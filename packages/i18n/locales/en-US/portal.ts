@@ -143,7 +143,7 @@ export const portalEnUS: DeepStrings<typeof portalEsBO> = {
     },
     summary: {
       intro: "This is how a guest sees your product on the gift list.", previewLabel: "Preview of the guest's card", from: "From {{price}}", deliversIn: "Delivers to {{cities}}", moreCities: "{{first}} and {{count}} more cities", leadDays: "In {{count}} days", leadToday: "Same-day delivery", freeShipping: "Free shipping", shipping: "Shipping {{price}}", pickup: "Shop pickup",
-      ctaStore: "View in the shop", ctaWhatsapp: "Order on WhatsApp", noPhoto: "No photo yet", ready: "The sheet is complete. You can publish it now.", published: "Product published", publishedDetail: "Hosts can now choose it for their list.", isPublished: "Published and visible to hosts.",
+      ctaStore: "View in the shop", ctaWhatsapp: "Order on WhatsApp", previewNote: "Preview: the buttons open the real destination and your test clicks are never billed or counted as requests.", previewPreparing: "Getting the test buttons ready…", previewUnavailable: "We could not get the test buttons ready. They stay off so that no click is billed by mistake.", previewOpen: "{{label}}. Opens the real destination as a test; it is not billed.", noPhoto: "No photo yet", ready: "The sheet is complete. You can publish it now.", published: "Product published", publishedDetail: "Hosts can now choose it for their list.", isPublished: "Published and visible to hosts.",
       hidden: "Our team hid this product. Reason: {{reason}}", hiddenNoReason: "Our team hid this product.", duplicated: "Copy created as a draft. It still needs photos."
     },
     completeness: { COMPLETE: "Complete", INCOMPLETE: "Incomplete", HIDDEN_BY_ADMIN: "Hidden" },

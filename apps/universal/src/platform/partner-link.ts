@@ -29,3 +29,19 @@ export function partnerRedirectUrl(listingId: string, options: { readonly destin
   if (options.ctx) query.set("ctx", options.ctx);
   return `${publicSiteOrigin()}/r/${encodeURIComponent(listingId)}?${query.toString()}`;
 }
+
+/**
+ * R6b · a link the provider portal opens on one of the provider's own listings. `ctx` is the signed one of `POST /providers/{id}/lead-context`: `PROVIDER_OWNER`
+ * makes the click `PROVIDER_SELF` (M-1) and `PREVIEW` makes `surface=PREVIEW` count (M-2); the surface follows the relation, so a preview never claims to be
+ * the public site. The URL is a bearer for 15 minutes (whoever holds it clicks for free on that provider's listings): it goes to `Linking.openURL` and is
+ * never rendered, copied, shared or stored.
+ */
+export function portalRedirectUrl(listingId: string, options: { readonly relation: "PROVIDER_OWNER" | "PREVIEW"; readonly ctx: string; readonly destination?: string }): string {
+  if (!LISTING_ID.test(listingId)) throw new Error("portalRedirectUrl needs a listing id (UUID), never a partner URL");
+  if (!options.ctx) throw new Error("portalRedirectUrl needs the ctx of lead-context");
+  const query = new URLSearchParams();
+  if (options.destination) query.set("destination", options.destination);
+  query.set("surface", options.relation === "PREVIEW" ? "PREVIEW" : "PUBLIC_SITE");
+  query.set("ctx", options.ctx);
+  return `${publicSiteOrigin()}/r/${encodeURIComponent(listingId)}?${query.toString()}`;
+}

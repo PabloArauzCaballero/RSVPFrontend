@@ -140,7 +140,7 @@ export const portalEsBO = {
     },
     summary: {
       intro: "Así ve el invitado tu producto en la lista de regalos.", previewLabel: "Vista previa de la tarjeta del invitado", from: "Desde {{price}}", deliversIn: "Entrega en {{cities}}", moreCities: "{{first}} y {{count}} ciudades más", leadDays: "En {{count}} días", leadToday: "Entrega el mismo día", freeShipping: "Envío gratis", shipping: "Envío {{price}}", pickup: "Retiro en tienda",
-      ctaStore: "Ver en la tienda", ctaWhatsapp: "Pedir por WhatsApp", noPhoto: "Sin foto todavía", ready: "La ficha está completa. Ya puedes publicarla.", published: "Producto publicado", publishedDetail: "Los anfitriones ya pueden elegirlo para su lista.", isPublished: "Publicado y visible para los anfitriones.",
+      ctaStore: "Ver en la tienda", ctaWhatsapp: "Pedir por WhatsApp", previewNote: "Vista previa: los botones abren el destino real y tus clics de prueba no se cobran ni cuentan como solicitudes.", previewPreparing: "Preparando los botones de prueba…", previewUnavailable: "No pudimos preparar los botones de prueba. Siguen apagados para que ningún clic se cobre por error.", previewOpen: "{{label}}. Abre el destino real como prueba; no se cobra.", noPhoto: "Sin foto todavía", ready: "La ficha está completa. Ya puedes publicarla.", published: "Producto publicado", publishedDetail: "Los anfitriones ya pueden elegirlo para su lista.", isPublished: "Publicado y visible para los anfitriones.",
       hidden: "El equipo ocultó este producto. Motivo: {{reason}}", hiddenNoReason: "El equipo ocultó este producto.", duplicated: "Copia creada como borrador. Le faltan las fotos."
     },
     completeness: { COMPLETE: "Completo", INCOMPLETE: "Incompleto", HIDDEN_BY_ADMIN: "Oculto" },

@@ -69,19 +69,31 @@ export function useDownloadLeadReportCsv(client: ApiClient) {
   return useMutation({ mutationFn: ({ month, providerId }: { readonly month: string; readonly providerId?: string }) => leadReportApi(client).adminCsv(month, providerId) });
 }
 
-/** The ctx lives 15 minutes (3.9.0): it is asked again every 12 so a link opened from a long session never carries a stale one. */
-export const PORTAL_LEAD_CONTEXT_REFRESH_MS = 12 * 60_000;
+/** The ctx lives 15 minutes (3.9.0, `expiresAt` in the answer): it is asked again when 3 minutes are left, so a link opened from a long session never carries a stale one. */
+export const PORTAL_LEAD_CONTEXT_RENEW_BEFORE_MS = 3 * 60_000;
+/** Never ask more often than this, even if a clock or an `expiresAt` in the past says the ctx is already stale (a loop of POSTs). */
+const MIN_RENEW_GAP_MS = 30_000;
+
+/** Milliseconds until the ctx should be renewed: 0 when it is missing, malformed or about to expire. */
+export function msUntilLeadContextRenewal(grant: Pick<LeadContext, "expiresAt"> | undefined, now: number = Date.now()): number {
+  const expires = grant ? Date.parse(grant.expiresAt) : Number.NaN;
+  return Number.isFinite(expires) ? Math.max(0, expires - now - PORTAL_LEAD_CONTEXT_RENEW_BEFORE_MS) : 0;
+}
 
 /**
  * M-1 and M-2 · POST /providers/{id}/lead-context. The portal asks for the signed `ctx` of its owner (`PROVIDER_OWNER`) or of the preview of one listing
  * (`PREVIEW`) and appends it to the `/r/{listingId}` links it opens, so those clicks are invalid leads and never bill. It is a bearer: never put it in a
- * link that is copied or shared. While it is not there (or the answer is a 503 LEAD_CONTEXT_UNAVAILABLE) `ctx` is undefined and the link goes without it.
+ * link that is copied or shared, nor in a query key. It is renewed from its own `expiresAt` (timer while the screen is visible, and on returning to the
+ * tab or the app, which is when a paused timer would have let it expire). While it is not there (or the answer is a 503 LEAD_CONTEXT_UNAVAILABLE) `data`
+ * is undefined and the screen must not offer the link.
  */
 export function useLeadContext(client: ApiClient, providerId: string | undefined, request: LeadContextRequest, enabled = true) {
   return useQuery({
     queryKey: leadReportKeys.context(providerId ?? "", request.relation, request.listingId),
     queryFn: () => leadReportApi(client).issueLeadContext(providerId ?? "", request),
-    staleTime: PORTAL_LEAD_CONTEXT_REFRESH_MS, gcTime: PORTAL_LEAD_CONTEXT_REFRESH_MS, refetchInterval: PORTAL_LEAD_CONTEXT_REFRESH_MS, retry: false,
+    staleTime: (query) => msUntilLeadContextRenewal(query.state.data), gcTime: MIN_RENEW_GAP_MS,
+    refetchInterval: (query) => (query.state.data ? Math.max(MIN_RENEW_GAP_MS, msUntilLeadContextRenewal(query.state.data)) : false),
+    refetchOnWindowFocus: true, refetchOnReconnect: true, retry: false,
     enabled: enabled && Boolean(providerId) && (request.relation === "PROVIDER_OWNER" || Boolean(request.listingId))
   });
 }

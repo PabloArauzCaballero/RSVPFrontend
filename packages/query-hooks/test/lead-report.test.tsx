@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, focusManager } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -96,6 +96,37 @@ describe("useLeadContext (M-1, M-2)", () => {
     await waitFor(() => expect(view.result.current.isError).toBe(true));
     expect(view.result.current.data).toBeUndefined();
     expect(h.calls).toHaveLength(1);
+  });
+});
+
+describe("renewal of the portal ctx from its own expiresAt", () => {
+  const at = (minutes: number, now: number) => ({ expiresAt: new Date(now + minutes * 60_000).toISOString() });
+  it("renews 3 minutes before it expires; a missing, malformed or already expired one is due now", () => {
+    const now = Date.parse("2026-11-27T12:00:00Z");
+    expect(hooks.msUntilLeadContextRenewal(at(15, now), now)).toBe(12 * 60_000);
+    expect(hooks.msUntilLeadContextRenewal(at(2, now), now)).toBe(0);
+    expect(hooks.msUntilLeadContextRenewal(at(-5, now), now)).toBe(0);
+    expect(hooks.msUntilLeadContextRenewal({ expiresAt: "ayer" }, now)).toBe(0);
+    expect(hooks.msUntilLeadContextRenewal(undefined, now)).toBe(0);
+  });
+  it("a ctx that is already inside the renewal margin is asked again when the app returns to the foreground, and a fresh one is not", async () => {
+    let n = 0;
+    const h = harness(() => { n += 1; return json({ ctx: `ctx-${n}`, relation: "PREVIEW", expiresAt: new Date(Date.now() + (n === 1 ? 60_000 : 15 * 60_000)).toISOString() }); });
+    const view = renderHook(() => hooks.useLeadContext(h.client, PID, { relation: "PREVIEW", listingId: LID }), { wrapper: h.wrapper });
+    await waitFor(() => expect(view.result.current.data?.ctx).toBe("ctx-1"));
+    act(() => { focusManager.setFocused(false); focusManager.setFocused(true); });
+    await waitFor(() => expect(view.result.current.data?.ctx).toBe("ctx-2"));
+    act(() => { focusManager.setFocused(false); focusManager.setFocused(true); });
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(h.calls).toHaveLength(2);
+  });
+  it("the ctx never reaches a query key", async () => {
+    const queryClient = new QueryClient();
+    const h = harness(() => json({ ctx: "secreto-portador", relation: "PROVIDER_OWNER", expiresAt: new Date(Date.now() + 900_000).toISOString() }));
+    const wrapper = ({ children }: { children: ReactNode }) => <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+    const view = renderHook(() => hooks.useLeadContext(h.client, PID, { relation: "PROVIDER_OWNER" }), { wrapper });
+    await waitFor(() => expect(view.result.current.data?.ctx).toBe("secreto-portador"));
+    expect(JSON.stringify(queryClient.getQueryCache().getAll().map((query) => query.queryKey))).not.toContain("secreto-portador");
   });
 });
 
