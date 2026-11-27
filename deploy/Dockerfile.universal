@@ -11,10 +11,12 @@ ARG EXPO_PUBLIC_API_URL
 ARG EXPO_PUBLIC_SITE_URL
 # Origin of the guests' personal RSVP links.
 ARG EXPO_PUBLIC_RSVP_ORIGIN
+# OSM · Optional tile server of the web map (https template with {z}/{x}/{y}); empty keeps tile.openstreetmap.org.
+ARG EXPO_PUBLIC_MAP_TILE_URL
 # M9 · Empty or relative values would bake relative links into the app: stop the build instead.
 RUN sh deploy/check-build-args.sh EXPO_PUBLIC_API_URL EXPO_PUBLIC_SITE_URL EXPO_PUBLIC_RSVP_ORIGIN
 # The public gateway URL configures nginx below. The browser always calls this app's own /api.
-ENV EXPO_PUBLIC_API_URL=/api EXPO_PUBLIC_SITE_URL=$EXPO_PUBLIC_SITE_URL EXPO_PUBLIC_RSVP_ORIGIN=$EXPO_PUBLIC_RSVP_ORIGIN
+ENV EXPO_PUBLIC_API_URL=/api EXPO_PUBLIC_SITE_URL=$EXPO_PUBLIC_SITE_URL EXPO_PUBLIC_RSVP_ORIGIN=$EXPO_PUBLIC_RSVP_ORIGIN EXPO_PUBLIC_MAP_TILE_URL=$EXPO_PUBLIC_MAP_TILE_URL
 RUN yarn workspace @rsvp/universal build
 
 # M14 · Pinned by digest (nginx 1.27.5-alpine): rebuilds are reproducible.
