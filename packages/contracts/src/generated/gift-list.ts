@@ -47,7 +47,7 @@ export interface paths {
         get?: never;
         /**
          * Set the delivery notes of the list (host or organizer)
-         * @description Since 1.17.0 (R4). MANAGE only (PF-3). PUT semantics, idempotent (PF-4). Free text of at most 200 characters, published by the host: tell them not to write the exact address. 404 GIFT_LIST_NOT_FOUND without a list.
+         * @description Since 1.17.0 (R4). MANAGE only (PF-3). PUT semantics, idempotent (PF-4). Free text of at most 200 characters, published by the host: tell them not to write the exact address. Since 1.18.0: 422 CONTACT_IN_TEXT (with field and fragment) when the text carries a phone number or a web address, because it is public in getPublicGiftsSummary; nothing is stored. 404 GIFT_LIST_NOT_FOUND without a list.
          */
         put: operations["putGiftListDeliveryNotes"];
         post?: never;
@@ -1001,7 +1001,7 @@ export interface components {
             variantCode?: string | null;
         };
         GiftBatchRequest: {
-            /** @description Omit to keep the current notes; null or an empty text clears them. */
+            /** @description Omit to keep the current notes; null or an empty text clears them. Since 1.18.0: 422 CONTACT_IN_TEXT when it carries a phone number or a web address. */
             deliveryNotes?: string | null;
             items: components["schemas"]["GiftBatchEntry"][];
         };
@@ -1236,7 +1236,7 @@ export interface components {
             closed: boolean;
         };
         GiftListDeliveryNotesRequest: {
-            /** @description Delivery instructions, no exact address. null or an empty text clears them. */
+            /** @description Delivery instructions, no exact address, no phone number or web address (422 CONTACT_IN_TEXT since 1.18.0). null or an empty text clears them. */
             deliveryNotes: string | null;
         };
         /** @description Since 1.13.0 (R8a): DevCompatGiftList plus its manual closure state. */
