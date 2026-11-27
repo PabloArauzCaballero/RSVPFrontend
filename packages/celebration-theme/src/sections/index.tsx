@@ -76,7 +76,14 @@ function Gallery({ gallery, t }: SectionProps): ReactNode {
     const label = t("celebration.gallery.photo", { n: index + 1, total: available.length });
     return { ...photo, label, openLabel: t("celebration.gallery.open", { label }) };
   });
-  return <GalleryView photos={photos} labels={{ title: t("celebration.sections.gallery"), close: t("celebration.gallery.close"), previous: t("celebration.gallery.previous"), next: t("celebration.gallery.next") }} />;
+  const labels = {
+    title: t("celebration.sections.gallery"),
+    enlarge: t("celebration.gallery.enlarge"),
+    close: t("celebration.gallery.close"),
+    previous: t("celebration.gallery.previous"),
+    next: t("celebration.gallery.next")
+  };
+  return <GalleryView photos={photos} labels={labels} />;
 }
 
 function DressCode({ content }: SectionProps): ReactNode {

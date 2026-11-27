@@ -125,11 +125,29 @@
 .celebration-cta[data-credential] { display: inline-grid; place-items: center; }
 .celebration-cta-face { grid-area: 1 / 1; display: inline-flex; align-items: center; justify-content: center; gap: .5rem; }
 .celebration-cta[data-credential="absent"] .celebration-cta-face[data-face="confirm"], .celebration-cta[data-credential="present"] .celebration-cta-face[data-face="find"] { visibility: hidden; }
-.celebration-gallery { list-style: none; padding: 0; margin: 0; display: grid; gap: .75rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr)); }
-.celebration-gallery a { display: block; }
-.celebration-gallery :is(img, [data-photo-failed]) { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; }
+.celebration-gallery-carousel { inline-size: min(100%, 48rem); margin-inline: auto; container-type: inline-size; }
+.celebration-gallery {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+.celebration-gallery > li { flex: 0 0 100%; min-width: 0; scroll-snap-align: start; }
+.celebration-gallery a { display: block; position: relative; aspect-ratio: 4 / 3; max-height: 30rem; cursor: zoom-in; text-decoration: none; }
+.celebration .celebration-gallery a:focus-visible { outline: none; }
+.celebration-gallery :is(picture, img, [data-photo-failed]) { display: block; width: 100%; height: 100%; box-sizing: border-box; }
 .celebration[data-images="rounded"] .celebration-gallery :is(img, [data-photo-failed]) { border-radius: var(--celebration-radius); }
 .celebration[data-images="framed"] .celebration-gallery :is(img, [data-photo-failed]) { border: 6px solid var(--celebration-surface); box-shadow: 0 1px 4px rgb(0 0 0 / .15); }
+.celebration-gallery-enlarge {
+  position: absolute;
+  inset-inline-end: .75rem;
+  inset-block-end: .75rem;
+  pointer-events: none;
+}
 .celebration-gallery-dialog {
   box-sizing: border-box;
   width: min(calc(100% - 1.5rem), 70rem);
@@ -147,7 +165,7 @@
 .celebration-gallery-dialog::backdrop { background: rgb(0 0 0 / .8); }
 html:has(.celebration-gallery-dialog[open]) { overflow: hidden; }
 .celebration-gallery-toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .5rem; }
-.celebration-gallery-toolbar button {
+.celebration-gallery-toolbar button, .celebration-gallery-enlarge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -158,14 +176,24 @@ html:has(.celebration-gallery-dialog[open]) { overflow: hidden; }
   border: 1px solid currentColor;
   border-radius: .375rem;
   background: var(--celebration-surface);
-  color: inherit;
+  color: var(--celebration-text);
   font: inherit;
   font-size: .9375rem;
   font-weight: 600;
   cursor: pointer;
 }
-.celebration-gallery-toolbar button:hover { background: color-mix(in srgb, currentColor 10%, var(--celebration-surface)); }
-.celebration-gallery a:focus-visible, .celebration-gallery-toolbar button:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+.celebration-gallery-toolbar button:not([aria-disabled="true"]):hover, .celebration-gallery a:hover .celebration-gallery-enlarge { background: color-mix(in srgb, currentColor 10%, var(--celebration-surface)); }
+.celebration-gallery-toolbar button[aria-disabled="true"] { opacity: .5; cursor: default; }
+.celebration-gallery-toolbar button:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+.celebration-gallery a:focus-visible .celebration-gallery-enlarge { outline: 2px solid currentColor; outline-offset: 3px; }
+.celebration-gallery-navigation { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); margin-block-start: .75rem; }
+.celebration-gallery-navigation button:first-child { justify-self: start; }
+.celebration-gallery-navigation button:last-child { justify-self: end; }
+.celebration-gallery-navigation [role="status"] { font-variant-numeric: tabular-nums; text-align: center; }
+@container (max-width: 24rem) {
+  .celebration-gallery-navigation button span { display: none; }
+  .celebration-gallery-navigation button { padding-inline: .625rem; }
+}
 .celebration-gallery-stage { display: grid; place-items: center; min-width: 0; overflow: hidden; }
 .celebration-gallery-stage :is(picture, img) { display: block; width: 100%; height: 100%; }
 .celebration-gallery-stage [data-photo-failed] { width: min(100%, 20rem); max-height: 100%; }
