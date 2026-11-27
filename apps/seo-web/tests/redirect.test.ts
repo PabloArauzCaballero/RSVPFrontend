@@ -139,7 +139,7 @@ describe("REQ-F27-02/03 · /r/{listingId} redirector", () => {
     expect(url.searchParams.has("ctx")).toBe(false);
   });
 
-  it("R6a · PREVIEW is a surface that is and is forwarded as the lead's surface", async () => {
+  it("R6a · PREVIEW is a known surface and is forwarded as the lead's surface", async () => {
     const fetchFn = gateway(upstream302());
     await GET(new Request(`http://site.test/r/${LISTING}?surface=PREVIEW`), ctx);
     const [url] = fetchFn.mock.calls[0] as unknown as [URL];
@@ -166,40 +166,12 @@ describe("REQ-F27-02/03 · /r/{listingId} redirector", () => {
     expect(url.searchParams.get("ctx")).toBe(token);
   });
 
-  it("R6a · a 422 INVALID_LEAD_CONTEXT is retried once without ctx and the visitor is redirected", async () => {
-    const answers = [
-      new Response(JSON.stringify({ code: "INVALID_LEAD_CONTEXT", status: 422 }), { status: 422, headers: { "content-type": "application/problem+json" } }),
-      new Response(null, { status: 302, headers: { location: "https://shop.example/torta" } })
-    ];
-    const fetchFn = vi.fn(async () => answers.shift() as Response);
-    vi.stubGlobal("fetch", fetchFn);
-    const response = await GET(new Request(`http://site.test/r/${LISTING}?surface=GIFT_LIST&ctx=token-que-el-backend-rechaza`), ctx);
-    expect(response.status).toBe(302);
-    expect(response.headers.get("location")).toContain("https://shop.example/torta");
-    expect(fetchFn).toHaveBeenCalledTimes(2);
-    const [first, second] = fetchFn.mock.calls.map((call) => (call as unknown as [URL])[0]);
-    expect(first?.searchParams.get("ctx")).toBe("token-que-el-backend-rechaza");
-    expect(second?.searchParams.has("ctx")).toBe(false);
-    expect(second?.searchParams.get("surface")).toBe("GIFT_LIST");
-  });
-
-  it("R6a · the retry happens once: if the backend still answers 422 without ctx, the failure is reported", async () => {
+  it("R6a · a 422 INVALID_LEAD_CONTEXT is NOT retried (the code is shared by sessionId, surface, celebrationId…): one backend call and the failure is reported", async () => {
     const fetchFn = vi.fn(async () => new Response(JSON.stringify({ code: "INVALID_LEAD_CONTEXT" }), { status: 422 }));
     vi.stubGlobal("fetch", fetchFn);
-    const response = await GET(new Request(`http://site.test/r/${LISTING}?ctx=token`), ctx);
-    expect(response.status).not.toBe(302);
-    expect(fetchFn).toHaveBeenCalledTimes(2);
-  });
-
-  it("R6a · other 422 codes (or none) are not retried, and a 422 without ctx is never retried", async () => {
-    const other = vi.fn(async () => new Response(JSON.stringify({ code: "VALIDATION_ERROR" }), { status: 422 }));
-    vi.stubGlobal("fetch", other);
-    await GET(new Request(`http://site.test/r/${LISTING}?ctx=token`), ctx);
-    expect(other).toHaveBeenCalledTimes(1);
-    const none = vi.fn(async () => new Response(JSON.stringify({ code: "INVALID_LEAD_CONTEXT" }), { status: 422 }));
-    vi.stubGlobal("fetch", none);
-    await GET(new Request(`http://site.test/r/${LISTING}?surface=SEARCH`), ctx);
-    expect(none).toHaveBeenCalledTimes(1);
+    const response = await GET(new Request(`http://site.test/r/${LISTING}?surface=NO_EXISTE&ctx=token`), ctx);
+    expect(response.status).toBe(400);
+    expect(fetchFn).toHaveBeenCalledTimes(1);
   });
 
   it("/r/ is not indexable", () => {

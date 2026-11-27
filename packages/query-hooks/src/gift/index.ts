@@ -96,6 +96,9 @@ export interface GiftListOptions {
 }
 
 export function useGiftList(client: ApiClient, celebrationId: string | undefined, credential?: string | null, initialData?: GiftItemList, options: GiftListOptions = {}) {
+  // Documented limit: the app default is read only when it is a boolean or "always". React Query also allows a function of the query there; this repo's
+  // apps (seo-web: false, universal: unset) never use one, and the function's parameter type (Query<unknown>) cannot take a typed gift query without a cast,
+  // so a function default is treated as React Query's own default (true) for a read without a lead context.
   const configured = useQueryClient().getDefaultOptions().queries?.refetchOnWindowFocus;
   const appFocusDefault = typeof configured === "function" || configured === undefined ? true : configured;
   return useQuery({

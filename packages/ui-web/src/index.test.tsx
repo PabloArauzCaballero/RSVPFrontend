@@ -165,7 +165,26 @@ describe('PartnerLink: always through /r/{listingId}', () => {
     fireEvent.click(link, { shiftKey: true });
     fireEvent(link, new MouseEvent('auxclick', { bubbles: true, cancelable: true, button: 1 }));
     expect(open.mock.calls.slice(1).map((call) => call[1])).toEqual(['_blank', '_blank', '_blank', '_blank']);
+    expect(open.mock.calls.slice(1).map((call) => call[2])).toEqual(['noopener', 'noopener', 'noopener', 'noopener']);
     for (let call = 1; call < 5; call += 1) expect(target(call).searchParams.get('ctx')).toBe(ctx);
+    open.mockRestore();
+  });
+  it('R6a: alt-click (download) and an already handled click are left to the browser', () => {
+    const open = vi.spyOn(window, 'open').mockReturnValue(null);
+    render(<PartnerLink listingId={ID} surface="GIFT_LIST" celebrationId="c1" ctx="tok">Ir</PartnerLink>);
+    const link = screen.getByRole('link', { name: 'Ir' });
+    fireEvent.click(link, { altKey: true });
+    expect(open).not.toHaveBeenCalled();
+    link.addEventListener('click', (event) => event.preventDefault(), { once: true });
+    fireEvent.click(link);
+    expect(open).not.toHaveBeenCalled();
+    open.mockRestore();
+  });
+  it('R6a: an auxclick that is not the middle button is ignored', () => {
+    const open = vi.spyOn(window, 'open').mockReturnValue(null);
+    render(<PartnerLink listingId={ID} surface="GIFT_LIST" celebrationId="c1" ctx="tok">Ir</PartnerLink>);
+    fireEvent(screen.getByRole('link', { name: 'Ir' }), new MouseEvent('auxclick', { bubbles: true, cancelable: true, button: 2 }));
+    expect(open).not.toHaveBeenCalled();
     open.mockRestore();
   });
   it('R6a: without ctx the click is the browser default (no script navigation)', () => {
