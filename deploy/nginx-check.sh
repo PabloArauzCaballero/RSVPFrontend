@@ -53,7 +53,8 @@ for p in / /index.html /rsvp/token-123 /c/boda/rsvp/token-123 /c/boda/regalos/re
   expect "$p" '^x-frame-options: DENY$'
   expect "$p" '^strict-transport-security: max-age='
   expect "$p" '^content-security-policy-report-only: '
-  expect "$p" '^permissions-policy: '
+  # OSM · exact value: this origin may ask for the position ("use my location", "near me"); nothing else is opened.
+  expect "$p" '^permissions-policy: camera=\(\), microphone=\(\), geolocation=\(self\), payment=\(\), usb=\(\)$'
 done
 expect / '^referrer-policy: strict-origin-when-cross-origin$'
 expect /rsvp/token-123 '^referrer-policy: no-referrer$'
