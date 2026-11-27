@@ -51,7 +51,7 @@ describe("EditorShell", () => {
     expect(screen.getByTestId("save-status").textContent).toContain("Borrador guardado.");
   });
 
-  it("undo and redo work from the buttons and from Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y", () => {
+  it("undo and redo work from the buttons", () => {
     mount();
     const original = accentLight().value;
     fireEvent.change(accentLight(), { target: { value: "#123456" } });
@@ -59,6 +59,13 @@ describe("EditorShell", () => {
     fireEvent.click(screen.getByRole("button", { name: "Deshacer" }));
     expect(accentLight().value).toBe(original);
     fireEvent.click(screen.getByRole("button", { name: "Rehacer" }));
+    expect(accentLight().value).toBe("#123456");
+  });
+
+  it("undo and redo work from Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y", () => {
+    mount();
+    const original = accentLight().value;
+    fireEvent.change(accentLight(), { target: { value: "#123456" } });
     expect(accentLight().value).toBe("#123456");
     fireEvent.keyDown(accentLight(), { key: "z", ctrlKey: true });
     expect(accentLight().value).toBe(original);

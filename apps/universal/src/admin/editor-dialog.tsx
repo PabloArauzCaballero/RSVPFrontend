@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Modal, ScrollView, Text, View, useWindowDimensions } from "react-native";
+import { Modal, Platform, ScrollView, Text, View, useWindowDimensions } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
 import { Button, OverlayEnter, overlayAnimation } from "@rsvp/ui";
 import { useT } from "../platform/providers";
@@ -37,11 +37,12 @@ export function EditorDialog({ title, saveLabel, saveTestID, busy = false, canSa
   const styles = useStyles();
   const { height } = useWindowDimensions();
   const editing = onSave !== undefined;
+  const nativeDialog = Platform.OS === "web" ? {} : { role: "dialog" as const, "aria-label": title };
   return (
-    <Modal visible transparent animationType={overlayAnimation("fade")} onRequestClose={busy ? () => undefined : onClose}>
+    <Modal visible transparent aria-label={title} animationType={overlayAnimation("fade")} onRequestClose={busy ? () => undefined : onClose}>
       <View style={styles.overlay}>
         <OverlayEnter from="none">
-          <View accessibilityViewIsModal role="dialog" aria-label={title} style={[styles.dialog, { maxWidth: width, maxHeight: dialogMaxHeight(height) }]}>
+          <View accessibilityViewIsModal {...nativeDialog} style={[styles.dialog, { maxWidth: width, maxHeight: dialogMaxHeight(height) }]}>
             <Text accessibilityRole="header" style={styles.subtitle}>{title}</Text>
             <ScrollView tabIndex={0} aria-label={title} style={{ flexShrink: 1 }} contentContainerStyle={{ gap: spacing[4], paddingBottom: spacing[1] }} keyboardShouldPersistTaps="handled">{children}</ScrollView>
             <View style={{ flexDirection: "row", gap: spacing[2] }}>
