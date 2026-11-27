@@ -5,9 +5,27 @@
  * whole upload and comparing it with the device clock also counts the device's drift. The age here is local: monotonic time
  * between the first and the latest server answer that said PROCESSING. Cached data and failed polls do not make it grow.
  *
- * It is saved as a duration, never as a date, so a reload resumes the count and a photo that really is stuck cannot be reset
- * forever. Time with the page closed does not count. Without storage (native), the count lasts as long as the app does.
+ * Which time counts: while the same app instance lives, everything between those two answers, even if nothing was polled in
+ * between (screen closed, tab in the background). It is saved as a duration, never as a date, so a reload resumes from the
+ * last saved age; the time between that last answer and the first one after the reload does not count. Without storage
+ * (native), the count lasts as long as the app does.
+ *
+ * So short visits add little (a visit with a single answer adds nothing). `isProcessingStuck` therefore also gives up on a
+ * photo whose upload was signed a very long time ago.
+ *
+ * Pending in the backend: expose `processingStartedAt` and the server's current time; both thresholds could then go.
  */
+export const MEDIA_PROCESSING_STALE_MS = 3 * 60_000;
+/** Compared with `createdAt` and the device clock, so it is high enough to absorb slow uploads and ordinary clock drift. */
+export const MEDIA_PROCESSING_ABANDONED_MS = 24 * 60 * 60_000;
+
+/** Stuck: watched in PROCESSING for too long, or (backup) signed more than a day ago. A missing or invalid date never counts. */
+export function isProcessingStuck(observedAgeMs: number, createdAt: unknown, wallNow: number): boolean {
+  if (observedAgeMs >= MEDIA_PROCESSING_STALE_MS) return true;
+  const signedAt = typeof createdAt === "string" ? Date.parse(createdAt) : Number.NaN;
+  return wallNow - signedAt >= MEDIA_PROCESSING_ABANDONED_MS;
+}
+
 export interface ProcessingAgeStorage {
   getItem(key: string): string | null;
   setItem(key: string, value: string): void;
@@ -48,18 +66,15 @@ export function createProcessingAgeTracker(now: () => number, storage: () => Pro
     observe(celebrationId, processingIds) {
       const at = now();
       const previous = celebrations.get(celebrationId);
-      let restored: Record<string, unknown> | undefined;
+      // Read on every answer: another tab may have saved a longer count, which must never go back.
+      const stored = processingIds.length ? saved(celebrationId) : {};
       const next = new Map<string, { readonly startedAt: number; readonly ageMs: number }>();
       const ages: Record<string, number> = {};
       for (const id of processingIds) {
-        let startedAt = previous?.get(id)?.startedAt;
-        if (startedAt === undefined) {
-          restored ??= saved(celebrationId);
-          const age = restored[id];
-          startedAt = at - (typeof age === "number" && Number.isFinite(age) && age > 0 ? age : 0);
-        }
-        const ageMs = at - startedAt;
-        next.set(id, { startedAt, ageMs });
+        const value = stored[id];
+        const savedAge = typeof value === "number" && Number.isFinite(value) && value > 0 ? value : 0;
+        const ageMs = Math.max(at - (previous?.get(id)?.startedAt ?? at), savedAge);
+        next.set(id, { startedAt: at - ageMs, ageMs });
         ages[id] = Math.round(ageMs);
       }
       celebrations.set(celebrationId, next);

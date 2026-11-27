@@ -2,7 +2,7 @@ import { useState, type ReactNode } from "react";
 import { Image, Text, View } from "react-native";
 import { radius, spacing } from "@rsvp/design-tokens";
 import { CheckMark, Enter, Skeleton, SkeletonList, useColors } from "@rsvp/ui";
-import { MEDIA_PROCESSING_STALE_MS, mediaProcessingAgeMs, useDeleteMedia, useMediaAssets, useReorderMedia, useUploadMedia, type MediaAsset } from "@rsvp/query-hooks";
+import { isMediaProcessingStuck, useDeleteMedia, useMediaAssets, useReorderMedia, useUploadMedia, type MediaAsset } from "@rsvp/query-hooks";
 import { pickImage as defaultPick, type PickedImage } from "../platform/pick-image";
 import { useApiClient, useT } from "../platform/providers";
 import { CelebrationScreen, useScreenHeader, type ScreenProps } from "./gate";
@@ -97,7 +97,7 @@ function Gallery({ celebrationId, pick }: { readonly celebrationId: string; read
       ) : null}
       {problem ? <Notice kind="error">{problem}</Notice> : null}
       {processing.map((asset) => {
-        const stale = mediaProcessingAgeMs(celebrationId, asset.id) >= MEDIA_PROCESSING_STALE_MS;
+        const stale = isMediaProcessingStuck(celebrationId, asset);
         return stale ? (
           <View key={asset.id} style={{ gap: spacing[2] }} testID={`processing-stale-${asset.id}`}>
             <Notice kind="error">{t("host.gallery.processingSlow", { name: asset.filename })}</Notice>

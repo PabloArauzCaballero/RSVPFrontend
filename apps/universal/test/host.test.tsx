@@ -342,16 +342,22 @@ describe("C12 · gallery", () => {
     await waitFor(() => expect(calls.find((call) => call.method === "PUT")?.body).toEqual({ assetIds: ["a1", "a2"], coverAssetId: "a2" }));
   });
 
-  it.each([
-    ["a slow upload or a device clock ahead", -10 * 60_000],
-    ["a device clock behind", 10 * 60_000]
-  ])("does not offer to delete a photo first seen in PROCESSING with %s", async (_name, offset) => {
-    const asset = { id: "healthy", celebrationId: "c-1", filename: "sana.jpg", contentType: "image/jpeg", sizeBytes: 100, status: "PROCESSING" as const, createdAt: new Date(Date.now() + offset).toISOString(), width: null, height: null, sortOrder: 0, isCover: false, variants: {} };
+  const processingPhoto = (id: string, createdAt: string) => ({ id, celebrationId: "c-1", filename: `${id}.jpg`, contentType: "image/jpeg", sizeBytes: 100, status: "PROCESSING" as const, createdAt, width: null, height: null, sortOrder: 0, isCover: false, variants: {} });
+  const showGallery = (asset: ReturnType<typeof processingPhoto>) => {
     const { client } = fakeClient({ ...baseHandlers(), "GET /media/celebrations/c-1/assets": () => ({ items: [asset] }) });
     renderApp(<GalleryEditorScreen celebrationId="c-1" onNavigate={navigate} pick={vi.fn()} />, client);
+  };
+
+  it("does not offer to delete a photo first seen in PROCESSING after a slow upload or with a device clock ahead", async () => {
+    showGallery(processingPhoto("sana", new Date(Date.now() - 10 * 60_000).toISOString()));
     expect(await screen.findByText(/sana\.jpg/)).toBeTruthy();
-    expect(screen.queryByTestId("processing-stale-healthy")).toBeNull();
-    expect(screen.queryByTestId("delete-processing-healthy")).toBeNull();
+    expect(screen.queryByTestId("processing-stale-sana")).toBeNull();
+    expect(screen.queryByTestId("delete-processing-sana")).toBeNull();
+  });
+
+  it("offers to delete on first sight a photo still in PROCESSING a day after its upload was signed", async () => {
+    showGallery(processingPhoto("olvidada", new Date(Date.now() - 25 * 60 * 60_000).toISOString()));
+    expect(await screen.findByTestId("delete-processing-olvidada")).toBeTruthy();
   });
 
   it("offers check-again and delete actions when a PROCESSING photo is stale and deletes it on confirm", async () => {
