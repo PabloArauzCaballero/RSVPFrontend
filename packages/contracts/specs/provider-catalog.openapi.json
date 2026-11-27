@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "RSVP Provider Catalog API",
-    "version": "3.7.0",
-    "description": "2.0.0: real service (port 3005). Paths now include the gateway prefixes (/providers, /r) and /listings; bodies and responses are defined. GET /providers keeps the query contract of RSVPFrontend seo-web (category, city, verified, maxPriceMinor, availableOn, page, pageSize) and adds coverage, near and locale. Errors are RFC 9457 problems. Disclaimer: RSVP brokers contact, it does not deliver the service. 2.1.0 (additive): ProviderCard adds providerId, providerName, destinations, address and hours and GET /providers accepts ?slug=; GET /providers/mine; microsite profile (GET/PUT /providers/{id}/microsite, REQ-F28-02); verification documents with presigned upload to object storage (/providers/{id}/documents...); POST /providers/impressions returns {recorded, ignored}; POST /providers/{id}/quotes accepts anonymous requests only when the deployment enables them (captcha or open mode, with per-address and per-contact caps); GET /listings text search matches any word, accent-insensitively, by title, category or description. 2.2.0 (additive, back office, ADMIN only: 401 without token, 403 to any other role): GET/PUT /providers/admin/categories[/{code}], GET/PUT /providers/admin/geography[/{code}], GET /providers/admin/verification-queue, POST /providers/{providerId}/reject (reason required), POST /providers/{providerId}/suspend now takes {reason} (required when an administrator suspends; the owner may still pause its own provider), GET /providers/admin/moderation and POST /providers/admin/moderation/{id}/approve|reject, GET /providers/admin/metrics/leads, GET /providers/admin/summary. ProviderStatus gains REJECTED (a rejected provider may resubmit). Every decision is audited (actor, time, reason) and emits an outbox event. Inactive categories and cities disappear from the public lists. City coordinates were verified against GeoNames. 2.3.0 (additive): the provider-owned routes of the Nest runtime (/private/*, /catalog/*, /public/products*) and, later in the same version, GET/PUT /providers/{providerId}/notification-settings and the internal GET /internal/v1/providers/{providerId}/notification-profile (that addition did not bump the version; from 2.9.1 the contract version lock in packages/contracts-openapi/versions.lock.json refuses a content change without a version change). 2.4.0 (additive): listing categories and catalog photos. 2.9.0 (additive, A23): GET /listings/{listingId} exposes enabled destination types. WhatsApp links support an optional prefilled message. 2.9.1 (correction, no runtime change): removes GET/POST /, POST /{providerId}/verify, POST /{providerId}/listings, GET /{providerId}/calendar, POST /{providerId}/bookings and POST /{providerId}/quotes. The service never served those unprefixed paths (it serves the same operations under /providers/...), and they duplicated seven operationIds (searchProviders, registerProvider, verifyProvider, createListing, getProviderCalendar, requestBooking, requestQuote), which OpenAPI requires to be unique. 2.10.0 (B11, additive): the provider's quote inbox. GET /providers/{providerId}/quotes (newest first, keyset cursor) and GET /providers/{providerId}/quotes/{quoteId} with the contact the requester gave. Owner with the PROVIDER role only (administrators and other providers get 403), under the provider's row-level scope. 2.10.1 (correction, no runtime change): the /private/*, /catalog/* and /public/products* operations declare their own server http://localhost:8000/providers. The service has always served them under /providers (Nest controllers providers/private, providers/catalog and providers/public/products), and the gateway reaches them there; resolved against the global server they pointed to paths that answer 404. Path keys and operationIds are unchanged, so generated clients keep their types and only the base URL of these 18 operations moves. 2.11.0 (additive, A24; PR #42: partner creation moves to the admin panel; ADMIN only, every route calls requireAdmin in the service: 401 without token, 403 to any other role): partner intake (server-side draft) POST/GET/PATCH/DELETE /providers/admin/intakes[/{intakeId}], its KYP documents (/documents, /complete, DELETE) and the atomic POST /providers/admin/intakes/{intakeId}/commit (Idempotency-Key) that creates the provider VERIFIED with origin ADMIN and KYP COMPLETE, moves the documents (review ACCEPTED), writes admin_audit provider.created-by-admin and enqueues provider.provider.registered.v2; partner administration GET /providers/admin/partners (server-side filters, sort, pagination), GET/PATCH /providers/admin/partners/{providerId} (If-Match), documents with review, kyp/complete, suspend, reactivate and change-owner (409 OWNER_CHANGE_UNAVAILABLE until F4), GET /providers/admin/documents/{documentId}/download (5-minute presigned URL, audited). Document kinds gain POWER_OF_ATTORNEY and BANK_CERTIFICATE and documents carry reviewStatus. The CI and the bank account are encrypted at rest and masked (****1234) in every response; only GET ...?reveal=ci returns the CI, and that read is audited. KYP_INCOMPLETE carries details.missing (list of failing kyp.<path> and documents.<KIND>); Problem.details stays an object. 3.0.0 (frente F8, A20): the provider has one state machine, the marketplace one (POST /providers/{providerId}/submit|verify|suspend|reject), which audits every decision and returns its reason to the owner (Provider.statusReason, statusChangedAt). The duplicated Nest lifecycle routes are retired (incompatible change, hence the major version): GET /private/providers/{providerId}/verification, POST /private/providers/{providerId}/verification-requests, GET /private/admin/providers/{providerId} and POST /private/admin/providers/{providerId}/verify|suspend. No client used them; the private registration POST /private/providers stays until phase 4 of the partner hand-over. Microsite.moderation tells the owner that a rejected microsite is unpublished and why. 3.1.0 (additive, A23; PR #69): GET /r/{listingId} is one redirector routed by the listing: destination is optional (absent = the primary destination: PRODUCT_PAGE of a product, otherwise the first stored and enabled one); every destination is checked against its whitelist when published and again when resolved (tel:+E.164, mailto:, https://wa.me/<number>, https://instagram.com, canonical https), so a stored target that no longer passes answers 404. 3.2.0 (additive, L4; PR #67): GET /providers/{providerId}/bookings and GET /providers/me/bookings are keyset pages ordered by (date, id): ?limit (1 to 100, default 50) and the opaque ?cursor of the previous page; the response adds nextCursor (null on the last page). Until 2.4.x both lists stopped at 200 bookings without saying so; a client that ignores nextCursor now sees a bounded first page and an explicit cursor instead of a silent cut. A malformed limit or cursor is 422 (INVALID_QUERY, INVALID_CURSOR). 3.3.0 (additive, A24/DPA-10; provisional version pending VERSIONES.md): partner requests. A signed-in user who owns no provider sends POST /providers/partner-requests (business name, category, department and city codes of /providers/categories and /providers/geo, WhatsApp or phone, message up to 1000 characters, contact consent), sees status and statusReason in GET /providers/partner-requests/mine and may withdraw an OPEN request (DELETE /providers/partner-requests/{requestId}, REJECTED with reason WITHDRAWN_BY_REQUESTER). One live (OPEN or IN_REVIEW) request per user (409 REQUEST_ALREADY_OPEN), at most 3 in 30 days (429 REQUEST_LIMIT), never for a user who already owns a provider (409 ALREADY_PARTNER_OWNER). The administrator lists the queue (GET /providers/admin/partner-requests, with OPEN / IN_REVIEW counts for the tab badge), takes (OPEN -> IN_REVIEW), rejects with a mandatory reason, or converts a request (POST .../convert: one transaction opens a partner intake owned by the requester with identity, contact and coverage prefilled). Transitions take an optional If-Match version (409 PARTNER_REQUEST_VERSION_CONFLICT) and are audited. 3.4.0 (additive, R1 of the gift series: A28, A29, M23): GET /providers/categories accepts ?type=PRODUCT|SERVICE and keeps the categories that can hold that listing type (the ones typed that way plus the untyped ones, listingType null, which hold both); another value is 422 INVALID_QUERY. Creating or publishing a listing whose type differs from its category's listingType is 422 CATEGORY_TYPE_MISMATCH (details: type, category, categoryType); the database enforces the same rule. The legacy POST /private/providers/{providerId}/products keeps its closed problem catalogue and answers PROVIDER_VALIDATION (422) for a product in a SERVICE category. Eighteen PRODUCT categories of the gift catalogue are added as data (no schema change). ListingSummary (GET /listings, GET /listings/{listingId}) declares type as required with enum PRODUCT|SERVICE; the service always sent it, so consumers only gain a narrower type. Listings stored before the rule whose type does not match their category (a SERVICE in a PRODUCT category, or a PRODUCT in a SERVICE category) are not converted: a data migration hides them (published false) and marks them with hiddenReason CATEGORY_TYPE_MISMATCH in the provider's own listings (Listing.hiddenReason); existing gift reservations keep pointing at them. 3.5.0 (additive, R2 of the gift series: A30, L23): the product sheet of a marketplace PRODUCT (exact priceMinor, stock, giftIdeas, variants, delivery with city slugs, details, whatsappTemplate) with completeness and missing; GET and PATCH /providers/{providerId}/listings/{listingId} (If-Match, 428/409); POST /providers/{providerId}/listings takes Idempotency-Key and refuses imageUrl for a PRODUCT; POST .../duplicate; PUT /providers/admin/listings/{listingId}/featured (ADMIN); GET/PUT /providers/{providerId}/whatsapp-template; public GET /providers/gift-ideas; publishing a PRODUCT requires COMPLETE (422 LISTING_INCOMPLETE); GET /listings lists only eligible products; product photos (presigned upload signing Content-Length, complete, delete). BEHAVIOUR CHANGE (PF-6), with no change to existing shapes: a client of 3.4.0 that sends imageUrl for a PRODUCT now gets 422 IMAGE_URL_NOT_ALLOWED, publishing a PRODUCT without a complete sheet is 422 LISTING_INCOMPLETE, and GET /listings no longer lists incomplete or hidden products; the provider portal must move to 3.5.0 in the same deployment (BE R2 and FE R2 go together). Product texts, delivery conditions, variant labels, photo altText and the WhatsApp template refuse phones and web addresses (422 CONTACT_IN_TEXT with details {field, fragment}; decision 7). Listing (owner view) adds incompleteReason OWN_CATALOG_NO_SHEET to products of the own gift catalog (SNAPSHOT_V1), which have completeness INCOMPLETE and no editable sheet yet. The photo cap of 5 per product counts the photos of its variants too. Decoration and invitations categories have gift ideas (provider migration 20261125000400). ProductSheet.adminHiddenReason carries the administrator's text while a product is HIDDEN_BY_ADMIN; Listing.hiddenReason stays the platform's CATEGORY_TYPE_MISMATCH (3.4.0). 3.7.0 (additive, R6a of the gift series: D-10 #31 and #32, plan §5.9): GET /r/{listingId} keeps answering 302 for every click and records more invalid (non-billable) leads. Lead.invalidReason adds PREVIEW (surface=PREVIEW, the new preview surface of the portal and of moderation), NOT_ELIGIBLE (a PRODUCT that is not COMPLETE or that an administrator hid), PROVIDER_SELF (the visitor owns the listing's provider) and HOST_OR_PLANNER (the visitor is a member of the celebration: host, organizer or collaborator); dup (DUPLICATE) and bot (BOT) are unchanged. PROVIDER_SELF and HOST_OR_PLANNER are decided only from the new optional query parameter ctx, a short-lived token signed by Gift List (gift-list listGiftItems leadContext) and bound to the click's celebrationId; a missing, forged, expired or foreign ctx is ignored and never an error. A GIFT_LIST click is billed at most once per 24 h for the same visitor, listing and destination (configurable, never shorter than the provider's dedupeMinutes; a repeat on any other surface inside that window is also a duplicate). POST /providers/impressions does not accept PREVIEW."
+    "version": "3.11.0",
+    "description": "2.0.0: real service (port 3005). Paths now include the gateway prefixes (/providers, /r) and /listings; bodies and responses are defined. GET /providers keeps the query contract of RSVPFrontend seo-web (category, city, verified, maxPriceMinor, availableOn, page, pageSize) and adds coverage, near and locale. Errors are RFC 9457 problems. Disclaimer: RSVP brokers contact, it does not deliver the service. 2.1.0 (additive): ProviderCard adds providerId, providerName, destinations, address and hours and GET /providers accepts ?slug=; GET /providers/mine; microsite profile (GET/PUT /providers/{id}/microsite, REQ-F28-02); verification documents with presigned upload to object storage (/providers/{id}/documents...); POST /providers/impressions returns {recorded, ignored}; POST /providers/{id}/quotes accepts anonymous requests only when the deployment enables them (captcha or open mode, with per-address and per-contact caps); GET /listings text search matches any word, accent-insensitively, by title, category or description. 2.2.0 (additive, back office, ADMIN only: 401 without token, 403 to any other role): GET/PUT /providers/admin/categories[/{code}], GET/PUT /providers/admin/geography[/{code}], GET /providers/admin/verification-queue, POST /providers/{providerId}/reject (reason required), POST /providers/{providerId}/suspend now takes {reason} (required when an administrator suspends; the owner may still pause its own provider), GET /providers/admin/moderation and POST /providers/admin/moderation/{id}/approve|reject, GET /providers/admin/metrics/leads, GET /providers/admin/summary. ProviderStatus gains REJECTED (a rejected provider may resubmit). Every decision is audited (actor, time, reason) and emits an outbox event. Inactive categories and cities disappear from the public lists. City coordinates were verified against GeoNames. 2.3.0 (additive): the provider-owned routes of the Nest runtime (/private/*, /catalog/*, /public/products*) and, later in the same version, GET/PUT /providers/{providerId}/notification-settings and the internal GET /internal/v1/providers/{providerId}/notification-profile (that addition did not bump the version; from 2.9.1 the contract version lock in packages/contracts-openapi/versions.lock.json refuses a content change without a version change). 2.4.0 (additive): listing categories and catalog photos. 2.9.0 (additive, A23): GET /listings/{listingId} exposes enabled destination types. WhatsApp links support an optional prefilled message. 2.9.1 (correction, no runtime change): removes GET/POST /, POST /{providerId}/verify, POST /{providerId}/listings, GET /{providerId}/calendar, POST /{providerId}/bookings and POST /{providerId}/quotes. The service never served those unprefixed paths (it serves the same operations under /providers/...), and they duplicated seven operationIds (searchProviders, registerProvider, verifyProvider, createListing, getProviderCalendar, requestBooking, requestQuote), which OpenAPI requires to be unique. 2.10.0 (B11, additive): the provider's quote inbox. GET /providers/{providerId}/quotes (newest first, keyset cursor) and GET /providers/{providerId}/quotes/{quoteId} with the contact the requester gave. Owner with the PROVIDER role only (administrators and other providers get 403), under the provider's row-level scope. 2.10.1 (correction, no runtime change): the /private/*, /catalog/* and /public/products* operations declare their own server http://localhost:8000/providers. The service has always served them under /providers (Nest controllers providers/private, providers/catalog and providers/public/products), and the gateway reaches them there; resolved against the global server they pointed to paths that answer 404. Path keys and operationIds are unchanged, so generated clients keep their types and only the base URL of these 18 operations moves. 2.11.0 (additive, A24; PR #42: partner creation moves to the admin panel; ADMIN only, every route calls requireAdmin in the service: 401 without token, 403 to any other role): partner intake (server-side draft) POST/GET/PATCH/DELETE /providers/admin/intakes[/{intakeId}], its KYP documents (/documents, /complete, DELETE) and the atomic POST /providers/admin/intakes/{intakeId}/commit (Idempotency-Key) that creates the provider VERIFIED with origin ADMIN and KYP COMPLETE, moves the documents (review ACCEPTED), writes admin_audit provider.created-by-admin and enqueues provider.provider.registered.v2; partner administration GET /providers/admin/partners (server-side filters, sort, pagination), GET/PATCH /providers/admin/partners/{providerId} (If-Match), documents with review, kyp/complete, suspend, reactivate and change-owner (409 OWNER_CHANGE_UNAVAILABLE until F4), GET /providers/admin/documents/{documentId}/download (5-minute presigned URL, audited). Document kinds gain POWER_OF_ATTORNEY and BANK_CERTIFICATE and documents carry reviewStatus. The CI and the bank account are encrypted at rest and masked (****1234) in every response; only GET ...?reveal=ci returns the CI, and that read is audited. KYP_INCOMPLETE carries details.missing (list of failing kyp.<path> and documents.<KIND>); Problem.details stays an object. 3.0.0 (frente F8, A20): the provider has one state machine, the marketplace one (POST /providers/{providerId}/submit|verify|suspend|reject), which audits every decision and returns its reason to the owner (Provider.statusReason, statusChangedAt). The duplicated Nest lifecycle routes are retired (incompatible change, hence the major version): GET /private/providers/{providerId}/verification, POST /private/providers/{providerId}/verification-requests, GET /private/admin/providers/{providerId} and POST /private/admin/providers/{providerId}/verify|suspend. No client used them; the private registration POST /private/providers stays until phase 4 of the partner hand-over. Microsite.moderation tells the owner that a rejected microsite is unpublished and why. 3.1.0 (additive, A23; PR #69): GET /r/{listingId} is one redirector routed by the listing: destination is optional (absent = the primary destination: PRODUCT_PAGE of a product, otherwise the first stored and enabled one); every destination is checked against its whitelist when published and again when resolved (tel:+E.164, mailto:, https://wa.me/<number>, https://instagram.com, canonical https), so a stored target that no longer passes answers 404. 3.2.0 (additive, L4; PR #67): GET /providers/{providerId}/bookings and GET /providers/me/bookings are keyset pages ordered by (date, id): ?limit (1 to 100, default 50) and the opaque ?cursor of the previous page; the response adds nextCursor (null on the last page). Until 2.4.x both lists stopped at 200 bookings without saying so; a client that ignores nextCursor now sees a bounded first page and an explicit cursor instead of a silent cut. A malformed limit or cursor is 422 (INVALID_QUERY, INVALID_CURSOR). 3.3.0 (additive, A24/DPA-10; provisional version pending VERSIONES.md): partner requests. A signed-in user who owns no provider sends POST /providers/partner-requests (business name, category, department and city codes of /providers/categories and /providers/geo, WhatsApp or phone, message up to 1000 characters, contact consent), sees status and statusReason in GET /providers/partner-requests/mine and may withdraw an OPEN request (DELETE /providers/partner-requests/{requestId}, REJECTED with reason WITHDRAWN_BY_REQUESTER). One live (OPEN or IN_REVIEW) request per user (409 REQUEST_ALREADY_OPEN), at most 3 in 30 days (429 REQUEST_LIMIT), never for a user who already owns a provider (409 ALREADY_PARTNER_OWNER). The administrator lists the queue (GET /providers/admin/partner-requests, with OPEN / IN_REVIEW counts for the tab badge), takes (OPEN -> IN_REVIEW), rejects with a mandatory reason, or converts a request (POST .../convert: one transaction opens a partner intake owned by the requester with identity, contact and coverage prefilled). Transitions take an optional If-Match version (409 PARTNER_REQUEST_VERSION_CONFLICT) and are audited. 3.4.0 (additive, R1 of the gift series: A28, A29, M23): GET /providers/categories accepts ?type=PRODUCT|SERVICE and keeps the categories that can hold that listing type (the ones typed that way plus the untyped ones, listingType null, which hold both); another value is 422 INVALID_QUERY. Creating or publishing a listing whose type differs from its category's listingType is 422 CATEGORY_TYPE_MISMATCH (details: type, category, categoryType); the database enforces the same rule. The legacy POST /private/providers/{providerId}/products keeps its closed problem catalogue and answers PROVIDER_VALIDATION (422) for a product in a SERVICE category. Eighteen PRODUCT categories of the gift catalogue are added as data (no schema change). ListingSummary (GET /listings, GET /listings/{listingId}) declares type as required with enum PRODUCT|SERVICE; the service always sent it, so consumers only gain a narrower type. Listings stored before the rule whose type does not match their category (a SERVICE in a PRODUCT category, or a PRODUCT in a SERVICE category) are not converted: a data migration hides them (published false) and marks them with hiddenReason CATEGORY_TYPE_MISMATCH in the provider's own listings (Listing.hiddenReason); existing gift reservations keep pointing at them. 3.5.0 (additive, R2 of the gift series: A30, L23): the product sheet of a marketplace PRODUCT (exact priceMinor, stock, giftIdeas, variants, delivery with city slugs, details, whatsappTemplate) with completeness and missing; GET and PATCH /providers/{providerId}/listings/{listingId} (If-Match, 428/409); POST /providers/{providerId}/listings takes Idempotency-Key and refuses imageUrl for a PRODUCT; POST .../duplicate; PUT /providers/admin/listings/{listingId}/featured (ADMIN); GET/PUT /providers/{providerId}/whatsapp-template; public GET /providers/gift-ideas; publishing a PRODUCT requires COMPLETE (422 LISTING_INCOMPLETE); GET /listings lists only eligible products; product photos (presigned upload signing Content-Length, complete, delete). BEHAVIOUR CHANGE (PF-6), with no change to existing shapes: a client of 3.4.0 that sends imageUrl for a PRODUCT now gets 422 IMAGE_URL_NOT_ALLOWED, publishing a PRODUCT without a complete sheet is 422 LISTING_INCOMPLETE, and GET /listings no longer lists incomplete or hidden products; the provider portal must move to 3.5.0 in the same deployment (BE R2 and FE R2 go together). Product texts, delivery conditions, variant labels, photo altText and the WhatsApp template refuse phones and web addresses (422 CONTACT_IN_TEXT with details {field, fragment}; decision 7). Listing (owner view) adds incompleteReason OWN_CATALOG_NO_SHEET to products of the own gift catalog (SNAPSHOT_V1), which have completeness INCOMPLETE and no editable sheet yet. The photo cap of 5 per product counts the photos of its variants too. Decoration and invitations categories have gift ideas (provider migration 20261125000400). ProductSheet.adminHiddenReason carries the administrator's text while a product is HIDDEN_BY_ADMIN; Listing.hiddenReason stays the platform's CATEGORY_TYPE_MISMATCH (3.4.0). 3.7.0 (additive, R6a of the gift series: D-10 #31 and #32, plan §5.9): GET /r/{listingId} keeps answering 302 for every click and records more invalid (non-billable) leads. Lead.invalidReason adds PREVIEW (surface=PREVIEW, the new preview surface of the portal and of moderation), NOT_ELIGIBLE (a PRODUCT that is not COMPLETE or that an administrator hid), PROVIDER_SELF (the visitor owns the listing's provider) and HOST_OR_PLANNER (the visitor is a member of the celebration: host, organizer or collaborator); dup (DUPLICATE) and bot (BOT) are unchanged. PROVIDER_SELF and HOST_OR_PLANNER are decided only from the new optional query parameter ctx, a short-lived token signed by Gift List (gift-list listGiftItems leadContext) and bound to the click's celebrationId; a missing, forged, expired or foreign ctx is ignored and never an error. A GIFT_LIST click is billed at most once per 24 h for the same visitor, listing and destination (configurable, never shorter than the provider's dedupeMinutes; a repeat on any other surface inside that window is also a duplicate). POST /providers/impressions does not accept PREVIEW. 3.9.0 (R6b of the gift series: D-10 #33 to #35, M34, M-1, M-2, A35; additive except where noted): GET /providers/admin/leads/report and /report.csv (ADMIN only) give the monthly lead report per provider, product and button: valid and invalid leads by reason and the total billable by billing model, no personal data; the CSV neutralises spreadsheet formulas. GET /providers/{providerId}/leads/report is the same report for one provider (owner or admin), and GET /providers/{providerId}/leads takes the filters month, listingId and destination. A35 (privacy fix, still additive): Lead.context is now a closed object (surface, locale, device, country, city, eventType) without celebrationId or guestId, and Lead gains listingTitle, eventType, city, surface and device. POST /providers/{providerId}/lead-context issues the signed ctx of the portal: PROVIDER_OWNER (M-1: the owner's clicks are always PROVIDER_SELF) and PREVIEW of one listing (M-2: surface=PREVIEW only counts with it; without it the click is evaluated normally and recorded as PUBLIC_SITE). GET /r/{listingId}: M34, the sessionId query parameter is ignored (the billing key is always the server's hash of address and user agent) and eventType is a new optional parameter. 3.11.0 (additive, R8b of the gift series: D-10 #17 and #18, plan §5.13): moderation of products by an administrator. GET /providers/admin/moderation/listings is the inbox (view RECENT = published in the last `days`, 7 by default, or HIDDEN; filters providerId, category, featured and completeness; keyset pages with `cursor`; counters of both tabs). POST /providers/admin/listings/{listingId}/hide takes {reason} (3 to 500 characters) and puts the product in HIDDEN_BY_ADMIN, POST .../show lifts it; both are ADMIN only (401 / 403), audited (admin_audit listing.hidden / listing.shown with the actor and the reason) and idempotent by state: repeating a decision answers 200 with replayed=true and changes nothing, hiding with another reason while hidden is 409 LISTING_ALREADY_HIDDEN, a service is 422 MODERATION_PRODUCT_ONLY. Hiding also unpublishes the product (the row remembers whether it was published; show republishes it only then), so a hidden product behaves like any unpublished listing: it leaves GET /listings and every recommendation, GET /listings/{listingId} and GET /r/{listingId} answer 404 (Gift List reads that as «not eligible»: it stops accepting it as a new gift and the gifts already in a list stop being reservable), it is no longer featured (featured is also refused while hidden, 409 LISTING_HIDDEN) and its owner cannot publish or duplicate it. The provider is told through provider.listing.completeness-changed.v1, which already declares HIDDEN_BY_ADMIN (and, with published=false, the unpublishing); no event is added and the reason never travels in an event. PUT /providers/admin/listings/{listingId}/featured is idempotent (a repeat is not audited again) and featured stays off by default. No shape of an existing response changes."
   },
   "servers": [
     {
@@ -751,7 +751,7 @@
     "/providers/{providerId}/leads": {
       "get": {
         "operationId": "listLeads",
-        "summary": "Raw leads (valid and invalid) for auditing",
+        "summary": "The provider's clicks (valid and invalid) with filters, for the portal",
         "tags": [
           "provider-catalog"
         ],
@@ -771,6 +771,12 @@
           },
           "403": {
             "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
           }
         },
         "parameters": [
@@ -804,13 +810,53 @@
               "minimum": 0
             },
             "description": ""
+          },
+          {
+            "name": "month",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^20[0-9]{2}-(0[1-9]|1[0-2])$"
+            },
+            "description": "Calendar month YYYY-MM in the provider's own time zone (the one its monthly cap uses). 422 INVALID_MONTH otherwise."
+          },
+          {
+            "name": "listingId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Only this product."
+          },
+          {
+            "name": "destination",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "OFFICIAL_SITE",
+                "LANDING",
+                "WHATSAPP",
+                "PHONE",
+                "EMAIL",
+                "INSTAGRAM",
+                "PRODUCT_PAGE",
+                "QUOTE_FORM"
+              ]
+            },
+            "description": "Only this button."
           }
         ],
         "security": [
           {
             "bearerAuth": []
           }
-        ]
+        ],
+        "description": "D-10 #34 and A35: product, button, date, event type and city of each click, newest first. Owner or admin. Never the celebration, guest or referrer."
       }
     },
     "/providers/{providerId}/listings": {
@@ -884,6 +930,24 @@
           "provider-catalog"
         ],
         "responses": {
+          "200": {
+            "description": "Idempotent replay (same Idempotency-Key and body)",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "\"<version>\" for the next If-Match."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductSheet"
+                }
+              }
+            }
+          },
           "201": {
             "description": "Listing created",
             "headers": {
@@ -913,27 +977,6 @@
           "403": {
             "$ref": "#/components/responses/Forbidden"
           },
-          "422": {
-            "$ref": "#/components/responses/Validation"
-          },
-          "200": {
-            "description": "Idempotent replay (same Idempotency-Key and body)",
-            "headers": {
-              "ETag": {
-                "schema": {
-                  "type": "string"
-                },
-                "description": "\"<version>\" for the next If-Match."
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProductSheet"
-                }
-              }
-            }
-          },
           "409": {
             "description": "IDEMPOTENCY_KEY_REUSED",
             "content": {
@@ -943,6 +986,9 @@
                 }
               }
             }
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
           }
         },
         "parameters": [
@@ -1024,9 +1070,6 @@
           "404": {
             "$ref": "#/components/responses/NotFound"
           },
-          "422": {
-            "$ref": "#/components/responses/Validation"
-          },
           "409": {
             "description": "LISTING_HIDDEN or LISTING_NOT_EDITABLE",
             "content": {
@@ -1036,6 +1079,9 @@
                 }
               }
             }
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
           }
         },
         "parameters": [
@@ -2240,7 +2286,7 @@
             "schema": {
               "type": "string"
             },
-            "description": "Visitor session; derived from IP and user agent when absent. With the listing and the destination it is the deduplication key of billable leads (24 h on GIFT_LIST since 3.7.0)."
+            "description": "Ignored since 3.9.0 (M34). The visitor is always the server's hash of the client address and user agent, never a value the client sends; with the listing and the destination it is the deduplication key of billable leads (24 h on GIFT_LIST). Old links that still carry it keep working."
           },
           {
             "name": "surface",
@@ -2259,7 +2305,7 @@
                 "PREVIEW"
               ]
             },
-            "description": "Where the link was shown. PREVIEW (R6a, 3.7.0): a preview in the provider portal or in moderation; the click is recorded as an invalid lead with reason PREVIEW."
+            "description": "Where the link was shown. PREVIEW: a preview in the provider portal or in moderation; since 3.9.0 (M-2) it only counts with a ctx issued for that listing (issueLeadContext, relation PREVIEW). Without it the click is evaluated like any other and recorded as PUBLIC_SITE."
           },
           {
             "name": "celebrationId",
@@ -2279,7 +2325,7 @@
               "type": "string",
               "maxLength": 512
             },
-            "description": "R6a (3.7.0): signed lead context of a celebration member, copied as is from gift-list listGiftItems leadContext. Only an authentic, unexpired token whose celebration equals celebrationId counts: the click is then an invalid lead (HOST_OR_PLANNER, or PROVIDER_SELF when the member owns the provider). Any other value is ignored and the click is classified as an anonymous visitor's; more than 512 characters is 422 INVALID_LEAD_CONTEXT. Carries no personal data."
+            "description": "R6a (3.7.0): signed lead context of a celebration member, copied as is from gift-list listGiftItems leadContext. Only an authentic, unexpired token whose celebration equals celebrationId counts: the click is then an invalid lead (HOST_OR_PLANNER, or PROVIDER_SELF when the member owns the provider). Any other value is ignored and the click is classified as an anonymous visitor's; more than 512 characters is 422 INVALID_LEAD_CONTEXT. Carries no personal data. Since 3.9.0 it can also be the portal's token of issueLeadContext: PROVIDER_OWNER (the click is PROVIDER_SELF without any celebration, M-1) or PREVIEW (M-2). A token of one kind never passes for the other."
           },
           {
             "name": "guestId",
@@ -2318,6 +2364,16 @@
               "type": "string"
             },
             "description": ""
+          },
+          {
+            "name": "eventType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Z][A-Z0-9_]{1,59}$"
+            },
+            "description": "Type of the celebration (a code such as WEDDING). Stored with the click so the provider sees it without seeing the celebration (D-10 #34)."
           },
           {
             "name": "ref",
@@ -10731,6 +10787,24 @@
           }
         ],
         "responses": {
+          "200": {
+            "description": "Idempotent replay",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "\"<version>\" for the next If-Match."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductSheet"
+                }
+              }
+            }
+          },
           "201": {
             "description": "Copy created (a product is INCOMPLETE with PHOTO)",
             "headers": {
@@ -10744,24 +10818,6 @@
                 "schema": {
                   "type": "string"
                 }
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProductSheet"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "Idempotent replay",
-            "headers": {
-              "ETag": {
-                "schema": {
-                  "type": "string"
-                },
-                "description": "\"<version>\" for the next If-Match."
               }
             },
             "content": {
@@ -10881,8 +10937,19 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "LISTING_HIDDEN",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
           }
-        }
+        },
+        "description": "Decision 18: prepared and off by default; no charge. ADMIN only, audited once per real change (a repeat is a 200 with no new audit row), 409 LISTING_HIDDEN when asked to feature a product an administrator hid."
       }
     },
     "/providers/{providerId}/whatsapp-template": {
@@ -11069,6 +11136,578 @@
           },
           "422": {
             "$ref": "#/components/responses/Validation"
+          }
+        }
+      }
+    },
+    "/providers/{providerId}/leads/report": {
+      "get": {
+        "operationId": "getProviderLeadReport",
+        "summary": "Monthly lead report of one provider (portal /portal/metricas)",
+        "tags": [
+          "provider-catalog"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "description": "Same figures the administrator sees for this provider: valid and invalid leads by reason per product and button, and the billable total by billing model. Owner or admin; read under the provider's row-level scope.",
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "month",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^20[0-9]{2}-(0[1-9]|1[0-2])$"
+            },
+            "description": "Calendar month YYYY-MM in the provider's own time zone (the one its monthly cap uses). 422 INVALID_MONTH otherwise."
+          },
+          {
+            "name": "listingId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Only this product."
+          },
+          {
+            "name": "destination",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "OFFICIAL_SITE",
+                "LANDING",
+                "WHATSAPP",
+                "PHONE",
+                "EMAIL",
+                "INSTAGRAM",
+                "PRODUCT_PAGE",
+                "QUOTE_FORM"
+              ]
+            },
+            "description": "Only this button."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Report",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadReport"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          }
+        }
+      }
+    },
+    "/providers/{providerId}/lead-context": {
+      "post": {
+        "operationId": "issueLeadContext",
+        "summary": "Signed ctx of the portal (PROVIDER_OWNER) or of a preview of one listing (PREVIEW)",
+        "tags": [
+          "provider-catalog"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "description": "M-1: PROVIDER_OWNER only for the authenticated owner; every click of that owner on the provider's listings is then PROVIDER_SELF and never bills, member of a celebration or not. M-2: PREVIEW for one listing of the provider, to its owner or to an administrator (moderation); it is the only thing that makes surface=PREVIEW count. 15 minutes of life.",
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LeadContextRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Context",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadContext"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          },
+          "503": {
+            "description": "LEAD_CONTEXT_UNAVAILABLE: PROVIDER_LEAD_CONTEXT_SIGNING_KEY is not configured.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/providers/admin/leads/report": {
+      "get": {
+        "operationId": "adminLeadReport",
+        "summary": "Monthly lead report per provider, product and button (ADMIN)",
+        "tags": [
+          "provider-catalog"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "description": "D-10 #33. Rows: provider, product, button, valid, invalid by reason and billable total by billing model. No personal data. ADMIN only (PF-3).",
+        "parameters": [
+          {
+            "name": "month",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^20[0-9]{2}-(0[1-9]|1[0-2])$"
+            },
+            "description": "Calendar month YYYY-MM in the provider's own time zone (the one its monthly cap uses). 422 INVALID_MONTH otherwise."
+          },
+          {
+            "name": "providerId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Only this provider."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Report",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminLeadReport"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          }
+        }
+      }
+    },
+    "/providers/admin/leads/report.csv": {
+      "get": {
+        "operationId": "adminLeadReportCsv",
+        "summary": "The monthly lead report as CSV (ADMIN)",
+        "tags": [
+          "provider-catalog"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "description": "Same rows as adminLeadReport. UTF-8 with a byte order mark, CRLF lines, one line per provider, product and button. A cell a spreadsheet would read as a formula (starts with = + - @, a tab or a carriage return) is prefixed with an apostrophe.",
+        "parameters": [
+          {
+            "name": "month",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^20[0-9]{2}-(0[1-9]|1[0-2])$"
+            },
+            "description": "Calendar month YYYY-MM in the provider's own time zone (the one its monthly cap uses). 422 INVALID_MONTH otherwise."
+          },
+          {
+            "name": "providerId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Only this provider."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CSV",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          }
+        }
+      }
+    },
+    "/providers/admin/moderation/listings": {
+      "get": {
+        "operationId": "listProductModeration",
+        "summary": "Product moderation inbox (ADMIN)",
+        "tags": [
+          "provider-catalog"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "description": "R8b (§5.13). RECENT lists the products published in the last `days` (newest first); HIDDEN lists the ones an administrator hid (latest first). Keyset pages: the cursor encodes the last row, so hiding a product between two pages neither repeats nor skips another. ADMIN only (PF-3). Responses are not cached.",
+        "parameters": [
+          {
+            "name": "view",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "RECENT",
+                "HIDDEN"
+              ],
+              "default": "RECENT"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 30,
+              "default": 7
+            },
+            "description": "Width of the RECENT window."
+          },
+          {
+            "name": "providerId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,60}$"
+            },
+            "description": "Category code."
+          },
+          {
+            "name": "featured",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "completeness",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/CompletenessState"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "es-BO",
+                "en-US"
+              ]
+            },
+            "description": "Overrides Accept-Language."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One page",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModerationInbox"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "422": {
+            "description": "INVALID_QUERY or INVALID_CURSOR",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/providers/admin/listings/{listingId}/hide": {
+      "post": {
+        "operationId": "hideListing",
+        "summary": "Hide a product with a reason (ADMIN)",
+        "tags": [
+          "provider-catalog"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "description": "R8b (§5.13). The product becomes HIDDEN_BY_ADMIN and is unpublished (remembering whether it was published): it leaves GET /listings and the recommendations, GET /listings/{listingId} and GET /r/{listingId} answer 404, it stops being featured and its owner cannot publish or duplicate it. POST .../show restores it. Idempotent by state: the same reason again is 200 with replayed=true and writes nothing; another reason while hidden is 409 LISTING_ALREADY_HIDDEN. Audited and announced by provider.listing.completeness-changed.v1 in the same transaction.",
+        "parameters": [
+          {
+            "name": "listingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "es-BO",
+                "en-US"
+              ]
+            },
+            "description": "Overrides Accept-Language."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HideListingInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Hidden (or already hidden with the same reason)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListingModeration"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "description": "LISTING_ALREADY_HIDDEN",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "REASON_REQUIRED, REASON_TOO_LONG, INVALID_REASON, VALIDATION_FAILED or MODERATION_PRODUCT_ONLY",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/providers/admin/listings/{listingId}/show": {
+      "post": {
+        "operationId": "showListing",
+        "summary": "Show a hidden product again (ADMIN)",
+        "tags": [
+          "provider-catalog"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "description": "R8b (§5.13). Lifts the hiding and republishes the product if it was published when hidden. It returns to COMPLETE or INCOMPLETE as its sheet says today and is served again only when COMPLETE. It is not featured again. Idempotent: showing a visible product is 200 with replayed=true. Audited (listing.shown) and announced by provider.listing.completeness-changed.v1.",
+        "parameters": [
+          {
+            "name": "listingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "es-BO",
+                "en-US"
+              ]
+            },
+            "description": "Overrides Accept-Language."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Shown (or already visible)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListingModeration"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "description": "MODERATION_PRODUCT_ONLY",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
           }
         }
       }
@@ -11644,7 +12283,8 @@
             "$ref": "#/components/schemas/ProviderStatus"
           },
           "published": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Visible in the public catalog. A product an administrator hid (R8b, 3.11.0) is not served at all (404), and a row hidden before 3.11.0 that is still marked published answers false here."
           },
           "type": {
             "type": "string",
@@ -11907,7 +12547,10 @@
             "type": "string"
           },
           "category": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "valid": {
             "type": "boolean"
@@ -11923,16 +12566,15 @@
               "PREVIEW",
               "NOT_ELIGIBLE",
               "PROVIDER_SELF",
-              "HOST_OR_PLANNER"
+              "HOST_OR_PLANNER",
+              "UNASSESSED",
+              "SUSPENDED"
             ],
-            "description": "Why the lead is not billable (absent when valid). dup: same visitor, listing and destination inside the deduplication window. bot: automated traffic. Since 3.7.0 (R6a): PREVIEW (preview surface), NOT_ELIGIBLE (product not COMPLETE or hidden), PROVIDER_SELF (the provider's owner) and HOST_OR_PLANNER (a member of the celebration)."
+            "description": "Why the lead is not billable (absent when valid). dup: same visitor, listing and destination inside the deduplication window. bot: automated traffic. Since 3.7.0 (R6a): PREVIEW (preview surface), NOT_ELIGIBLE (product not COMPLETE or hidden), PROVIDER_SELF (the provider's owner) and HOST_OR_PLANNER (a member of the celebration). UNASSESSED and SUSPENDED are the legacy reasons of the gift-catalog redirect (H05B); the reports count them as OTHER."
           },
           "correlationId": {
             "type": "string",
             "format": "uuid"
-          },
-          "context": {
-            "type": "object"
           },
           "utm": {
             "type": "object"
@@ -11940,8 +12582,104 @@
           "occurredAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "listingTitle": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Title of the product in the request locale."
+          },
+          "eventType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Type of the celebration the click came from (a code such as WEDDING); null when the link did not carry it."
+          },
+          "city": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "City slug of the click; null when absent."
+          },
+          "surface": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "PUBLIC_SITE",
+              "SEARCH",
+              "CELEBRATION_SITE",
+              "GIFT_LIST",
+              "EMAIL",
+              "APP",
+              "QUOTE_FORM",
+              "PREVIEW",
+              "GIFT_CATALOG",
+              null
+            ]
+          },
+          "device": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "MOBILE",
+              "TABLET",
+              "DESKTOP",
+              "UNKNOWN",
+              null
+            ]
+          },
+          "context": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Closed since 3.9.0 (A35, PF-1): only these fields; never celebrationId, guestId or the referrer. null for what the click did not carry (the gift-catalog redirect stores no context: its surface is GIFT_CATALOG).",
+            "properties": {
+              "surface": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "locale": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "device": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "country": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "city": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "eventType": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
           }
-        }
+        },
+        "description": "What the provider sees of a click (D-10 #34, A35, PF-1): product, button, date, event type and city. Never the celebration, the guest, the referrer or the visitor."
       },
       "LeadList": {
         "type": "object",
@@ -19864,6 +20602,541 @@
             "type": "array",
             "items": {
               "type": "string"
+            }
+          }
+        }
+      },
+      "InvalidLeadCounts": {
+        "type": "object",
+        "description": "Invalid leads by reason. OTHER holds the legacy reasons (unassessed, suspended) of clicks recorded by the gift-catalog redirect.",
+        "required": [
+          "dup",
+          "bot",
+          "PREVIEW",
+          "NOT_ELIGIBLE",
+          "PROVIDER_SELF",
+          "HOST_OR_PLANNER",
+          "OTHER"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "dup": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "bot": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "PREVIEW": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "NOT_ELIGIBLE": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "PROVIDER_SELF": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "HOST_OR_PLANNER": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "OTHER": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "LeadReportRow": {
+        "type": "object",
+        "required": [
+          "providerId",
+          "providerName",
+          "listingId",
+          "listingTitle",
+          "destination",
+          "validLeads",
+          "invalidLeads",
+          "invalidByReason",
+          "billableLeads"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "providerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "providerName": {
+            "type": "string"
+          },
+          "listingId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "listingTitle": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "destination": {
+            "type": "string"
+          },
+          "validLeads": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "invalidLeads": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "invalidByReason": {
+            "$ref": "#/components/schemas/InvalidLeadCounts"
+          },
+          "billableLeads": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "description": "Valid leads when the provider pays per click (CPC). null for CPA, FLAT and COMMISSION: they are not billed per lead."
+          }
+        }
+      },
+      "LeadReportProvider": {
+        "type": "object",
+        "required": [
+          "providerId",
+          "providerName",
+          "billingModel",
+          "monthlyCap",
+          "validLeads",
+          "invalidLeads",
+          "invalidByReason",
+          "billableLeads"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "providerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "providerName": {
+            "type": "string"
+          },
+          "billingModel": {
+            "type": "string",
+            "enum": [
+              "CPC",
+              "CPA",
+              "FLAT",
+              "COMMISSION"
+            ]
+          },
+          "monthlyCap": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "0 = no cap. Informative: leads above the cap are still valid."
+          },
+          "validLeads": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "invalidLeads": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "invalidByReason": {
+            "$ref": "#/components/schemas/InvalidLeadCounts"
+          },
+          "billableLeads": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "description": "Valid leads when the provider pays per click (CPC). null for CPA, FLAT and COMMISSION: they are not billed per lead."
+          }
+        }
+      },
+      "LeadReport": {
+        "type": "object",
+        "required": [
+          "month",
+          "providers",
+          "rows"
+        ],
+        "additionalProperties": false,
+        "description": "Monthly lead report: ids, names of providers and products, and counters. No personal data (PF-1).",
+        "properties": {
+          "month": {
+            "type": "string"
+          },
+          "providers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LeadReportProvider"
+            }
+          },
+          "rows": {
+            "type": "array",
+            "description": "One row per provider, product and button, ordered by provider name, product and button.",
+            "items": {
+              "$ref": "#/components/schemas/LeadReportRow"
+            }
+          }
+        }
+      },
+      "AdminLeadReport": {
+        "type": "object",
+        "required": [
+          "providerId",
+          "month",
+          "providers",
+          "rows"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "providerId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "The provider asked for, null for every provider."
+          },
+          "month": {
+            "type": "string"
+          },
+          "providers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LeadReportProvider"
+            }
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LeadReportRow"
+            }
+          }
+        }
+      },
+      "LeadContextRequest": {
+        "type": "object",
+        "required": [
+          "relation"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "relation": {
+            "type": "string",
+            "enum": [
+              "PROVIDER_OWNER",
+              "PREVIEW"
+            ]
+          },
+          "listingId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Required for PREVIEW, forbidden for PROVIDER_OWNER."
+          }
+        }
+      },
+      "LeadContext": {
+        "type": "object",
+        "required": [
+          "ctx",
+          "relation",
+          "expiresAt"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "ctx": {
+            "type": "string",
+            "maxLength": 512,
+            "description": "Short-lived signed token to append as ?ctx= to a link /r/{listingId}. A bearer: never put it in a shared link. Carries a provider or listing id and an instant, no account."
+          },
+          "relation": {
+            "type": "string",
+            "enum": [
+              "PROVIDER_OWNER",
+              "PREVIEW"
+            ]
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "HideListingInput": {
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 500,
+            "description": "The administrator's words, shown to the provider in its own sheet (ProductSheet.adminHiddenReason). One line of plain text: no control characters. Never sent in an event or shown publicly."
+          }
+        }
+      },
+      "ListingModeration": {
+        "type": "object",
+        "required": [
+          "listingId",
+          "providerId",
+          "hidden",
+          "completeness",
+          "missing",
+          "featured",
+          "adminHiddenReason",
+          "adminHiddenAt",
+          "adminHiddenBy",
+          "replayed"
+        ],
+        "additionalProperties": false,
+        "description": "R8b: the moderation state of one product after hide or show.",
+        "properties": {
+          "listingId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "providerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "hidden": {
+            "type": "boolean"
+          },
+          "completeness": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CompletenessState"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "HIDDEN_BY_ADMIN while hidden; after a show, what the sheet says today."
+          },
+          "missing": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MissingCode"
+            }
+          },
+          "featured": {
+            "type": "boolean",
+            "description": "Always false while hidden."
+          },
+          "adminHiddenReason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "adminHiddenAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "adminHiddenBy": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "User id of the administrator (no name or contact)."
+          },
+          "replayed": {
+            "type": "boolean",
+            "description": "True when the request repeated a decision that already stood and changed nothing."
+          }
+        }
+      },
+      "ModerationListing": {
+        "type": "object",
+        "required": [
+          "listingId",
+          "providerId",
+          "providerName",
+          "providerStatus",
+          "category",
+          "title",
+          "priceMinor",
+          "currency",
+          "published",
+          "publishedAt",
+          "completeness",
+          "featured",
+          "ownCatalog",
+          "hidden",
+          "adminHiddenReason",
+          "adminHiddenAt",
+          "adminHiddenBy"
+        ],
+        "additionalProperties": false,
+        "description": "R8b: one product of the moderation inbox. Ids and catalog text only (PF-1): never the owner, a destination, a lead or a contact.",
+        "properties": {
+          "listingId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "providerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "providerName": {
+            "type": "string"
+          },
+          "providerStatus": {
+            "$ref": "#/components/schemas/ProviderStatus"
+          },
+          "category": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string",
+            "description": "In the requested locale, with the usual fallback."
+          },
+          "priceMinor": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "currency": {
+            "type": "string"
+          },
+          "published": {
+            "type": "boolean"
+          },
+          "publishedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "completeness": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CompletenessState"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "featured": {
+            "type": "boolean"
+          },
+          "ownCatalog": {
+            "type": "boolean",
+            "description": "A product of the own gift catalog (SNAPSHOT_V1): it can be hidden but has no sheet."
+          },
+          "imageUrl": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https://",
+            "maxLength": 500,
+            "description": "Card rendition of the cover photo, when it has one."
+          },
+          "hidden": {
+            "type": "boolean"
+          },
+          "adminHiddenReason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "adminHiddenAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "adminHiddenBy": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "ModerationInbox": {
+        "type": "object",
+        "required": [
+          "view",
+          "days",
+          "since",
+          "counts",
+          "nextCursor",
+          "items"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "view": {
+            "type": "string",
+            "enum": [
+              "RECENT",
+              "HIDDEN"
+            ]
+          },
+          "days": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 30
+          },
+          "since": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Start of the RECENT window."
+          },
+          "counts": {
+            "type": "object",
+            "required": [
+              "recent",
+              "hidden"
+            ],
+            "additionalProperties": false,
+            "description": "Counters of the two tabs, without the optional filters.",
+            "properties": {
+              "recent": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "hidden": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Opaque; send it as ?cursor= for the next page. Null on the last page."
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModerationListing"
             }
           }
         }
