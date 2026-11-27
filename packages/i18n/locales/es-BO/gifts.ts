@@ -22,6 +22,8 @@ export const giftsEsBO = {
     done: { confirmedTitle: "Regalo reservado", confirmedBody: "«{{title}}» es tuyo. Quienes te invitan lo verán en su lista en un momento.", pendingTitle: "Reserva enviada", pendingBody: "Quienes te invitan aprueban cada reserva. Mientras tanto, nadie más puede reservar «{{title}}»." },
     taken: { title: "Alguien se adelantó", body: "«{{title}}» ya lo reservó otra persona. Pasa a veces. Te mostramos otras opciones.", alternatives: "Otros regalos disponibles", none: "Ya no quedan regalos disponibles. Gracias por querer acompañarlos." },
     empty: { title: "Aún no hay regalos", body: "Quienes te invitan todavía no agregaron ninguno. Vuelve en unos días." },
+    /** R8a · botón de regalos en la invitación según `GET /gifts/public/celebrations/{slug}/gifts/summary` (OPEN | EMPTY | CLOSED). */
+    cta: { open: "Ver regalos", empty: "Lista de regalos (pronto)", closed: "Ver regalos" },
     error: {
       expiredTitle: "Tu enlace ya no funciona", expiredBody: "Pídele uno nuevo a quien te invitó.",
       otherTitle: "Este enlace es de otra celebración", otherBody: "Abre el enlace que te enviaron para esta celebración. Si no lo encuentras, pídele uno nuevo a quien te invitó.",

@@ -4,7 +4,7 @@ import * as router from "expo-router";
 import { createTranslator } from "@rsvp/i18n";
 import { Text } from "react-native";
 import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join, relative } from "node:path";
+import { join, relative, sep } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { lazyScreen } from "../src/platform/lazy-screen";
 import { loadingProfile } from "../src/platform/loading-profiles";
@@ -23,16 +23,20 @@ const src = join(process.cwd(), "src");
 const ZONES = [{ group: "(host)", zone: "host" }, { group: "(admin)", zone: "admin" }, { group: "(provider)", zone: "provider" }] as const;
 /** Routes that render no screen of their zone (a redirect), so there is nothing to load lazily. */
 const NO_SCREEN = new Set(["(admin)/panel.tsx"]);
+const routePath = (root: string, file: string): string => relative(root, file).split(sep).join("/");
 
 describe("M13 · route files of the lazy zones", () => {
-  it.each(ZONES)("every $group route takes its screen through lazyScreen(load…), never with a static import of the zone", ({ group, zone }) => {
+  it.each(ZONES)("every $group route loads its screen lazily without a static import of the zone", ({ group, zone }) => {
     const problems: string[] = [];
     for (const file of routeFiles(join(app, group))) {
-      const name = relative(app, file);
+      const name = routePath(app, file);
       if (NO_SCREEN.has(name)) continue;
       const code = readFileSync(file, "utf8");
-      if (!/lazyScreen\(load\w+Screens, \(zone\) => zone\.\w+\)/.test(code)) problems.push(`${name}: no lazyScreen`);
-      const pathname = `/${relative(join(app, group), file).replace(/\.tsx$/, "")}`.replace(/\/index$/, "");
+      const loader = name === "(host)/diseno.tsx"
+        ? /lazyScreen\(\s*\(\) => import\('\.\.\/\.\.\/src\/host\/design-editor-screen'\)/
+        : /lazyScreen\(load\w+Screens, \(zone\) => zone\.\w+\)/;
+      if (!loader.test(code)) problems.push(`${name}: no lazyScreen`);
+      const pathname = `/${routePath(join(app, group), file).replace(/\.tsx$/, "")}`.replace(/\/index$/, "");
       const profile = loadingProfile(pathname);
       if (!profile) problems.push(`${name}: missing loading layout`);
       else for (const locale of ["es-BO", "en-US"] as const) {
@@ -46,6 +50,11 @@ describe("M13 · route files of the lazy zones", () => {
       }
     }
     expect(problems, `${zone}`).toEqual([]);
+  });
+
+  it("keeps the design editor out of the shared host chunk", () => {
+    const hostScreens = readFileSync(join(src, "host", "screens.ts"), "utf8");
+    expect(hostScreens).not.toMatch(/["']\.\/design-editor-screen(?:\.[\w.]+)?["']/);
   });
 
   it("nothing outside a zone imports its screens barrel statically (it is the chunk root)", () => {
