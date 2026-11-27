@@ -31,3 +31,22 @@ describe("two origins: personal links vs the public site that serves /r", () => 
     expect(() => partnerRedirectUrl("https://wa.me/591", { surface: "APP" })).toThrow();
   });
 });
+
+describe("R6a: lead context (ctx) of a celebration member", () => {
+  it("adds ctx unchanged (encoded) to the redirector link and supports the PREVIEW surface", () => {
+    vi.stubEnv("EXPO_PUBLIC_RSVP_ORIGIN", "https://done.bo");
+    vi.stubEnv("EXPO_PUBLIC_SITE_URL", "");
+    const ctx = "lead context+/=de prueba";
+    const url = new URL(partnerRedirectUrl(LISTING, { destination: "PRODUCT_PAGE", surface: "GIFT_LIST", celebrationId: "c1", ctx }));
+    expect(url.searchParams.get("ctx")).toBe(ctx);
+    expect(url.searchParams.get("celebrationId")).toBe("c1");
+    expect(partnerRedirectUrl(LISTING, { surface: "PREVIEW" })).toBe(`https://done.bo/r/${LISTING}?surface=PREVIEW`);
+  });
+
+  it("without a context (guest, public read, older server) the link has no ctx", () => {
+    vi.stubEnv("EXPO_PUBLIC_RSVP_ORIGIN", "https://done.bo");
+    vi.stubEnv("EXPO_PUBLIC_SITE_URL", "");
+    expect(partnerRedirectUrl(LISTING, { surface: "GIFT_LIST", celebrationId: "c1", ctx: null })).toBe(`https://done.bo/r/${LISTING}?surface=GIFT_LIST&celebrationId=c1`);
+    expect(partnerRedirectUrl(LISTING, { surface: "GIFT_LIST", celebrationId: "c1", ctx: "" })).not.toContain("ctx");
+  });
+});

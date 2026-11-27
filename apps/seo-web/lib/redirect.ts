@@ -9,13 +9,23 @@ import { forwardedFor } from "./client-address";
 
 export const REDIRECT_STATUS = 302;
 export const DESTINATIONS = ["OFFICIAL_SITE", "LANDING", "WHATSAPP", "PHONE", "EMAIL", "INSTAGRAM", "PRODUCT_PAGE"] as const;
-export const SURFACES = ["PUBLIC_SITE", "SEARCH", "CELEBRATION_SITE", "GIFT_LIST", "EMAIL", "APP", "QUOTE_FORM"] as const;
 export const CORRELATION_HEADER = "x-correlation-id";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const UTM_PREFIX = "utm_";
-/** Context the backend validates and stores with the lead (RawLeadContext). */
+/**
+ * Context the backend validates and stores with the lead (RawLeadContext). `ctx` (R6a) is the signed lead context Gift Lists gives
+ * a celebration member: it is forwarded to Provider Catalog unchanged so the member's own click is not billed, and it is never copied
+ * into the partner URL (`withAttribution` only carries utm_* and correlationId). A click always redirects: an empty, oversized or malformed `ctx` is
+ * dropped here (it would only be a 422 INVALID_LEAD_CONTEXT), and if the backend still answers that 422 the call is repeated once without `ctx`
+ * (the click is then evaluated as an ordinary visitor's).
+ */
 const CONTEXT_KEYS = ["surface", "celebrationId", "guestId", "locale", "country", "city"] as const;
+/** Provider Catalog rejects a `ctx` longer than this with 422 INVALID_LEAD_CONTEXT. */
+const MAX_CTX_LENGTH = 512;
+/** A signed token is printable ASCII without spaces; anything else (control characters, spaces) is not one and is not worth a 422. */
+const CTX_SHAPE = /^[\x21-\x7e]+$/;
+const INVALID_LEAD_CONTEXT = "INVALID_LEAD_CONTEXT";
 const BAD_REQUEST = 400;
 const NOT_FOUND = 404;
 const UNPROCESSABLE = 422;
@@ -62,6 +72,14 @@ function failureOf(status: number): { readonly reason: RedirectFailure; readonly
   return { reason: "unavailable", status: status >= 500 ? SERVICE_UNAVAILABLE : BAD_GATEWAY };
 }
 
+/** Whether the 422 is the backend refusing the `ctx` (problem+json `code`). The body is read from a clone, so the response stays usable. */
+async function isInvalidLeadContext(response: Response): Promise<boolean> {
+  try {
+    const problem: unknown = await response.clone().json();
+    return typeof problem === "object" && problem !== null && (problem as { readonly code?: unknown }).code === INVALID_LEAD_CONTEXT;
+  } catch { return false; }
+}
+
 export async function resolveRedirect(request: RedirectRequest): Promise<RedirectOutcome> {
   const correlationId = correlationIdOf(request.correlationId, request.searchParams.get("correlationId"));
   if (!UUID.test(request.listingId)) return { kind: "failure", reason: "not-found", status: NOT_FOUND, correlationId };
@@ -71,13 +89,20 @@ export async function resolveRedirect(request: RedirectRequest): Promise<Redirec
   const requested = request.searchParams.get("destination");
   const destination = requested !== null && (DESTINATIONS as readonly string[]).includes(requested) ? requested : null;
 
-  const upstream = new URL(`${apiBaseUrl()}/r/${request.listingId}`);
-  if (destination) upstream.searchParams.set("destination", destination);
-  for (const key of CONTEXT_KEYS) {
-    const value = request.searchParams.get(key);
-    if (value) upstream.searchParams.set(key, value);
-  }
-  if (!upstream.searchParams.has("surface")) upstream.searchParams.set("surface", "PUBLIC_SITE");
+  const rawCtx = request.searchParams.get("ctx");
+  const ctx = rawCtx !== null && rawCtx.length <= MAX_CTX_LENGTH && CTX_SHAPE.test(rawCtx) ? rawCtx : null;
+
+  const upstreamUrl = (withCtx: string | null): URL => {
+    const url = new URL(`${apiBaseUrl()}/r/${request.listingId}`);
+    if (destination) url.searchParams.set("destination", destination);
+    for (const key of CONTEXT_KEYS) {
+      const value = request.searchParams.get(key);
+      if (value) url.searchParams.set(key, value);
+    }
+    if (withCtx) url.searchParams.set("ctx", withCtx);
+    if (!url.searchParams.has("surface")) url.searchParams.set("surface", "PUBLIC_SITE");
+    return url;
+  };
 
   const headers: Record<string, string> = { [CORRELATION_HEADER]: correlationId, ...forwardedFor(request.clientAddress) };
   if (request.userAgent) headers["user-agent"] = request.userAgent;
@@ -86,7 +111,9 @@ export async function resolveRedirect(request: RedirectRequest): Promise<Redirec
 
   try {
     // redirect: "manual" so the 302 (and its Location) is read here and never followed server-side.
-    const response = await (request.fetchFn ?? fetch)(upstream, { method: "GET", headers, redirect: "manual", cache: "no-store" });
+    const call = (withCtx: string | null) => (request.fetchFn ?? fetch)(upstreamUrl(withCtx), { method: "GET", headers, redirect: "manual", cache: "no-store" });
+    let response = await call(ctx);
+    if (ctx && response.status === UNPROCESSABLE && (await isInvalidLeadContext(response))) response = await call(null);
     const location = response.headers.get("location");
     if (REDIRECT_STATUSES.has(response.status) && location) return { kind: "redirect", location: withAttribution(location, request.searchParams, correlationId), correlationId };
     return { kind: "failure", ...failureOf(response.status), correlationId };

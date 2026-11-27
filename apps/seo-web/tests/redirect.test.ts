@@ -121,6 +121,87 @@ describe("REQ-F27-02/03 · /r/{listingId} redirector", () => {
     expect(url.searchParams.has("destination")).toBe(false);
   });
 
+  it("R6a · ctx (the member's lead context) is forwarded to Provider Catalog unchanged and never reaches the partner URL", async () => {
+    const fetchFn = gateway(upstream302("https://shop.example/torta?utm_source=rsvp"));
+    const token = "lead-context-de-prueba";
+    const response = await GET(new Request(`http://site.test/r/${LISTING}?surface=GIFT_LIST&celebrationId=22222222-3333-4444-8555-666666666666&ctx=${token}`), ctx);
+    expect(response.status).toBe(302);
+    const [url] = fetchFn.mock.calls[0] as unknown as [URL];
+    expect(url.searchParams.get("ctx")).toBe(token);
+    expect(response.headers.get("location")).not.toContain(token);
+    expect(response.headers.get("location")).not.toContain("ctx=");
+  });
+
+  it("R6a · without ctx none is sent, and an empty one is dropped (a guest's click is billed as before)", async () => {
+    const fetchFn = gateway(upstream302());
+    await GET(new Request(`http://site.test/r/${LISTING}?surface=GIFT_LIST&ctx=`), ctx);
+    const [url] = fetchFn.mock.calls[0] as unknown as [URL];
+    expect(url.searchParams.has("ctx")).toBe(false);
+  });
+
+  it("R6a · PREVIEW is a surface that is and is forwarded as the lead's surface", async () => {
+    const fetchFn = gateway(upstream302());
+    await GET(new Request(`http://site.test/r/${LISTING}?surface=PREVIEW`), ctx);
+    const [url] = fetchFn.mock.calls[0] as unknown as [URL];
+    expect(url.searchParams.get("surface")).toBe("PREVIEW");
+  });
+
+  it("R6a · a ctx longer than 512 characters, with spaces or with control characters is dropped before calling the backend, and the click still redirects", async () => {
+    for (const bad of ["a".repeat(513), "con espacio", "tab%09", "salto%0Ade-linea", "acentuaci%C3%B3n"]) {
+      const fetchFn = gateway(upstream302());
+      const response = await GET(new Request(`http://site.test/r/${LISTING}?surface=GIFT_LIST&celebrationId=22222222-3333-4444-8555-666666666666&ctx=${bad}`), ctx);
+      expect(response.status).toBe(302);
+      expect(fetchFn).toHaveBeenCalledTimes(1);
+      const [url] = fetchFn.mock.calls[0] as unknown as [URL];
+      expect(url.searchParams.has("ctx")).toBe(false);
+      expect(url.searchParams.get("celebrationId")).toBe("22222222-3333-4444-8555-666666666666");
+    }
+  });
+
+  it("R6a · a ctx of exactly 512 characters is still forwarded", async () => {
+    const fetchFn = gateway(upstream302());
+    const token = "a".repeat(512);
+    await GET(new Request(`http://site.test/r/${LISTING}?surface=GIFT_LIST&ctx=${token}`), ctx);
+    const [url] = fetchFn.mock.calls[0] as unknown as [URL];
+    expect(url.searchParams.get("ctx")).toBe(token);
+  });
+
+  it("R6a · a 422 INVALID_LEAD_CONTEXT is retried once without ctx and the visitor is redirected", async () => {
+    const answers = [
+      new Response(JSON.stringify({ code: "INVALID_LEAD_CONTEXT", status: 422 }), { status: 422, headers: { "content-type": "application/problem+json" } }),
+      new Response(null, { status: 302, headers: { location: "https://shop.example/torta" } })
+    ];
+    const fetchFn = vi.fn(async () => answers.shift() as Response);
+    vi.stubGlobal("fetch", fetchFn);
+    const response = await GET(new Request(`http://site.test/r/${LISTING}?surface=GIFT_LIST&ctx=token-que-el-backend-rechaza`), ctx);
+    expect(response.status).toBe(302);
+    expect(response.headers.get("location")).toContain("https://shop.example/torta");
+    expect(fetchFn).toHaveBeenCalledTimes(2);
+    const [first, second] = fetchFn.mock.calls.map((call) => (call as unknown as [URL])[0]);
+    expect(first?.searchParams.get("ctx")).toBe("token-que-el-backend-rechaza");
+    expect(second?.searchParams.has("ctx")).toBe(false);
+    expect(second?.searchParams.get("surface")).toBe("GIFT_LIST");
+  });
+
+  it("R6a · the retry happens once: if the backend still answers 422 without ctx, the failure is reported", async () => {
+    const fetchFn = vi.fn(async () => new Response(JSON.stringify({ code: "INVALID_LEAD_CONTEXT" }), { status: 422 }));
+    vi.stubGlobal("fetch", fetchFn);
+    const response = await GET(new Request(`http://site.test/r/${LISTING}?ctx=token`), ctx);
+    expect(response.status).not.toBe(302);
+    expect(fetchFn).toHaveBeenCalledTimes(2);
+  });
+
+  it("R6a · other 422 codes (or none) are not retried, and a 422 without ctx is never retried", async () => {
+    const other = vi.fn(async () => new Response(JSON.stringify({ code: "VALIDATION_ERROR" }), { status: 422 }));
+    vi.stubGlobal("fetch", other);
+    await GET(new Request(`http://site.test/r/${LISTING}?ctx=token`), ctx);
+    expect(other).toHaveBeenCalledTimes(1);
+    const none = vi.fn(async () => new Response(JSON.stringify({ code: "INVALID_LEAD_CONTEXT" }), { status: 422 }));
+    vi.stubGlobal("fetch", none);
+    await GET(new Request(`http://site.test/r/${LISTING}?surface=SEARCH`), ctx);
+    expect(none).toHaveBeenCalledTimes(1);
+  });
+
   it("/r/ is not indexable", () => {
     const rule = (robots().rules as { disallow: string[] }[])[0];
     expect(rule?.disallow).toContain("/r/");

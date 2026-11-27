@@ -352,3 +352,39 @@ describe("D-3 · the guest cancels their own reservation from the gift page", ()
     expect(new Set(keys).size).toBe(1);
   });
 });
+
+describe("R6a · ctx del miembro en los enlaces /r/ de la lista", () => {
+  const TOKEN = "lead-context-de-prueba";
+  const partnerHrefs = () => screen.getAllByRole("link").map((a) => a.getAttribute("href") ?? "").filter((href) => href.startsWith("/r/"));
+
+  it("a list read that carries leadContext keeps it OUT of every /r/ link href (copy link address would hand it out) and adds it only when navigating", async () => {
+    stubFetch(() => json(201, {}), () => json(200, { items: ITEMS, partnerPriorityEnabled: true, leadContext: TOKEN }), () => json(200, { destinationTypes: ["PRODUCT_PAGE", "WHATSAPP"] }));
+    const { container } = renderList();
+    const links = await screen.findAllByRole("link", { name: "Consultar por WhatsApp" });
+    expect(partnerHrefs().length).toBeGreaterThan(0);
+    for (const href of partnerHrefs()) {
+      const url = new URL(href, "http://site.test");
+      expect(url.searchParams.has("ctx")).toBe(false);
+      expect(url.searchParams.get("celebrationId")).toBe(CELEBRATION);
+      expect(url.searchParams.get("surface")).toBe("GIFT_LIST");
+    }
+    expect(container.innerHTML).not.toContain(TOKEN);
+    const open = vi.spyOn(window, "open").mockReturnValue(null);
+    try {
+      fireEvent.click(links[0]!);
+      const target = new URL(String(open.mock.calls[0]?.[0]), "http://site.test");
+      expect(target.pathname.startsWith("/r/")).toBe(true);
+      expect(target.searchParams.get("ctx")).toBe(TOKEN);
+      expect(target.searchParams.get("celebrationId")).toBe(CELEBRATION);
+    } finally {
+      open.mockRestore();
+    }
+  });
+
+  it("a guest's list (leadContext null) has no ctx on any /r/ link", async () => {
+    stubFetch(() => json(201, {}), () => json(200, { items: ITEMS, partnerPriorityEnabled: true, leadContext: null }), () => json(200, { destinationTypes: ["PRODUCT_PAGE", "WHATSAPP"] }));
+    renderList();
+    await screen.findAllByRole("link", { name: "Consultar por WhatsApp" });
+    for (const href of partnerHrefs()) expect(href).not.toContain("ctx");
+  });
+});

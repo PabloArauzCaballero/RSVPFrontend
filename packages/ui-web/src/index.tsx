@@ -54,14 +54,32 @@ export type ButtonProps = PropsWithChildren<{
 
 const LISTING_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export type PartnerDestination = 'OFFICIAL_SITE' | 'LANDING' | 'WHATSAPP' | 'PHONE' | 'EMAIL' | 'INSTAGRAM' | 'PRODUCT_PAGE';
-export type PartnerSurface = 'PUBLIC_SITE' | 'SEARCH' | 'CELEBRATION_SITE' | 'GIFT_LIST' | 'EMAIL' | 'APP' | 'QUOTE_FORM';
-/** The only way to point at a partner: the redirector `/r/{listingId}`, which records the lead and answers 302. Never the partner URL. */
-export function partnerRedirectHref(listingId: string, options: { destination?: PartnerDestination; surface?: PartnerSurface; celebrationId?: string } = {}): string {
+/**
+ * Surface of a click. `PREVIEW` (the provider portal or moderation previewing a page) only means something with the signed `ctx` of the
+ * portal or of moderation: without a token the click is evaluated as a normal one (decision M-2), so a PREVIEW link without `ctx` is a plain click.
+ */
+export type PartnerSurface = 'PUBLIC_SITE' | 'SEARCH' | 'CELEBRATION_SITE' | 'GIFT_LIST' | 'EMAIL' | 'APP' | 'QUOTE_FORM' | 'PREVIEW';
+/**
+ * A `ctx` (the member's signed lead context) is only valid together with the celebration it was signed for, so the type demands `celebrationId`
+ * whenever `ctx` is a value. Without a celebration there is no `ctx`.
+ */
+export type PartnerLinkContext =
+  | { celebrationId: string; ctx?: string | null }
+  | { celebrationId?: undefined; ctx?: undefined };
+export type PartnerRedirectOptions = { destination?: PartnerDestination; surface?: PartnerSurface } & PartnerLinkContext;
+
+/**
+ * The only way to point at a partner: the redirector `/r/{listingId}`, which records the lead and answers 302. Never the partner URL.
+ * With `ctx` the result is a bearer link (whoever holds it clicks for free in the member's name): use it only to navigate, never as a visible or copyable `href`.
+ */
+export function partnerRedirectHref(listingId: string, options: PartnerRedirectOptions = {}): string {
   if (!LISTING_ID.test(listingId)) throw new Error('PartnerLink needs a listing id (UUID), never a partner URL');
   const query = new URLSearchParams();
   if (options.destination) query.set('destination', options.destination);
   if (options.surface) query.set('surface', options.surface);
   if (options.celebrationId) query.set('celebrationId', options.celebrationId);
+  // R6a: the member's signed lead context (opaque, ~5 min).
+  if (options.ctx) query.set('ctx', options.ctx);
   const text = query.toString();
   return `/r/${encodeURIComponent(listingId)}${text ? `?${text}` : ''}`;
 }
@@ -69,13 +87,35 @@ export function partnerRedirectHref(listingId: string, options: { destination?: 
 /**
  * A link to a partner. It takes a listing id, not a URL, so a direct partner link is impossible by construction; the rel is always
  * `sponsored nofollow` and the disclaimer travels with the link (visible, and tied to it with aria-describedby).
+ *
+ * R6a: the DOM `href` NEVER carries `ctx` (the lead context is a bearer: «copy link address», a long-press or a middle-click preview would hand it
+ * out). It is added only when navigating: a plain click or Enter opens it in this tab, ctrl/cmd/shift-click and middle-click in a new tab. The browser
+ * context menu («open in new tab») uses the `href`, so that click is evaluated without a member context (billed as a normal visitor's).
  */
-export function PartnerLink({ listingId, destination, surface, celebrationId, children, className, disclaimer = true }: PropsWithChildren<{ listingId: string; destination?: PartnerDestination; surface?: PartnerSurface; celebrationId?: string; className?: string; disclaimer?: boolean }>) {
+export function PartnerLink({ listingId, children, className, disclaimer = true, ...link }: PropsWithChildren<{ listingId: string; className?: string; disclaimer?: boolean } & PartnerRedirectOptions>) {
   const t = useStrings();
   const id = useId();
+  const href = partnerRedirectHref(listingId, { ...link, ctx: undefined });
+  const bearer = link.ctx ? partnerRedirectHref(listingId, link) : null;
   return (
     <span className="inline-flex flex-col gap-1">
-      <a href={partnerRedirectHref(listingId, { destination, surface, celebrationId })} rel="sponsored nofollow noopener" aria-describedby={disclaimer ? id : undefined} className={cn(buttonVariants({ variant: 'secondary' }), className)}>{children}</a>
+      <a
+        href={href}
+        rel="sponsored nofollow noopener"
+        aria-describedby={disclaimer ? id : undefined}
+        className={cn(buttonVariants({ variant: 'secondary' }), className)}
+        onClick={bearer ? (event) => {
+          if (event.defaultPrevented || event.altKey || event.button !== 0) return;
+          event.preventDefault();
+          if (event.metaKey || event.ctrlKey || event.shiftKey) window.open(bearer, '_blank', 'noopener');
+          else window.open(bearer, '_self');
+        } : undefined}
+        onAuxClick={bearer ? (event) => {
+          if (event.button !== 1) return;
+          event.preventDefault();
+          window.open(bearer, '_blank', 'noopener');
+        } : undefined}
+      >{children}</a>
       {disclaimer ? <span id={id} className="text-xs text-text-muted">{t.partnerDisclaimer}</span> : null}
     </span>
   );

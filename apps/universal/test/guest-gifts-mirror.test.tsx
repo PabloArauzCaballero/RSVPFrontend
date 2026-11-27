@@ -92,6 +92,30 @@ describe("Espejo web · A14 the gift list at /c/{slug}/regalos in the app", () =
     }
   });
 
+  it("R6a: a list read that carries leadContext sends it as ctx on the redirector link (without it, the link keeps the exact query asserted above)", async () => {
+    const launch = vi.spyOn(Linking, "openURL").mockResolvedValue(undefined);
+    try {
+      const withCtx = (leadContext: string | null) => ({ "GET /gifts/celebrations/c-1/items": () => ({ items: ITEMS, partnerPriorityEnabled: true, leadContext }), [`GET /listings/${LISTING}`]: () => ({ id: LISTING, destinationTypes: ["WHATSAPP"] }) });
+      show({ token: TOKEN }, withCtx("lead-context-de-prueba"));
+      fireEvent.click(await screen.findByRole("button", { name: "Consultar por WhatsApp" }));
+      expect(new URL(launch.mock.calls[0]![0]).searchParams.get("ctx")).toBe("lead-context-de-prueba");
+    } finally {
+      launch.mockRestore();
+    }
+  });
+
+  it("R6a: the guest's read goes with the link credential and Gift answers leadContext null, so the link carries no ctx", async () => {
+    const launch = vi.spyOn(Linking, "openURL").mockResolvedValue(undefined);
+    try {
+      const { calls } = show({ token: TOKEN }, { "GET /gifts/celebrations/c-1/items": () => ({ items: ITEMS, partnerPriorityEnabled: true, leadContext: null }), [`GET /listings/${LISTING}`]: () => ({ id: LISTING, destinationTypes: ["WHATSAPP"] }) });
+      fireEvent.click(await screen.findByRole("button", { name: "Consultar por WhatsApp" }));
+      expect(calls.find((call) => call.path === "/gifts/celebrations/c-1/items")?.headers.get("authorization")).toBe(`Bearer ${TOKEN}`);
+      expect(new URL(launch.mock.calls[0]![0]).searchParams.has("ctx")).toBe(false);
+    } finally {
+      launch.mockRestore();
+    }
+  });
+
   it("keeps the reservation available if the catalog offer is no longer public", async () => {
     const { calls } = show({ token: TOKEN }, { [`GET /listings/${LISTING}`]: () => new HttpFailure(404) });
     await screen.findByTestId(`reserve-${TORTA}`);
