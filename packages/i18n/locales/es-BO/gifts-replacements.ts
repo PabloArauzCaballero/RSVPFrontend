@@ -6,12 +6,12 @@ export const giftsReplacementsEsBO = {
     OUT_OF_STOCK: "Se agotó.", VARIANT_OUT_OF_STOCK: "Se agotó la versión que elegiste.", LISTING_NOT_PRODUCT: "Dejó de ser un producto del catálogo.",
     unknown: "El proveedor ya no lo ofrece."
   },
-  open: "Ver 3 reemplazos de la misma idea", openLabel: "Ver reemplazos de {{title}}", close: "Ocultar reemplazos", closeLabel: "Ocultar reemplazos de {{title}}",
+  open: "Ver reemplazos de la misma idea", openLabel: "Ver reemplazos de la misma idea: {{title}}", close: "Ocultar reemplazos", closeLabel: "Ocultar reemplazos: {{title}}",
   title: "Reemplazos de la misma idea", intro: "Son productos de proveedores verificados para la misma idea de regalo. Cambiarlo toma un toque: el nuevo queda en tu lista con la misma cantidad.",
   loading: "Buscando reemplazos…",
   empty: "Por ahora no hay reemplazos para esta idea.", emptyHint: "Cuando un proveedor publique uno lo verás aquí. También puedes elegir otro producto del catálogo.", emptyAction: "Buscar en el catálogo",
   noIdea: "Este regalo no viene del asistente, así que no tiene una idea para buscar reemplazos. Puedes elegir otro producto del catálogo.",
-  swap: "Cambiar por este", swapLabel: "Cambiar {{old}} por {{new}}", swapping: "Cambiando…",
+  swap: "Cambiar por este", swapLabel: "Cambiar por este: {{new}} (reemplaza {{old}})", swapping: "Cambiando…",
   done: "Cambiaste «{{old}}» por «{{new}}». Ya está en tu lista.",
   price: "Precio vigente: {{price}}",
   error: {
@@ -28,6 +28,7 @@ export const giftsReplacementsEsBO = {
       DUPLICATE_GIFT_IDEA: "Esa idea ya tiene otro regalo en tu lista. Actualizamos la lista.",
       INVALID_QUANTITY: "La cantidad de este regalo no es válida para el nuevo producto.",
       INVALID_GIFT_IDEA: "Esa idea de regalo ya no existe.",
+      maybeApplied: "No sabemos si el cambio se aplicó. Toca otra vez el mismo producto para confirmarlo: no se agregará dos veces.",
       unknown: "No pudimos cambiar el regalo. No se cambió nada: puedes intentarlo otra vez."
     }
   }

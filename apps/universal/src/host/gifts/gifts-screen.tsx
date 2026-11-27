@@ -1,14 +1,14 @@
 import { Chip, Stagger, SwitchRow, fonts, useColors } from "@rsvp/ui";
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Text, View, useWindowDimensions } from "react-native";
 import { radius, spacing } from "@rsvp/design-tokens";
 import { formatMinor } from "@rsvp/i18n";
-import { activeReservationsByItem, catalogedFirst, isGiftListMissing, isGiftUnavailable, unavailableReasonOf, isReservationNotActive, newIdempotencyKey, useApproveExternalGift, useCancelGiftReservation, useGiftList, useHostReservations, useRejectExternalGift, useGiftSettings, useUpdateGiftSettings, type GiftItem, type GiftReservation } from "@rsvp/query-hooks";
+import { activeReservationsByItem, catalogedFirst, isGiftListMissing, isGiftUnavailable, unavailableReasonOf, isReservationNotActive, newIdempotencyKey, useApproveExternalGift, useCancelGiftReservation, useAddGiftBatch, useGiftList, useHostReservations, useRejectExternalGift, useGiftSettings, useUpdateGiftSettings, type GiftItem, type GiftReservation } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../../platform/providers";
 import { CelebrationScreen, useScreenHeader, type ScreenProps } from "../gate";
 import { HOST_ROUTES, withCelebration } from "../routes";
 import { GiftErrorNotice } from "./gift-errors";
-import { ReplacementsPanel, ReplacementsToggle } from "./replacements-panel";
+import { ReplacementsPanel, ReplacementsToggle, type SwapMutation } from "./replacements-panel";
 import { ActionButton, ConfirmDialog, EmptyState, ErrorNotice, Loading, Notice, useStyles } from "../ui";
 import { Figure } from "../figures";
 import { Row, RowList } from "./offer-row";
@@ -31,7 +31,7 @@ function Monogram({ title }: { readonly title: string }): ReactNode {
 }
 
 /** R7 · the celebration facts the replacements read needs and what the screen does with the outcome of the panel. */
-interface SwapContext { readonly celebrationId: string; readonly eventType: string; readonly content: Readonly<Record<string, unknown>>; readonly onSwapped: (oldTitle: string, newTitle: string) => void; readonly onStore: () => void; readonly onGone: () => void }
+interface SwapContext { readonly celebrationId: string; readonly eventType: string; readonly content: Readonly<Record<string, unknown>>; readonly onSwapped: (oldTitle: string, newTitle: string) => void; readonly onStore: () => void; readonly onGone: () => void; readonly add: SwapMutation }
 
 /** C29 · One gift: a monogram, the title with its origin, the price set apart on the right, the status as a chip and, for a proposal, the two decisions. */
 function GiftRow({ item, first, currencyLocale, onApprove, onReject, approving, rejecting, locked, onRelease, releasing, swap }: { readonly item: GiftItem; readonly first: boolean; readonly currencyLocale: ReturnType<typeof useLocale>; readonly onApprove: (id: string) => void; readonly onReject: (item: GiftItem) => void; readonly approving: boolean; readonly rejecting: boolean; readonly locked: boolean; /** D-3 · present when the gift is held by a committed reservation the host can release. */ readonly onRelease?: () => void; readonly releasing?: boolean; /** R7 · what the replacements panel of an unavailable gift needs from the screen. */ readonly swap?: SwapContext }): ReactNode {
@@ -45,6 +45,10 @@ function GiftRow({ item, first, currencyLocale, onApprove, onReject, approving, 
   const status = shownStatus(item);
   const reason = unavailable ? unavailableReasonOf(item) ?? "unknown" : null;
   const [replacementsOpen, setReplacementsOpen] = useState(false);
+  // After a swap the panel closes and its buttons leave: focus goes back to the control that opened it, not to the page.
+  const toggleRef = useRef<View>(null);
+  const refocus = useRef(false);
+  useEffect(() => { if (!replacementsOpen && refocus.current) { refocus.current = false; (toggleRef.current as unknown as { focus?: () => void } | null)?.focus?.(); } }, [replacementsOpen]);
   return (
     <Row first={first} testID={`gift-${item.id}`}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[4] }}>
@@ -68,8 +72,8 @@ function GiftRow({ item, first, currencyLocale, onApprove, onReject, approving, 
       </View>
       {unavailable && swap ? (
         <View style={{ paddingLeft: narrow ? 0 : 48 + spacing[4], gap: spacing[2] }}>
-          <ReplacementsToggle item={item} open={replacementsOpen} onToggle={() => setReplacementsOpen((open) => !open)} />
-          {replacementsOpen ? <ReplacementsPanel item={item} {...swap} onSwapped={(oldTitle, newTitle) => { setReplacementsOpen(false); swap.onSwapped(oldTitle, newTitle); }} /> : null}
+          <ReplacementsToggle toggleRef={toggleRef} item={item} open={replacementsOpen} onToggle={() => setReplacementsOpen((open) => !open)} />
+          {replacementsOpen ? <ReplacementsPanel item={item} {...swap} onSwapped={(oldTitle, newTitle) => { refocus.current = true; setReplacementsOpen(false); swap.onSwapped(oldTitle, newTitle); }} /> : null}
         </View>
       ) : null}
       {item.status === "PROPOSED" ? (
@@ -150,6 +154,8 @@ function GiftsBody({ celebrationId, eventType, content, onNavigate }: { readonly
   const [released, setReleased] = useState<string | null>(null);
   const [swapped, setSwapped] = useState<{ readonly oldTitle: string; readonly newTitle: string } | null>(null);
   const releaseKeys = useRef(new Map<string, string>());
+  // The swap mutation lives here: its Idempotency-Key per body survives closing and reopening a panel.
+  const swapBatch = useAddGiftBatch(client, celebrationId);
   const approve = useApproveExternalGift(client, celebrationId);
   const reject = useRejectExternalGift(client, celebrationId);
   const [rejectTarget, setRejectTarget] = useState<GiftItem | null>(null);
@@ -191,7 +197,7 @@ function GiftsBody({ celebrationId, eventType, content, onNavigate }: { readonly
           {list.data?.deliveryNotes ? <Text style={styles.body} testID="gift-delivery-notes">{t("gifts.host.wizard.list.delivery", { notes: list.data.deliveryNotes })}</Text> : null}
           <RequesterVisibility celebrationId={celebrationId} />
           <RowList>
-            <Stagger>{items.map((item, index) => <GiftRow key={item.id} first={index === 0} item={item} currencyLocale={locale} onApprove={(id) => { setRejected(null); reject.reset(); if (flight.begin()) approve.mutate(id, { onSettled: flight.end }); }} onReject={(target) => { setRejected(null); approve.reset(); reject.reset(); setRejectTarget(target); }} approving={approve.isPending && approve.variables === item.id} rejecting={reject.isPending && reject.variables === item.id} locked={locked} swap={{ celebrationId, eventType, content, onSwapped: (oldTitle, newTitle) => setSwapped({ oldTitle, newTitle }), onStore: go(HOST_ROUTES.giftCatalog), onGone: () => { void list.refetch(); } }} {...(item.status === "COMMITTED" && held.get(item.id) ? { onRelease: () => { const reservation = held.get(item.id); if (!reservation) return; setReleased(null); release.reset(); setReleaseTarget({ item, reservation }); }, releasing: release.isPending && release.variables?.reservationId === held.get(item.id)?.id } : {})} />)}</Stagger>
+            <Stagger>{items.map((item, index) => <GiftRow key={item.id} first={index === 0} item={item} currencyLocale={locale} onApprove={(id) => { setRejected(null); reject.reset(); if (flight.begin()) approve.mutate(id, { onSettled: flight.end }); }} onReject={(target) => { setRejected(null); approve.reset(); reject.reset(); setRejectTarget(target); }} approving={approve.isPending && approve.variables === item.id} rejecting={reject.isPending && reject.variables === item.id} locked={locked} swap={{ add: swapBatch, celebrationId, eventType, content, onSwapped: (oldTitle, newTitle) => setSwapped({ oldTitle, newTitle }), onStore: go(HOST_ROUTES.giftCatalog), onGone: () => { void list.refetch(); } }} {...(item.status === "COMMITTED" && held.get(item.id) ? { onRelease: () => { const reservation = held.get(item.id); if (!reservation) return; setReleased(null); release.reset(); setReleaseTarget({ item, reservation }); }, releasing: release.isPending && release.variables?.reservationId === held.get(item.id)?.id } : {})} />)}</Stagger>
           </RowList>
         </>
       )}

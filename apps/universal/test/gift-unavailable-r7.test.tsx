@@ -65,7 +65,7 @@ describe("R7 · host list: the unavailable gift", () => {
     renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client, undefined, "en-US");
     await screen.findByTestId("gift-dead");
     expect(screen.getByTestId("gift-unavailable-reason-dead").textContent).toBe("It is out of stock.");
-    expect(screen.getByTestId("replacements-toggle-dead").textContent).toBe("See 3 replacements of the same idea");
+    expect(screen.getByTestId("replacements-toggle-dead").textContent).toBe("See replacements of the same idea");
     expect(screen.getByTestId("gift-status-dead").textContent).toBe("Unavailable");
   });
 
@@ -102,6 +102,46 @@ describe("R7 · host list: the unavailable gift", () => {
     expect(sent[0]?.headers.get("idempotency-key")).toMatch(/\S{8,}/);
     await screen.findByTestId("gift-new");
     expect(screen.queryByTestId("replacements-dead")).toBeNull();
+  });
+
+  it("swap lost on the network: says it may have been applied (one alert) and the retry replays the SAME Idempotency-Key", async () => {
+    let attempts = 0;
+    const { client, calls } = fakeClient(handlers({ [REPLACEMENTS]: () => OPTIONS, [BATCH]: () => { attempts += 1; if (attempts === 1) throw new TypeError("fetch failed"); return { items: [gift("new", { title: "Vajilla blanca" })], deliveryNotes: null }; } }));
+    renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    fireEvent.click(await screen.findByTestId("replacements-toggle-dead"));
+    fireEvent.click(await screen.findByTestId(`swap-dead-${L2}`));
+    const err = await screen.findByTestId("replacements-swap-error-dead");
+    expect(err.textContent).toMatch(/No sabemos si el cambio se aplicó/);
+    expect(err.textContent).not.toMatch(/No se cambió nada/);
+    expect(within(screen.getByTestId("replacements-dead")).getAllByRole("alert")).toHaveLength(1);
+    fireEvent.click(screen.getByTestId(`swap-dead-${L2}`));
+    await screen.findByTestId("gift-swapped");
+    const posts = calls.filter((call) => call.method === "POST" && call.path === `${ITEMS}/batch`);
+    expect(posts).toHaveLength(2);
+    expect(posts[0]?.headers.get("idempotency-key")).toBeTruthy();
+    expect(posts[1]?.headers.get("idempotency-key")).toBe(posts[0]?.headers.get("idempotency-key"));
+  });
+
+  it("the three swap buttons have distinct accessible names that start with the visible text; the toggle too", async () => {
+    const { client } = fakeClient(handlers({ [REPLACEMENTS]: () => OPTIONS }));
+    renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    const toggle = await screen.findByTestId("replacements-toggle-dead");
+    expect(toggle.getAttribute("aria-label")).toBe("Ver reemplazos de la misma idea: Vajilla dorada");
+    expect(toggle.textContent).toBe("Ver reemplazos de la misma idea");
+    fireEvent.click(toggle);
+    await screen.findByTestId(`swap-dead-${L1}`);
+    const names = [L1, L2, L3].map((id) => screen.getByTestId(`swap-dead-${id}`).getAttribute("aria-label") ?? "");
+    expect(new Set(names).size).toBe(3);
+    for (const name of names) expect(name.startsWith("Cambiar por este")).toBe(true);
+  });
+
+  it("after a swap the panel closes and focus returns to «Ver reemplazos» of that row", async () => {
+    const { client } = fakeClient(handlers({ [REPLACEMENTS]: () => OPTIONS, [BATCH]: () => ({ items: [gift("new")], deliveryNotes: null }) }));
+    renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    fireEvent.click(await screen.findByTestId("replacements-toggle-dead"));
+    fireEvent.click(await screen.findByTestId(`swap-dead-${L1}`));
+    await screen.findByTestId("gift-swapped");
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByTestId("replacements-toggle-dead")));
   });
 
   it("a double touch sends one request", async () => {
@@ -194,11 +234,11 @@ describe("R7 · host list: the unavailable gift", () => {
 describe("R7 · guest card: the unavailable gift", () => {
   const TOKEN = MOCK_VALID_TOKEN;
   const LISTING = "6f1c2a3b-4d5e-4f60-8a7b-9c0d1e2f3a4b";
-  const guestGifts = (items: unknown[]) => {
+  const guestGifts = (items: unknown[], mine: unknown[] = []) => {
     const { client, calls } = fakeClient({
       "GET /celebrations/public/ana-luis": () => ({ celebrationId: "c-1", slug: "ana-luis", content: { title: "Ana y Luis" } }),
       "GET /gifts/celebrations/c-1/items": () => ({ items, partnerPriorityEnabled: true }),
-      "GET /gifts/celebrations/c-1/my-reservations": () => ({ items: [] }),
+      "GET /gifts/celebrations/c-1/my-reservations": () => ({ items: mine }),
       [`GET /listings/${LISTING}`]: () => ({ id: LISTING, destinationTypes: ["PRODUCT_PAGE", "WHATSAPP"] })
     });
     renderApp(<GuestGiftsScreen slug="ana-luis" token={TOKEN} onNavigate={vi.fn()} />, client, GUEST);
@@ -239,9 +279,10 @@ describe("R7 · guest card: the unavailable gift", () => {
   });
 
   it("a reservation the guest already holds on it stays visible and can still be cancelled", async () => {
-    guestGifts([gift("g1", { ...base, availability: "UNAVAILABLE", viewer: { reservationId: "r-1", role: "SOLE", status: "COMMITTED", units: 1 } })]);
+    guestGifts([gift("g1", { ...base, availability: "UNAVAILABLE", viewer: { reservationId: "r-1", role: "SOLE", status: "COMMITTED", units: 1 } })], [{ id: "r-1", itemId: "g1", celebrationId: "c-1", status: "COMMITTED", requestedAt: "2026-11-01T00:00:00Z", role: "SOLE", units: 1 }]);
     const card = within(await screen.findByTestId("gift-g1"));
     expect(card.getByTestId("gift-mine-g1")).toBeTruthy();
+    expect(card.getByTestId("cancel-reservation-g1")).toBeTruthy();
     expect(card.queryByTestId("whatsapp-g1")).toBeNull();
   });
 

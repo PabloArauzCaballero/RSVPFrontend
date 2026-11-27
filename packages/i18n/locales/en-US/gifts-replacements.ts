@@ -9,12 +9,12 @@ export const giftsReplacementsEnUS: DeepStrings<typeof giftsReplacementsEsBO> = 
     OUT_OF_STOCK: "It is out of stock.", VARIANT_OUT_OF_STOCK: "The version you chose is out of stock.", LISTING_NOT_PRODUCT: "It stopped being a catalog product.",
     unknown: "The provider no longer offers it."
   },
-  open: "See 3 replacements of the same idea", openLabel: "See replacements for {{title}}", close: "Hide replacements", closeLabel: "Hide replacements for {{title}}",
+  open: "See replacements of the same idea", openLabel: "See replacements of the same idea: {{title}}", close: "Hide replacements", closeLabel: "Hide replacements: {{title}}",
   title: "Replacements of the same idea", intro: "These are products from verified providers for the same gift idea. Swapping takes one tap: the new one goes on your list with the same quantity.",
   loading: "Looking for replacements…",
   empty: "There are no replacements for this idea right now.", emptyHint: "When a provider publishes one you will see it here. You can also pick another product from the catalog.", emptyAction: "Browse the catalog",
   noIdea: "This gift did not come from the assistant, so it has no idea to look replacements up by. You can pick another product from the catalog.",
-  swap: "Swap for this one", swapLabel: "Swap {{old}} for {{new}}", swapping: "Swapping…",
+  swap: "Swap for this one", swapLabel: "Swap for this one: {{new}} (replaces {{old}})", swapping: "Swapping…",
   done: "You swapped “{{old}}” for “{{new}}”. It is on your list now.",
   price: "Current price: {{price}}",
   error: {
@@ -31,6 +31,7 @@ export const giftsReplacementsEnUS: DeepStrings<typeof giftsReplacementsEsBO> = 
       DUPLICATE_GIFT_IDEA: "That idea already has another gift on your list. We refreshed the list.",
       INVALID_QUANTITY: "This gift's quantity is not valid for the new product.",
       INVALID_GIFT_IDEA: "That gift idea no longer exists.",
+      maybeApplied: "We do not know whether the swap was applied. Tap the same product again to confirm it: it will not be added twice.",
       unknown: "We could not swap the gift. Nothing was changed: you can try again."
     }
   }

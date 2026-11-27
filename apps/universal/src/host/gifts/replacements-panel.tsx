@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode, type Ref } from "react";
 import { Pressable, Text, View } from "react-native";
 import { radius, spacing } from "@rsvp/design-tokens";
 import { fonts, useColors } from "@rsvp/ui";
 import { formatMinor } from "@rsvp/i18n";
-import { replacementsFailure, replacementsRetryable, swapEntry, swapFailureCode, useAddGiftBatch, useGiftReplacements, useProviderGeo, type GiftItem, type GiftReplacement } from "@rsvp/query-hooks";
+import { replacementsFailure, replacementsRetryable, swapEntry, mayHaveBeenApplied, swapFailureCode, useGiftReplacements, useProviderGeo, type GiftItem, type GiftReplacement, type useAddGiftBatch } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../../platform/providers";
 import { useSingleFlightGate } from "../../platform/single-flight";
 import { ActionButton, Notice, useStyles } from "../ui";
@@ -18,8 +18,11 @@ import { GiftErrorNotice } from "./gift-errors";
 const TOUCH = 44;
 const FAILURE_KEY = { forbidden: "forbidden", notFound: "notFound", unavailable: "unavailable", offline: "offline", unknown: "unknown" } as const;
 
-export function ReplacementsPanel({ celebrationId, item, eventType, content, onSwapped, onStore, onGone }: {
-  readonly celebrationId: string; readonly item: GiftItem; readonly eventType: string; readonly content: Readonly<Record<string, unknown>>;
+/** The batch mutation lives in the screen (not here) so its Idempotency-Key per body survives closing and reopening the panel. */
+export type SwapMutation = ReturnType<typeof useAddGiftBatch>;
+
+export function ReplacementsPanel({ celebrationId, item, eventType, content, add, onSwapped, onStore, onGone }: {
+  readonly add: SwapMutation; readonly celebrationId: string; readonly item: GiftItem; readonly eventType: string; readonly content: Readonly<Record<string, unknown>>;
   readonly onSwapped: (oldTitle: string, newTitle: string) => void; readonly onStore: () => void; readonly onGone: () => void;
 }): ReactNode {
   const styles = useStyles();
@@ -35,13 +38,16 @@ export function ReplacementsPanel({ celebrationId, item, eventType, content, onS
   const geoSettled = geo.data !== undefined || geo.isError || geo.failureCount > 0;
   const city = geo.data ? celebrationCityHint(content, geo.data.items) : "";
   const replacements = useGiftReplacements(client, celebrationId, item.id, { eventType, city: city || undefined }, geoSettled);
-  const add = useAddGiftBatch(client, celebrationId);
   const ideaCode = replacements.data?.giftIdeaCode ?? item.giftIdeaCode ?? null;
 
   // 404: the gift is no longer on the list (another device removed it): the list is read again, which drops the row and this panel with it.
   const gone = replacements.isError && replacementsFailure(replacements.error) === "notFound";
   const reported = useRef(false);
   useEffect(() => { if (gone && !reported.current) { reported.current = true; onGone(); } }, [gone, onGone]);
+
+  // The mutation is shared by every panel of the screen: an error left by another row is not this panel's.
+  useEffect(() => { if (add.isError) add.reset(); // eslint-disable-line react-hooks/exhaustive-deps -- once, when the panel opens
+  }, []);
 
   const swap = (replacement: GiftReplacement): void => {
     if (!ideaCode || !flight.begin()) return;
@@ -76,11 +82,7 @@ export function ReplacementsPanel({ celebrationId, item, eventType, content, onS
     }
     return (
       <View style={{ gap: spacing[3] }}>
-        {add.isError ? (
-          <Notice kind="error">
-            <Text style={styles.body} testID={`replacements-swap-error-${item.id}`}>{t(`gifts.host.replacements.error.swap.${swapFailureCode(add.error) ?? "unknown"}`)}</Text>
-          </Notice>
-        ) : null}
+        {add.isError ? <SwapError error={add.error} id={item.id} /> : null}
         {options.map((option) => {
           const busy = add.isPending && picked === option.listingId;
           return (
@@ -89,7 +91,7 @@ export function ReplacementsPanel({ celebrationId, item, eventType, content, onS
                 <Text style={styles.itemTitle} numberOfLines={2}>{option.title}</Text>
                 <Text style={[styles.muted, { fontVariant: ["tabular-nums"] }]}>{t("gifts.host.replacements.price", { price: formatMinor(option.priceMinor, option.currency, locale) })}</Text>
               </View>
-              <ActionButton icon="check" variant="secondary" label={busy ? t("gifts.host.replacements.swapping") : t("gifts.host.replacements.swap")} busy={busy} disabled={add.isPending && !busy}
+              <ActionButton icon="check" variant="secondary" label={busy ? t("gifts.host.replacements.swapping") : t("gifts.host.replacements.swap")} accessibilityLabel={t("gifts.host.replacements.swapLabel", { old: item.title, new: option.title })} busy={busy} disabled={add.isPending && !busy}
                 onPress={() => swap(option)} testID={`swap-${item.id}-${option.listingId}`} />
             </View>
           );
@@ -103,17 +105,26 @@ export function ReplacementsPanel({ celebrationId, item, eventType, content, onS
       <Text accessibilityRole="header" aria-level={3} style={{ color: palette.text, fontSize: 16, lineHeight: 22, fontWeight: "600", fontFamily: fonts.sans }}>{t("gifts.host.replacements.title")}</Text>
       <Text style={styles.muted}>{t("gifts.host.replacements.intro")}</Text>
       {body()}
-      {add.isError && swapFailureCode(add.error) === null ? <GiftErrorNotice error={add.error} /> : null}
     </View>
   );
 }
 
+/** One error branch for the swap: a write that may have been applied says so (a retry replays the same key); a known 422 has its text; anything else uses the shared notice. */
+function SwapError({ error, id }: { readonly error: unknown; readonly id: string }): ReactNode {
+  const styles = useStyles();
+  const t = useT();
+  if (mayHaveBeenApplied(error)) return <Notice kind="error"><Text style={styles.body} testID={`replacements-swap-error-${id}`}>{t("gifts.host.replacements.error.swap.maybeApplied")}</Text></Notice>;
+  const code = swapFailureCode(error);
+  if (code) return <Notice kind="error"><Text style={styles.body} testID={`replacements-swap-error-${id}`}>{t(`gifts.host.replacements.error.swap.${code}`)}</Text></Notice>;
+  return <GiftErrorNotice error={error} />;
+}
+
 /** The one control that opens or closes the panel: a labelled button that says whether it is expanded (a drawn state would be color only). */
-export function ReplacementsToggle({ item, open, onToggle }: { readonly item: GiftItem; readonly open: boolean; readonly onToggle: () => void }): ReactNode {
+export function ReplacementsToggle({ item, open, onToggle, toggleRef }: { readonly toggleRef?: Ref<View>; readonly item: GiftItem; readonly open: boolean; readonly onToggle: () => void }): ReactNode {
   const palette = useColors();
   const t = useT();
   return (
-    <Pressable role="button" accessibilityRole="button" aria-expanded={open} accessibilityState={{ expanded: open }}
+    <Pressable ref={toggleRef} role="button" accessibilityRole="button" aria-expanded={open} accessibilityState={{ expanded: open }}
       accessibilityLabel={t(open ? "gifts.host.replacements.closeLabel" : "gifts.host.replacements.openLabel", { title: item.title })}
       onPress={onToggle} testID={`replacements-toggle-${item.id}`} style={{ minHeight: TOUCH, justifyContent: "center", alignSelf: "flex-start" }}>
       <Text style={{ color: palette.primary, fontWeight: "600", fontSize: 14, lineHeight: 20, textDecorationLine: "underline", fontFamily: fonts.sans }}>{t(open ? "gifts.host.replacements.close" : "gifts.host.replacements.open")}</Text>
