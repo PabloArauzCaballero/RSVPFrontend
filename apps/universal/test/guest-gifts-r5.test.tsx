@@ -83,6 +83,41 @@ describe("R5 · units", () => {
   });
 });
 
+describe("R5 · B-1 · whoever holds units keeps the provider buttons", () => {
+  it("a guest who reserved 2 of 12 still sees «Ver en la tienda» and «Pedir por WhatsApp», asking /r for their 2 units, and cannot reserve again", async () => {
+    const launch = vi.spyOn(Linking, "openURL").mockResolvedValue(undefined);
+    try {
+      items = [gift({ quantity: 12, unitsLeft: 10, variantCode: VARIANT, viewer: viewer("SOLE", 2) })];
+      mine = [{ id: "r-1", itemId: ID, celebrationId: "c-1", status: "PENDING_REVIEW", units: 2, role: "SOLE", requestedAt: "2026-11-01T00:00:00Z" }]; show();
+      const r = await row();
+      expect(await r.findByText("Reservaste 2 unidades")).toBeTruthy();
+      expect(r.queryByTestId(`reserve-${ID}`)).toBeNull();
+      expect(r.queryByTestId(`units-${ID}`)).toBeNull();
+      fireEvent.click(r.getByRole("button", { name: "Pedir por WhatsApp" }));
+      expect(lastLaunch(launch)).toMatchObject({ destination: "WHATSAPP", quantity: "2", giftItemId: ID, variant: VARIANT });
+      fireEvent.click(r.getByRole("button", { name: "Ver en la tienda" }));
+      expect(lastLaunch(launch)).toMatchObject({ destination: "PRODUCT_PAGE", quantity: "2" });
+    } finally { launch.mockRestore(); }
+  });
+
+  it("a gift of 1 the guest reserved (COMMITTED, nothing left) keeps the buttons with quantity 1", async () => {
+    const launch = vi.spyOn(Linking, "openURL").mockResolvedValue(undefined);
+    try {
+      items = [gift({ status: "COMMITTED", unitsLeft: 0, viewer: { reservationId: "r-1", role: "SOLE", status: "COMMITTED", units: 1 } })];
+      mine = [{ id: "r-1", itemId: ID, celebrationId: "c-1", status: "COMMITTED", units: 1, role: "SOLE", requestedAt: "2026-11-01T00:00:00Z" }]; show();
+      fireEvent.click(await (await row()).findByRole("button", { name: "Pedir por WhatsApp" }));
+      expect(lastLaunch(launch)).toMatchObject({ quantity: "1" });
+    } finally { launch.mockRestore(); }
+  });
+
+  it("M-3 · a coordinated gift names who buys it once, not also «reservado por»", async () => {
+    items = [gift({ groupGiftEnabled: true, status: "PENDING_REVIEW", participants: 2, contributors: 1, coordinatorName: "Marta", reservedByName: "Marta" })]; show();
+    const r = await row();
+    expect(await r.findByText("Marta lo comprará")).toBeTruthy();
+    expect(r.queryByText(/Reservado por/)).toBeNull();
+  });
+});
+
 describe("R5 · coordinated contribution", () => {
   it("nobody yet: «Coordinar», no provider buttons, and the reservation sends no units", async () => {
     items = [gift({ groupGiftEnabled: true, quantity: 1, participants: 0, contributors: 0 })];
@@ -216,5 +251,25 @@ describe("R5 · accessibility of the card (structure; contrast and screen reader
     await screen.findByTestId("reserve-confirm");
     expect(await run()).toEqual([]);
     expect(calls.some((call) => call.method === "POST")).toBe(false);
+  });
+
+  it("M-5 · the card is a named region, each answer names its gift, and the question is announced when it appears", async () => {
+    const { AccessibilityInfo } = await import("react-native");
+    const announce = vi.fn();
+    (AccessibilityInfo as unknown as { announceForAccessibility: typeof announce }).announceForAccessibility = announce;
+    await import("./stubs/expo-secure-store").then((store) => store.setItemAsync("rsvp.gift.purchase.v1", JSON.stringify({ [ID]: { giftItemId: ID, destination: "WHATSAPP", units: 1, at: Date.now(), phase: "away" } })));
+    items = [gift({ quantity: 12, unitsLeft: 8 })]; show();
+    const card = await screen.findByTestId(`gift-prompt-${ID}`);
+    expect(card.getAttribute("aria-label")).toBe("¿Compraste Vajilla?");
+    expect(within(card).getByRole("button", { name: "Sí, compré Vajilla" })).toBeTruthy();
+    expect(within(card).getByRole("button", { name: "Todavía no compré Vajilla" })).toBeTruthy();
+    expect(within(card).getByRole("button", { name: "No compré Vajilla" })).toBeTruthy();
+    expect(announce).toHaveBeenCalledWith("¿Compraste Vajilla?");
+  });
+
+  it("M-5 · the name-consent help is part of the checkbox's own name", async () => {
+    items = [gift({ quantity: 12, unitsLeft: 8 })]; show();
+    fireEvent.click((await row()).getByTestId(`reserve-${ID}`));
+    expect(screen.getByRole("checkbox", { name: /Mostrar mi nombre a los demás invitados\. Solo si escribiste tu nombre/ })).toBeTruthy();
   });
 });

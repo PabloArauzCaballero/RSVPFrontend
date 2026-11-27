@@ -8,8 +8,8 @@
 export const PURCHASE_STORE_KEY = "rsvp.gift.purchase.v1";
 /** An attempt older than this is forgotten: the guest is not asked about a click from two weeks ago. */
 export const ATTEMPT_TTL_MS = 14 * 24 * 60 * 60 * 1000;
-/** A list never keeps more attempts than a guest can hold reservations of; the oldest are dropped. */
-const MAX_ATTEMPTS = 50;
+/** Few and recent: the whole value stays near 1.3 KB, under the 2048 B at which SecureStore warns on iOS; the oldest are dropped. */
+export const MAX_ATTEMPTS = 10;
 
 /** Where the attempts live: one string, so the app (memory), the web (localStorage) and tests share the logic. */
 export interface PurchaseStore { readonly read: () => string | null; readonly write: (value: string) => void }

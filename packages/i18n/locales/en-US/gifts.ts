@@ -21,25 +21,23 @@ export const giftsEnUS: DeepStrings<typeof giftsEsBO> = {
     groupPartner: "From our partners", groupOther: "Ideas from your hosts",
     status: { AVAILABLE: "Available", PENDING_REVIEW: "Waiting for approval", COMMITTED: "Reserved" },
     /** R5 · guest card: quantity by units, coordinated contribution, current price and «did you buy it?». */
-    units: { left_one: "{{count}} of {{total}} still needed", left_other: "{{count}} of {{total}} still needed", all: "{{total}} in total", choose: "How many do you want to give", less: "Fewer units", more: "More units", value_one: "{{count}} unit", value_other: "{{count}} units", help: "{{left}} left. Reserve only the ones you will give.", mine_one: "You reserved {{count}} unit", mine_other: "You reserved {{count}} units", soldOut: "No units left" },
+    units: { left_one: "{{count}} of {{total}} still needed", left_other: "{{count}} of {{total}} still needed", choose: "How many do you want to give", less: "Fewer units", more: "More units", value_one: "{{count}} unit", value_other: "{{count}} units", help: "{{left}} left. Reserve only the ones you will give.", mine_one: "You reserved {{count}} unit", mine_other: "You reserved {{count}} units" },
     group: {
       badge: "Together", contributorsNone: "Nobody has joined yet", contributors_one: "1 person is chipping in", contributors_other: "{{count}} people are chipping in",
       noCoordinator: "Be the one who coordinates: you reserve the gift and buy it at the store; the others join with their share.",
       coordinatorNamed: "{{name}} will buy it", coordinatorAnonymous: "Someone in the group will buy it",
       join: "Join in", joinFor: "Join in for {{title}}", start: "Coordinate this gift", startFor: "Coordinate {{title}}",
-      youCoordinate: "You coordinate this gift", youCoordinateHelp: "You are the one who buys it. Use the buttons below and the others chip in.", namesShown: "Joined: {{names}}", leaveCoordinator: "Stop coordinating",
+      youCoordinate: "You coordinate this gift", youCoordinateHelp: "You are the one who buys it. Use the buttons below and the others chip in.", namesShown: "Joined: {{names}}",
       youContribute: "You joined this gift", youContributeHelp: "Someone else buys it; you chip in your share with them.", leave: "Leave this gift",
       lead: "This gift is bought together. Whoever signs up first coordinates and buys it; the app does not charge or move money.", leadContributor: "You join another person's purchase. The app does not charge: agree on the share between you."
     },
-    buy: { title: "Where to get it", viaStore: "See it at the store", viaWhatsApp: "Order on WhatsApp", price: "Today's price: {{price}}", partnerNote: "A DOne partner offers it. Opening the link takes you out of DOne." },
     prompt: {
       title: "Did you buy {{title}}?", titleUnits: "Did you buy {{units}} × {{title}}?", body: "Tell us so we reserve it and nobody else gives it. Your answer stays on this device until you reserve it.", reminder: "We will remind you only once.",
       yes: "Yes, I bought it", later: "Not yet", no: "No", yesCoordinator: "Thanks. Your reservation is still active.", closed: "Done. We will not ask again.", laterDone: "We will remind you once when you open the list.",
       yesFor: "Yes, I bought {{title}}", laterFor: "I have not bought {{title}} yet", noFor: "I did not buy {{title}}"
     },
-    price: { current: "Current price", from: "The provider's current price" },
     reserve: "Reserve", reserveFor: "Reserve {{title}}", viaPartner: "See it at the store", partnerNote: "A DOne partner offers it. Opening the link takes you out of DOne.", reservedBy: "Reserved by {{name}}",
-    form: { title: "Reserve “{{title}}”", lead: "If you like, leave your name and a message for your hosts. Both are optional.", name: "Your name (optional)", nameHelp: "Your hosts see it next to your reservation.", message: "Message (optional)", messageHelp: "Up to 500 characters.", submit: "Confirm reservation", submitting: "Reserving…", cancel: "Not now", units: "Units", showName: "Show my name to the other guests", showNameHelp: "Only if you typed your name above. Your phone and e-mail are never shown.", coordinatorNote: "You will be the one who coordinates the purchase of the whole gift." },
+    form: { title: "Reserve “{{title}}”", lead: "If you like, leave your name and a message for your hosts. Both are optional.", name: "Your name (optional)", nameHelp: "Your hosts see it next to your reservation.", message: "Message (optional)", messageHelp: "Up to 500 characters.", submit: "Confirm reservation", submitting: "Reserving…", cancel: "Not now", showName: "Show my name to the other guests", showNameHelp: "Only if you typed your name above. Your phone and e-mail are never shown.", coordinatorNote: "You will be the one who coordinates the purchase of the whole gift." },
     done: { confirmedTitle: "Gift reserved", confirmedBody: "“{{title}}” is yours. Your hosts will see it on their list in a moment.", pendingTitle: "Reservation sent", pendingBody: "Your hosts approve each reservation. Meanwhile, nobody else can reserve “{{title}}”." },
     taken: { title: "Someone got there first", body: "Someone else already reserved “{{title}}”. It happens. Here are other options.", alternatives: "Other available gifts", none: "There are no available gifts left. Thank you for wanting to join them." },
     empty: { title: "No gifts yet", body: "Your hosts have not added any yet. Come back in a few days." },

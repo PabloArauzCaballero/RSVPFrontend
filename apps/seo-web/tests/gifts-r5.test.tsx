@@ -130,18 +130,37 @@ describe("R5 · units: «Faltan 8 de 12» and reserving 2 of 12", () => {
     expect((await screen.findByTestId("reserve-error")).textContent).toContain("Ya tienes una reserva de este regalo");
   });
 
-  it("a guest who holds units sees them and no provider buttons; a gift with nothing left has neither reserve nor buttons", async () => {
-    items = [gift({ quantity: 12, unitsLeft: 10, viewer: VIEWER("SOLE", 2) })]; mineItems = [{ id: "r-1", itemId: ID, status: "PENDING_REVIEW", units: 2, role: "SOLE" }]; stub(); renderList();
+  it("B-1 · a guest who reserved 2 of 12 keeps both provider buttons, asking /r for exactly their 2 units; a gift taken by others has neither reserve nor buttons", async () => {
+    items = [gift({ quantity: 12, unitsLeft: 10, variantCode: VARIANT, viewer: VIEWER("SOLE", 2) })]; mineItems = [{ id: "r-1", itemId: ID, status: "PENDING_REVIEW", units: 2, role: "SOLE" }]; stub(); renderList();
     const row = within(await rowOf());
     expect(await row.findByText("Reservaste 2 unidades")).toBeTruthy();
-    expect(row.queryByRole("link", { name: "Pedir por WhatsApp" })).toBeNull();
     expect(row.queryByTestId(`reserve-${ID}`)).toBeNull();
+    expect(row.queryByTestId(`units-${ID}`)).toBeNull();
+    const whatsapp = await row.findByRole("link", { name: "Pedir por WhatsApp" });
+    const store = row.getByRole("link", { name: "Ver en la tienda" });
+    expect(partnerQuery(whatsapp)).toMatchObject({ destination: "WHATSAPP", quantity: "2", giftItemId: ID, variant: VARIANT });
+    expect(partnerQuery(store)).toMatchObject({ destination: "PRODUCT_PAGE", quantity: "2" });
     cleanup();
     items = [gift({ quantity: 3, unitsLeft: 0, status: "PENDING_REVIEW" })]; mineItems = []; stub(); renderList();
     const full = within(await rowOf());
     expect(full.queryByTestId(`reserve-${ID}`)).toBeNull();
     expect(full.queryByRole("link", { name: "Pedir por WhatsApp" })).toBeNull();
     expect(full.getByText("Esperando aprobación")).toBeTruthy();
+  });
+
+  it("B-1 · a gift of 1 the guest reserved (COMMITTED, nothing left) is still theirs to buy: both buttons, quantity 1, and Sí after returning only confirms", async () => {
+    items = [gift({ status: "COMMITTED", unitsLeft: 0, viewer: { reservationId: "r-1", role: "SOLE", status: "COMMITTED", units: 1 } })];
+    mineItems = [{ id: "r-1", itemId: ID, status: "COMMITTED", units: 1, role: "SOLE" }]; stub(); renderList();
+    const row = within(await rowOf());
+    expect(partnerQuery(await row.findByRole("link", { name: "Pedir por WhatsApp" }))).toMatchObject({ quantity: "1" });
+    expect(row.getByText("Tu reserva")).toBeTruthy();
+  });
+
+  it("M-3 · a coordinated gift shows who buys it once: «reservado por» is not drawn next to «lo comprará»", async () => {
+    items = [gift({ groupGiftEnabled: true, status: "PENDING_REVIEW", participants: 2, contributors: 1, coordinatorName: "Marta", reservedByName: "Marta" })]; stub(); renderList();
+    const row = within(await rowOf());
+    expect(await row.findByText("Marta lo comprará")).toBeTruthy();
+    expect(row.queryByText(/Reservado por/)).toBeNull();
   });
 });
 
@@ -351,5 +370,16 @@ describe("R5 · accessibility of the card (structure; contrast needs a real brow
     expect(screen.getByRole("group", { name: "Cuántos quieres regalar" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Más unidades · Vajilla" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Menos unidades · Vajilla" })).toBeTruthy();
+  });
+
+  it("M-5 · each answer names its gift, and the question takes focus when it appears so a screen reader says it", async () => {
+    items = [gift({ quantity: 12, unitsLeft: 8 })];
+    window.localStorage.setItem("rsvp.gift.purchase.v1", JSON.stringify({ [ID]: { giftItemId: ID, destination: "WHATSAPP", units: 1, at: Date.now(), phase: "away" } }));
+    stub(); renderList();
+    const card = await screen.findByRole("region", { name: "¿Compraste Vajilla?" });
+    expect(document.activeElement).toBe(card);
+    expect(within(card).getByRole("button", { name: "Sí, compré Vajilla" })).toBeTruthy();
+    expect(within(card).getByRole("button", { name: "Todavía no compré Vajilla" })).toBeTruthy();
+    expect(within(card).getByRole("button", { name: "No compré Vajilla" })).toBeTruthy();
   });
 });

@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
-import { Pressable, Text, View } from "react-native";
+import { useEffect, type ReactNode } from "react";
+import { AccessibilityInfo, Pressable, Text, View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
 import { useColors } from "@rsvp/ui";
 import type { GuestGiftState, PurchaseAnswer } from "@rsvp/query-hooks";
@@ -58,20 +58,22 @@ export function UnitsAndGroup({ id, state }: { readonly id: string; readonly sta
   );
 }
 
-/** The card that appears when the guest comes back from the provider. */
+/** The card that appears when the guest comes back. It is a named region and its question is announced when it appears, so a screen reader hears it on return. */
 export function PurchasePromptCard({ id, title, units, reminder, onAnswer }: { readonly id: string; readonly title: string; readonly units: number; readonly reminder: boolean; readonly onAnswer: (answer: PurchaseAnswer) => void }): ReactNode {
   const styles = useStyles();
   const t = useT();
+  const question = units > 1 ? t("gifts.guest.prompt.titleUnits", { units, title }) : t("gifts.guest.prompt.title", { title });
+  useEffect(() => { try { AccessibilityInfo?.announceForAccessibility?.(question); } catch { /* no screen reader bridge (web, tests) */ } }, [question]);
   return (
     <Notice kind="info">
-      <View testID={`gift-prompt-${id}`} style={{ gap: spacing[2] }}>
-        <Text accessibilityRole="header" aria-level={3} style={styles.itemTitle}>{units > 1 ? t("gifts.guest.prompt.titleUnits", { units, title }) : t("gifts.guest.prompt.title", { title })}</Text>
+      <View role="region" aria-label={question} testID={`gift-prompt-${id}`} style={{ gap: spacing[2] }}>
+        <Text accessibilityRole="header" aria-level={3} style={styles.itemTitle}>{question}</Text>
         <Text style={styles.muted}>{t("gifts.guest.prompt.body")}</Text>
         {reminder ? <Text style={styles.muted}>{t("gifts.guest.prompt.reminder")}</Text> : null}
         <View style={styles.row}>
-          <ActionButton icon="check" label={t("gifts.guest.prompt.yes")} onPress={() => onAnswer("yes")} testID={`prompt-yes-${id}`} />
-          <ActionButton variant="secondary" label={t("gifts.guest.prompt.later")} onPress={() => onAnswer("later")} testID={`prompt-later-${id}`} />
-          <ActionButton variant="secondary" label={t("gifts.guest.prompt.no")} onPress={() => onAnswer("no")} testID={`prompt-no-${id}`} />
+          <ActionButton icon="check" label={t("gifts.guest.prompt.yes")} accessibilityLabel={t("gifts.guest.prompt.yesFor", { title })} onPress={() => onAnswer("yes")} testID={`prompt-yes-${id}`} />
+          <ActionButton variant="secondary" label={t("gifts.guest.prompt.later")} accessibilityLabel={t("gifts.guest.prompt.laterFor", { title })} onPress={() => onAnswer("later")} testID={`prompt-later-${id}`} />
+          <ActionButton variant="secondary" label={t("gifts.guest.prompt.no")} accessibilityLabel={t("gifts.guest.prompt.noFor", { title })} onPress={() => onAnswer("no")} testID={`prompt-no-${id}`} />
         </View>
       </View>
     </Notice>

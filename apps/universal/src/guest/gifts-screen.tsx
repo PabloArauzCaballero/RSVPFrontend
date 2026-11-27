@@ -237,10 +237,8 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
       {state.group && !state.hasCoordinator ? <Text style={styles.label}>{t("gifts.guest.form.coordinatorNote")}</Text> : null}
       {state.chooseUnits ? <UnitsStepper value={unitsOf(item)} max={state.unitsLeft} title={item.title} testID={`units-${item.id}`} onChange={(next) => { setUnits((current) => ({ ...current, [item.id]: clampUnits(next, state.unitsLeft) })); reserve.reset(); }} /> : null}
       <Field label={t("gifts.guest.form.name")} value={name} onChange={(next) => { setName(next); setFieldErrors({}); }} help={t("gifts.guest.form.nameHelp")} error={fieldErrors.name ? t("gifts.guest.reserveError.nameTooLong", { max: NAME_MAX }) : undefined} testID="reserve-name" />
-      <View>
-        <Checkbox label={t("gifts.guest.form.showName")} value={showName} onChange={setShowName} />
-        <Text style={styles.muted}>{t("gifts.guest.form.showNameHelp")}</Text>
-      </View>
+      {/* The help is part of the checkbox's own name, so a screen reader reads both (the shared Checkbox takes no description). */}
+      <Checkbox label={`${t("gifts.guest.form.showName")}. ${t("gifts.guest.form.showNameHelp")}`} value={showName} onChange={setShowName} />
       <Field label={t("gifts.guest.form.message")} value={message} onChange={(next) => { setMessage(next); setFieldErrors({}); }} help={t("gifts.guest.form.messageHelp")} error={fieldErrors.message ? t("gifts.guest.reserveError.messageTooLong", { max: MESSAGE_MAX }) : undefined} multiline testID="reserve-message" />
       {failedKind && failedKind !== "taken" ? (
         <Notice kind="error">
@@ -283,7 +281,7 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
         {item.description ? <Text style={styles.muted}>{item.description}</Text> : null}
         <UnitsAndGroup id={item.id} state={state} />
         {item.status !== "AVAILABLE" && !state.group ? <Chip tone={item.status === "PENDING_REVIEW" ? "wait" : "yes"}>{t(`gifts.guest.status.${item.status}`)}</Chip> : null}
-        {item.reservedByName ? <Text style={styles.muted} testID={`gift-by-${item.id}`}>{t("gifts.guest.reservedBy", { name: item.reservedByName })}</Text> : null}
+        {item.reservedByName && !state.group ? <Text style={styles.muted} testID={`gift-by-${item.id}`}>{t("gifts.guest.reservedBy", { name: item.reservedByName })}</Text> : null}
         {held || state.role ? (
           <View testID={`gift-mine-${item.id}`} style={{ gap: spacing[2], alignItems: "flex-start" }}>
             <Text style={[styles.body, { fontWeight: "600" }]}>{state.role === "COORDINATOR" ? t("gifts.guest.group.youCoordinate") : state.role === "CONTRIBUTOR" ? t("gifts.guest.group.youContribute") : held?.status === "PENDING_REVIEW" ? t("gifts.guest.mine.pendingLabel") : t("gifts.guest.mine.label")}</Text>

@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import type { GuestGiftState, PurchaseAnswer } from '@rsvp/query-hooks';
 import type { createTranslator } from '@rsvp/i18n/server';
 
@@ -41,15 +41,18 @@ export function UnitsAndGroup({ id, state, t }: { readonly id: string; readonly 
 
 /** The card that appears when the guest comes back from the provider. It is a labelled group, so a screen reader announces the question with its options. */
 export function PurchasePromptCard({ id, title, units, reminder, t, onAnswer }: { readonly id: string; readonly title: string; readonly units: number; readonly reminder: boolean; readonly t: T; readonly onAnswer: (answer: PurchaseAnswer) => void }): ReactNode {
+  // The question appears when the guest comes back: it takes focus so a screen reader says it (the same as the page's other inline answers).
+  const ref = useRef<HTMLElement>(null);
+  useEffect(() => { ref.current?.focus({ preventScroll: false }); }, []);
   return (
-    <section className="gift-note gift-note--info gift-prompt" aria-labelledby={`gift-prompt-${id}-title`} data-testid={`gift-prompt-${id}`}>
+    <section ref={ref} tabIndex={-1} className="gift-note gift-note--info gift-prompt" aria-labelledby={`gift-prompt-${id}-title`} data-testid={`gift-prompt-${id}`}>
       <h3 id={`gift-prompt-${id}-title`}>{units > 1 ? t('gifts.guest.prompt.titleUnits', { units, title }) : t('gifts.guest.prompt.title', { title })}</h3>
       <p className="rsvp-hint">{t('gifts.guest.prompt.body')}</p>
       {reminder ? <p className="rsvp-hint">{t('gifts.guest.prompt.reminder')}</p> : null}
       <div className="gift-actions">
-        <button type="button" className="rsvp-button" onClick={() => onAnswer('yes')} data-testid={`prompt-yes-${id}`}>{t('gifts.guest.prompt.yes')}</button>
-        <button type="button" className="rsvp-button rsvp-button--secondary" onClick={() => onAnswer('later')} data-testid={`prompt-later-${id}`}>{t('gifts.guest.prompt.later')}</button>
-        <button type="button" className="rsvp-button rsvp-button--secondary" onClick={() => onAnswer('no')} data-testid={`prompt-no-${id}`}>{t('gifts.guest.prompt.no')}</button>
+        <button type="button" className="rsvp-button" aria-label={t('gifts.guest.prompt.yesFor', { title })} onClick={() => onAnswer('yes')} data-testid={`prompt-yes-${id}`}>{t('gifts.guest.prompt.yes')}</button>
+        <button type="button" className="rsvp-button rsvp-button--secondary" aria-label={t('gifts.guest.prompt.laterFor', { title })} onClick={() => onAnswer('later')} data-testid={`prompt-later-${id}`}>{t('gifts.guest.prompt.later')}</button>
+        <button type="button" className="rsvp-button rsvp-button--secondary" aria-label={t('gifts.guest.prompt.noFor', { title })} onClick={() => onAnswer('no')} data-testid={`prompt-no-${id}`}>{t('gifts.guest.prompt.no')}</button>
       </div>
     </section>
   );

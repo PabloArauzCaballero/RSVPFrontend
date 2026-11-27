@@ -20,10 +20,12 @@ export interface GuestGiftState {
   /** The viewer's own role in this gift, or null when they hold nothing. */
   readonly role: ReservationRole | null;
   /** The viewer can start a reservation (plain: units left; group: always, as coordinator or contributor). */
+  /** Units the viewer's own reservation holds (SOLE or COORDINATOR); 0 when they hold nothing or are a contributor. */
+  readonly heldUnits: number;
   readonly canReserve: boolean;
   /** Plain gift with more than one free unit: the guest chooses how many. */
   readonly chooseUnits: boolean;
-  /** Both provider buttons (store and WhatsApp) are for this viewer. Never for a contributor, and never once a plain gift is taken. */
+  /** Both provider buttons (store and WhatsApp) are for this viewer: whoever may reserve a plain gift, whoever already holds one (reserve, then buy: D-3), and the coordinator of a group. Never a contributor, never a plain gift taken by others. */
   readonly showProviderButtons: boolean;
   /** Group gift: somebody already coordinates it. */
   readonly hasCoordinator: boolean;
@@ -44,7 +46,7 @@ export function effectivePrice(item: Pick<GiftItem, "price" | "currentPrice">): 
 }
 
 /** `held`: the guest's own reservation of this gift from `my-reservations`, for a server that does not send `viewer` on the list. */
-export function guestGiftState(item: GiftItem, held?: Pick<GiftReservation, "role"> | undefined): GuestGiftState {
+export function guestGiftState(item: GiftItem, held?: Pick<GiftReservation, "role" | "units"> | undefined): GuestGiftState {
   const quantity = Math.max(1, item.quantity ?? 1);
   // An older server sends no unit counts: an AVAILABLE gift has all its units free, any other has none.
   const unitsLeft = Math.max(0, Math.min(quantity, item.unitsLeft ?? (item.status === "AVAILABLE" ? quantity : 0)));
@@ -53,10 +55,11 @@ export function guestGiftState(item: GiftItem, held?: Pick<GiftReservation, "rol
   const hasCoordinator = group && ((item.participants ?? 0) > 0 || role === "COORDINATOR");
   const open = HOLDS.has(item.status);
   const canReserve = role === null && open && (group || (item.status === "AVAILABLE" && unitsLeft > 0));
-  const showProviderButtons = group ? role === "COORDINATOR" : role === null && item.status === "AVAILABLE" && unitsLeft > 0;
+  const showProviderButtons = group ? role === "COORDINATOR" : role === "SOLE" || (role === null && item.status === "AVAILABLE" && unitsLeft > 0);
+  const heldUnits = Math.max(0, Math.trunc(item.viewer?.units ?? held?.units ?? 0));
   const name = typeof item.coordinatorName === "string" && item.coordinatorName.trim() ? item.coordinatorName.trim() : null;
   return {
-    quantity, unitsLeft, showUnits: quantity > 1, group, role, canReserve,
+    quantity, unitsLeft, showUnits: quantity > 1, group, role, heldUnits, canReserve,
     chooseUnits: !group && canReserve && unitsLeft > 1,
     showProviderButtons, hasCoordinator,
     coordinator: group && hasCoordinator && role !== "COORDINATOR" ? { name } : null,
@@ -66,8 +69,11 @@ export function guestGiftState(item: GiftItem, held?: Pick<GiftReservation, "rol
 }
 
 /** What the provider buttons ask for: the units of a plain gift the guest chose, or the whole quantity the coordinator of a group buys. */
-export function buttonQuantity(state: Pick<GuestGiftState, "group" | "quantity" | "unitsLeft">, chosen: number): number {
-  return state.group ? state.quantity : clampUnits(chosen, state.unitsLeft);
+export function buttonQuantity(state: Pick<GuestGiftState, "group" | "quantity" | "unitsLeft" | "role" | "heldUnits">, chosen: number): number {
+  if (state.group) return state.quantity;
+  // Someone who already holds units buys exactly those.
+  if (state.role === "SOLE") return Math.max(1, state.heldUnits);
+  return clampUnits(chosen, state.unitsLeft);
 }
 
 /** A number of units between 1 and what is left (never below 1: a plain gift with nothing left shows no stepper at all). */

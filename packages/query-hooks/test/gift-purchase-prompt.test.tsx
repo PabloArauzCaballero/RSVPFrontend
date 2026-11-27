@@ -1,6 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { answerAttempt, ATTEMPT_TTL_MS, PURCHASE_STORE_KEY, readAttempts, recordAttempt, takeDue, usePurchasePrompt, type PurchasePromptEnv, type PurchaseStore } from "../src/index.js";
+import { answerAttempt, MAX_ATTEMPTS, ATTEMPT_TTL_MS, PURCHASE_STORE_KEY, readAttempts, recordAttempt, takeDue, usePurchasePrompt, type PurchasePromptEnv, type PurchaseStore } from "../src/index.js";
 
 const memoryStore = (initial: string | null = null): PurchaseStore & { value: string | null } => {
   const store = { value: initial, read: () => store.value, write: (next: string) => { store.value = next; } };
@@ -59,13 +59,15 @@ describe("R5 · «¿Compraste?»: local attempts", () => {
     expect(takeDue(broken, "open", T0)).toEqual([]);
   });
 
-  it("keeps the 50 newest attempts", () => {
+  it("keeps the 10 newest attempts, a value far under the 2048 B SecureStore warns at", () => {
     const store = memoryStore();
     for (let n = 0; n < 55; n++) recordAttempt(store, { ...input, giftItemId: `g${n}` }, T0 + n);
     const kept = Object.keys(readAttempts(store, T0 + 100));
-    expect(kept).toHaveLength(50);
+    expect(kept).toHaveLength(10);
     expect(kept).not.toContain("g0");
+    expect(MAX_ATTEMPTS).toBe(10);
     expect(kept).toContain("g54");
+    expect(store.value!.length).toBeLessThan(2048);
   });
 
   it("stores no personal data: only the gift id, the button, the units and the time", () => {

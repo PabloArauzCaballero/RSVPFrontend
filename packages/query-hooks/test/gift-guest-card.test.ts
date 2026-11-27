@@ -21,9 +21,25 @@ describe("R5 · guestGiftState: what the guest's card says and offers", () => {
     expect(guestGiftState(item({ status: "COMMITTED" }))).toMatchObject({ unitsLeft: 0, canReserve: false, showProviderButtons: false });
   });
 
-  it("a guest who already holds the gift (viewer SOLE) cannot reserve again and has no buttons", () => {
+  it("B-1 · a guest who already holds units (viewer SOLE) cannot reserve again but keeps both provider buttons, asking for exactly the units they hold", () => {
     const state = guestGiftState(item({ quantity: 12, unitsLeft: 10, viewer: { reservationId: "r", role: "SOLE", status: "PENDING_REVIEW", units: 2 } }));
-    expect(state).toMatchObject({ role: "SOLE", canReserve: false, showProviderButtons: false });
+    expect(state).toMatchObject({ role: "SOLE", canReserve: false, chooseUnits: false, showProviderButtons: true, heldUnits: 2 });
+    expect(buttonQuantity(state, 7)).toBe(2);
+    // a gift of 1 reserved by the guest, now COMMITTED and with nothing left: still theirs to buy
+    const whole = guestGiftState(item({ status: "COMMITTED", unitsLeft: 0, viewer: { reservationId: "r", role: "SOLE", status: "COMMITTED", units: 1 } }));
+    expect(whole).toMatchObject({ showProviderButtons: true, heldUnits: 1 });
+    expect(buttonQuantity(whole, 5)).toBe(1);
+  });
+
+  it("B-1 · without `viewer`, the units come from the guest's own reservation (my-reservations)", () => {
+    const state = guestGiftState(item({ quantity: 12, unitsLeft: 10 }), { role: "SOLE", units: 3 });
+    expect(state).toMatchObject({ showProviderButtons: true, heldUnits: 3 });
+    expect(buttonQuantity(state, 1)).toBe(3);
+  });
+
+  it("a coordinator holds the whole quantity and a contributor none, and only the coordinator has buttons", () => {
+    expect(guestGiftState(item({ groupGiftEnabled: true, status: "PENDING_REVIEW", participants: 2, quantity: 2, viewer: { reservationId: "r", role: "COORDINATOR", status: "PENDING_REVIEW", units: 2 } }))).toMatchObject({ heldUnits: 2, showProviderButtons: true });
+    expect(guestGiftState(item({ groupGiftEnabled: true, status: "PENDING_REVIEW", participants: 2, viewer: { reservationId: "r", role: "CONTRIBUTOR", status: "PENDING_REVIEW", units: 0 } }))).toMatchObject({ heldUnits: 0, showProviderButtons: false });
   });
 
   it("group, nobody yet: the first to sign up coordinates (reserve = «Coordinar»), and no one has provider buttons yet", () => {
@@ -83,9 +99,9 @@ describe("R5 · price, units and the quantity the buttons carry", () => {
   });
 
   it("the buttons ask for the units the guest chose in a plain gift and for the whole quantity in a group", () => {
-    expect(buttonQuantity({ group: false, quantity: 12, unitsLeft: 8 }, 2)).toBe(2);
-    expect(buttonQuantity({ group: false, quantity: 12, unitsLeft: 3 }, 9)).toBe(3);
-    expect(buttonQuantity({ group: true, quantity: 12, unitsLeft: 12 }, 2)).toBe(12);
+    expect(buttonQuantity({ group: false, quantity: 12, unitsLeft: 8, role: null, heldUnits: 0 }, 2)).toBe(2);
+    expect(buttonQuantity({ group: false, quantity: 12, unitsLeft: 3, role: null, heldUnits: 0 }, 9)).toBe(3);
+    expect(buttonQuantity({ group: true, quantity: 12, unitsLeft: 12, role: "COORDINATOR", heldUnits: 12 }, 2)).toBe(12);
   });
 });
 
