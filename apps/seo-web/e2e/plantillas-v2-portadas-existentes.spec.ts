@@ -2,9 +2,10 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 
-// PL-FE143-R2-2 · the engine change of FE #143 (the photo of a centred cover shares the axis of the text) is for the six extra templates only: the 31 templates that existed before keep the
+// PL-FE143-R2-2 · the engine change of FE #143 (the photo of a centred cover shares the axis of the text) is for the six extra templates only: the 30 templates that existed before keep the
 // geometry of the cover they had. For each of them, with and without a cover photo, at 360 and 1280, the title and the photo are measured (`getBoundingClientRect`) and compared with
-// `e2e/fixtures/portadas-base.json`, the same measure taken on the official branch before the change (58ddce68, Linux, Google Chrome, fonts loaded, reduced motion).
+// `e2e/fixtures/portadas-base.json`, the same measure taken on the official branch `chore/deploy-contabo-coolify` at eb392573 (it already includes FE #146, which makes the <picture> of every cover `display: contents`;
+// the first recording, at 58ddce68, was stale: 34 of the 120 measures differ from it for that reason alone, not because of this PR). Linux, Google Chrome, fonts loaded, reduced motion.
 // COVER_GEOMETRY_RECORD=<path> writes the measure there instead of comparing (how the file was made; run it on the base, never on a branch that changes covers).
 const EXISTING = ["arena-terracota", "baby-shower", "bodas-de-oro", "bodas-de-plata", "cielo-bautizo", "corporativo-grafito", "corporativo", "cumpleanos-adulto", "despedida", "editorial-granate",
   "editorial-oliva", "editorial", "festivo", "fiesta-lila", "fiesta-patronal", "fiesta-tematica", "fin-de-ano", "gala", "graduacion", "inauguracion", "jardin-botanico", "marfil", "menta-infantil",

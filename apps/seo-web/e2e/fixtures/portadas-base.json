@@ -7,13 +7,13 @@
    "height": 42
   },
   "photo": {
-   "x": 33,
+   "x": 74.2,
    "y": 235,
    "width": 211.7,
    "height": 282.2
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "arena-terracota 1280": {
   "h1": {
@@ -23,13 +23,13 @@
    "height": 49
   },
   "photo": {
-   "x": 494.3,
+   "x": 690.7,
    "y": 260,
    "width": 224,
    "height": 298.7
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "arena-terracota-sinfoto 360": {
   "h1": {
@@ -67,7 +67,7 @@
    "height": 197.3
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "baby-shower 1280": {
   "h1": {
@@ -83,7 +83,7 @@
    "height": 290.7
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "baby-shower-sinfoto 360": {
   "h1": {
@@ -115,13 +115,13 @@
    "height": 49
   },
   "photo": {
-   "x": 16,
+   "x": 68,
    "y": 322,
    "width": 224,
    "height": 298.7
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "bodas-de-oro 1280": {
   "h1": {
@@ -131,13 +131,13 @@
    "height": 96.9
   },
   "photo": {
-   "x": 319,
+   "x": 528,
    "y": 420.3,
    "width": 224,
    "height": 298.7
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "bodas-de-oro-sinfoto 360": {
   "h1": {
@@ -164,18 +164,18 @@
  "bodas-de-plata 360": {
   "h1": {
    "x": 16,
-   "y": 748,
+   "y": 322,
    "width": 191.9,
    "height": 42
   },
   "photo": {
    "x": 16,
-   "y": 322,
+   "y": 464.4,
    "width": 328,
    "height": 410
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "bodas-de-plata 1280": {
   "h1": {
@@ -191,7 +191,7 @@
    "height": 354.5
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "bodas-de-plata-sinfoto 360": {
   "h1": {
@@ -223,13 +223,13 @@
    "height": 38.5
   },
   "photo": {
-   "x": 33,
+   "x": 74.2,
    "y": 249,
    "width": 211.7,
    "height": 282.2
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "cielo-bautizo 1280": {
   "h1": {
@@ -239,13 +239,13 @@
    "height": 44.9
   },
   "photo": {
-   "x": 169,
+   "x": 324.7,
    "y": 324,
    "width": 224,
    "height": 298.7
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "cielo-bautizo-sinfoto 360": {
   "h1": {
@@ -283,23 +283,23 @@
    "height": 246
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "corporativo-grafito 1280": {
   "h1": {
    "x": 314.4,
-   "y": 746.8,
+   "y": 746.9,
    "width": 651.1,
    "height": 69.4
   },
   "photo": {
-   "x": 405.3,
+   "x": 92,
    "y": 378.9,
-   "width": 469.3,
+   "width": 1096,
    "height": 352
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "corporativo-grafito-sinfoto 360": {
   "h1": {
@@ -337,7 +337,7 @@
    "height": 220.5
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "corporativo 1280": {
   "h1": {
@@ -347,13 +347,13 @@
    "height": 44.9
   },
   "photo": {
-   "x": 229.3,
+   "x": 129,
    "y": 276,
-   "width": 469.3,
+   "width": 670,
    "height": 352
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "corporativo-sinfoto 360": {
   "h1": {
@@ -391,7 +391,7 @@
    "height": 218.7
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "cumpleanos-adulto 1280": {
   "h1": {
@@ -403,11 +403,11 @@
   "photo": {
    "x": 216.7,
    "y": 259,
-   "width": 528,
+   "width": 592.7,
    "height": 352
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "cumpleanos-adulto-sinfoto 360": {
   "h1": {
@@ -445,23 +445,23 @@
    "height": 177.1
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "despedida 1280": {
   "h1": {
    "x": 132,
-   "y": 520.4,
+   "y": 523,
    "width": 418.4,
    "height": 44.9
   },
   "photo": {
    "x": 132,
    "y": 251,
-   "width": 253.4,
-   "height": 253.4
+   "width": 256,
+   "height": 256
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "despedida-sinfoto 360": {
   "h1": {
@@ -499,7 +499,7 @@
    "height": 220.5
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "editorial-granate 1280": {
   "h1": {
@@ -509,13 +509,13 @@
    "height": 57.1
   },
   "photo": {
-   "x": 405.3,
+   "x": 318.3,
    "y": 340,
-   "width": 469.3,
+   "width": 643.3,
    "height": 352
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "editorial-granate-sinfoto 360": {
   "h1": {
@@ -553,7 +553,7 @@
    "height": 164
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "editorial-oliva 1280": {
   "h1": {
@@ -569,7 +569,7 @@
    "height": 238.7
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "editorial-oliva-sinfoto 360": {
   "h1": {
@@ -596,18 +596,18 @@
  "editorial 360": {
   "h1": {
    "x": 16,
-   "y": 648,
+   "y": 222,
    "width": 269.5,
    "height": 62.9
   },
   "photo": {
    "x": 16,
-   "y": 222,
+   "y": 383.4,
    "width": 328,
    "height": 410
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "editorial 1280": {
   "h1": {
@@ -623,7 +623,7 @@
    "height": 710.3
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "editorial-sinfoto 360": {
   "h1": {
@@ -655,13 +655,13 @@
    "height": 83.9
   },
   "photo": {
-   "x": 32,
+   "x": 73.4,
    "y": 242,
    "width": 213.1,
    "height": 284.1
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "festivo 1280": {
   "h1": {
@@ -671,13 +671,13 @@
    "height": 49
   },
   "photo": {
-   "x": 168,
+   "x": 324.7,
    "y": 251,
    "width": 224,
    "height": 298.7
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "festivo-sinfoto 360": {
   "h1": {
@@ -715,23 +715,23 @@
    "height": 236.2
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "fiesta-lila 1280": {
   "h1": {
    "x": 552,
-   "y": 520.4,
+   "y": 523,
    "width": 378.7,
    "height": 49
   },
   "photo": {
    "x": 552,
    "y": 251,
-   "width": 253.4,
-   "height": 253.4
+   "width": 256,
+   "height": 256
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "fiesta-lila-sinfoto 360": {
   "h1": {
@@ -769,23 +769,23 @@
    "height": 211.7
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "fiesta-patronal 1280": {
   "h1": {
    "x": 149,
-   "y": 648,
+   "y": 650.5,
    "width": 558.7,
    "height": 97.9
   },
   "photo": {
    "x": 149,
    "y": 378.5,
-   "width": 253.4,
-   "height": 253.4
+   "width": 256,
+   "height": 256
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "fiesta-patronal-sinfoto 360": {
   "h1": {
@@ -823,7 +823,7 @@
    "height": 222
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "fiesta-tematica 1280": {
   "h1": {
@@ -833,13 +833,13 @@
    "height": 49
   },
   "photo": {
-   "x": 405.3,
+   "x": 330.7,
    "y": 251,
-   "width": 469.3,
+   "width": 618.7,
    "height": 352
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "fiesta-tematica-sinfoto 360": {
   "h1": {
@@ -866,18 +866,18 @@
  "fin-de-ano 360": {
   "h1": {
    "x": 24,
-   "y": 628,
+   "y": 222,
    "width": 312,
    "height": 97.9
   },
   "photo": {
    "x": 24,
-   "y": 222,
+   "y": 420.3,
    "width": 312,
    "height": 390
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "fin-de-ano 1280": {
   "h1": {
@@ -893,7 +893,7 @@
    "height": 417
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "fin-de-ano-sinfoto 360": {
   "h1": {
@@ -931,7 +931,7 @@
    "height": 220.5
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "gala 1280": {
   "h1": {
@@ -941,13 +941,13 @@
    "height": 81.4
   },
   "photo": {
-   "x": 405.3,
+   "x": 318.3,
    "y": 428,
-   "width": 469.3,
+   "width": 643.3,
    "height": 352
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "gala-sinfoto 360": {
   "h1": {
@@ -985,7 +985,7 @@
    "height": 246
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "graduacion 1280": {
   "h1": {
@@ -995,13 +995,13 @@
    "height": 57.1
   },
   "photo": {
-   "x": 229.3,
+   "x": 112,
    "y": 374.2,
-   "width": 469.3,
+   "width": 704,
    "height": 352
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "graduacion-sinfoto 360": {
   "h1": {
@@ -1033,13 +1033,13 @@
    "height": 69.9
   },
   "photo": {
-   "x": 16,
+   "x": 68,
    "y": 246,
    "width": 224,
    "height": 298.7
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "inauguracion 1280": {
   "h1": {
@@ -1049,13 +1049,13 @@
    "height": 40.8
   },
   "photo": {
-   "x": 132,
+   "x": 316.3,
    "y": 369.5,
    "width": 224,
    "height": 298.7
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "inauguracion-sinfoto 360": {
   "h1": {
@@ -1087,13 +1087,13 @@
    "height": 49
   },
   "photo": {
-   "x": 33,
+   "x": 74.2,
    "y": 347,
    "width": 211.7,
    "height": 282.2
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "jardin-botanico 1280": {
   "h1": {
@@ -1103,13 +1103,13 @@
    "height": 96.9
   },
   "photo": {
-   "x": 149,
+   "x": 316.3,
    "y": 276,
    "width": 224,
    "height": 298.7
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "jardin-botanico-sinfoto 360": {
   "h1": {
@@ -1141,13 +1141,13 @@
    "height": 49
   },
   "photo": {
-   "x": 16,
+   "x": 68,
    "y": 322,
    "width": 224,
    "height": 298.7
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "marfil 1280": {
   "h1": {
@@ -1157,13 +1157,13 @@
    "height": 96.9
   },
   "photo": {
-   "x": 555.3,
+   "x": 697.3,
    "y": 275,
    "width": 224,
    "height": 298.7
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "marfil-sinfoto 360": {
   "h1": {
@@ -1201,23 +1201,23 @@
    "height": 211.7
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "menta-infantil 1280": {
   "h1": {
    "x": 575.7,
-   "y": 545.4,
+   "y": 548,
    "width": 313.5,
    "height": 57.1
   },
   "photo": {
    "x": 575.7,
    "y": 276,
-   "width": 253.4,
-   "height": 253.4
+   "width": 256,
+   "height": 256
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "menta-infantil-sinfoto 360": {
   "h1": {
@@ -1255,7 +1255,7 @@
    "height": 218.7
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "minimalista 1280": {
   "h1": {
@@ -1267,11 +1267,11 @@
   "photo": {
    "x": 232,
    "y": 251,
-   "width": 528,
+   "width": 612,
    "height": 352
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "minimalista-sinfoto 360": {
   "h1": {
@@ -1298,18 +1298,18 @@
  "otros-evento 360": {
   "h1": {
    "x": 16,
-   "y": 748,
+   "y": 322,
    "width": 328,
    "height": 90.9
   },
   "photo": {
    "x": 16,
-   "y": 322,
+   "y": 512.4,
    "width": 328,
    "height": 410
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "otros-evento 1280": {
   "h1": {
@@ -1325,7 +1325,7 @@
    "height": 357.6
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "otros-evento-sinfoto 360": {
   "h1": {
@@ -1363,7 +1363,7 @@
    "height": 197.3
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "pedida-de-mano 1280": {
   "h1": {
@@ -1379,7 +1379,7 @@
    "height": 195.5
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "pedida-de-mano-sinfoto 360": {
   "h1": {
@@ -1417,23 +1417,23 @@
    "height": 236.2
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "pinata 1280": {
   "h1": {
    "x": 132,
-   "y": 662.8,
+   "y": 665.4,
    "width": 313.2,
    "height": 57.1
   },
   "photo": {
    "x": 132,
    "y": 393.4,
-   "width": 253.4,
-   "height": 253.4
+   "width": 256,
+   "height": 256
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "pinata-sinfoto 360": {
   "h1": {
@@ -1460,18 +1460,18 @@
  "primera-comunion 360": {
   "h1": {
    "x": 16,
-   "y": 648,
+   "y": 222,
    "width": 328,
    "height": 157.4
   },
   "photo": {
    "x": 16,
-   "y": 222,
+   "y": 477.9,
    "width": 328,
    "height": 410
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "primera-comunion 1280": {
   "h1": {
@@ -1487,7 +1487,7 @@
    "height": 346.9
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "primera-comunion-sinfoto 360": {
   "h1": {
@@ -1525,7 +1525,7 @@
    "height": 220.5
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "reencuentro 1280": {
   "h1": {
@@ -1535,13 +1535,13 @@
    "height": 49
   },
   "photo": {
-   "x": 405.3,
+   "x": 403,
    "y": 276,
-   "width": 469.3,
+   "width": 474,
    "height": 352
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "reencuentro-sinfoto 360": {
   "h1": {
@@ -1579,23 +1579,23 @@
    "height": 211.7
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "rosa-antiguo 1280": {
   "h1": {
    "x": 413,
-   "y": 545.4,
+   "y": 548,
    "width": 372.5,
    "height": 96.9
   },
   "photo": {
    "x": 413,
    "y": 276,
-   "width": 253.4,
-   "height": 253.4
+   "width": 256,
+   "height": 256
   },
   "aligned": false,
-  "pictureDisplay": "block"
+  "pictureDisplay": "contents"
  },
  "rosa-antiguo-sinfoto 360": {
   "h1": {

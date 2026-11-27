@@ -61,6 +61,32 @@ plantillas-v2-portadas-existentes.spec.ts -> 120 passed
 ```
 Primera corrida (antes de afirmar `centred` en Black tie): 12 fallos de Black tie en la prueba nueva, porque el documento de Black tie también centra el texto; la aserción se corrigió (foto de ancho completo) y la corrida final está en verde.
 
+## Ronda 3 · actualización con la oficial y corrector de la nube · 2026-11-27
+Se fusionó (merge, sin rebase ni push forzado) `chore/deploy-contabo-coolify` en `eb392573` (incluye FE #146 y #157) sin conflictos.
+
+### La base de portadas estaba obsoleta: la oficial ya movió 34 de 120 medidas
+FE #146 (PL-OF-1) hace `display: contents` el `<picture>` de **toda** portada (`styles.css`, `.cdesign-cover > picture`). Con esa regla, 34 de las 120 medidas de `e2e/fixtures/portadas-base.json` (grabado en `58ddce68`) ya no coinciden en la oficial (por ejemplo `arena-terracota 360`: foto de x 33 a x 74,2), y el `pictureDisplay` de las 60 con foto pasa de `block` a `contents`. Con la base vieja, `plantillas-v2-portadas-existentes.spec.ts` daba **60 failed, 60 passed** sobre el merge: el cambio no era de este PR. La base se volvió a grabar en la oficial (`eb392573`, build propia, `COVER_GEOMETRY_RECORD`): 120 passed en la oficial y 120 passed en esta rama. La regla de las seis plantillas (`data-align`) sigue ganando a `picture { display: contents }` solo en ellas (especificidad), y las 30 existentes no reciben el atributo.
+
+### Comandos y salidas (merge `28ba6234` + este commit; Linux, Chrome `/usr/bin/google-chrome`, `next build` + `next start` sobre `fixture-api.mjs`; NO backend real; yarn 4.10.3)
+```
+yarn install --mode=skip-build -> OK
+yarn typecheck (turbo, 19 tareas) -> 19 successful
+yarn test (turbo, 33 tareas) -> 33 successful (celebration-theme: 18 archivos, 3282 tests; seo-web: 25 archivos, 210 tests)
+npx eslint packages/celebration-theme apps/seo-web/e2e --max-warnings 0 -> rc=0
+node scripts/validate-harness.mjs -> Harness frontend: 28 carriles, 61 skills y recarga por prompt válidos.
+next build (apps/seo-web) -> OK
+playwright test plantillas-v2 (v2, bodas, fiestas, infantil-ritos, sobrio, extra, portada de FE #146, portadas-existentes), sin reintentos -> 1287 passed (13.8m)
+  (los 4 fallos de 360x800 de la ronda 2 ya no existen: los arregló FE #146)
+```
+Contraste sobre píxeles pintados (texto oculto con `-webkit-text-fill-color: transparent`, captura recorriendo la página, peor píxel bajo la caja de cada texto no tapado por el dock; 72 casos = 6 × con/sin foto × claro/oscuro × 360/768/1280; 0 casos bajo 4,5): peor texto por plantilla Rumbo 6,04 · Mesa 5,86 · Disco 6,40 · Black tie 5,78 (oscuro) · Solitario 6,32 · Rosa 6,03. Se miden entre 89 % y 100 % de las cajas de texto por caso; las demás quedan bajo el dock en el recorrido y se miden aparte en `plantillas-v2-extra.spec.ts` (AA en el DOM).
+Negativos: `/c/fixture-v2-no-existe` -> 404; `/c/fixture-v2-pedida-rosa/no-existe` -> 404; `/c/fixture-v2-pedida-rosa/regalos` -> 200. Mutación: quitar `&& PHOTO_ON_TEXT_AXIS.has(context.theme.id)` de `render.tsx` hace fallar `extra.test.tsx` («arena-terracota: not to contain data-align»); se restauró (`git checkout`).
+
+### NO probado
+Backend real, Docker y PostgreSQL (la web leyó el fixture); `contracts:validate`; gitleaks (no instalado); macOS, Safari, Firefox, iOS/Android, lector de pantalla; texto sobre foto real (N/A: foto arriba y texto debajo).
+
+### PL-EXTRA-3 (sin tocar; registrado en `bugs/catalogo`)
+Reproducido en este merge: el h1 de `pedida-rosa` mide 47,99 px a 360, 56 px a 768 y 56 px a 1280, aunque el lienzo de escritorio del documento pide `size: 104`. `Canvas` (`render.tsx:266`) toma `phone.get(id) ?? wide.get(id)`. Arreglarlo cambia la portada de las 36 plantillas, así que no entra en este PR.
+
 ## Líneas base macOS que cambian
 Ninguna. Capturas nuevas solo en `docs/progress/evidence/plantillas-extra/` (360/768/1280, claro y oscuro, con y sin foto) y `contraste.md` / `contrast.jsonl`.
 
