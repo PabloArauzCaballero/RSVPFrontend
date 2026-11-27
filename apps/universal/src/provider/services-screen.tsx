@@ -51,13 +51,13 @@ function OfferRow({ provider, listing, cities, publishing, duplicating, onPublis
       <View style={[styles.row, { justifyContent: "space-between", alignItems: "center", flexWrap: "nowrap" }]}>
         <Text accessibilityRole="header" style={[styles.subtitle, { flex: 1 }]}>{listing.title}</Text>
         <View testID={`listing-state-${listing.id}`}><Chip tone={hidden ? "no" : listing.published ? "yes" : "wait"}>{hidden ? t("portal.services.hiddenChip") : listing.published ? t("portal.services.published") : t("portal.services.draft")}</Chip></View>
-        {sheet ? <View testID={`listing-completeness-${listing.id}`}><CompletenessChip state={listing.completeness ?? null} /></View> : null}
-        {sheet && noSheet ? null : sheet ? (
+        {sheet && !hidden ? <View testID={`listing-completeness-${listing.id}`}><CompletenessChip state={listing.completeness ?? null} /></View> : null}
+        {hidden || (sheet && noSheet) ? null : sheet ? (
           <OverflowMenu label={t("portal.product.actions.rowMenu", { title: listing.title })} items={[
             { key: "duplicate", label: duplicating ? t("portal.product.actions.duplicating") : t("portal.product.actions.duplicate"), disabled: duplicating || listing.completeness === "HIDDEN_BY_ADMIN", onPress: onDuplicate },
             ...(listing.published ? [] : [{ key: "publish", label: publishing ? t("portal.product.actions.publishing") : t("portal.product.actions.publish"), disabled: publishBlocked || publishing, onPress: onPublish }])
           ]} />
-        ) : listing.published || hidden ? null : <OverflowMenu label={t("portal.services.rowMenu", { title: listing.title })} items={[{ key: "publish", label: publishing ? t("portal.services.publishing") : t("portal.services.publish"), disabled: publishBlocked || publishing, onPress: onPublish }]} />}
+        ) : listing.published ? null : <OverflowMenu label={t("portal.services.rowMenu", { title: listing.title })} items={[{ key: "publish", label: publishing ? t("portal.services.publishing") : t("portal.services.publish"), disabled: publishBlocked || publishing, onPress: onPublish }]} />}
       </View>
       <View style={{ flexDirection: "row", alignItems: "baseline", flexWrap: "wrap", columnGap: spacing[3] }}>
         {listing.priceFromMinor !== undefined ? <Text style={{ color: palette.text, fontSize: 26, lineHeight: 30, fontWeight: "500", letterSpacing: -0.6, fontFamily: fonts.display, fontVariant: ["tabular-nums"] }}>{formatMinor(listing.priceFromMinor, provider.currency, locale)}</Text> : null}
@@ -67,10 +67,10 @@ function OfferRow({ provider, listing, cities, publishing, duplicating, onPublis
         {terms ? <><Text style={styles.muted}>{terms}</Text>{f?.conditions ? <Text style={styles.body}>{f.conditions}</Text> : null}</> : listing.published ? <Notice kind="error">{t("portal.delivery.missing")}</Notice> : null}
       </View>
       {hidden ? <Notice kind="error"><Text style={styles.body} testID={`listing-hidden-${listing.id}`}>{t("portal.services.hidden.CATEGORY_TYPE_MISMATCH")}</Text></Notice> : null}
-      {!sheet && !listing.published && !listing.fulfillment && !hidden ? <Text style={styles.muted} testID={`publish-blocked-${listing.id}`}>{t("portal.services.needsTerms")}</Text> : null}
-      {sheet && missing.length ? <Text style={styles.muted} testID={`listing-missing-${listing.id}`}>{missingShort(missing, t)}</Text> : null}
-      {sheet && (noSheet || listing.completeness === "INCOMPLETE") ? <Text style={styles.muted} testID={`listing-not-gift-${listing.id}`}>{t("portal.product.notGift")}</Text> : null}
-      {sheet && !noSheet ? (
+      {!sheet && !hidden && !listing.published && !listing.fulfillment ? <Text style={styles.muted} testID={`publish-blocked-${listing.id}`}>{t("portal.services.needsTerms")}</Text> : null}
+      {sheet && !hidden && missing.length ? <Text style={styles.muted} testID={`listing-missing-${listing.id}`}>{missingShort(missing, t)}</Text> : null}
+      {sheet && !hidden && (noSheet || listing.completeness === "INCOMPLETE") ? <Text style={styles.muted} testID={`listing-not-gift-${listing.id}`}>{t("portal.product.notGift")}</Text> : null}
+      {sheet && !hidden && !noSheet ? (
         <View style={{ alignSelf: "flex-start" }}>
           <ActionButton variant="secondary" icon="arrow" label={t("portal.product.actions.edit")} onPress={() => router.push(productHref(listing.id, missing[0] ? MISSING_STEP[missing[0]] : "summary") as Href)} testID={`listing-edit-${listing.id}`} />
         </View>

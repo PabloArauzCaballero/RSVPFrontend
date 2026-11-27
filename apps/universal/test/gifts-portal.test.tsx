@@ -528,6 +528,17 @@ describe("REQ-F28-03/05 · services with delivery conditions", () => {
     expect((await screen.findByTestId("listing-hidden-h1")).textContent).toMatch(/Hidden: the type does not match the category/);
     expect(screen.getByTestId("listing-state-h1").textContent).toBe("Hidden");
   });
+  it("R1 + R2 · a product with a sheet that the platform hid shows only «Oculto» and why: no completeness chip, menu or «Editar»", async () => {
+    await withProvider();
+    const items = [{ id: "h3", providerId: PID, type: "PRODUCT", category: "PASTRY", city: "la-paz", title: "Oculta con ficha", published: false, version: 2, completeness: "INCOMPLETE", missing: ["PHOTO"], hiddenReason: "CATEGORY_TYPE_MISMATCH" }];
+    const { client } = fakeClient(providerHandlers({ [`GET /providers/${PID}/listings`]: () => ({ items }) }));
+    renderApp(<ProductsScreen />, client, HOST);
+    const row = await screen.findByTestId("listing-h3");
+    expect(screen.getByTestId("listing-state-h3").textContent).toBe("Oculto");
+    expect(screen.getByTestId("listing-hidden-h3")).toBeTruthy();
+    expect(within(row).queryByRole("button", { name: /Más opciones/ })).toBeNull();
+    for (const id of ["listing-completeness-h3", "listing-edit-h3", "listing-missing-h3", "listing-not-gift-h3", "publish-blocked-h3"]) expect(screen.queryByTestId(id)).toBeNull();
+  });
   it("lists the categories of each offer type; a product goes to the step-by-step sheet (R2: no image link, 422 IMAGE_URL_NOT_ALLOWED)", async () => {
     await withProvider();
     const { client, calls } = fakeClient(providerHandlers({ [`GET /providers/${PID}/listings`]: () => ({ items: [] }) }));

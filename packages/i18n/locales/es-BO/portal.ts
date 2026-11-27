@@ -111,7 +111,7 @@ export const portalEsBO = {
       status: { PENDING_UPLOAD: "Subiendo", QUEUED: "En cola", PROCESSING: "Procesando", READY: "Lista", REJECTED: "Rechazada", DELETING: "Quitando" },
       stage: { requesting: "Preparando la subida…", uploading: "Subiendo la foto…", processing: "Procesando la foto…" }, ready: "Foto lista.",
       reject: { UNREADABLE: "No pudimos leer la imagen. Prueba con otro archivo.", HEIC_UNSUPPORTED: "Las fotos HEIC no se pueden usar. Expórtala como JPG y súbela de nuevo.", TOO_MANY_PIXELS: "La foto es demasiado grande (más de 60 megapíxeles).", PROCESSING_FAILED: "No pudimos procesar la foto. Súbela de nuevo." },
-      openSettings: "Abrir ajustes",
+      openSettings: "Abrir ajustes", openSettingsFailed: "No pudimos abrir los ajustes. Ábrelos tú desde tu dispositivo y permite el acceso a tus fotos.",
       permissionDenied: "No tenemos permiso para ver tus fotos. Actívalo en los ajustes de tu dispositivo, en los permisos de esta app, y vuelve a intentarlo.",
       typeError: "Solo JPG, PNG o WebP. Si tu foto es HEIC, expórtala como JPG.", sizeError: "Cada foto puede pesar hasta 5 MB.", putFailed: "No se pudo enviar la foto. Revisa tu conexión e inténtalo de nuevo.", timeout: "La foto sigue procesándose. Aparecerá aquí apenas esté lista.", limit: "Ya tienes 5 fotos. Quita una para agregar otra.",
       shows: "Versión de la foto", showsHelp: "Si la foto muestra solo una versión, elígela; si no, déjala en «Todo el producto».", wholeProduct: "Todo el producto", variantLimit: "«{{variant}}» ya tiene {{max}} fotos. Elige otra versión o quita una de sus fotos."
