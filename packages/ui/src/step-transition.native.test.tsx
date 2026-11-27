@@ -1,10 +1,15 @@
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import { StrictMode } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.spyOn(console, 'warn').mockImplementation(() => undefined); // the expected `useNativeDriver` fallback notice of react-native-web
+/** Only the expected `useNativeDriver` fallback notice of react-native-web is silenced; any other warning still prints. */
+const realWarn = console.warn.bind(console);
+beforeEach(() => {
+  vi.spyOn(console, 'warn').mockImplementation((...args: unknown[]) => { if (!String(args[0]).includes('`useNativeDriver` is not supported')) realWarn(...args); });
+});
 
-afterEach(() => { cleanup(); vi.resetModules(); vi.doUnmock('react-native'); vi.doUnmock('./enter'); vi.doUnmock('./motion'); });
+afterEach(() => {
+  vi.restoreAllMocks(); cleanup(); vi.resetModules(); vi.doUnmock('react-native'); vi.doUnmock('./enter'); vi.doUnmock('./motion'); });
 
 type Listener = (reduced: boolean) => void;
 
@@ -54,10 +59,8 @@ describe('native StepTransition (real enter.native / motion.native, JS driver)',
     view.rerender(step(2, StepTransition));
     view.rerender(step(3, StepTransition));
     expect(opacityOf('body')).toBe(0);
-    await wait(120);
-    const mid = opacityOf('body');
-    expect(mid).toBeGreaterThan(0);
-    expect(mid).toBeLessThan(1);
+    // Not tied to a wall-clock instant: wait until the animation is observed strictly between 0 and 1.
+    await waitFor(() => { const mid = opacityOf('body'); expect(mid).toBeGreaterThan(0); expect(mid).toBeLessThan(1); }, { timeout: 2000, interval: 5 });
     await waitFor(() => expect(opacityOf('body')).toBe(1), { timeout: 2000 });
     expect(screen.getByText('paso 3 0')).toBeTruthy();
     expect(settled('body')).toBe(true);
