@@ -46,7 +46,8 @@ export function ReplacementsPanel({ celebrationId, item, eventType, content, add
   useEffect(() => { if (gone && !reported.current) { reported.current = true; onGone(); } }, [gone, onGone]);
 
   // The mutation is shared by every panel of the screen: an error left by another row is not this panel's.
-  useEffect(() => { if (add.isError) add.reset(); // eslint-disable-line react-hooks/exhaustive-deps -- once, when the panel opens
+  // Runs once, when the panel opens.
+  useEffect(() => { if (add.isError) add.reset();
   }, []);
 
   const swap = (replacement: GiftReplacement): void => {

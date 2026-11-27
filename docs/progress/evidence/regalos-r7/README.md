@@ -80,3 +80,23 @@ Ninguna.
 2. **Retirar el regalo apagado.** Tras «Cambiar por este», el regalo no disponible sigue en la lista del anfitrión (no hay operación de borrar/rechazar para un regalo del catálogo). ¿Se agrega al contrato una operación de reemplazo atómico («cambiar» = alta + retiro) o se acepta que queden ambos?
 3. **Ciudad de los reemplazos.** El contrato de la celebración no tiene campo ciudad; la app la deduce de `content` (`citySlug`, `city`, `venueCity`) como el asistente de R4. Sin ciudad, los reemplazos no se ordenan por entrega.
 4. **Avisos (correo/push) y «precio actualizado» al invitado.** R7 FE no tiene pantalla en el plan para los avisos de Notification ni para un aviso de «subió de precio»: solo se consume `currentPrice` (R5). Si se quiere un aviso en pantalla, falta decidir dónde.
+
+## Ronda 2 (revisión independiente sobre c54cb6cd)
+
+Cambios: el cambio con un toque tiene una sola rama de error (si pudo aplicarse —sin respuesta o 5xx— dice «No sabemos si el cambio se aplicó…» y el reintento repite la MISMA `Idempotency-Key`; 422 conocido, su texto; otro, `GiftErrorNotice`); la mutación del lote vive en `GiftsBody` (la clave por cuerpo sobrevive al cierre y reapertura del panel) y el panel limpia un error ajeno al abrirse; tras el cambio el foco vuelve a «Ver reemplazos» de la fila; `ActionButton` acepta `accessibilityLabel` opcional (en `apps/universal/src/host/ui.tsx`, no en `packages/ui`) y los botones «Cambiar por este: {nuevo} (reemplaza {viejo})» tienen nombre propio que empieza con el texto visible; «Ver reemplazos de la misma idea» ya no dice «3»; `.gift-row.gift-row--unavailable` conserva el padding; se quitó `gifts.guest.unavailable.label` (sin uso); la prueba de reserva propia comprueba el botón de cancelar. Pruebas nuevas: pérdida de red en el cambio con la misma clave en el reintento y una sola alerta, nombres accesibles, foco con `document.activeElement`.
+Sin cambios (decisión de Pablo): el BE oculta los UNAVAILABLE al invitado.
+
+### gitleaks (binario oficial 8.28.0, descargado de GitHub releases a /var/tmp)
+
+`gitleaks git --log-opts="1a419775..HEAD" --redact -v .` → `6 commits scanned. scanned ~194215 bytes (194.21 KB) in 191ms. no leaks found`.
+
+### Suites de la ronda 2
+
+| Suite | Resultado |
+|---|---|
+| `corepack yarn lint` | exit 0, `Tasks: 19 successful, 19 total` |
+| `corepack yarn typecheck` | exit 0, `Tasks: 19 successful, 19 total` |
+| `corepack yarn test` | exit 0, `Tasks: 33 successful, 33 total`; universal `66 passed (66)` / `864 passed (864)`; seo-web `28` / `254`; query-hooks `20` / `238`; i18n `3` / `15` |
+| `corepack yarn workspace @rsvp/seo-web build` | exit 0 |
+| `corepack yarn workspace @rsvp/contracts check:generated` | exit 0, `verified 8 contracts at …@4977789e7a7a` |
+| `corepack yarn harness:validate` | exit 0 |
