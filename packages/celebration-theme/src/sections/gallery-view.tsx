@@ -83,6 +83,13 @@ export function GalleryView({ photos, labels }: { readonly photos: readonly Gall
     event.preventDefault();
     move(offset);
   };
+  const onDialogClick = (event: MouseEvent<HTMLDialogElement>): void => {
+    if (event.target !== event.currentTarget || event.detail === 0) return;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) {
+      event.currentTarget.close();
+    }
+  };
   const onClose = (): void => {
     setSelected(null);
     opener.current?.focus({ preventScroll: true });
@@ -116,7 +123,7 @@ export function GalleryView({ photos, labels }: { readonly photos: readonly Gall
         ) : null}
       </div>
       {photo ? (
-        <dialog ref={dialog} className="celebration-gallery-dialog rsvp-protected" aria-label={labels.title} onKeyDown={onKeyDown} onClose={onClose}>
+        <dialog ref={dialog} className="celebration-gallery-dialog rsvp-protected" aria-label={labels.title} onClick={onDialogClick} onKeyDown={onKeyDown} onClose={onClose}>
           <div className="celebration-gallery-toolbar">
             <span role="status">{photo.label}</span>
             <button ref={closeButton} type="button" onClick={() => dialog.current?.close()}><ActionIcon name="close" size={18} />{labels.close}</button>

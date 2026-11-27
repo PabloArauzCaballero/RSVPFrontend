@@ -5,6 +5,8 @@ test("the invitation carousel and viewer browse photos in place", async ({ page 
   const track = page.locator(".celebration-gallery");
   const photos = track.getByRole("link");
   await expect(photos).toHaveCount(2);
+  const [trackBox, firstBox] = await Promise.all([track.boundingBox(), photos.nth(0).boundingBox()]);
+  expect(trackBox && firstBox && Math.abs(firstBox.width - trackBox.width)).toBeLessThanOrEqual(2);
   const controls = page.locator(".celebration-gallery-navigation");
   const next = controls.getByRole("button", { name: "Siguiente" });
   const previous = controls.getByRole("button", { name: "Anterior" });
@@ -43,6 +45,12 @@ test("the invitation carousel and viewer browse photos in place", async ({ page 
 
   await second.click();
   await close.click();
+  await expect(viewer).toHaveCount(0);
+  await expect(second).toBeFocused();
+
+  await second.click();
+  await expect(viewer).toBeVisible();
+  await page.mouse.click(2, 2);
   await expect(viewer).toHaveCount(0);
   await expect(second).toBeFocused();
   expect(page.url()).toBe(invitation);
