@@ -37,11 +37,12 @@ export function BalanceBar({ report, guests, onSeeCheap }: {
   const locale = useLocale();
   const widest = Math.max(1, ...BALANCE_BANDS.map((band) => report.units[band.id]));
   const have = report.units.b1;
+  const guestsText = t("gifts.host.wizard.summary.balance.guestsCount", { count: guests.count });
   const sentence = guests.state === "loading" ? t("gifts.host.wizard.summary.balance.loadingGuests")
     : guests.state === "error" ? t("gifts.host.wizard.summary.balance.guestsError")
     : guests.count === 0 ? t("gifts.host.wizard.summary.balance.noGuests")
     : report.needsAffordable
-      ? (have === 0 ? t("gifts.host.wizard.summary.balance.needAffordableNone", { max: formatBs(BALANCE_BANDS[0].maxMinor, locale), guests: guests.count }) : t("gifts.host.wizard.summary.balance.needAffordable", { count: have, have, max: formatBs(BALANCE_BANDS[0].maxMinor, locale), guests: guests.count }))
+      ? (have === 0 ? t("gifts.host.wizard.summary.balance.needAffordableNone", { max: formatBs(BALANCE_BANDS[0].maxMinor, locale), guests: guestsText }) : t("gifts.host.wizard.summary.balance.needAffordable", { count: have, have, max: formatBs(BALANCE_BANDS[0].maxMinor, locale), guests: guestsText }))
       : t("gifts.host.wizard.summary.balance.ok");
   return (
     <View testID="wizard-balance" style={{ gap: spacing[3] }}>

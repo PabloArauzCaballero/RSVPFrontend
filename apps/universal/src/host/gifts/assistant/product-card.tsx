@@ -42,16 +42,17 @@ export function ProductTile({ product, selected, showDelivery, problem, onChoose
   const shipping = product.shippingCostMinor === 0 ? t("gifts.host.wizard.products.shippingFree") : t("gifts.host.wizard.products.shipping", { price: formatBs(product.shippingCostMinor, locale) });
   const delivery = showDelivery ? (product.deliversToCity ? t("gifts.host.wizard.products.deliveryHere") : t("gifts.host.wizard.products.deliveryOther")) : null;
   const facts = [delivery, leadLabel(t, product.leadTimeDays), shipping].filter((fact): fact is string => fact !== null);
+  // A sold-out product is set apart by the muted text token (it passes AA on the card, see design-tokens/contrast.test) and by its «Agotado» chip, not by fading the whole tile with opacity, which would pull the text below AA.
   const label = `${t("gifts.host.wizard.products.choose", { title: product.title, price })}. ${t(`gifts.host.wizard.products.stock.${product.stock}`)}. ${facts.join(". ")}`;
   return (
     <View testID={`product-${product.listingId}`} style={{ gap: spacing[2] }}>
       <Pressable role="radio" accessibilityRole="radio" aria-checked={selected} aria-disabled={!orderable} disabled={!orderable} accessibilityLabel={label} onPress={onChoose} testID={`choose-${product.listingId}`}
-        style={[styles.option, { minHeight: TOUCH + 4, opacity: orderable ? 1 : 0.55 }, selected && styles.optionSelected, problem ? styles.inputError : null]}>
+        style={[styles.option, { minHeight: TOUCH + 4 }, selected && styles.optionSelected, problem ? styles.inputError : null]}>
         <View style={{ flexDirection: "row", gap: spacing[3], alignItems: "flex-start" }}>
           <ProductPhoto product={product} />
           <View style={{ flex: 1, minWidth: 0, gap: spacing[1] }}>
-            <Text style={styles.itemTitle} numberOfLines={2}>{product.title}</Text>
-            <Text style={{ color: palette.text, fontSize: 20, lineHeight: 24, fontWeight: "500", fontFamily: fonts.display, fontVariant: ["tabular-nums"] }}>{price}</Text>
+            <Text style={[styles.itemTitle, orderable ? null : { color: palette.textMuted }]} numberOfLines={2}>{product.title}</Text>
+            <Text style={{ color: orderable ? palette.text : palette.textMuted, fontSize: 20, lineHeight: 24, fontWeight: "500", fontFamily: fonts.display, fontVariant: ["tabular-nums"] }}>{price}</Text>
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing[2], alignItems: "center" }}>
               <Chip tone={orderable ? (product.stock === "AVAILABLE" ? "yes" : "maybe") : "no"}>{t(`gifts.host.wizard.products.stock.${product.stock}`)}</Chip>
               {product.featured ? <Chip tone="wait">{t("gifts.host.wizard.products.sponsored")}</Chip> : null}

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { ApiError, createApiClient } from "@rsvp/api-client";
 import {
-  AFFORDABLE_UNITS_PER_GUESTS, assistantApi, balanceOf, bandOf, batchFailures, createBatchKeys, defaultVariant, ideaOverlapsBand, recommendationPath, suggestGroupGift, toBatchEntry, unitPriceOf
+  AFFORDABLE_UNITS_PER_GUESTS, assistantApi, balanceOf, bandOf, batchFailures, createBatchKeys, defaultVariant, ideaOverlapsBand, mayHaveBeenApplied, recommendationPath, suggestGroupGift, toBatchEntry, unitPriceOf
 } from "../src/index.js";
 
 interface Call { readonly method: string; readonly path: string; readonly headers: Headers; readonly body: unknown }
@@ -94,6 +94,19 @@ describe("R4 · Idempotency-Key", () => {
     expect(keyFor({ items: [entry] })).toBe("k1");
     expect(keyFor({ items: [{ ...entry, quantity: 2 }] })).toBe("k2");
     expect(keyFor({ items: [entry], deliveryNotes: "Portón verde" })).toBe("k3");
+  });
+  it("`reset` forgets the key: an identical body after a success is a new request", () => {
+    let n = 0;
+    const keyFor = createBatchKeys(() => `k${++n}`);
+    expect(keyFor({ items: [entry] })).toBe("k1");
+    keyFor.reset();
+    expect(keyFor({ items: [entry] })).toBe("k2");
+    expect(keyFor({ items: [entry] })).toBe("k2");
+  });
+  it("only a missing answer or a 5xx may have been applied; a 4xx wrote nothing", () => {
+    const failure = (status: number) => new ApiError(status, "test", { title: "x", status });
+    expect([new TypeError("fetch failed"), failure(500), failure(503), failure(504)].map(mayHaveBeenApplied)).toEqual([true, true, true, true]);
+    expect([failure(401), failure(403), failure(404), failure(409), failure(422), failure(428), failure(429)].map(mayHaveBeenApplied)).toEqual([false, false, false, false, false, false, false]);
   });
   it("addBatch sends it as a header and one POST on the normal path", async () => {
     const { client, calls } = harness({ status: 201, body: { items: [], deliveryNotes: null } });

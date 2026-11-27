@@ -119,25 +119,31 @@ export function batchFailures(error: unknown): readonly BatchFailure[] {
   if (Array.isArray(problem?.failures)) for (const raw of problem.failures) { const failure = asFailure(raw); if (failure && !found.has(failure.itemIndex)) found.set(failure.itemIndex, failure); }
   return [...found.values()].sort((a, b) => a.itemIndex - b.itemIndex);
 }
-/** Codes of the batch that are about one entry; the rest of the codes are about the request. */
-export const isRequestLevelCode = (code: string | undefined): boolean => code === "INVALID_DELIVERY_NOTES" || code === "VALIDATION_FAILED";
 export const isIdempotencyRequired = (error: unknown): boolean => error instanceof ApiError && error.status === 428 && problemCode(error) === "IDEMPOTENCY_KEY_REQUIRED";
 export const isIdempotencyReused = (error: unknown): boolean => error instanceof ApiError && error.status === 422 && problemCode(error) === "IDEMPOTENCY_KEY_REUSED";
 /** No answer at all (offline, DNS, aborted): the write may or may not have arrived, so the retry keeps the same key. */
 export const isNoAnswer = (error: unknown): boolean => !(error instanceof ApiError);
+/**
+ * The write MAY have been applied although the caller saw a failure: no answer at all, or a 5xx (a 504 from the gateway after the service committed).
+ * Until a retry answers, the request must be repeated byte for byte with the same key; a definitive 4xx means nothing was written.
+ */
+export const mayHaveBeenApplied = (error: unknown): boolean => isNoAnswer(error) || (error instanceof ApiError && error.status >= 500);
 
 /**
  * One Idempotency-Key per distinct request body: a retry after a lost answer or a 5xx replays the same key (the server answers the stored
- * result), and a changed selection gets a new one (the same key with another body is 422 IDEMPOTENCY_KEY_REUSED).
+ * result), and a changed selection gets a new one (the same key with another body is 422 IDEMPOTENCY_KEY_REUSED). `reset` forgets the key once the
+ * batch succeeded, so an identical body sent later is a NEW request and not a replay that creates nothing.
  */
-export function createBatchKeys(newKey: () => string): (body: GiftBatchRequest) => string {
+export type BatchKeys = ((body: GiftBatchRequest) => string) & { readonly reset: () => void };
+export function createBatchKeys(newKey: () => string): BatchKeys {
   let signature = "";
   let key = "";
-  return (body) => {
+  const keyFor = (body: GiftBatchRequest): string => {
     const next = JSON.stringify(body);
     if (next !== signature || key === "") { signature = next; key = newKey(); }
     return key;
   };
+  return Object.assign(keyFor, { reset: (): void => { signature = ""; key = ""; } });
 }
 
 /** gift-list 1.17.0 calls of the assistant. The Gateway serves Gift List under `/gifts`. */

@@ -6,10 +6,10 @@ export const giftsWizardEnUS: DeepStrings<typeof giftsWizardEsBO> = {
   stepName: { ideas: "Ideas", products: "Products", summary: "Summary" },
   ideas: {
     title: "Pick gift ideas", intro: "Tick the ideas you want on your list. Then you choose a product from a verified provider for each one.",
-    recommended: "Recommended for your {{event}} in {{city}}", recommendedNoCity: "Recommended for your {{event}}",
+    recommended: "Recommended for your celebration ({{event}}) in {{city}}", recommendedNoCity: "Recommended for your celebration ({{event}})",
     cityLabel: "Delivery city", cityAny: "All cities", cityHelp: "We show first the products that deliver to that city.",
     count_one: "{{count}} product · {{range}}", count_other: "{{count}} products · {{range}}", range: "{{min}} – {{max}}", rangeSingle: "{{price}}",
-    photo: "Photo of {{title}}", alreadyListed: "Already on your list", choose: "Pick the idea {{name}}", chooseListed: "{{name}}: already on your list",
+    alreadyListed: "Already on your list", choose: "Pick the idea {{name}}", chooseListed: "{{name}}: already on your list",
     selected_one: "{{count}} idea picked", selected_other: "{{count}} ideas picked", continue: "Choose products", needOne: "Tick at least one idea to continue.",
     emptyTitle: "No products for your celebration yet", emptyBody: "When a verified provider publishes complete products, their ideas will show up here. Meanwhile you can add a gift from a store.", emptyStore: "Add from a store",
     allListed: "You already have a gift for every available idea. You can see them on your list.",
@@ -26,8 +26,8 @@ export const giftsWizardEnUS: DeepStrings<typeof giftsWizardEsBO> = {
     version: "Version", versionOption: "{{label}} · {{price}}", versionOut: "{{label}} · sold out",
     quantity: "Quantity", quantityLess: "Less", quantityMore: "More", quantityValue: "Quantity: {{count}}", quantityHelp: "Between 1 and {{max}}.",
     group: "Can be given by several people", groupHelp: "Your guests can chip in to give it. We suggest turning it on above {{price}}.", groupSuggested: "Suggested by the price",
-    emptyIdea: "This idea no longer has products in stock. Untick it or pick another.", missing: "Choose a product for {{idea}} or remove the idea.", review: "Review",
-    error: "We could not load the products.", currencyNote: "Provider prices are in bolivianos (Bs)."
+    emptyIdea: "This idea no longer has products in stock. Untick it or pick another.", missing: "Choose a product for {{idea}} or remove the idea.",
+    currencyNote: "Provider prices are in bolivianos (Bs)."
   },
   summary: {
     title: "Review your list", intro: "These gifts are added together: if one fails, none is added.",
@@ -37,11 +37,12 @@ export const giftsWizardEnUS: DeepStrings<typeof giftsWizardEsBO> = {
       title: "Price balance", intro: "This is how the gifts on your list, the ones you already have and the new ones, are spread by price.",
       b1: "Up to {{max}}", b2: "From {{min}} to {{max}}", b3: "From {{min}} to {{max}}", b4: "Over {{min}}",
       units_one: "{{count}} gift", units_other: "{{count}} gifts", guests_one: "{{count}} confirmed or pending guest", guests_other: "{{count}} confirmed or pending guests",
-      needAffordable_one: "You have {{have}} gift up to {{max}} and {{guests}} guests: add affordable ideas.", needAffordable_other: "You have {{have}} gifts up to {{max}} and {{guests}} guests: add affordable ideas.",
-      needAffordableNone: "You have no gifts up to {{max}} and {{guests}} guests: add affordable ideas.",
+      guestsCount_one: "{{count}} guest", guestsCount_other: "{{count}} guests",
+      needAffordable_one: "You have {{have}} gift up to {{max}} and {{guests}}: add affordable ideas.", needAffordable_other: "You have {{have}} gifts up to {{max}} and {{guests}}: add affordable ideas.",
+      needAffordableNone: "You have no gifts up to {{max}} and {{guests}}: add affordable ideas.",
       seeCheap: "See ideas up to {{max}}", ok: "Your list has gifts for different budgets.", noGuests: "Once you invite people, we compare your list with them.", loadingGuests: "Working it out with your guests…", guestsError: "We could not read your guests; the balance is shown without comparing."
     },
-    delivery: { label: "Delivery notes (optional)", help: "For example: “Deliver to the front desk, in the afternoon”. People who choose to buy see it.", warning: "Do not write the exact address.", counter: "{{count}} of {{max}} characters", tooLong_one: "Remove {{count}} character: the limit is {{max}}.", tooLong_other: "Remove {{count}} characters: the limit is {{max}}." },
+    delivery: { label: "Delivery notes (optional)", help: "For example: “Deliver to the front desk, in the afternoon”. Your guests and the provider they message will see it.", warning: "Do not write the exact address.", counter: "{{count}} of {{max}} characters", tooLong_one: "Remove {{count}} character: the limit is {{max}}.", tooLong_other: "Remove {{count}} characters: the limit is {{max}}." },
     submit_one: "Add {{count}} gift", submit_other: "Add {{count}} gifts", submitting: "Adding…",
     doneTitle_one: "Done: we added {{count}} gift", doneTitle_other: "Done: we added {{count}} gifts", doneBody: "They are on your list and your guests will see them.", seeList: "See my list", addMore: "Add more"
   },
@@ -55,12 +56,12 @@ export const giftsWizardEnUS: DeepStrings<typeof giftsWizardEsBO> = {
       INVALID_VARIANT: "That version no longer exists. Pick another one.",
       DUPLICATE_GIFT_IDEA: "That idea already has a gift on your list. Remove one of the two."
     },
-    entryFallback: "We could not add this gift. Pick another one.", entryTitle: "{{idea}}: {{message}}",
+    entryFallback: "We could not add this gift. Pick another one.",
     failedTitle_one: "No gift was added: {{count}} needs a change", failedTitle_other: "No gift was added: {{count}} need a change",
     failedHelp: "Fix what is marked and tap “Add” again. The rest is kept.", fix: "Fix",
     invalidNotes: "Check the delivery notes: they allow up to {{max}} characters and must not carry the exact address.",
     retryHint: "You can tap “Add” again: nothing is added twice.", offline: "No connection right now. Your selection is still here; retry when the internet is back.",
-    listChanged: "Your list changed while you were choosing. Start again from the ideas."
+    listUnreadable: "We could not read your gift list. Without it we cannot tell what you already added.", listRetry: "Try again"
   },
   list: { quantity: "Quantity: {{count}}", group: "Can be given by several people", delivery: "Delivery notes: {{notes}}" }
 };

@@ -58,16 +58,26 @@ describe("R4 · step 1 · ideas recommended for the event type and the city", ()
     const { calls } = await open();
     const read = calls.find((call) => call.path === "/providers/gift-ideas/recommendations");
     expect(read?.url).toBe("/providers/gift-ideas/recommendations?eventType=WEDDING&locale=es-BO");
-    expect(screen.getByTestId("wizard-headline").textContent).toBe("Recomendado para tu boda");
+    expect(screen.getByTestId("wizard-headline").textContent).toBe("Recomendado para tu celebración (Boda)");
     expect(screen.getByTestId("idea-CAKE").getAttribute("aria-label")).toMatch(/^Elegir la idea Torta o repostería\. 2 productos · Bs\s?150 – Bs\s?180$/);
     expect(calls.some((call) => call.path === "/providers" || call.path === "/listings")).toBe(false);
+    // The geo catalog is read first: the recommendations are asked ONCE, not once without the city and again with it.
+    expect(calls.filter((call) => call.path === "/providers/gift-ideas/recommendations")).toHaveLength(1);
+  });
+
+  it("the event type name is shown as the contract gives it (never lowercased) and a geo failure neither blocks the ideas nor asks twice", async () => {
+    const { client, calls } = fakeClient(handlers({ "GET /providers/geo": () => new HttpFailure(503) }));
+    renderApp(<AddGiftScreen celebrationId="c-1" initial="catalog" onNavigate={navigate} />, client);
+    await screen.findByTestId("idea-CAKE", {}, { timeout: SLOW });
+    expect(calls.filter((call) => call.path === "/providers/gift-ideas/recommendations")).toHaveLength(1);
+    expect(screen.getByTestId("wizard-headline").textContent).toBe("Recomendado para tu celebración (Boda)");
   });
 
   it("choosing the city asks again with it, names it in the headline and shows the delivery notes of each product", async () => {
     const { calls } = await open();
     fireEvent.change(screen.getByTestId("wizard-city"), { target: { value: "santa-cruz" } });
     await waitFor(() => expect(calls.some((call) => call.url === "/providers/gift-ideas/recommendations?eventType=WEDDING&city=santa-cruz&locale=es-BO")).toBe(true));
-    expect((await screen.findByTestId("wizard-headline")).textContent).toBe("Recomendado para tu boda en Santa Cruz de la Sierra");
+    expect((await screen.findByTestId("wizard-headline")).textContent).toBe("Recomendado para tu celebración (Boda) en Santa Cruz de la Sierra");
     click("idea-DINNERWARE_SET");
     await next(/Elige un producto por idea/);
     expect(screen.getByTestId("product-vajilla").textContent).toContain("Entrega en tu ciudad");
@@ -252,6 +262,64 @@ describe("R4 · retries and errors of the batch", () => {
     expect(new Set(bodies).size).toBe(1);
   });
 
+  it("applied but lost: the answer never arrives, the list read meanwhile already has the gifts, and the retry repeats the same request until «Listo»", async () => {
+    let applied = false;
+    let attempt = 0;
+    const { calls } = await toSummary({
+      [`GET ${ITEMS}`]: () => (applied ? { ...EMPTY_LIST, items: [gift("n1", { giftIdeaCode: "CAKE" }), gift("n2", { giftIdeaCode: "DINNERWARE_SET" })] } : EMPTY_LIST),
+      [BATCH]: () => { attempt += 1; if (attempt === 1) { applied = true; throw new TypeError("fetch failed"); } return created([gift("n1", { giftIdeaCode: "CAKE" }), gift("n2", { giftIdeaCode: "DINNERWARE_SET" })]); }
+    });
+    click("wizard-submit");
+    expect((await screen.findByTestId("wizard-submit-error")).textContent).toMatch(/Sin conexión por ahora/);
+    // The connection comes back and the screen is focused again: the list is read and it already holds both gifts.
+    window.dispatchEvent(new Event("online"));
+    document.dispatchEvent(new Event("visibilitychange"));
+    window.dispatchEvent(new Event("focus"));
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    // Nothing moved under the host: both lines and the count are still there, and the button still adds the same two gifts.
+    expect(screen.getByTestId("line-CAKE")).toBeTruthy();
+    expect(screen.getByTestId("line-DINNERWARE_SET")).toBeTruthy();
+    expect(screen.getByTestId("wizard-submit").textContent).toBe("Agregar 2 regalos");
+    expect(screen.queryByText(/Agregar 0 regalos/)).toBeNull();
+    click("wizard-submit");
+    expect(await screen.findByTestId("wizard-done")).toBeTruthy();
+    expect(screen.getByTestId("wizard-done-title").textContent).toBe("Listo: agregamos 2 regalos");
+    const sent = calls.filter((call) => call.path === `${ITEMS}/batch`);
+    expect(sent).toHaveLength(2);
+    expect(sent[1]?.headers.get("idempotency-key")).toBe(sent[0]?.headers.get("idempotency-key"));
+    expect(JSON.stringify(sent[1]?.body)).toBe(JSON.stringify(sent[0]?.body));
+  });
+
+  it("after a success an identical selection is a NEW request with a new key, not a replay that creates nothing", async () => {
+    const { calls } = await open({ [BATCH]: () => created([gift("n1", { giftIdeaCode: "CAKE" })]) });
+    for (let round = 0; round < 2; round++) {
+      click("idea-CAKE");
+      await next(/Elige un producto por idea/);
+      click("choose-torta");
+      await next(/Revisa tu lista/);
+      click("wizard-submit");
+      await screen.findByTestId("wizard-done");
+      if (round === 0) { click("wizard-add-more"); await screen.findByTestId("idea-CAKE"); }
+    }
+    const sent = calls.filter((call) => call.path === `${ITEMS}/batch`);
+    expect(sent).toHaveLength(2);
+    expect(JSON.stringify(sent[1]?.body)).toBe(JSON.stringify(sent[0]?.body));
+    expect(sent[1]?.headers.get("idempotency-key")).not.toBe(sent[0]?.headers.get("idempotency-key"));
+  });
+
+  it("a list that cannot be read says so (not that it «changed») and offers «Reintentar», which reads it again", async () => {
+    let down = true;
+    const { calls } = await toSummary({ [`GET ${ITEMS}`]: () => (down ? new HttpFailure(503) : EMPTY_LIST) });
+    const notice = await screen.findByTestId("wizard-list-error");
+    expect(notice.textContent).toBe("No pudimos leer tu lista de regalos. Sin ella no podemos saber qué ya agregaste.");
+    expect(screen.queryByText(/cambió mientras elegías/)).toBeNull();
+    const before = calls.filter((call) => call.path === ITEMS).length;
+    down = false;
+    fireEvent.click(screen.getByTestId("wizard-list-retry"));
+    await waitFor(() => expect(screen.queryByTestId("wizard-list-error")).toBeNull());
+    expect(calls.filter((call) => call.path === ITEMS).length).toBeGreaterThan(before);
+  });
+
   it("a 422 points at the entry by itemIndex: nothing was added, the product shows its words, the list is read again and another product gets a new key", async () => {
     let attempt = 0;
     const { calls } = await toSummary({ [BATCH]: () => {
@@ -294,12 +362,19 @@ describe("R4 · retries and errors of the batch", () => {
     expect(screen.queryByTestId("line-problem-DINNERWARE_SET")).toBeNull();
   });
 
-  it("the other answers keep the selection: 403 says who may manage, 409 conflicts refresh, 428 and a reused key never show a stack of codes", async () => {
-    for (const [status, code, words] of [[403, "HOST_REQUIRED", /Solo los anfitriones/], [422, "IDEMPOTENCY_KEY_REUSED", /ya se envió con otros datos/], [409, "GIFT_LIST_NOT_FOUND", /./]] as const) {
+  it("the other answers keep the selection: 403 says who may manage, a reused key, 428 and 503 never show a stack of codes", async () => {
+    // Only answers the batch contract declares (201, 401, 403, 404, 422, 428, 503): 403 names hosts AND organizers, the rest never show a code.
+    const cases = [
+      [403, "HOST_REQUIRED", "Solo los anfitriones u organizadores de esta celebración pueden administrar los regalos."],
+      [422, "IDEMPOTENCY_KEY_REUSED", "Esa solicitud ya se envió con otros datos. Vuelve a empezar desde la lista."],
+      [428, "IDEMPOTENCY_KEY_REQUIRED", "Algo no salió como esperábamos. Revisa tu conexión y vuelve a intentarlo; lo que escribiste sigue aquí."],
+      [503, "SERVICE_UNAVAILABLE", "El servidor no respondió como esperábamos. Inténtalo de nuevo en unos minutos; tus cambios siguen aquí."]
+    ] as const;
+    for (const [status, code, words] of cases) {
       cleanup();
       await toSummary({ [BATCH]: () => new HttpFailure(status, { code }) });
       click("wizard-submit");
-      expect((await screen.findByTestId("wizard-submit-error")).textContent).toMatch(words);
+      expect((await screen.findByTestId("wizard-submit-error")).textContent).toContain(words);
       expect(screen.getByTestId("line-CAKE")).toBeTruthy();
     }
   });
@@ -344,11 +419,28 @@ describe("R4 · step 3 · balance and delivery notes", () => {
     await waitFor(() => expect(screen.getByTestId("balance-sentence").textContent).toMatch(/No pudimos leer tus invitados/));
   });
 
+  it("the guests of the sentence agree in number in both languages: «1 invitado» and «1 guest»", async () => {
+    for (const [locale, words] of [["es-BO", /^No tienes regalos hasta Bs\s?200 y 1 invitado: agrega ideas económicas\.$/], ["en-US", /^You have no gifts up to (?:Bs|BOB)\s?200 and 1 guest: add affordable ideas\.$/]] as const) {
+      cleanup();
+      await open({ ...guestsOf(0, 1) }, undefined, locale);
+      click("idea-DINNERWARE_SET");
+      await screen.findByTestId("wizard-next");
+      click("wizard-next");
+      await screen.findByTestId("choose-vajilla-lejos");
+      click("choose-vajilla-lejos");
+      click("wizard-next");
+      await waitFor(() => expect(screen.getByTestId("balance-sentence").textContent).toMatch(words));
+    }
+  });
+
   it("the delivery notes go along only when changed, count the 200 characters and block the call above them", async () => {
     const { calls } = await toSummary({ [BATCH]: () => created([gift("n1"), gift("n2")]) });
     const notes = screen.getByTestId("wizard-notes") as HTMLTextAreaElement;
     expect(screen.getByTestId("wizard-notes-counter").textContent).toBe("0 de 200 caracteres");
     expect(screen.getByText(/No escribas la dirección exacta/)).toBeTruthy();
+    // PF-1: the notes are public in the gift view and go into the WhatsApp message to the provider; the help says who reads them.
+    expect(screen.getByText(/Lo verán tus invitados y el proveedor al que le escriban/)).toBeTruthy();
+    expect(screen.queryByText(/Quienes eligen comprar/)).toBeNull();
     fireEvent.change(notes, { target: { value: "x".repeat(201) } });
     expect(screen.getByText("Quita 1 carácter: el máximo es 200.")).toBeTruthy();
     expect(screen.getByTestId("wizard-submit").getAttribute("aria-disabled")).toBe("true");
