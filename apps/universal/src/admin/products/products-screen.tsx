@@ -37,9 +37,11 @@ function toFilters(view: ModerationView, draft: Draft, locale: string): Moderati
     ...(draft.providerId.trim() ? { providerId: draft.providerId.trim() } : {}),
     ...(draft.category ? { category: draft.category } : {}),
     ...(draft.featured !== "any" ? { featured: draft.featured === "on" } : {}),
-    ...(draft.completeness ? { completeness: draft.completeness } : {})
+    ...(view === "RECENT" && draft.completeness ? { completeness: draft.completeness } : {})
   };
 }
+
+const PANEL_ID = "products-panel";
 
 /** «Recientes (12) | Ocultos (3)»: two tabs over the same list, each with the counter of the server (without the optional filters). */
 function Tabs({ view, counts, onChange }: { readonly view: ModerationView; readonly counts: { readonly recent: number; readonly hidden: number } | undefined; readonly onChange: (view: ModerationView) => void }): ReactNode {
@@ -50,13 +52,21 @@ function Tabs({ view, counts, onChange }: { readonly view: ModerationView; reado
     const count = counts ? (key === "RECENT" ? counts.recent : counts.hidden) : undefined;
     const label = t(`admin.products.views.${key}`);
     return (
-      <PressFeedback key={key} accessibilityRole="tab" aria-selected={selected} accessibilityLabel={count === undefined ? label : t("admin.products.tabCount", { label, count })} onPress={() => onChange(key)} style={[styles.choice, selected && styles.choiceSelected, { flexDirection: "row", alignItems: "center", gap: spacing[2] }]} testID={`products-tab-${key.toLowerCase()}`}>
+      <PressFeedback key={key} nativeID={`products-tab-${key.toLowerCase()}-id`} accessibilityRole="tab" aria-selected={selected} aria-controls={PANEL_ID} tabIndex={selected ? 0 : -1} accessibilityLabel={count === undefined ? label : t("admin.products.tabCount", { label, count })} onPress={() => onChange(key)} style={[styles.choice, selected && styles.choiceSelected, { flexDirection: "row", alignItems: "center", gap: spacing[2] }]} testID={`products-tab-${key.toLowerCase()}`}>
         <Text style={[styles.body, selected && { fontWeight: "600" }]}>{label}</Text>
         {count !== undefined ? <Text style={[styles.muted, { fontVariant: ["tabular-nums"] }]} testID={`products-count-${key.toLowerCase()}`}>{String(count)}</Text> : null}
       </PressFeedback>
     );
   };
-  return <View role="tablist" aria-label={t("admin.products.views.label")} style={styles.row}>{tab("RECENT")}{tab("HIDDEN")}</View>;
+  /** Arrow keys (and Home/End) move between the two tabs and select them, as the tab pattern asks; focus follows the selection. */
+  const onKeyDown = (event: { readonly key: string; preventDefault: () => void }): void => {
+    const next = event.key === "ArrowRight" || event.key === "ArrowLeft" || event.key === "Home" || event.key === "End" ? (event.key === "Home" ? "RECENT" : event.key === "End" ? "HIDDEN" : view === "RECENT" ? "HIDDEN" : "RECENT") : null;
+    if (!next) return;
+    event.preventDefault();
+    onChange(next);
+    if (typeof document !== "undefined") document.getElementById(`products-tab-${next.toLowerCase()}-id`)?.focus();
+  };
+  return <View role="tablist" aria-label={t("admin.products.views.label")} style={styles.row} {...({ onKeyDown } as object)}>{tab("RECENT")}{tab("HIDDEN")}</View>;
 }
 
 function Filters({ view, draft, onChange, categories }: { readonly view: ModerationView; readonly draft: Draft; readonly onChange: (next: Draft) => void; readonly categories: readonly { readonly code: string; readonly name: string }[] }): ReactNode {
@@ -65,7 +75,7 @@ function Filters({ view, draft, onChange, categories }: { readonly view: Moderat
   const [provider, setProvider] = useState(draft.providerId);
   const providerInvalid = provider.trim() !== "" && !UUID.test(provider.trim());
   const cell = { flexGrow: 1, flexBasis: 180, gap: spacing[1] } as const;
-  const active = draft.providerId !== "" || draft.category !== "" || draft.featured !== "any" || draft.completeness !== "" || (view === "RECENT" && draft.days !== MODERATION_DEFAULT_DAYS);
+  const active = draft.providerId !== "" || draft.category !== "" || draft.featured !== "any" || (view === "RECENT" && draft.completeness !== "") || (view === "RECENT" && draft.days !== MODERATION_DEFAULT_DAYS);
   const submitProvider = (): void => { if (!providerInvalid) onChange({ ...draft, providerId: provider.trim() }); };
   return (
     <View role="group" aria-label={t("admin.products.filters.label")} style={{ gap: spacing[3] }}>
@@ -80,7 +90,7 @@ function Filters({ view, draft, onChange, categories }: { readonly view: Moderat
           <FilterSelect<Featured> label={t("admin.products.filters.featured")} value={draft.featured} onChange={(featured) => onChange({ ...draft, featured })} options={[{ value: "any", label: t("admin.products.filters.allFeatured") }, { value: "on", label: t("admin.products.filters.featuredOn") }, { value: "off", label: t("admin.products.filters.featuredOff") }]} testID="products-featured" /></View>
         {view === "RECENT" ? (
           <View style={cell}><Text style={styles.label}>{t("admin.products.filters.completeness")}</Text>
-            <FilterSelect label={t("admin.products.filters.completeness")} value={draft.completeness} onChange={(completeness) => onChange({ ...draft, completeness: completeness as Draft["completeness"] })} options={[{ value: "", label: t("admin.products.filters.all") }, ...MODERATION_COMPLETENESS.map((state) => ({ value: state, label: t(`admin.products.completeness.${state}`) }))]} testID="products-completeness" /></View>
+            <FilterSelect label={t("admin.products.filters.completeness")} value={draft.completeness} onChange={(completeness) => onChange({ ...draft, completeness: completeness as Draft["completeness"] })} options={[{ value: "", label: t("admin.products.filters.all") }, ...RECENT_COMPLETENESS.map((state) => ({ value: state, label: t(`admin.products.completeness.${state}`) }))]} testID="products-completeness" /></View>
         ) : null}
       </View>
       <View style={[styles.row, { alignItems: "flex-end" }]}>
@@ -91,6 +101,9 @@ function Filters({ view, draft, onChange, categories }: { readonly view: Moderat
     </View>
   );
 }
+
+/** «Oculto» is not offered in RECENT: hiding unpublishes the product, so that combination is always empty (hidden ones live in the «Ocultos» tab). */
+const RECENT_COMPLETENESS = MODERATION_COMPLETENESS.filter((state) => state !== "HIDDEN_BY_ADMIN");
 
 const COMPLETENESS_TONE = { COMPLETE: "yes", INCOMPLETE: "maybe", HIDDEN_BY_ADMIN: "no" } as const;
 
@@ -126,8 +139,8 @@ function ProductRow({ item, busy, onHide, onShow, onFeatured }: { readonly item:
       <SwitchRow label={t("admin.products.row.featuredNamed", { name: item.title })} hint={item.hidden ? t("admin.products.row.featuredHidden") : t("admin.products.row.featuredHint")} value={item.featured} disabled={busy || item.hidden} onChange={onFeatured} testID={`product-featured-${item.listingId}`} />
       <View style={styles.row}>
         {item.hidden
-          ? <ActionButton variant="secondary" label={t("admin.products.actions.show")} busy={busy} onPress={onShow} testID={`product-show-${item.listingId}`} />
-          : <ActionButton variant="danger" label={t("admin.products.actions.hide")} busy={busy} onPress={onHide} testID={`product-hide-${item.listingId}`} />}
+          ? <ActionButton variant="secondary" accessibleName={t("admin.products.actions.showNamed", { name: item.title })} label={t("admin.products.actions.show")} busy={busy} onPress={onShow} testID={`product-show-${item.listingId}`} />
+          : <ActionButton variant="danger" accessibleName={t("admin.products.actions.hideNamed", { name: item.title })} label={t("admin.products.actions.hide")} busy={busy} onPress={onHide} testID={`product-hide-${item.listingId}`} />}
       </View>
     </View>
   );
@@ -152,7 +165,7 @@ function ProductsScreenContent({ onNavigate }: { readonly onNavigate: (href: str
   const featureOnce = useSingleMutation(feature);
   const items = useMemo(() => inbox.data?.pages.flatMap((page) => page.items) ?? [], [inbox.data]);
   const counts = moderationCounts(inbox.data?.pages);
-  const error = hide.error ?? show.error ?? feature.error;
+  const error = (asking ? null : hide.error) ?? show.error ?? feature.error;
   const reset = (): void => { hide.reset(); show.reset(); feature.reset(); setDone(null); };
   const busyId = hide.isPending ? hide.variables?.listingId : show.isPending ? show.variables?.listingId : feature.isPending ? feature.variables?.listingId : undefined;
   const finish = (kind: Done["kind"]) => ({ onSuccess: (result: unknown) => { setDone({ kind, replayed: typeof result === "object" && result !== null && "replayed" in result && result.replayed === true }); } });
@@ -164,9 +177,10 @@ function ProductsScreenContent({ onNavigate }: { readonly onNavigate: (href: str
         <PageIntro>{t("admin.products.intro")}</PageIntro>
         <Tabs view={view} counts={counts} onChange={changeView} />
         <Filters key={view} view={view} draft={draft} onChange={changeDraft} categories={categories.data?.items ?? []} />
+        <View role="tabpanel" nativeID={PANEL_ID} aria-labelledby={`products-tab-${view.toLowerCase()}-id`} style={{ gap: spacing[6] }}>
         {done ? <Notice kind="success"><Text role="status" style={styles.body} testID="products-done">{done.replayed ? t("admin.products.done.replayed") : t(`admin.products.done.${done.kind}`)}</Text></Notice> : null}
         <AdminErrorNotice error={error} onReload={() => { reset(); void inbox.refetch(); }} />
-        <QueryBoundary query={{ isPending: inbox.isPending, error: inbox.error, data: inbox.data ? { items } : undefined, refetch: inbox.refetch }} avatar illustration={view === "HIDDEN" ? "nothingPending" : "emptySearch"}
+        <QueryBoundary query={{ isPending: inbox.isPending, error: inbox.isFetchNextPageError ? null : inbox.error, data: inbox.data ? { items } : undefined, refetch: inbox.refetch }} avatar illustration={view === "HIDDEN" ? "nothingPending" : "emptySearch"}
           empty={view === "HIDDEN" ? t("admin.products.empty.HIDDEN") : t("admin.products.empty.RECENT", { days: draft.days })}>
           {() => (
             <>
@@ -176,14 +190,16 @@ function ProductsScreenContent({ onNavigate }: { readonly onNavigate: (href: str
                   onShow={() => { setDone(null); showOnce({ listingId: item.listingId }, finish("shown")); }}
                   onFeatured={(featured) => { setDone(null); featureOnce({ listingId: item.listingId, featured }, finish(featured ? "featuredOn" : "featuredOff")); }} />
               ))}
-              {inbox.isFetchNextPageError ? <AdminErrorNotice error={inbox.error} onRetry={() => { void inbox.refetch(); }} /> : null}
+              {inbox.isFetchNextPageError ? <AdminErrorNotice error={inbox.error} onRetry={() => { void inbox.fetchNextPage(); }} /> : null}
               {inbox.hasNextPage ? <ActionButton variant="secondary" label={t("admin.products.more")} busy={inbox.isFetchingNextPage} onPress={() => { void inbox.fetchNextPage(); }} testID="products-more" /> : null}
             </>
           )}
         </QueryBoundary>
+        </View>
         <ReasonDialog visible={asking !== null} title={asking ? t("admin.products.hide.title", { name: asking.title }) : ""} body={t("admin.products.hide.body")} confirmLabel={t("admin.products.actions.hide")}
-          minLength={HIDE_REASON_MIN} maxLength={HIDE_REASON_MAX} multiline={false} onCancel={() => setAsking(null)}
-          onConfirm={(reason) => { if (asking) hideOnce({ listingId: asking.listingId, reason: reason.replace(CONTROL, " ").trim() }, finish("hidden")); setAsking(null); }} />
+          minLength={HIDE_REASON_MIN} maxLength={HIDE_REASON_MAX} multiline={false} holdOpen busy={hide.isPending} error={asking ? hide.error : null}
+          onCancel={() => { hide.reset(); setAsking(null); }}
+          onConfirm={(reason) => { if (asking) hideOnce({ listingId: asking.listingId, reason: reason.replace(CONTROL, " ").trim() }, { ...finish("hidden"), onSuccess: (result) => { finish("hidden").onSuccess(result); setAsking(null); } }); }} />
       </Stack>
     </AdminScreen>
   );

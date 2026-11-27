@@ -39,6 +39,8 @@ describe("product moderation inbox path", () => {
 
   it("HIDDEN never sends days", () => {
     expect(admin.productModerationPath({ view: "HIDDEN", days: 30 })).toBe("/providers/admin/moderation/listings?view=HIDDEN&limit=50");
+    // B2: the sheet filter exists only in RECENT; in HIDDEN every product is HIDDEN_BY_ADMIN, so a carried-over value would empty the list.
+    expect(admin.productModerationPath({ view: "HIDDEN", completeness: "COMPLETE", category: "FLORES" })).toBe("/providers/admin/moderation/listings?view=HIDDEN&category=FLORES&limit=50");
   });
 
   it("reads the first page, then follows nextCursor and stops at null", async () => {

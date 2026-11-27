@@ -1,8 +1,8 @@
 # R8b FE · Moderación del admin (`/admin/productos`)
 
 - Fecha: 2026-11-27. Rama `feat/regalos-r8b-moderacion`, creada desde `origin/feat/regalos-r6a-leads` (FE #147, punta `fbc73c27`).
-- Plan: `PLAN-REGALOS-PROVEEDORES.md` §5.13 (moderación), §5.14 (privacidad, PF-1), §8 fila R8; decisiones 17 y 18. BE: PR #169, `feat/regalos-r8b-moderacion` @ `e2ea4cfb`.
-- Contratos: `generate --ref e2ea4cfb27cb47b7ef88e78e32f5e00fcce1e69b` con el generador oficial (provider-catalog **3.11.0**; gift-list 1.16.0, celebration 1.6.0 sin cambio). Ningún archivo generado se editó a mano; `check:generated` y `check:source` pasan.
+- Plan: `PLAN-REGALOS-PROVEEDORES.md` §5.13 (moderación), §5.14 (privacidad, PF-1), §8 fila R8; decisiones 17 y 18. BE: PR #169, `feat/regalos-r8b-moderacion` @ `07b3c855` (el recorrido en vivo de abajo corrió antes, contra `e2ea4cfb`).
+- Contratos: `generate --ref 07b3c855b96e7824057c3e72111a4103a17579f4` con el generador oficial (provider-catalog **3.11.0**; gift-list 1.16.0, celebration 1.6.0 sin cambio). Ningún archivo generado se editó a mano; `check:generated` y `check:source` pasan.
 - Nivel: **TESTED** (unitarias + recorrido en Chrome real contra el servicio real provider-catalog sobre PostgreSQL 16). **NO VERIFIED, NO DONE**: falta el recorrido con el gateway Docker (Kong) y TEST, y el recorrido real de la pantalla del proveedor.
 
 ## Qué se construyó (vertical slice: el admin oculta un producto y deja de recomendarse)
@@ -65,6 +65,17 @@ Reproducir: levantar PG y el arnés (ver cabecera de `be-harness.mjs`), `cors-pr
 - Movimiento: ninguno nuevo (se reutiliza lo del admin). `rsvp-motion-design`: N/A, sin animación propia.
 - Capturas revisadas a 1280 y 360. axe (críticos y serios): 0 en bandeja, diálogo y Ocultos.
 
+## Ronda de correcciones tras la revisión independiente (comentario 7212082016)
+
+- B1: contratos regenerados con `generate --ref 07b3c855…` (cambian lock, spec de provider-catalog `31cc9ec2…`, `generated/index.ts` y `generated/provider-catalog.ts`; solo descripciones). `check:generated` y `check:source` OK contra `07b3c855`.
+- B2: `completeness` solo viaja en RECENT (`toFilters` y `productModerationPath`); «Oculto» sale de las opciones de «Ficha»; «Limpiar» no se ofrece por un filtro que la vista no muestra. Pruebas: ruta HIDDEN con `completeness` (query-hooks) y pantalla (universal).
+- M1: un «Ver más» fallido conserva las filas y muestra el aviso en línea con reintento de la página siguiente. M2: el diálogo de ocultar sigue abierto con `busy`, conserva el motivo y muestra el error dentro; se cierra solo en `onSuccess`.
+- M3: `done.shown` (es-BO y en-US) dice que se restaura la publicación previa y que solo se muestra con ficha completa y proveedor verificado.
+- Accesibilidad: `tabpanel` con `aria-controls`/`aria-labelledby`, tabindex itinerante, flechas/Home/End, botones por fila que nombran el producto. `cors-proxy.mjs` escucha en 127.0.0.1 y solo permite un Origin localhost explícito (`ALLOW_ORIGIN`, por defecto `http://localhost:8081`).
+- Pruebas: universal 805/805, query-hooks 185/185, typecheck de universal, query-hooks, i18n y contracts en verde.
+- **No repetido: recorrido en vivo L1 a L9 contra `07b3c855`** (sobre todo L7, Mostrar). El arnés necesita PostgreSQL 16, compilar el servicio y Chrome; Docker/Kong no corren en el sandbox y no se levantó el arnés en esta ronda. Queda cubierto por pruebas unitarias contra el contrato regenerado; falta el recorrido.
+- **gitleaks no se corrió**: el binario no está instalado y el sandbox bloquea su descarga. Solo hubo un barrido por patrones del diff sin hallazgos reales (única coincidencia: la palabra «token» en la descripción del spec).
+
 ## No verificado y por qué
 
 - Gateway Docker (Kong) y TEST: Docker no corre en el sandbox.
@@ -75,8 +86,10 @@ Reproducir: levantar PG y el arnés (ver cabecera de `be-harness.mjs`), `cors-pr
 
 ## Decisiones pendientes para Pablo
 
+0. Vista de «reportados» (plan §5.13: «los publicados en los últimos 7 días y los reportados»): el contrato 3.11.0 solo admite `view` RECENT y HIDDEN y no existe un mecanismo de reporte de productos, así que la pantalla no la tiene. ¿Existe hoy un mecanismo de reporte (de dónde saldría) o se difiere a otro carril? Requiere BE antes que FE.
+
 1. Filtro por proveedor: hoy es un campo de UUID. ¿Se prefiere un buscador de proveedores por nombre? Requiere un endpoint de búsqueda ligero o reutilizar el de partners.
 2. «Destacar» en productos del catálogo propio (`ownCatalog`, sin ficha): el contrato lo permite pedir y el servicio puede responder 422 `FEATURED_PRODUCT_ONLY`; la pantalla muestra el error. ¿Se oculta el interruptor para ellos?
 3. Ventana «Recientes»: el contrato admite 1 a 30 días; la pantalla ofrece 7, 14 y 30. ¿Se quieren otros valores?
 4. Aviso al proveedor: el motivo se ve en su ficha; el plan dice «avisa al proveedor». No hay correo ni push de R8b (el evento no lleva el motivo). ¿Se agrega en R7 o más adelante?
-5. Orden de fusión: BE #169 declara 3.11.0 pero estaba construido sobre R6b (3.9.0); el FE se regeneró con `e2ea4cfb`. Si cambia el SHA tras rebasar (R7 3.10.0), hay que repetir `generate --ref`.
+5. Orden de fusión: BE #169 declara 3.11.0 pero estaba construido sobre R6b (3.9.0); el FE se regeneró con `07b3c855`. Si cambia el SHA tras rebasar (R7 3.10.0), hay que repetir `generate --ref`.

@@ -50,7 +50,8 @@ export function productModerationPath(filters: ModerationFilters, cursor?: strin
   if (providerId) params.set("providerId", providerId);
   if (filters.category) params.set("category", filters.category);
   if (filters.featured !== undefined) params.set("featured", String(filters.featured));
-  if (filters.completeness) params.set("completeness", filters.completeness);
+  // The sheet filter only exists in RECENT: in HIDDEN every product is HIDDEN_BY_ADMIN, so a carried-over value would empty the list with no visible reason.
+  if (filters.view === "RECENT" && filters.completeness) params.set("completeness", filters.completeness);
   params.set("limit", String(MODERATION_PAGE_SIZE));
   if (filters.locale) params.set("locale", filters.locale);
   if (cursor) params.set("cursor", cursor);

@@ -90,6 +90,62 @@ describe("R8b · inbox", () => {
     expect((screen.getByLabelText("Proveedor") as HTMLInputElement).value).toBe("");
   });
 
+  it("B2: the sheet filter is sent only in RECENT, never in HIDDEN, and «Oculto» is not offered in RECENT", async () => {
+    const { calls } = render(base());
+    await screen.findByText("Ramo de rosas");
+    const options = Array.from((screen.getByLabelText("Ficha") as HTMLSelectElement).options).map((option) => option.value);
+    expect(options).toEqual(["", "COMPLETE", "INCOMPLETE"]);
+    fireEvent.change(screen.getByLabelText("Ficha"), { target: { value: "COMPLETE" } });
+    await waitFor(() => expect(inboxCalls(calls).at(-1)?.get("completeness")).toBe("COMPLETE"));
+    fireEvent.click(screen.getByRole("tab", { name: /Ocultos/ }));
+    expect(await screen.findByTestId(`product-reason-${B}`)).toBeTruthy();
+    const hiddenRead = inboxCalls(calls).filter((query) => query.get("view") === "HIDDEN");
+    expect(hiddenRead.length).toBeGreaterThan(0);
+    expect(hiddenRead.every((query) => !query.has("completeness"))).toBe(true);
+    // The hidden filter is not active in this tab, so no «Limpiar» is offered for a filter nobody can see.
+    expect(screen.queryByTestId("products-clear")).toBeNull();
+  });
+
+  it("tabs follow the tab pattern: tabpanel, aria-controls, roving tabindex and arrow keys", async () => {
+    render(base());
+    await screen.findByText("Ramo de rosas");
+    const recent = screen.getByRole("tab", { name: /Recientes/ });
+    const hidden = screen.getByRole("tab", { name: /Ocultos/ });
+    const panel = screen.getByRole("tabpanel");
+    expect(recent.getAttribute("aria-controls")).toBe(panel.id);
+    expect(panel.getAttribute("aria-labelledby")).toBe(recent.id);
+    expect(recent.getAttribute("tabindex")).toBe("0");
+    expect(hidden.getAttribute("tabindex")).toBe("-1");
+    fireEvent.keyDown(recent, { key: "ArrowRight" });
+    expect(await screen.findByTestId(`product-reason-${B}`)).toBeTruthy();
+    expect(screen.getByRole("tab", { name: /Ocultos/ }).getAttribute("aria-selected")).toBe("true");
+    fireEvent.keyDown(screen.getByRole("tab", { name: /Ocultos/ }), { key: "Home" });
+    expect(await screen.findByText("Ramo de rosas")).toBeTruthy();
+  });
+
+  it("each row button names its product, so a screen reader does not hear «Ocultar» repeated", async () => {
+    render(base());
+    await screen.findByText("Ramo de rosas");
+    expect(screen.getByRole("button", { name: "Ocultar Ramo de rosas" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Ocultar Torta gigante" })).toBeTruthy();
+  });
+
+  it("M1: a failed «Ver más» keeps the rows already loaded and shows the notice in line, and the next try appends", async () => {
+    let fail = true;
+    render(base({
+      "GET /providers/admin/moderation/listings": (call) => (call.url.includes("cursor=c2") ? (fail ? new HttpFailure(503) : inbox("RECENT", [row({ listingId: B, title: "Segunda página" })])) : inbox("RECENT", [row()], { nextCursor: "c2" }))
+    }));
+    await screen.findByText("Ramo de rosas");
+    fireEvent.click(screen.getByTestId("products-more"));
+    expect(await screen.findByTestId("error-retry")).toBeTruthy();
+    expect(screen.getByText("Ramo de rosas")).toBeTruthy();
+    expect(screen.queryByTestId("admin-retry")).toBeNull();
+    fail = false;
+    fireEvent.click(screen.getByTestId("error-retry"));
+    expect(await screen.findByText("Segunda página")).toBeTruthy();
+    expect(screen.getByText("Ramo de rosas")).toBeTruthy();
+  });
+
   it("pages by cursor: «Ver más» sends nextCursor and appends, then disappears on the last page", async () => {
     const { calls } = render(base({
       "GET /providers/admin/moderation/listings": (call) => (call.url.includes("cursor=c2") ? inbox("RECENT", [row({ listingId: B, title: "Segunda página" })]) : inbox("RECENT", [row()], { nextCursor: "c2" }))
@@ -151,6 +207,22 @@ describe("R8b · hide", () => {
     expect(calls.filter((call) => call.method === "POST")).toHaveLength(1);
   });
 
+  it("M2: a failed hide keeps the dialog open with the written reason and the error inside; the retry then closes it", async () => {
+    let fail = true;
+    render(base({ [`POST /providers/admin/listings/${A}/hide`]: () => (fail ? new HttpFailure(503) : moderation()) }));
+    fireEvent.click(await screen.findByTestId(`product-hide-${A}`));
+    fireEvent.change(screen.getByLabelText("Motivo"), { target: { value: "Foto con teléfono" } });
+    const confirm = (): void => { const buttons = screen.getAllByRole("button", { name: "Ocultar" }); fireEvent.click(buttons[buttons.length - 1]!); };
+    confirm();
+    expect(await screen.findByRole("alert")).toBeTruthy();
+    expect((screen.getByLabelText("Motivo") as HTMLInputElement).value).toBe("Foto con teléfono");
+    expect(screen.getByText("Ocultar Ramo de rosas")).toBeTruthy();
+    fail = false;
+    confirm();
+    expect(await screen.findByText("Producto oculto. Su dueño verá el motivo.")).toBeTruthy();
+    await waitFor(() => expect(screen.queryByText("Ocultar Ramo de rosas")).toBeNull());
+  });
+
   it("cancelling the dialog sends nothing", async () => {
     const { calls } = render(base());
     fireEvent.click(await screen.findByTestId(`product-hide-${A}`));
@@ -182,7 +254,7 @@ describe("R8b · show and featured", () => {
     await screen.findByText("Ramo de rosas");
     fireEvent.click(screen.getByRole("tab", { name: /Ocultos/ }));
     fireEvent.click(await screen.findByTestId(`product-show-${B}`));
-    expect(await screen.findByText("Producto visible otra vez. No vuelve a estar destacado.")).toBeTruthy();
+    expect(await screen.findByText("Se quitó el ocultamiento. El producto recupera la publicación que tenía antes y solo se muestra si su ficha está completa y su proveedor está verificado. No vuelve a estar destacado.")).toBeTruthy();
     expect(calls.find((call) => call.path === `/providers/admin/listings/${B}/show`)?.body).toBeUndefined();
     replayed = true;
     fireEvent.click(await screen.findByTestId(`product-show-${B}`));
