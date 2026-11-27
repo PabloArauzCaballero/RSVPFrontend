@@ -3,11 +3,11 @@ import { Text, View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
 import { EmptyState, Notice, useStyles } from "../host/ui";
 import { useProviderLeadReport, type LeadFilters, type Provider } from "@rsvp/query-hooks";
-import { useApiClient, useT } from "../platform/providers";
+import { useApiClient, useLocale, useT } from "../platform/providers";
 import { PortalErrorState } from "./errors";
 import { RowsSkeleton } from "./parts";
 import { LeadFilterBar } from "./lead-filters";
-import { ProviderTotals, ReportRows, currentMonth } from "./lead-report-view";
+import { ProviderTotals, ReportRows, currentMonth, zoneName } from "./lead-report-view";
 
 /**
  * R6b · «Reporte mensual de solicitudes» (D-10 #33): the provider's own month, per product and button, with the filters of the contract
@@ -16,6 +16,7 @@ import { ProviderTotals, ReportRows, currentMonth } from "./lead-report-view";
 export function LeadReportSection({ provider }: { readonly provider: Provider }): ReactNode {
   const t = useT();
   const client = useApiClient();
+  const locale = useLocale();
   const styles = useStyles();
   const [filters, setFilters] = useState<LeadFilters & { readonly month: string }>({ month: currentMonth(provider.timeZone) });
   const report = useProviderLeadReport(client, provider.id, filters);
@@ -27,7 +28,7 @@ export function LeadReportSection({ provider }: { readonly provider: Provider })
         <Text style={styles.muted}>{t("portal.leadReport.intro")}</Text>
       </View>
       <LeadFilterBar provider={provider} value={filters} onChange={(next) => setFilters({ ...next, month: next.month || filters.month })} ns="portal.leadReport" />
-      <Text style={styles.muted}>{t("portal.leadReport.tz", { zone: provider.timeZone })}</Text>
+      <Text style={styles.muted}>{t("portal.leadReport.tz", { zone: zoneName(provider.timeZone, locale) })}</Text>
       {report.isPending ? <RowsSkeleton count={3} minHeight={64} trailing={false} /> : null}
       {report.isError && !report.data ? <PortalErrorState error={report.error} onRetry={() => { void report.refetch(); }} /> : null}
       {report.data ? (

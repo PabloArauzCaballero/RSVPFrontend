@@ -15,10 +15,12 @@ export interface OwnListing { readonly id: string; readonly providerId: string; 
   /** Provider Catalog 3.5.0 (R2): optimistic-lock version, completeness of a PRODUCT (null for a SERVICE) and what it still lacks, in fixed order. */
   readonly version?: number; readonly completeness?: "COMPLETE" | "INCOMPLETE" | "HIDDEN_BY_ADMIN" | null; readonly incompleteReason?: "OWN_CATALOG_NO_SHEET"; readonly missing?: readonly ("TITLE" | "DESCRIPTION" | "CATEGORY" | "GIFT_IDEA" | "PHOTO" | "PRICE" | "STOCK" | "COVERAGE" | "DELIVERY" | "DESTINATION")[] }
 export interface CreateListingInput { readonly type: "SERVICE" | "PRODUCT"; readonly category: string; readonly city: string; readonly titles: Readonly<Record<string, string>>; readonly descriptions?: Readonly<Record<string, string>>; readonly destinations: Readonly<Record<string, string>>; readonly fulfillment?: Fulfillment; readonly priceFromMinor?: number; readonly imageUrl?: string }
-/** What the provider sees of a click (provider-catalog 3.9.0, D-10 #34, A35, PF-1): product, button, date, event type and city. `context` is closed: never a celebration, a guest or a referrer. */
-export interface LeadContextView { readonly surface?: string | null; readonly locale?: string | null; readonly device?: string | null; readonly country?: string | null; readonly city?: string | null; readonly eventType?: string | null }
-export type InvalidLeadReason = NonNullable<ProviderCatalogComponents["schemas"]["Lead"]["invalidReason"]>;
-export interface Lead { readonly id: string; readonly listingId: string; readonly kind: "REDIRECT" | "FORM"; readonly destination?: string; readonly category?: string | null; readonly valid: boolean; readonly billable?: boolean; readonly invalidReason?: InvalidLeadReason; readonly occurredAt: string; readonly listingTitle?: string | null; readonly eventType?: string | null; readonly city?: string | null; readonly surface?: string | null; readonly device?: string | null; readonly context?: LeadContextView }
+/** What the provider sees of a click (provider-catalog 3.9.0, D-10 #34, A35, PF-1): product, button, date, event type and city. `context` is closed: never a celebration, a guest or a referrer. Derived from the generated contract. */
+type GeneratedLead = ProviderCatalogComponents["schemas"]["Lead"];
+export type LeadContextView = NonNullable<GeneratedLead["context"]>;
+export type InvalidLeadReason = NonNullable<GeneratedLead["invalidReason"]>;
+/** The service always sends these five; the generated schema leaves every field optional. */
+export type Lead = Omit<GeneratedLead, "id" | "listingId" | "kind" | "valid" | "occurredAt"> & Required<Pick<GeneratedLead, "id" | "listingId" | "kind" | "valid" | "occurredAt">>;
 export interface MetricTotals { readonly impressions: number; readonly clicks: number; readonly validLeads: number; readonly invalidLeads: number; readonly ctr: number }
 export interface Metrics { readonly providerId: string; readonly from: string; readonly to: string; readonly totals: MetricTotals; readonly rows?: readonly Readonly<Record<string, unknown>>[]; readonly groups?: readonly Readonly<Record<string, unknown>>[] }
 export interface AvailabilityRule { readonly weekdays: readonly number[]; readonly start: string; readonly end: string }

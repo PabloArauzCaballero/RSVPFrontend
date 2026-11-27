@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { ApiClient } from "@rsvp/api-client";
-import type { ProviderCatalogComponents } from "@rsvp/contracts";
+import type { ProviderCatalogComponents, ProviderCatalogOperations } from "@rsvp/contracts";
 
 /**
  * R6b (provider-catalog 3.9.0, D-10 #33 to #35, A35, M-1, M-2): the monthly lead report of a provider, the administrator's report with its CSV
@@ -17,7 +17,7 @@ export type AdminLeadReport = Schemas["AdminLeadReport"];
 export type InvalidLeadCounts = Schemas["InvalidLeadCounts"];
 export type LeadContext = Schemas["LeadContext"];
 export type LeadContextRequest = Schemas["LeadContextRequest"];
-export type LeadDestination = "OFFICIAL_SITE" | "LANDING" | "WHATSAPP" | "PHONE" | "EMAIL" | "INSTAGRAM" | "PRODUCT_PAGE" | "QUOTE_FORM";
+export type LeadDestination = NonNullable<NonNullable<ProviderCatalogOperations["listLeads"]["parameters"]["query"]>["destination"]>;
 /** The buttons a lead can come from (the `destination` filter of the contract). */
 export const LEAD_DESTINATIONS: readonly LeadDestination[] = ["OFFICIAL_SITE", "LANDING", "WHATSAPP", "PHONE", "EMAIL", "INSTAGRAM", "PRODUCT_PAGE", "QUOTE_FORM"];
 /** Every key of `invalidByReason`, in the order the reports show them. */
@@ -69,19 +69,20 @@ export function useDownloadLeadReportCsv(client: ApiClient) {
   return useMutation({ mutationFn: ({ month, providerId }: { readonly month: string; readonly providerId?: string }) => leadReportApi(client).adminCsv(month, providerId) });
 }
 
-/** The ctx lives 15 minutes (3.9.0): it is asked again every 12 so a link opened from a long session never carries a stale one. */
-export const PORTAL_LEAD_CONTEXT_REFRESH_MS = 12 * 60_000;
+/** The ctx lives 15 minutes (3.9.0): it is asked again every 10, also while the tab is in the background and when it regains focus, so a link never carries an expired one. */
+export const PORTAL_LEAD_CONTEXT_REFRESH_MS = 10 * 60_000;
 
 /**
  * M-1 and M-2 · POST /providers/{id}/lead-context. The portal asks for the signed `ctx` of its owner (`PROVIDER_OWNER`) or of the preview of one listing
  * (`PREVIEW`) and appends it to the `/r/{listingId}` links it opens, so those clicks are invalid leads and never bill. It is a bearer: never put it in a
- * link that is copied or shared. While it is not there (or the answer is a 503 LEAD_CONTEXT_UNAVAILABLE) `ctx` is undefined and the link goes without it.
+ * link that is copied or shared. It has no screen yet: a consumer must follow the R6a pattern (the ctx stays out of the `href`, it is added when navigating and
+ * renewed when the app regains focus). While it is not there (or the answer is a 503 LEAD_CONTEXT_UNAVAILABLE) `ctx` is undefined and the link goes without it.
  */
 export function useLeadContext(client: ApiClient, providerId: string | undefined, request: LeadContextRequest, enabled = true) {
   return useQuery({
     queryKey: leadReportKeys.context(providerId ?? "", request.relation, request.listingId),
     queryFn: () => leadReportApi(client).issueLeadContext(providerId ?? "", request),
-    staleTime: PORTAL_LEAD_CONTEXT_REFRESH_MS, gcTime: PORTAL_LEAD_CONTEXT_REFRESH_MS, refetchInterval: PORTAL_LEAD_CONTEXT_REFRESH_MS, retry: false,
+    staleTime: PORTAL_LEAD_CONTEXT_REFRESH_MS, gcTime: PORTAL_LEAD_CONTEXT_REFRESH_MS, refetchInterval: PORTAL_LEAD_CONTEXT_REFRESH_MS, refetchIntervalInBackground: true, refetchOnWindowFocus: true, retry: false,
     enabled: enabled && Boolean(providerId) && (request.relation === "PROVIDER_OWNER" || Boolean(request.listingId))
   });
 }

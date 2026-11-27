@@ -34,6 +34,14 @@ export function recentMonths(timeZone: string, count: number = MONTHS_BACK, now:
   });
 }
 
+/** «hora de Bolivia» instead of «America/La_Paz»; the raw IANA name only when the platform cannot name the zone. */
+export function zoneName(timeZone: string, locale: string): string {
+  try {
+    const name = new Intl.DateTimeFormat(locale, { timeZone, timeZoneName: "long" }).formatToParts(new Date()).find((part) => part.type === "timeZoneName")?.value;
+    return name ?? timeZone;
+  } catch { return timeZone; }
+}
+
 export function monthLabel(value: string, locale: string): string {
   const match = MONTH.exec(value);
   if (!match) return value;

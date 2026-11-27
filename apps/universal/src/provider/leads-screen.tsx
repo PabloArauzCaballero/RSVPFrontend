@@ -56,25 +56,28 @@ function Leads({ provider }: { readonly provider: Provider }): ReactNode {
   const geo = useProviderGeo(client);
   const [kind, setKind] = useState<Kind>("all");
   const filtered = Boolean(filters.month || filters.listingId || filters.destination);
-  if (leads.isPending) return <View style={{ gap: spacing[4] }}><PageIntro>{t("portal.leads.intro")}</PageIntro><RowsSkeleton count={4} minHeight={92} /></View>;
-  if (leads.isError && !leads.data) return <PortalErrorState error={leads.error} onRetry={() => { void leads.refetch(); }} />;
   const items = leads.data?.pages.flatMap((page) => page.items) ?? [];
   const total = leads.data?.pages[0]?.total ?? items.length;
   const quotes = items.filter((lead) => lead.kind === "FORM");
   const shown = kind === "all" ? items : kind === "quote" ? quotes : items.filter((lead) => lead.kind !== "FORM");
+  const failed = leads.isError && !leads.data;
   return (
     <View style={{ gap: spacing[4] }}>
       <PageIntro>{t("portal.leads.intro")}</PageIntro>
       <LeadFilterBar provider={provider} value={filters} onChange={setFilters} allMonths ns="portal.leads" />
-      {items.length === 0 && filtered ? <Notice>{t("portal.leads.filteredEmpty")}</Notice> : items.length === 0 ? <EmptyState illustration="emptySearch" title={t("portal.leads.emptyTitle")} body={t("portal.leads.empty")} /> : (
-        <View style={{ gap: spacing[2] }}>
-          <ChoiceGroup<Kind> label={t("portal.leads.filter")} value={kind} onChange={setKind} choices={[{ value: "all", label: t("portal.leads.filters.all") }, { value: "quote", label: t("portal.leads.filters.quote") }, { value: "click", label: t("portal.leads.filters.click") }]} />
-          {shown.length === 0 ? <Notice>{t(kind === "quote" ? "portal.leads.quotesEmpty" : "portal.leads.clicksEmpty")}</Notice> : <Stagger>{shown.map((lead) => <LeadRow key={lead.id} lead={lead} timeZone={provider.timeZone} cities={geo.data?.items} />)}</Stagger>}
+      {leads.isPending ? <RowsSkeleton count={4} minHeight={92} /> : failed ? <PortalErrorState error={leads.error} onRetry={() => { void leads.refetch(); }} /> : (
+        <View style={{ gap: spacing[4], opacity: leads.isPlaceholderData ? 0.5 : 1 }} aria-busy={leads.isPlaceholderData} testID="leads-body">
+          {items.length === 0 && filtered ? <Notice>{t("portal.leads.filteredEmpty")}</Notice> : items.length === 0 ? <EmptyState illustration="emptySearch" title={t("portal.leads.emptyTitle")} body={t("portal.leads.empty")} /> : (
+            <View style={{ gap: spacing[2] }}>
+              <ChoiceGroup<Kind> label={t("portal.leads.filter")} value={kind} onChange={setKind} choices={[{ value: "all", label: t("portal.leads.filters.all") }, { value: "quote", label: t("portal.leads.filters.quote") }, { value: "click", label: t("portal.leads.filters.click") }]} />
+              {shown.length === 0 ? <Notice>{t(kind === "quote" ? "portal.leads.quotesEmpty" : "portal.leads.clicksEmpty")}</Notice> : <Stagger>{shown.map((lead) => <LeadRow key={lead.id} lead={lead} timeZone={provider.timeZone} cities={geo.data?.items} />)}</Stagger>}
+            </View>
+          )}
+          {items.length > 0 ? <Text style={styles.muted} testID="leads-shown">{t("portal.leads.shown", { shown: items.length, total })}</Text> : null}
+          {leads.isFetchNextPageError ? <PortalErrorNotice error={leads.error} onRetry={() => { void leads.fetchNextPage(); }} /> : null}
+          {leads.hasNextPage ? <ActionButton icon="arrow" variant="secondary" label={t("portal.leads.more")} busy={leads.isFetchingNextPage} disabled={leads.isFetchingNextPage} onPress={() => { void leads.fetchNextPage(); }} testID="leads-more" /> : null}
         </View>
       )}
-      {items.length > 0 ? <Text style={styles.muted} testID="leads-shown">{t("portal.leads.shown", { shown: items.length, total })}</Text> : null}
-      {leads.isFetchNextPageError ? <PortalErrorNotice error={leads.error} onRetry={() => { void leads.fetchNextPage(); }} /> : null}
-      {leads.hasNextPage ? <ActionButton icon="arrow" variant="secondary" label={t("portal.leads.more")} busy={leads.isFetchingNextPage} disabled={leads.isFetchingNextPage} onPress={() => { void leads.fetchNextPage(); }} testID="leads-more" /> : null}
     </View>
   );
 }
