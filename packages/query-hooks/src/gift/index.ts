@@ -38,6 +38,8 @@ import { addGiftWithList, giftApi as giftService } from "./api.js";
 import type { AddGiftInput, UpdateGiftSettingsInput, GiftItemList, GiftReservation, ReservationStatus, ReserveGiftInput } from "./types.js";
 export * from "./types.js";
 export * from "./reserve-rules.js";
+export * from "./guest-card.js";
+export * from "./purchase-prompt.js";
 export { giftApi as giftService, isGiftListMissing, suggestionsOf, problemCode } from "./api.js";
 import { suggestionsOf, problemCode } from "./api.js";
 
@@ -58,8 +60,8 @@ export interface GiftFilters { readonly maxMinor?: number; readonly source: Gift
  * The guest's list as the web page and the app show it: only what a guest may see, the guest's filters applied, and partner
  * gifts before the others whatever the order they arrived in. One function so both surfaces filter identically.
  */
-export function arrangeGifts<T extends { readonly source: string; readonly status: string; readonly price: { readonly amountMinor: number } }>(items: readonly T[], filters: GiftFilters): { readonly partner: T[]; readonly other: T[] } {
-  const kept = guestVisible(items).filter((item) => (filters.maxMinor === undefined || item.price.amountMinor <= filters.maxMinor) && (!filters.onlyAvailable || item.status === "AVAILABLE") && (filters.source === "all" || (filters.source === "partner") === (item.source === "CATALOGED")));
+export function arrangeGifts<T extends { readonly source: string; readonly status: string; readonly price: { readonly amountMinor: number }; readonly currentPrice?: { readonly amountMinor: number } | null }>(items: readonly T[], filters: GiftFilters): { readonly partner: T[]; readonly other: T[] } {
+  const kept = guestVisible(items).filter((item) => (filters.maxMinor === undefined || (item.currentPrice?.amountMinor ?? item.price.amountMinor) <= filters.maxMinor) && (!filters.onlyAvailable || item.status === "AVAILABLE") && (filters.source === "all" || (filters.source === "partner") === (item.source === "CATALOGED")));
   const ordered = catalogedFirst(kept);
   return { partner: ordered.filter((item) => item.source === "CATALOGED"), other: ordered.filter((item) => item.source !== "CATALOGED") };
 }

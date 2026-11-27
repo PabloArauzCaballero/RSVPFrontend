@@ -6,7 +6,7 @@ export const giftsEnUS: DeepStrings<typeof giftsEsBO> = {
   meta: { title: "Gifts · {{name}}", description: "Choose a gift for {{name}}. Products from our partners come first." },
   back: "Back to the celebration",
   filters: { label: "Filter gifts", maxPrice: "Maximum price", source: "Source", sourceAll: "All", sourcePartner: "From our partners", sourceOther: "Other stores", onlyAvailable: "Available only", clear: "Clear filters", count_one: "{{count}} gift", count_other: "{{count}} gifts" },
-  card: { photo: "Photo of {{title}}", open: "See details of {{title}}", viaWhatsApp: "Ask on WhatsApp", viaOther: "See at the store" },
+  card: { photo: "Photo of {{title}}", open: "See details of {{title}}", viaWhatsApp: "Order on WhatsApp", viaOther: "See at the store" },
   detail: { title: "{{title}} · Gifts", back: "Back to the list", notFound: "This gift is no longer on the list.", notFoundBody: "The hosts may have removed it. The full list is still open to you.", partnerNote: "A DOne partner offers this product. Opening the link takes you out of DOne." },
   outcome: { cancelledTitle: "Reservation cancelled", cancelledBody: "This reservation was cancelled when your attendance changed. If you are attending again, confirm your response and choose an available gift." },
   error: {
@@ -20,8 +20,26 @@ export const giftsEnUS: DeepStrings<typeof giftsEsBO> = {
     title: "Gifts", intro: "Reserve a gift in one tap and nobody else will give the same one.", rule: "Each person can hold a limited number of reserved gifts at a time.", backToRsvp: "Back to my answer", loading: "Opening the list…",
     groupPartner: "From our partners", groupOther: "Ideas from your hosts",
     status: { AVAILABLE: "Available", PENDING_REVIEW: "Waiting for approval", COMMITTED: "Reserved" },
-    reserve: "Reserve", reserveFor: "Reserve {{title}}", viaPartner: "See it at the partner shop", partnerNote: "A DOne partner offers it. Opening the link takes you out of DOne.", reservedBy: "Reserved by {{name}}",
-    form: { title: "Reserve “{{title}}”", lead: "If you like, leave your name and a message for your hosts. Both are optional.", name: "Your name (optional)", nameHelp: "Your hosts see it next to your reservation.", message: "Message (optional)", messageHelp: "Up to 500 characters.", submit: "Confirm reservation", submitting: "Reserving…", cancel: "Not now" },
+    /** R5 · guest card: quantity by units, coordinated contribution, current price and «did you buy it?». */
+    units: { left_one: "{{count}} of {{total}} still needed", left_other: "{{count}} of {{total}} still needed", all: "{{total}} in total", choose: "How many do you want to give", less: "Fewer units", more: "More units", value: "{{count}} units", help: "{{left}} left. Reserve only the ones you will give.", mine_one: "You reserved {{count}} unit", mine_other: "You reserved {{count}} units", soldOut: "No units left" },
+    group: {
+      badge: "Together", contributorsNone: "Nobody has joined yet", contributors_one: "1 person is chipping in", contributors_other: "{{count}} people are chipping in",
+      noCoordinator: "Be the one who coordinates: you reserve the gift and buy it at the store; the others join with their share.",
+      coordinatorNamed: "{{name}} will buy it", coordinatorAnonymous: "Someone in the group will buy it",
+      join: "Join in", joinFor: "Join in for {{title}}", start: "Coordinate this gift", startFor: "Coordinate {{title}}",
+      youCoordinate: "You coordinate this gift", youCoordinateHelp: "You are the one who buys it. Use the buttons below and the others chip in.", namesShown: "Joined: {{names}}", leaveCoordinator: "Stop coordinating",
+      youContribute: "You joined this gift", youContributeHelp: "Someone else buys it; you chip in your share with them.", leave: "Leave this gift",
+      lead: "This gift is bought together. Whoever signs up first coordinates and buys it; the app does not charge or move money.", leadContributor: "You join another person's purchase. The app does not charge: agree on the share between you."
+    },
+    buy: { title: "Where to get it", viaStore: "See it at the store", viaWhatsApp: "Order on WhatsApp", price: "Today's price: {{price}}", partnerNote: "A DOne partner offers it. Opening the link takes you out of DOne." },
+    prompt: {
+      title: "Did you buy {{title}}?", titleUnits: "Did you buy {{units}} × {{title}}?", body: "Tell us so we reserve it and nobody else gives it. Your answer stays on this device until you reserve it.", reminder: "We will remind you only once.",
+      yes: "Yes, I bought it", later: "Not yet", no: "No", yesCoordinator: "Thanks. Your reservation is still active.", closed: "Done. We will not ask again.", laterDone: "We will remind you once when you open the list.",
+      yesFor: "Yes, I bought {{title}}", laterFor: "I have not bought {{title}} yet", noFor: "I did not buy {{title}}"
+    },
+    price: { current: "Current price", from: "The provider's current price" },
+    reserve: "Reserve", reserveFor: "Reserve {{title}}", viaPartner: "See it at the store", partnerNote: "A DOne partner offers it. Opening the link takes you out of DOne.", reservedBy: "Reserved by {{name}}",
+    form: { title: "Reserve “{{title}}”", lead: "If you like, leave your name and a message for your hosts. Both are optional.", name: "Your name (optional)", nameHelp: "Your hosts see it next to your reservation.", message: "Message (optional)", messageHelp: "Up to 500 characters.", submit: "Confirm reservation", submitting: "Reserving…", cancel: "Not now", units: "Units", showName: "Show my name to the other guests", showNameHelp: "Only if you typed your name above. Your phone and e-mail are never shown.", coordinatorNote: "You will be the one who coordinates the purchase of the whole gift." },
     done: { confirmedTitle: "Gift reserved", confirmedBody: "“{{title}}” is yours. Your hosts will see it on their list in a moment.", pendingTitle: "Reservation sent", pendingBody: "Your hosts approve each reservation. Meanwhile, nobody else can reserve “{{title}}”." },
     taken: { title: "Someone got there first", body: "Someone else already reserved “{{title}}”. It happens. Here are other options.", alternatives: "Other available gifts", none: "There are no available gifts left. Thank you for wanting to join them." },
     empty: { title: "No gifts yet", body: "Your hosts have not added any yet. Come back in a few days." },
@@ -41,6 +59,7 @@ export const giftsEnUS: DeepStrings<typeof giftsEsBO> = {
       expired: "Your link no longer works. Ask whoever invited you for a new one.", forbidden: "This link cannot reserve gifts. Ask whoever invited you for a new one.", notFound: "This link is for another celebration. Open the one you were sent for this one.",
       busy: "There were a lot of requests in a row. Wait a moment and try again.", busyWait: "There were a lot of requests in a row. Wait {{seconds}} s and try again.", busyMinutes: "There were a lot of requests. You can try again in about {{minutes}} min. Your message is still here.",
       validation: "The name or the message is too long. Shorten it and try again.", offline: "No connection right now. Your message is still here; try again when your internet is back.", generic: "We could not reserve the gift. Try again.",
+      units: "Only {{count}} units are left. Pick a smaller number and try again.", unitsNone: "No units of this gift are left. We refreshed the list.", already: "You already hold a reservation for this gift. Cancel it first if you want to change it.",
       retryHint: "You can tap “Confirm reservation” again: it will not be reserved twice.", nameTooLong: "The name accepts up to {{max}} characters.", messageTooLong: "The message accepts up to {{max}} characters."
     }
   },

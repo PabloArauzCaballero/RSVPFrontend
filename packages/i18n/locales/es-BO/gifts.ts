@@ -4,7 +4,7 @@ export const giftsEsBO = {
   meta: { title: "Regalos · {{name}}", description: "Elige un regalo para {{name}}. Los productos de nuestros aliados aparecen primero." },
   back: "Volver a la celebración",
   filters: { label: "Filtrar regalos", maxPrice: "Precio máximo", source: "Origen", sourceAll: "Todos", sourcePartner: "De nuestros aliados", sourceOther: "Otras tiendas", onlyAvailable: "Solo disponibles", clear: "Quitar filtros", count_one: "{{count}} regalo", count_other: "{{count}} regalos" },
-  card: { photo: "Foto de {{title}}", open: "Ver detalle de {{title}}", viaWhatsApp: "Consultar por WhatsApp", viaOther: "Ver en la tienda" },
+  card: { photo: "Foto de {{title}}", open: "Ver detalle de {{title}}", viaWhatsApp: "Pedir por WhatsApp", viaOther: "Ver en la tienda" },
   detail: { title: "{{title}} · Regalos", back: "Volver a la lista", notFound: "Este regalo ya no está en la lista.", notFoundBody: "Puede que los anfitriones lo hayan quitado. La lista completa sigue abierta para ti.", partnerNote: "Este producto lo ofrece un aliado de DOne. Al abrir el enlace saldrás de DOne." },
   outcome: { cancelledTitle: "Reserva cancelada", cancelledBody: "Esta reserva se canceló al cambiar tu asistencia. Si volvés a asistir, confirmá tu respuesta y elegí un regalo disponible." },
   error: {
@@ -18,8 +18,26 @@ export const giftsEsBO = {
     title: "Regalos", intro: "Reserva un regalo en un toque y nadie más regalará lo mismo.", rule: "Cada persona puede tener un máximo de regalos reservados a la vez.", backToRsvp: "Volver a mi respuesta", loading: "Abriendo la lista…",
     groupPartner: "De nuestros aliados", groupOther: "Ideas de quienes te invitan",
     status: { AVAILABLE: "Disponible", PENDING_REVIEW: "Esperando aprobación", COMMITTED: "Reservado" },
-    reserve: "Reservar", reserveFor: "Reservar {{title}}", viaPartner: "Ver en la tienda del aliado", partnerNote: "Lo ofrece un aliado de DOne. Al abrir el enlace sales de DOne.", reservedBy: "Reservado por {{name}}",
-    form: { title: "Reservar «{{title}}»", lead: "Si quieres, deja tu nombre y un mensaje para quienes te invitan. Los dos son opcionales.", name: "Tu nombre (opcional)", nameHelp: "Lo ven quienes te invitan junto a tu reserva.", message: "Mensaje (opcional)", messageHelp: "Hasta 500 caracteres.", submit: "Confirmar reserva", submitting: "Reservando…", cancel: "Ahora no" },
+    /** R5 · tarjeta del invitado: cantidad por unidades, aporte coordinado, precio vigente y «¿lo compraste?». */
+    units: { left_one: "Falta {{count}} de {{total}}", left_other: "Faltan {{count}} de {{total}}", all: "{{total}} en total", choose: "Cuántos quieres regalar", less: "Menos unidades", more: "Más unidades", value: "{{count}} unidades", help: "Quedan {{left}}. Reservas solo las que vas a regalar.", mine_one: "Reservaste {{count}} unidad", mine_other: "Reservaste {{count}} unidades", soldOut: "Ya no quedan unidades" },
+    group: {
+      badge: "Entre varios", contributorsNone: "Todavía nadie se sumó", contributors_one: "1 persona aporta", contributors_other: "{{count}} personas aportan",
+      noCoordinator: "Sé quien coordina: reservas el regalo y compras en la tienda; los demás se suman con su parte.",
+      coordinatorNamed: "{{name}} lo comprará", coordinatorAnonymous: "Alguien del grupo lo comprará",
+      join: "Sumarme", joinFor: "Sumarme a {{title}}", start: "Coordinar este regalo", startFor: "Coordinar {{title}}",
+      youCoordinate: "Tú coordinas este regalo", youCoordinateHelp: "Eres quien compra. Usa los botones de abajo y los demás aportan su parte.", namesShown: "Se sumaron: {{names}}", leaveCoordinator: "Dejar de coordinar",
+      youContribute: "Te sumaste a este regalo", youContributeHelp: "Otra persona lo compra; tú aportas tu parte con ella.", leave: "Salirme del regalo",
+      lead: "Este regalo se compra entre varios. Quien se anota primero lo coordina y compra; la app no cobra ni mueve dinero.", leadContributor: "Te sumas a la compra de otra persona. La app no cobra: acuerden el aporte entre ustedes."
+    },
+    buy: { title: "Dónde conseguirlo", viaStore: "Ver en la tienda", viaWhatsApp: "Pedir por WhatsApp", price: "Precio de hoy: {{price}}", partnerNote: "Lo ofrece un aliado de DOne. Al abrir el enlace sales de DOne." },
+    prompt: {
+      title: "¿Compraste {{title}}?", titleUnits: "¿Compraste {{units}} × {{title}}?", body: "Cuéntanos para reservarlo y que nadie más lo regale. Tu respuesta no sale de este dispositivo hasta que lo reserves.", reminder: "Te lo recordamos una sola vez.",
+      yes: "Sí, ya lo compré", later: "Todavía no", no: "No", yesCoordinator: "Gracias. Tu reserva sigue activa.", closed: "Listo. No te lo volveremos a preguntar.", laterDone: "Te lo recordaremos una vez cuando abras la lista.",
+      yesFor: "Sí, compré {{title}}", laterFor: "Todavía no compré {{title}}", noFor: "No compré {{title}}"
+    },
+    price: { current: "Precio vigente", from: "Precio vigente del proveedor" },
+    reserve: "Reservar", reserveFor: "Reservar {{title}}", viaPartner: "Ver en la tienda", partnerNote: "Lo ofrece un aliado de DOne. Al abrir el enlace sales de DOne.", reservedBy: "Reservado por {{name}}",
+    form: { title: "Reservar «{{title}}»", lead: "Si quieres, deja tu nombre y un mensaje para quienes te invitan. Los dos son opcionales.", name: "Tu nombre (opcional)", nameHelp: "Lo ven quienes te invitan junto a tu reserva.", message: "Mensaje (opcional)", messageHelp: "Hasta 500 caracteres.", submit: "Confirmar reserva", submitting: "Reservando…", cancel: "Ahora no", units: "Unidades", showName: "Mostrar mi nombre a los demás invitados", showNameHelp: "Solo si escribiste tu nombre arriba. Tu teléfono y tu correo nunca se muestran.", coordinatorNote: "Quedarás como quien coordina la compra de todo el regalo." },
     done: { confirmedTitle: "Regalo reservado", confirmedBody: "«{{title}}» es tuyo. Quienes te invitan lo verán en su lista en un momento.", pendingTitle: "Reserva enviada", pendingBody: "Quienes te invitan aprueban cada reserva. Mientras tanto, nadie más puede reservar «{{title}}»." },
     taken: { title: "Alguien se adelantó", body: "«{{title}}» ya lo reservó otra persona. Pasa a veces. Te mostramos otras opciones.", alternatives: "Otros regalos disponibles", none: "Ya no quedan regalos disponibles. Gracias por querer acompañarlos." },
     empty: { title: "Aún no hay regalos", body: "Quienes te invitan todavía no agregaron ninguno. Vuelve en unos días." },
@@ -39,6 +57,7 @@ export const giftsEsBO = {
       expired: "Tu enlace ya no funciona. Pídele uno nuevo a quien te invitó.", forbidden: "Con este enlace no se pueden reservar regalos. Pídele uno nuevo a quien te invitó.", notFound: "Este enlace es de otra celebración. Abre el que te enviaron para esta.",
       busy: "Hubo muchas solicitudes seguidas. Espera un momento y vuelve a intentarlo.", busyWait: "Hubo muchas solicitudes seguidas. Espera {{seconds}} s y vuelve a intentarlo.", busyMinutes: "Hubo muchas solicitudes. Podrás volver a intentarlo en unos {{minutes}} min. Tu mensaje sigue aquí.",
       validation: "El nombre o el mensaje son demasiado largos. Acórtalos y vuelve a intentarlo.", offline: "Sin conexión por ahora. Tu mensaje sigue aquí; reintenta cuando vuelva internet.", generic: "No pudimos reservar el regalo. Inténtalo de nuevo.",
+      units: "Ya solo quedan {{count}} unidades. Elige una cantidad menor y vuelve a intentarlo.", unitsNone: "Ya no quedan unidades de este regalo. Actualizamos la lista.", already: "Ya tienes una reserva de este regalo. Cancélala primero si quieres cambiarla.",
       retryHint: "Puedes volver a tocar «Confirmar reserva»: no se reservará dos veces.", nameTooLong: "El nombre admite hasta {{max}} caracteres.", messageTooLong: "El mensaje admite hasta {{max}} caracteres."
     }
   },
