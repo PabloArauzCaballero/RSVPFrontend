@@ -748,6 +748,30 @@ describe("D-3 · the host releases a reserved gift", () => {
     expect(posts.map((call) => call.path)).toEqual(["/gifts/celebrations/c-1/reservations/r9/cancel"]);
     expect(posts[0]?.headers.get("idempotency-key")).toBeTruthy();
   });
+  const mesa = (availability: string) => ({ items: [gift("Mesa", { status: "COMMITTED", availability })], partnerPriorityEnabled: true });
+  const cancelled = () => ({ ...COMMITTED.items[0], status: "CANCELLED", cancellationReason: "HOST_CANCELLED" });
+  it.each([
+    ["es-BO", "Se cancela la reserva de «Mesa». El regalo sigue como no disponible: tus invitados no lo ven.", "Liberaste «Mesa». Sigue como no disponible: tus invitados no lo ven.", /vuelve a estar disponible|disponible otra vez/],
+    ["en-US", "The reservation of \"Mesa\" is cancelled. The gift stays unavailable: your guests do not see it.", "You released \"Mesa\". It is still unavailable: your guests do not see it.", /available to your guests again|It is available again/]
+  ] as const)("releasing an unavailable gift never says guests can get it again (%s)", async (locale, confirmBody, done, promise) => {
+    const { client } = fakeClient(base({ "GET /gifts/celebrations/c-1/items": () => mesa("UNAVAILABLE"), "POST /gifts/celebrations/c-1/reservations/r9/cancel": cancelled }));
+    renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client, HOST, locale);
+    fireEvent.click(await screen.findByTestId("release-Mesa"));
+    expect(screen.getByText(confirmBody)).toBeTruthy();
+    expect(screen.queryByText(promise)).toBeNull();
+    fireEvent.click(screen.getByTestId("release-confirm"));
+    expect(await screen.findByText(done)).toBeTruthy();
+    expect(screen.queryByText(promise)).toBeNull();
+  });
+  it("an available gift keeps the «available again» wording; if the refreshed list says it is unavailable, the notice follows the list", async () => {
+    let availability = "AVAILABLE";
+    const { client } = fakeClient(base({ "GET /gifts/celebrations/c-1/items": () => mesa(availability), "POST /gifts/celebrations/c-1/reservations/r9/cancel": () => { availability = "UNAVAILABLE"; return cancelled(); } }));
+    renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    fireEvent.click(await screen.findByTestId("release-Mesa"));
+    expect(screen.getByText("Se cancela la reserva de «Mesa» y el regalo vuelve a estar disponible para tus invitados. Quien lo reservó verá su reserva como cancelada.")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("release-confirm"));
+    expect(await screen.findByText("Liberaste «Mesa». Sigue como no disponible: tus invitados no lo ven.")).toBeTruthy();
+  });
   it("«No, mantener la reserva» sends nothing; a reservation already ended (409) closes and explains", async () => {
     const { client, calls } = fakeClient(base({ "POST /gifts/celebrations/c-1/reservations/r9/cancel": () => new HttpFailure(409, { code: "RESERVATION_NOT_ACTIVE" }) }));
     renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);
