@@ -81,7 +81,7 @@ export const hostEsBO = {
   media: {
     title: "Archivos", quota: "{{assets}} de {{maxAssets}} archivos · {{used}} de {{max}} usados", quotaFull: "Llegaste al límite de archivos de esta invitación. Elimina alguno para subir otro.",
     add: "Agregar archivos", addMusic: "Subir música (MP3)", help: "JPG, PNG, WebP, GIF, AVIF, SVG o HEIC, de hasta {{max}} MB cada uno.", helpMusic: "MP3 de hasta {{max}} MB y {{minutes}} minutos.",
-    queued: "En espera", uploading: "Subiendo {{name}}… {{percent}} %", processing: "Preparando {{name}}…", done: "{{name}} está lista.", retry: "Reintentar", remove: "Quitar de la lista", clear: "Limpiar lista",
+    queued: "En espera", uploading: "Subiendo {{name}}…", progressLabel: "Avance de {{name}}", quotaLabel: "Espacio usado", processing: "Preparando {{name}}…", done: "Listo: {{name}}.", retry: "Reintentar", remove: "Quitar de la lista", clear: "Limpiar lista",
     rightsTitle: "Aviso de derechos de autor", rights: "Confirmo que tengo derecho a usar esta música en mi invitación y entiendo que se retirará si recibimos una denuncia de derechos de autor.", rightsRequired: "Acepta el aviso de derechos para subir música.",
     failures: {
       type: "{{name}}: este tipo de archivo no se puede subir aquí.", tooLarge: "{{name}} es demasiado grande. Prueba con una versión más liviana.", quotaAssets: "{{name}}: ya no caben más archivos en esta invitación.",

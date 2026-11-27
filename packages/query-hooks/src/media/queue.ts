@@ -64,6 +64,12 @@ export interface UploadQueue {
   readonly add: (files: readonly QueueFile[], options: QueueOptions) => readonly string[];
   readonly retry: (id: string) => void;
   readonly remove: (id: string) => void;
+  /**
+   * Settles the files the server was still processing when their upload ended, from the list the host re-reads while the worker runs:
+   * PROCESSED closes the row as done, REJECTED turns it into a `rejected` error (the file itself is the problem, so it is not retryable
+   * as is) and DELETED removes the row. Rows that are not `processing`, or whose asset is not in the list yet, are left alone.
+   */
+  readonly reconcile: (assets: readonly MediaAsset[]) => void;
   /** Removes the finished ones (done and errors the person dismissed with "clear"). */
   readonly clearFinished: () => void;
 }
@@ -153,6 +159,21 @@ export function createUploadQueue(upload: UploadOne, config: { readonly concurre
       if (!item || item.status !== "error") return;
       patch(id, { status: "queued", progress: 0, failure: undefined, retryable: undefined });
       pump();
+    },
+    reconcile: (assets) => {
+      const byId = new Map(assets.map((asset) => [asset.id, asset]));
+      let changed = false;
+      const next: QueueItem[] = [];
+      for (const item of items) {
+        const known = item.status === "processing" && item.asset ? byId.get(item.asset.id) : undefined;
+        if (!known || known.status === "PROCESSING" || known.status === "PENDING_UPLOAD") { next.push(item); continue; }
+        changed = true;
+        if (known.status === "DELETED") { sources.delete(item.id); continue; }
+        next.push(known.status === "PROCESSED" ? { ...item, status: "done", progress: 1, asset: known } : { ...item, status: "error", failure: "rejected", retryable: false, asset: known });
+      }
+      if (!changed) return;
+      items = next;
+      publish();
     },
     remove: (id) => { sources.delete(id); items = items.filter((item) => item.id !== id); publish(); },
     clearFinished: () => {
