@@ -59,6 +59,7 @@ describe("F6 · pictures", () => {
     expect(picture.querySelector("img")?.getAttribute("alt")).toBe("Los dos");
     // The background and the song are in the document's media list but are not photos of the gallery.
     expect(container.querySelectorAll(".celebration-gallery li")).toHaveLength(1);
+    expect(container.querySelector(".celebration-gallery-navigation")).toBeNull();
   });
 
   it("an even veil (contract 1.8.0, `veil: even`) is one veil over the whole picture, with a value per scheme that keeps the text at AA", () => {

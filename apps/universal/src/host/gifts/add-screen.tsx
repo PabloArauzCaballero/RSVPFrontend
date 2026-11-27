@@ -7,15 +7,15 @@ import { CelebrationScreen, type ScreenProps } from "../gate";
 import { HOST_ROUTES, withCelebration } from "../routes";
 import { ChoiceGroup, useStyles } from "../ui";
 import { CatalogPanel } from "./catalog-panel";
-import { ProvidersPanel } from "./providers-panel";
 import { StorePanel } from "./store-panel";
 
 /**
- * «Agregar regalo»: one flow with three origins (the catalog, a provider, a store) instead of three screens.
- * The three old routes still open it, each on its own origin, so shared links and bookmarks keep working.
+ * «Agregar regalo»: one flow with two origins, the catalog of products from verified providers and a store link (D-10
+ * decisions 1 and 7). A provider's offer is no longer an origin (A28): services stay in the provider directory and only
+ * products can become gifts. The old routes still open this flow, so shared links and bookmarks keep working.
  */
-export type Origin = "catalog" | "provider" | "store";
-const ORIGINS: readonly Origin[] = ["catalog", "provider", "store"];
+export type Origin = "catalog" | "store";
+const ORIGINS: readonly Origin[] = ["catalog", "store"];
 
 export function AddGiftScreen({ initial, ...props }: ScreenProps & { readonly initial: Origin }): ReactNode {
   const t = useT();
@@ -32,7 +32,6 @@ export function AddGiftScreen({ initial, ...props }: ScreenProps & { readonly in
               <View style={{ gap: spacing[4] }}>
                 <Text style={styles.muted}>{t(`gifts.host.add.hint.${origin}`)}</Text>
                 {origin === "catalog" ? <CatalogPanel celebrationId={celebration.id} currency={celebration.currency} onSeeList={to(HOST_ROUTES.gifts)} /> : null}
-                {origin === "provider" ? <ProvidersPanel celebrationId={celebration.id} currency={celebration.currency} onSeeList={to(HOST_ROUTES.gifts)} /> : null}
                 {origin === "store" ? <StorePanel celebration={celebration} onSeeList={to(HOST_ROUTES.gifts)} onChangeRule={to(HOST_ROUTES.modes)} /> : null}
               </View>
             </Enter>

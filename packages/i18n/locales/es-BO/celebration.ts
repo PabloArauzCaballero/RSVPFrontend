@@ -7,7 +7,7 @@ export const celebrationEsBO = {
   schedule: { zoneNote: "Los horarios están en la hora local del evento ({{zone}})." },
   venues: { howToGetThere: "Cómo llegar", kind: { ceremony: "Ceremonia", reception: "Recepción", other: "Lugar" } },
   recommendations: { view: "Ver opción", kind: { lodging: "Hospedaje", transport: "Transporte", other: "Recomendación" } },
-  gallery: { photo: "Foto {{n}} de {{total}}", open: "Abrir {{label}} en tamaño completo" },
+  gallery: { photo: "Foto {{n}} de {{total}}", open: "Abrir {{label}} en tamaño completo", enlarge: "Ampliar foto", close: "Cerrar", previous: "Anterior", next: "Siguiente" },
   rsvp: { body: "Confirma tu asistencia desde el enlace personal que recibiste en tu invitación.", cta: "Confirmar asistencia", findLink: "Busca tu enlace personal" },
   gifts: { intro: "Reserva un regalo en un toque y nadie más regalará lo mismo.", cta: "Ver regalos", ctaEmpty: "Regalos: próximamente", ctaClosed: "Regalos: lista cerrada" },
   media: { pauseShort: "Pausar", openVideo: "Ver el video", openMusic: "Escuchar", openMap: "Ver el mapa", retryShort: "Reintentar", loading: "Cargando {{provider}}…", loadFailed: "No pudimos cargar {{provider}}. Revisa tu conexión e inténtalo de nuevo.", retry: "Reintentar: {{title}}", playVideo: "Ver el video: {{title}}", playMusic: "Escuchar: {{title}}", showMap: "Ver el mapa: {{title}}", privacy: "Al tocar, se carga contenido de {{provider}} y ese sitio puede recibir datos de tu visita.", play: "Reproducir {{title}}", pause: "Pausar {{title}}", progress: "Avance de {{title}}", audioError: "No pudimos reproducir la música. Inténtalo de nuevo." },
