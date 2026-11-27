@@ -74,7 +74,8 @@ Reproducir: levantar PG y el arnés (ver cabecera de `be-harness.mjs`), `cors-pr
 - Accesibilidad: `tabpanel` con `aria-controls`/`aria-labelledby`, tabindex itinerante, flechas/Home/End, botones por fila que nombran el producto. `cors-proxy.mjs` escucha en 127.0.0.1 y solo permite un Origin localhost explícito (`ALLOW_ORIGIN`, por defecto `http://localhost:8081`).
 - Pruebas: universal 805/805, query-hooks 185/185, typecheck de universal, query-hooks, i18n y contracts en verde.
 - **No repetido: recorrido en vivo L1 a L9 contra `07b3c855`** (sobre todo L7, Mostrar). El arnés necesita PostgreSQL 16, compilar el servicio y Chrome; Docker/Kong no corren en el sandbox y no se levantó el arnés en esta ronda. Queda cubierto por pruebas unitarias contra el contrato regenerado; falta el recorrido.
-- **gitleaks no se corrió**: el binario no está instalado y el sandbox bloquea su descarga. Solo hubo un barrido por patrones del diff sin hallazgos reales (única coincidencia: la palabra «token» en la descripción del spec).
+- gitleaks (`go install github.com/zricethezav/gitleaks/v8@latest`, v8.30.x): `gitleaks detect --log-opts="origin/chore/deploy-contabo-coolify..HEAD"` sobre los commits de esta rama: **no leaks found**. Un escaneo de todas las refs del clon marca 17 falsos positivos `generic-api-key` en commits de otras ramas y evidencia histórica (fixtures de pruebas), ajenos a este PR. Una segunda corrida independiente del revisor también dio «no leaks found» (exit 0).
+- La prueba de M2 busca el texto concreto del error dentro del diálogo; comprobado que falla si se quita `error={...}` de `ReasonDialog`.
 
 ## No verificado y por qué
 

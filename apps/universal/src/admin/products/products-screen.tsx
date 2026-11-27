@@ -66,6 +66,7 @@ function Tabs({ view, counts, onChange }: { readonly view: ModerationView; reado
     onChange(next);
     if (typeof document !== "undefined") document.getElementById(`products-tab-${next.toLowerCase()}-id`)?.focus();
   };
+  // react-native-web forwards onKeyDown to the DOM node but the View types do not declare it, hence the `as object` cast.
   return <View role="tablist" aria-label={t("admin.products.views.label")} style={styles.row} {...({ onKeyDown } as object)}>{tab("RECENT")}{tab("HIDDEN")}</View>;
 }
 

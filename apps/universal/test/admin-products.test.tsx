@@ -214,7 +214,8 @@ describe("R8b · hide", () => {
     fireEvent.change(screen.getByLabelText("Motivo"), { target: { value: "Foto con teléfono" } });
     const confirm = (): void => { const buttons = screen.getAllByRole("button", { name: "Ocultar" }); fireEvent.click(buttons[buttons.length - 1]!); };
     confirm();
-    expect(await screen.findByRole("alert")).toBeTruthy();
+    const dialog = await screen.findByRole("dialog");
+    expect(await within(dialog).findByText("El servicio no está disponible por ahora. Reintenta en unos minutos.")).toBeTruthy();
     expect((screen.getByLabelText("Motivo") as HTMLInputElement).value).toBe("Foto con teléfono");
     expect(screen.getByText("Ocultar Ramo de rosas")).toBeTruthy();
     fail = false;
