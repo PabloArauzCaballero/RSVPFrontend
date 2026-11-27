@@ -1,4 +1,3 @@
-import { useRef } from "react";
 import { useMutation, useQuery, useQueryClient, type QueryKey } from "@tanstack/react-query";
 import type { ApiClient } from "@rsvp/api-client";
 import { cachePolicy, retryTransient } from "../policy.js";
@@ -128,53 +127,56 @@ function mediaUrlKey(url: string): string {
   }
 }
 
+const processingObservedAt = new Map<string, number>();
+const stableUrlObservedAt = new Map<string, number>();
+
 /** Age in ms of an asset in PROCESSING, using the runtime server timestamp when present or when this client first observed it. */
-export function processingAgeMs(asset: Pick<MediaAsset, "id"> & { readonly createdAt?: string }, firstSeen: ReadonlyMap<string, number>, now = Date.now()): number {
+export function processingAgeMs(asset: Pick<MediaAsset, "id"> & { readonly createdAt?: string }, firstSeen: ReadonlyMap<string, number>, now = Date.now(), key = asset.id): number {
   const raw = (asset as { readonly createdAt?: unknown }).createdAt;
   const parsed = typeof raw === "string" ? Date.parse(raw) : Number.NaN;
   if (Number.isFinite(parsed)) return Math.max(0, now - parsed);
-  const seen = firstSeen.get(asset.id);
+  const seen = firstSeen.get(key);
   return seen === undefined ? 0 : Math.max(0, now - seen);
 }
 
 export function useMediaAssets(client: ApiClient, celebrationId: string) {
-  const firstSeen = useRef<Map<string, number>>(new Map());
-  const stableUrls = useRef<Map<string, { readonly key: string; readonly url: string; readonly at: number }>>(new Map());
   return useQuery({
     queryKey: queryKeys.media.list(celebrationId),
     queryFn: ({ signal }) => mediaApi(client).list(celebrationId, signal),
     ...cachePolicy.celebration, enabled: Boolean(celebrationId),
     // Presigned GET URLs rotate their signature on every poll; keep the loaded URL stable while the object path is unchanged
     // so existing photos never reload or flicker while another upload is still PROCESSING.
-    structuralSharing: (_prev, next) => {
+    structuralSharing: (prev, next) => {
       const list = next as { readonly items?: readonly MediaAsset[] } | undefined;
       if (!list?.items) return next;
+      const previous = prev as { readonly items?: readonly MediaAsset[] } | undefined;
+      const prevById = new Map((previous?.items ?? []).map((asset) => [asset.id, asset]));
       const now = Date.now();
-      const cache = stableUrls.current;
-      const activeIds = new Set<string>();
+      const prefix = `${celebrationId}:`;
+      const activeKeys = new Set<string>();
       const items = list.items.map((asset) => {
-        activeIds.add(asset.id);
         if (asset.status !== "PROCESSED" || !asset.variants) return asset;
+        const prevAsset = prevById.get(asset.id);
         let changed = false;
         const stabilized: Record<string, string> = {};
         for (const [name, url] of Object.entries(asset.variants)) {
           if (!url) continue;
-          const cacheKey = `${asset.id}:${name}`;
-          const resourceKey = mediaUrlKey(url);
-          const entry = cache.get(cacheKey);
-          if (entry && entry.key === resourceKey && now - entry.at < MEDIA_URL_STABLE_MS) {
-            stabilized[name] = entry.url;
-            if (entry.url !== url) changed = true;
+          const cacheKey = `${prefix}${asset.id}:${name}`;
+          activeKeys.add(cacheKey);
+          const prevUrl = prevAsset?.variants?.[name as keyof MediaAsset["variants"]];
+          const observedAt = stableUrlObservedAt.get(cacheKey);
+          if (prevUrl && mediaUrlKey(prevUrl) === mediaUrlKey(url) && observedAt !== undefined && now - observedAt < MEDIA_URL_STABLE_MS) {
+            stabilized[name] = prevUrl;
+            if (prevUrl !== url) changed = true;
           } else {
-            cache.set(cacheKey, { key: resourceKey, url, at: now });
+            stableUrlObservedAt.set(cacheKey, now);
             stabilized[name] = url;
           }
         }
         return changed ? { ...asset, variants: stabilized } : asset;
       });
-      for (const cacheKey of cache.keys()) {
-        const assetId = cacheKey.slice(0, cacheKey.indexOf(":"));
-        if (!activeIds.has(assetId)) cache.delete(cacheKey);
+      for (const cacheKey of stableUrlObservedAt.keys()) {
+        if (cacheKey.startsWith(prefix) && !activeKeys.has(cacheKey)) stableUrlObservedAt.delete(cacheKey);
       }
       return { ...list, items };
     },
@@ -182,20 +184,22 @@ export function useMediaAssets(client: ApiClient, celebrationId: string) {
     // so a stuck backend job can never trap the client in an infinite refresh loop.
     refetchInterval: (query) => {
       if (query.state.error) return false;
+      const prefix = `${celebrationId}:`;
       const processing = (query.state.data?.items ?? []).filter((asset) => asset.status === "PROCESSING");
       if (processing.length === 0) {
-        firstSeen.current.clear();
+        for (const key of processingObservedAt.keys()) if (key.startsWith(prefix)) processingObservedAt.delete(key);
         return false;
       }
       const now = Date.now();
       const active = new Set<string>();
       let newestAge = Number.POSITIVE_INFINITY;
       for (const asset of processing) {
-        active.add(asset.id);
-        if (!firstSeen.current.has(asset.id)) firstSeen.current.set(asset.id, now);
-        newestAge = Math.min(newestAge, processingAgeMs(asset, firstSeen.current, now));
+        const key = `${prefix}${asset.id}`;
+        active.add(key);
+        if (!processingObservedAt.has(key)) processingObservedAt.set(key, now);
+        newestAge = Math.min(newestAge, processingAgeMs(asset, processingObservedAt, now, key));
       }
-      for (const id of firstSeen.current.keys()) if (!active.has(id)) firstSeen.current.delete(id);
+      for (const key of processingObservedAt.keys()) if (key.startsWith(prefix) && !active.has(key)) processingObservedAt.delete(key);
       if (newestAge >= MEDIA_PROCESSING_STALE_MS) return false;
       return newestAge >= MEDIA_PROCESSING_SLOW_AFTER_MS ? MEDIA_PROCESSING_SLOW_INTERVAL_MS : MEDIA_PROCESSING_INTERVAL_MS;
     },
