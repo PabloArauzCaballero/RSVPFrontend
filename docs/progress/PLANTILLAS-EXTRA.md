@@ -56,7 +56,7 @@ playwright test plantillas-v2 (v2, v2-bodas, v2-fiestas, v2-infantil-ritos, v2-s
      fallan igual en la rama oficial 58ddce68 (la misma prueba, build propia).
   2 intermitentes de plantillas-v2.spec.ts «gifts button EMPTY» (gala light/dark 390px; la carrera del color de fondo del dock durante su transición, con la máquina bajo carga de memoria):
      10/10 pasan al repetirlos (--repeat-each=5); en la rama oficial el mismo grupo también falló 1 de 228 (marfil light 320px, `--repeat-each=2`). No tocan portadas ni este PR.
-plantillas-v2-extra.spec.ts (151 antes -> 72 + 72 + 18 + 1 ahora, todos en verde en la corrida final)
+plantillas-v2-extra.spec.ts -> 205 passed (151 antes; el bloque V1/V2 pasó de 18 a 72 casos)
 plantillas-v2-portadas-existentes.spec.ts -> 120 passed
 ```
 Primera corrida (antes de afirmar `centred` en Black tie): 12 fallos de Black tie en la prueba nueva, porque el documento de Black tie también centra el texto; la aserción se corrigió (foto de ancho completo) y la corrida final está en verde.
