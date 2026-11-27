@@ -39,7 +39,7 @@ export function GuestFrame({ heading, lead, meta, children }: PropsWithChildren<
   const pad = compact ? spacing[6] : spacing[12];
   const size = compact ? 40 : 56;
   return (
-    <ActionDock>
+    <ActionDock inset={spacing[4]}>
     <ScrollView role="main" tabIndex={0} style={s.page} contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
       <View style={s.inner} testID="guest-column">
         <View style={s.top}><Logo tone="auto" height={26} /></View>

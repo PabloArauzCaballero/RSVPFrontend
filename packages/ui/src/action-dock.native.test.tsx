@@ -1,10 +1,10 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useState } from 'react';
-import { Keyboard } from 'react-native';
+import { Keyboard, Platform } from 'react-native';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ActionDock } from './action-dock.native';
 import { createDockStore, keyboardOverlap, pickEntry } from './action-dock-shared';
-import { Button, UiProvider } from './index';
+import { Button, Modal, UiProvider } from './index';
 import { StickyActions } from './sticky-actions';
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
@@ -50,12 +50,12 @@ describe('MV-A2 keyboardOverlap', () => {
   });
 });
 
-function Form() {
+function Form({ onSave }: { readonly onSave?: () => void }) {
   const [name, setName] = useState('Ana');
   return (
     <div data-testid="scroll">
       <input aria-label="Nombre" value={name} onChange={(event) => setName(event.target.value)} />
-      <StickyActions testID="bar"><Button>{`Guardar ${name}`}</Button></StickyActions>
+      <StickyActions testID="bar"><Button onPress={onSave}>{`Guardar ${name}`}</Button></StickyActions>
     </div>
   );
 }
@@ -80,6 +80,18 @@ describe('MV-A2 native ActionDock draws the bar under the scroll area', () => {
     expect(screen.queryByRole('button', { name: 'Guardar Ana' })).toBeNull();
   });
 
+  it('a tap on the docked button reaches the screen handler with the current state', () => {
+    const save = vi.fn();
+    render(<UiProvider scheme="light"><ActionDock><Form onSave={save} /></ActionDock></UiProvider>);
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar Ana' }));
+    expect(save).toHaveBeenCalledTimes(1);
+  });
+
+  it('the docked bar takes its horizontal padding from the dock inset', () => {
+    render(<UiProvider scheme="light"><ActionDock inset={24}><Form /></ActionDock></UiProvider>);
+    expect(getComputedStyle(screen.getByTestId('bar')).paddingLeft).toBe('24px');
+  });
+
   it('removes the bar when its form unmounts and lets the screen own action (priority 0) come back', () => {
     const screenAction = <StickyActions testID="screen-bar" priority={0}><Button>Siguiente</Button></StickyActions>;
     const view = (open: boolean) => <UiProvider scheme="light"><ActionDock><div>{screenAction}{open ? <StickyActions testID="form-bar"><Button>Crear</Button></StickyActions> : null}</div></ActionDock></UiProvider>;
@@ -93,18 +105,59 @@ describe('MV-A2 native ActionDock draws the bar under the scroll area', () => {
     expect(screen.queryByRole('button', { name: 'Crear' })).toBeNull();
   });
 
-  it('lifts the box by what the keyboard covers and drops it when the keyboard hides', async () => {
+  it('a StickyActions inside a Modal stays in the modal instead of landing behind it in the screen dock', () => {
+    render(<UiProvider scheme="light"><ActionDock><div data-testid="scroll" /><Modal visible onClose={() => undefined} title="Hoja"><StickyActions testID="modal-bar"><Button>Dentro</Button></StickyActions></Modal></ActionDock></UiProvider>);
+    const bar = screen.getByTestId('modal-bar');
+    expect(bar.closest('[aria-modal=true], [role=dialog]')).not.toBeNull();
+    expect(screen.getByTestId('scroll').parentElement?.contains(bar)).toBe(false);
+  });
+
+  const bounds = () => vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({ x: 0, y: 100, top: 100, left: 0, right: 390, bottom: 800, width: 390, height: 700, toJSON: () => ({}) });
+  const listeners = () => {
     const handlers = new Map<string, (event: unknown) => void>();
     vi.spyOn(Keyboard, 'addListener').mockImplementation(((name: string, handler: (event: unknown) => void) => { handlers.set(name, handler); return { remove: () => handlers.delete(name) }; }) as unknown as typeof Keyboard.addListener);
-    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({ x: 0, y: 100, top: 100, left: 0, right: 390, bottom: 800, width: 390, height: 700, toJSON: () => ({}) });
+    return handlers;
+  };
+
+  it('Android: lifts the box by what the keyboard covers and drops it when the keyboard hides', async () => {
+    const handlers = listeners();
+    bounds();
     const { unmount } = render(<UiProvider scheme="light"><ActionDock><Form /></ActionDock></UiProvider>);
     const box = screen.getByTestId('scroll').parentElement as HTMLElement;
-    expect(handlers.has('keyboardDidShow') || handlers.has('keyboardWillChangeFrame')).toBe(true);
-    act(() => { (handlers.get('keyboardDidShow') ?? handlers.get('keyboardWillChangeFrame'))?.({ endCoordinates: { screenY: 500, height: 344 } }); });
+    expect([...handlers.keys()].sort()).toEqual(['keyboardDidHide', 'keyboardDidShow']);
+    act(() => { handlers.get('keyboardDidShow')?.({ endCoordinates: { screenY: 500, height: 344 } }); });
     await waitFor(() => expect(getComputedStyle(box).paddingBottom).toBe('300px'));
     act(() => { handlers.get('keyboardDidHide')?.({}); });
     await waitFor(() => expect(getComputedStyle(box).paddingBottom).toBe('0px'));
     unmount();
     expect(handlers.size).toBe(0);
+  });
+
+  it('iOS: follows keyboardWillChangeFrame, including the frame that hides the keyboard', async () => {
+    const handlers = listeners();
+    bounds();
+    const original = Platform.OS;
+    Platform.OS = 'ios';
+    try {
+      render(<UiProvider scheme="light"><ActionDock><Form /></ActionDock></UiProvider>);
+      const box = screen.getByTestId('scroll').parentElement as HTMLElement;
+      expect([...handlers.keys()]).toEqual(['keyboardWillChangeFrame']);
+      act(() => { handlers.get('keyboardWillChangeFrame')?.({ endCoordinates: { screenY: 560, height: 284 } }); });
+      await waitFor(() => expect(getComputedStyle(box).paddingBottom).toBe('240px'));
+      act(() => { handlers.get('keyboardWillChangeFrame')?.({ endCoordinates: { screenY: 844, height: 0 } }); });
+      await waitFor(() => expect(getComputedStyle(box).paddingBottom).toBe('0px'));
+    } finally { Platform.OS = original; }
+  });
+
+  it('a keyboard that is already open when the dock mounts lifts the bar at once (no event will come)', async () => {
+    listeners();
+    bounds();
+    vi.spyOn(Keyboard, 'isVisible').mockReturnValue(true);
+    (Keyboard as unknown as { metrics: () => unknown }).metrics = () => ({ screenX: 0, screenY: 480, width: 390, height: 364 });
+    try {
+      render(<UiProvider scheme="light"><ActionDock><Form /></ActionDock></UiProvider>);
+      const box = screen.getByTestId('scroll').parentElement as HTMLElement;
+      await waitFor(() => expect(getComputedStyle(box).paddingBottom).toBe('320px'));
+    } finally { delete (Keyboard as unknown as { metrics?: unknown }).metrics; }
   });
 });

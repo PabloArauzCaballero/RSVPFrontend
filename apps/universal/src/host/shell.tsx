@@ -364,7 +364,7 @@ export function Screen({ title, intro, nav, current, onNavigate, actions, menu, 
   // On a phone the action is fixed at the bottom (MV-D1): the dock draws the `StickyActions` bar under this scroll area, so the
   // scroll never wraps the bar and the content ends above it. Header actions and the form's own bars all go through it.
   const body = (
-    <ActionDock>
+    <ActionDock inset={spacing[5]}>
     <ScrollView role="main" tabIndex={0} style={s.scroll} contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
       <View style={s.mHeader}>
         <View style={s.headRow}>

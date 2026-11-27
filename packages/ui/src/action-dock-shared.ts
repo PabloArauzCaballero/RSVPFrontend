@@ -17,6 +17,8 @@ export interface DockEntry {
 }
 
 export interface DockStore {
+  /** Horizontal padding of the docked bar: the dock's owner sets it to the screen's own content gutter so the buttons line up with the fields above. */
+  readonly inset: number;
   /** A slot number for one `StickyActions` instance; later mounts have higher numbers. */
   claim(): number;
   /** Publishes (or replaces) the bar of a slot; the first publish fixes its place in the mount order. */
@@ -36,7 +38,7 @@ export function pickEntry(entries: Iterable<DockEntry>): DockEntry | null {
   return best;
 }
 
-export function createDockStore(): DockStore {
+export function createDockStore(inset = 16): DockStore {
   const entries = new Map<number, DockEntry>();
   const listeners = new Set<() => void>();
   let counter = 0;
@@ -48,8 +50,15 @@ export function createDockStore(): DockStore {
     listeners.forEach((listener) => listener());
   };
   return {
+    inset,
     claim: () => ++counter,
-    publish: (id, priority, node) => { entries.set(id, { id, priority, node }); refresh(); },
+    publish: (id, priority, node) => {
+      const known = entries.get(id);
+      // Nothing to tell the dock when the very same bar is published again.
+      if (known && known.priority === priority && known.node === node) return;
+      entries.set(id, { id, priority, node });
+      refresh();
+    },
     withdraw: (id) => { if (entries.delete(id)) refresh(); },
     subscribe: (listener) => { listeners.add(listener); return () => { listeners.delete(listener); }; },
     snapshot: () => current

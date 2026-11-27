@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState, type ReactNode } from 'react';
+import { useContext, useEffect, useLayoutEffect, useState, type ReactNode } from 'react';
 import { Platform, View, type ViewStyle } from 'react-native';
 import { spacing } from '@rsvp/design-tokens';
 import { ActionDockContext } from './action-dock-shared';
@@ -14,7 +14,7 @@ export interface StickyActionsProps {
   /**
    * How far the bar reaches past its column on each side (default `spacing[4]`, for screens whose content sits 16 px from
    * the edge). Pass 0 in a centred column with its own padding, so the top line lines up with the fields above it. Only the
-   * in-flow bar (web, or native without an `ActionDock`) uses it: a docked bar is full width with its own 16 px padding.
+   * in-flow bar (web, or native without an `ActionDock`) uses it: a docked bar is full width with the dock's `inset` as horizontal padding.
    */
   bleed?: number;
   /**
@@ -50,15 +50,15 @@ export function StickyActions({ children, summary, testID, bleed = spacing[4], p
     </ButtonAlignContext.Provider>
   );
   const docked = dock ? (
-    <View role="group" testID={testID} style={{ backgroundColor: palette.canvas, borderTopWidth: 1, borderTopColor: palette.border, paddingTop: spacing[3], paddingBottom: spacing[3], paddingHorizontal: spacing[4] }}>
+    <View role="group" testID={testID} style={{ backgroundColor: palette.canvas, borderTopWidth: 1, borderTopColor: palette.border, paddingTop: spacing[3], paddingBottom: spacing[3], paddingHorizontal: dock.inset }}>
       <View style={{ width: '100%', maxWidth: DOCKED_MAX_WIDTH, alignSelf: 'center', gap: spacing[2] }}>
         {summary}
         {buttons}
       </View>
     </View>
   ) : null;
-  // Every render republishes, so the docked copy follows the form's state (disabled, busy, the failure line).
-  useEffect(() => { if (dock && docked) dock.publish(slot, priority, docked); });
+  // Every render republishes, in a layout effect so the dock paints the same frame as the form (busy/disabled never lag).
+  useLayoutEffect(() => { if (dock && docked) dock.publish(slot, priority, docked); });
   useEffect(() => () => { dock?.withdraw(slot); }, [dock, slot]);
   if (dock) return null;
   const stick = Platform.OS === 'web'

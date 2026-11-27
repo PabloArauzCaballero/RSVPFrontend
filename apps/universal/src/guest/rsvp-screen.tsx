@@ -289,8 +289,7 @@ function AnswerForm({ celebrationId, token, state, allowed, mode, onSaved, onClo
       {draft.status === "CONFIRMED" ? <CompanionsStepper value={draft.requestedCompanions} onChange={(requestedCompanions) => change({ requestedCompanions })} allowed={allowed} error={errors.requestedCompanions} /> : null}
       {draft.status ? <ExtrasFields dietaryNotes={draft.dietaryNotes} message={draft.message} onChange={change} errors={errors} /> : null}
       {Object.keys(errors).length ? <Text accessibilityRole="alert" style={[styles.muted, { color: palette.danger }]}>{t("rsvp.invite.errors.summary")}</Text> : null}
-      {failure ? <FailureNotice failure={failure} busy={busy} onRetry={() => { void submit(); }} /> : null}
-      <StickyActions>
+      <StickyActions summary={failure ? <FailureNotice failure={failure} busy={busy} onRetry={() => { void submit(); }} /> : undefined}>
         <ActionButton testID="rsvp-submit" label={label} busy={busy} onPress={() => { void submit(); }} />
         {onCancel ? <ActionButton icon="close" variant="secondary" label={t("rsvp.invite.cancelEdit")} disabled={busy} onPress={onCancel} testID="rsvp-cancel-edit" /> : null}
       </StickyActions>

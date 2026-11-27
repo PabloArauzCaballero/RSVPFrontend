@@ -150,6 +150,7 @@ function NewOffer({ providerId, onClose, onCreated }: { readonly providerId: str
     createOnce(body, { onSuccess: () => { setName(""); setPrice(""); onCreated(); } });
   };
   return (
+    <>
     <Section title={t("portal.services.new.title")}>
       <ChoiceGroup<Kind> label={t("portal.services.new.kind")} value={kind} onChange={setKind} disabled={create.isPending} choices={[{ value: "SERVICE", label: t("portal.services.type.SERVICE") }, { value: "PRODUCT", label: t("portal.services.type.PRODUCT") }]} />
       <Field label={t(isProduct ? "portal.services.new.productName" : "portal.services.new.name")} value={name} onChange={setName} testID="listing-name" />
@@ -184,11 +185,12 @@ function NewOffer({ providerId, onClose, onCreated }: { readonly providerId: str
       ) : null}
       {errors.length ? <Notice kind="error">{errors.map((message) => <Text key={message} style={styles.body}>{message}</Text>)}</Notice> : null}
       <ErrorNotice error={create.error} onRetry={submit} />
-      <StickyActions>
-        <ActionButton icon="plus" label={create.isPending ? t("portal.services.new.creating") : t("portal.services.new.submit")} busy={create.isPending} disabled={create.isPending || !category} onPress={submit} testID="listing-submit" />
-        <ActionButton icon="close" variant="secondary" label={t("portal.services.new.cancel")} disabled={create.isPending} onPress={onClose} testID="offer-new-close" />
-      </StickyActions>
     </Section>
+    <StickyActions>
+      <ActionButton icon="plus" label={create.isPending ? t("portal.services.new.creating") : t("portal.services.new.submit")} busy={create.isPending} disabled={create.isPending || !category} onPress={submit} testID="listing-submit" />
+      <ActionButton icon="close" variant="secondary" label={t("portal.services.new.cancel")} disabled={create.isPending} onPress={onClose} testID="offer-new-close" />
+    </StickyActions>
+    </>
   );
 }
 

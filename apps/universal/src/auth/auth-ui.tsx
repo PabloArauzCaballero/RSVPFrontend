@@ -120,8 +120,8 @@ export function AuthLayout({ title, intro, illustration = "invitation", children
           <View />
         </View>
       ) : null}
-      <ActionDock style={wide ? authStyles.panelWide : undefined}>
-      <ScrollView role="main" tabIndex={0} style={[authStyles.panel, !wide && authStyles.panelNarrow, wide && authStyles.panelWide]} contentContainerStyle={[authStyles.panelContent, wide ? authStyles.panelContentWide : authStyles.panelContentNarrow]} keyboardShouldPersistTaps="handled">
+      <ActionDock inset={spacing[6]} style={wide ? authStyles.panelWide : undefined}>
+      <ScrollView role="main" tabIndex={0} style={[authStyles.panel, !wide && authStyles.panelNarrow, wide && Platform.OS === "web" && authStyles.panelWide]} contentContainerStyle={[authStyles.panelContent, wide ? authStyles.panelContentWide : authStyles.panelContentNarrow]} keyboardShouldPersistTaps="handled">
         {wide ? null : <View style={[authStyles.column, { paddingBottom: spacing[8] }]}><Logo tone="auto" height={28} /></View>}
         <View style={authStyles.column}>
           <Enter from="down"><View style={{ gap: spacing[3] }}>
