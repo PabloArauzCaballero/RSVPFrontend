@@ -297,7 +297,7 @@ describe("state · the photo fails to load", () => {
 
 describe("state · «Ver regalos» in its three states (giftsStatus seam, BE #128 not connected)", () => {
   const LABEL = { OPEN: "celebration.gifts.cta", EMPTY: "celebration.gifts.ctaEmpty", CLOSED: "celebration.gifts.ctaClosed" } as const;
-  it.each(NAMES)("%s: OPEN, EMPTY and CLOSED each say their own words, look different and keep the link, twice", (name) => {
+  it.each(NAMES)("%s: OPEN, EMPTY and CLOSED each say their own words and keep the link, twice", (name) => {
     for (const status of ["OPEN", "EMPTY", "CLOSED"] as const) {
       const markup = html(name, { giftsStatus: status });
       const buttons = [...parse(markup).querySelectorAll('a[data-action="gifts"]')];
@@ -310,10 +310,9 @@ describe("state · «Ver regalos» in its three states (giftsStatus seam, BE #12
       expect(markup).not.toContain("gifts.guest.cta");
     }
   });
-  it("the stylesheet gives EMPTY and CLOSED a look of their own on palette roles", () => {
+  it("the stylesheet gives EMPTY and CLOSED no look of their own: the same primary as OPEN (decision 8, PL-139-R2-V1)", () => {
     const css = readFileSync(join(__dirname, "../../styles.css"), "utf8");
-    expect(css).toMatch(/\[data-gifts-status="EMPTY"\][^}]*dashed/);
-    expect(css).toMatch(/\[data-gifts-status="CLOSED"\][^}]*var\(--celebration-muted\)/);
+    expect(css).not.toMatch(/data-gifts-status="(EMPTY|CLOSED)"/);
   });
   it("the labels exist in both languages and none is a gifts.guest key", () => {
     const es = readFileSync(join(__dirname, "../../../i18n/locales/es-BO/celebration.ts"), "utf8");

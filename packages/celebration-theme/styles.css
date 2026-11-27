@@ -221,11 +221,13 @@ body:has(.cdesign-dock) { padding-bottom: 5.5rem; }
 .celebration-design .cdesign-intro p { max-width: 40rem; }
 .celebration-design .cdesign-page[data-section="gifts"] .celebration-cta { width: 100%; max-width: 22rem; }
 /* The reply and the gifts button are ONE block (FE #114 follow-up, decision 8): two primaries of the same weight, stacked on the phone and side by side from 768 px. Each one fills its half, so both have the same width and height; the block is renderer chrome, outside every canvas. */
-.celebration .celebration-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: .75rem; width: 100%; max-width: 36rem; box-sizing: border-box; align-items: stretch; margin-top: .5rem; }
+.celebration .celebration-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: .75rem; width: 100%; max-width: 44rem; box-sizing: border-box; align-items: stretch; margin-top: .5rem; }
 .celebration[data-align="center"] .celebration-actions, .celebration-design .celebration-actions { margin-inline: auto; }
 .celebration .celebration-actions .celebration-cta { width: 100%; max-width: none; min-height: 3rem; margin-top: 0; box-sizing: border-box; }
 @media (min-width: 48rem) { .celebration .celebration-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.celebration-design .cdesign-actions { width: min(100%, var(--celebration-max-width)); margin: 0 auto; padding: .5rem var(--celebration-space) 0; box-sizing: border-box; }
+.celebration-design .cdesign-actions { width: min(100%, var(--celebration-max-width)); margin: 0 auto; padding: .5rem var(--celebration-space) calc(var(--celebration-gap, 3rem) / 2); box-sizing: border-box; }
+/* The block sits on the axis of the page's title and text (they start at the left edge of the content column), not centred under them (PL-139-R2-V3). */
+.celebration-design .cdesign-actions .celebration-actions { margin-inline: 0; }
 
 /* Buttons of the document (gifts, reply, link). Solid is the default of .celebration-cta; outline and link are quieter. */
 .celebration .celebration-cta[data-variant="outline"] { background: transparent; color: var(--celebration-accent) !important; border: 2px solid var(--celebration-accent); }
@@ -263,10 +265,7 @@ body:has(.cdesign-dock) { padding-bottom: 5.5rem; }
 @media (min-width: 37.5rem) and (max-width: 56.1875rem) {
   .celebration-design .cdesign-page[data-page-kind="cover"] .cdesign-art { max-height: 13rem; width: auto; max-width: 100%; margin-inline: auto; }
 }
-/* The three states of «Ver regalos» (`giftsStatus`): the button stays and keeps its link; OPEN is the solid accent button, EMPTY (no gifts yet) a dashed accent outline on the surface, CLOSED a quiet line-and-muted one. Colours are palette roles, so each holds its contrast in both schemes. */
-.celebration .celebration-cta[data-action="gifts"][data-gifts-status="EMPTY"] { background: var(--celebration-surface); color: var(--celebration-accent) !important; border: 2px dashed var(--celebration-accent); }
-.celebration .celebration-cta[data-action="gifts"][data-gifts-status="CLOSED"] { background: var(--celebration-surface); color: var(--celebration-muted) !important; border: 2px solid var(--cd-line); }
-@media (hover: hover) { .celebration .celebration-cta[data-action="gifts"]:is([data-gifts-status="EMPTY"], [data-gifts-status="CLOSED"]):hover { background: color-mix(in srgb, var(--celebration-accent) 8%, var(--celebration-surface)); } }
+/* The states of «Ver regalos» (`giftsStatus`: OPEN, EMPTY, CLOSED) change its words (`gifts.guest.cta.*`), never its weight: the button leads to /c/{slug}/regalos in every state and is a primary of the same fill as the reply (decision 8; PL-139-R2-V1). A quieter look for CLOSED would be a decision of the product owner (question 3 of the PR). */
 /* A photo that did not load (`Photo`): the same box on the palette's surface with the camera drawing, never a broken hole. */
 .celebration [data-photo-failed] { display: grid; place-items: center; box-sizing: border-box; background: var(--celebration-surface); border: 1px solid var(--cd-line); aspect-ratio: 4 / 3; width: 100%; overflow: clip; }
 .celebration .celebration-photo-art { display: block; width: min(40%, 6rem); height: auto; }

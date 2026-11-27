@@ -208,8 +208,9 @@ for (const name of TEMPLATES) {
           expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
           const style = await dock.evaluate((node) => { const s = getComputedStyle(node); return { bg: s.backgroundColor, border: s.borderTopStyle }; });
           const palette = documentOf(name).tokens.palettes[scheme];
-          expect(style.bg).toBe(rgb((status === "OPEN" ? palette["accentFill"] : palette["surface"]) as string));
-          expect(style.border).toBe(status === "EMPTY" ? "dashed" : "solid");
+          // Decision 8 (FE #139, PL-139-R2-V1): the state changes the words, not the weight; every state is the solid accent button, with no border of its own.
+          expect(style.bg).toBe(rgb(palette["accentFill"] as string));
+          expect(style.border).toBe("none");
           const result = await new AxeBuilder({ page }).include(".cdesign-dock").withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).analyze();
           expect(result.violations.map((item) => `${item.id}: ${item.nodes.map((node) => node.target.join(" ")).join(" | ")}`)).toEqual([]);
           if (OUT && width === 390 && scheme === "light" && name === "marfil") await page.screenshot({ path: `${OUT}/regalos-${status.toLowerCase()}-${width}.png` });
