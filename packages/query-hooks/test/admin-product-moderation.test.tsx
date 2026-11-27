@@ -70,6 +70,14 @@ describe("hide, show and featured", () => {
     expect(spy.mock.calls.map((call) => call[0]?.queryKey)).toEqual([admin.productModerationKeys.all, ["providers"]]);
   });
 
+  it("hide: with the provider in the answer only that provider's reads are invalidated", async () => {
+    const h = harness(() => ({ body: { listingId: ID, providerId: "p-9", hidden: true, replayed: false } }));
+    const spy = vi.spyOn(h.queryClient, "invalidateQueries");
+    const view = renderHook(() => admin.useHideListing(h.client), { wrapper: h.wrapper });
+    await act(async () => { await view.result.current.mutateAsync({ listingId: ID, reason: "Foto con teléfono" }); });
+    expect(spy.mock.calls.map((call) => call[0]?.queryKey)).toEqual([admin.productModerationKeys.all, ["providers", "p-9"]]);
+  });
+
   it("hide: a refused reason (422) and a different reason while hidden (409) reach the caller and still refresh", async () => {
     const h = harness(() => ({ status: 409, body: { title: "x", status: 409, code: "LISTING_ALREADY_HIDDEN" } }));
     const spy = vi.spyOn(h.queryClient, "invalidateQueries");

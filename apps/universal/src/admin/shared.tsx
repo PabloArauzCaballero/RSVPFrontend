@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
 import { ApiError } from "@rsvp/api-client";
@@ -89,24 +89,28 @@ export function QueryBoundary<TData extends { readonly items: readonly unknown[]
 /** A confirmation that asks for a written reason; an empty reason is refused in place and the dialog stays open. */
 /**
  * A required reason; `maxLength` (the server's limit) caps the field and blocks a longer paste with its own message; `minLength` refuses a
- * shorter one in place; `multiline={false}` asks for one line (the server refuses control characters, new lines included).
+ * shorter one in place; `multiline={false}` asks for one line. `normalize` cleans the text before it is measured and sent, so the limits
+ * apply to what the server receives. The dialog keeps its text until the caller sets `visible` to false, so a failed write does not lose
+ * the reason; `busy` disables the confirm button meanwhile and `error` shows the failure inside the dialog.
  */
-export function ReasonDialog({ visible, title, body, confirmLabel, onConfirm, onCancel, maxLength, minLength, multiline = true, busy = false }: {
+export function ReasonDialog({ visible, title, body, confirmLabel, onConfirm, onCancel, maxLength, minLength, multiline = true, busy = false, normalize, error: failure }: {
   readonly visible: boolean; readonly title: string; readonly body: string; readonly confirmLabel: string;
   readonly onConfirm: (reason: string) => void; readonly onCancel: () => void; readonly maxLength?: number; readonly minLength?: number; readonly multiline?: boolean; readonly busy?: boolean;
+  readonly normalize?: (reason: string) => string; readonly error?: ReactNode;
 }): ReactNode {
   const t = useT();
   const [reason, setReason] = useState("");
   const [touched, setTouched] = useState(false);
-  const close = (): void => { setReason(""); setTouched(false); onCancel(); };
-  const value = reason.trim();
+  useEffect(() => { if (!visible) { setReason(""); setTouched(false); } }, [visible]);
+  const value = (normalize ? normalize(reason) : reason).trim();
   const tooLong = maxLength !== undefined && value.length > maxLength;
   const tooShort = minLength !== undefined && value !== "" && value.length < minLength;
   const error = touched && !value ? t("admin.common.reasonRequired") : tooLong ? t("admin.common.reasonTooLong", { max: maxLength ?? 0 }) : touched && tooShort ? t("admin.common.reasonTooShort", { min: minLength ?? 0 }) : undefined;
   return (
-    <ConfirmDialog visible={visible} danger busy={busy} title={title} body={body} confirmLabel={confirmLabel} onCancel={close}
-      onConfirm={() => { if (!value || tooLong || tooShort) { setTouched(true); return; } setReason(""); setTouched(false); onConfirm(value); }}>
+    <ConfirmDialog visible={visible} danger busy={busy} title={title} body={body} confirmLabel={confirmLabel} onCancel={onCancel}
+      onConfirm={() => { if (busy) return; if (!value || tooLong || tooShort) { setTouched(true); return; } onConfirm(value); }}>
       <Field label={t("admin.common.reason")} value={reason} onChange={setReason} {...(multiline ? { multiline: true } : {})} testID="admin-reason" {...(maxLength !== undefined ? { maxLength } : {})} {...(error ? { error } : {})} />
+      {failure}
     </ConfirmDialog>
   );
 }

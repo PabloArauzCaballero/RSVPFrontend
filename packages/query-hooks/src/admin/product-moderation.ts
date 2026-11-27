@@ -74,9 +74,9 @@ export function moderationCounts(pages: readonly ModerationInbox[] | undefined):
   return pages && pages.length > 0 ? pages[pages.length - 1]?.counts : undefined;
 }
 
-/** After any decision: the inbox (list and counters) and, for the owner on the same browser, the provider's own reads. */
-function refresh(queryClient: QueryClient): Promise<unknown> {
-  return Promise.all([queryClient.invalidateQueries({ queryKey: productModerationKeys.all }), queryClient.invalidateQueries({ queryKey: ["providers"] })]);
+/** After any decision: the inbox (list and counters) and the reads of that provider (all providers when the answer did not say which). */
+function refresh(queryClient: QueryClient, providerId?: string): Promise<unknown> {
+  return Promise.all([queryClient.invalidateQueries({ queryKey: productModerationKeys.all }), queryClient.invalidateQueries({ queryKey: providerId ? ["providers", providerId] : ["providers"] })]);
 }
 
 /**
@@ -88,7 +88,7 @@ export function useHideListing(client: ApiClient) {
   return useMutation({
     mutationFn: ({ listingId, reason }: { readonly listingId: string; readonly reason: string }) =>
       client.request<ListingModeration, Schemas["HideListingInput"]>(`${ADMIN_LISTINGS}/${encodeURIComponent(listingId)}/hide`, { method: "POST", body: { reason } }),
-    onSettled: () => refresh(queryClient)
+    onSettled: (data) => refresh(queryClient, data?.providerId)
   });
 }
 
@@ -97,7 +97,7 @@ export function useShowListing(client: ApiClient) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ listingId }: { readonly listingId: string }) => client.request<ListingModeration>(`${ADMIN_LISTINGS}/${encodeURIComponent(listingId)}/show`, { method: "POST" }),
-    onSettled: () => refresh(queryClient)
+    onSettled: (data) => refresh(queryClient, data?.providerId)
   });
 }
 
@@ -107,6 +107,6 @@ export function useSetListingFeatured(client: ApiClient) {
   return useMutation({
     mutationFn: ({ listingId, featured }: { readonly listingId: string; readonly featured: boolean }) =>
       client.request<Schemas["ProductSheet"], { readonly featured: boolean }>(`${ADMIN_LISTINGS}/${encodeURIComponent(listingId)}/featured`, { method: "PUT", body: { featured } }),
-    onSettled: () => refresh(queryClient)
+    onSettled: (data) => refresh(queryClient, data?.providerId)
   });
 }

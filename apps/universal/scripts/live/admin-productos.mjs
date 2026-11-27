@@ -78,6 +78,7 @@ await check("L3", "hide with a reason: the service records it, the product leave
   const control = await http("GET", `/listings/${C}`, { token: null });
   assert.equal(control.status, 200, `control: a visible product answers 200, got ${control.status}`);
   const redirect = await fetch(`${API}/r/${A}`, { redirect: "manual" });
+  assert.equal(redirect.status, 404, "GET /r/{id} is 404 once hidden");
   const inbox = await http("GET", "/providers/admin/moderation/listings?view=HIDDEN");
   assert.equal(inbox.json.counts.hidden, 1);
   assert.equal(inbox.json.items[0].adminHiddenReason, "La foto muestra un teléfono de contacto");
@@ -129,7 +130,7 @@ await check("L6", "filters reach the service: featured=false excludes the featur
 await check("L7", "show: the product is visible again, republished and NOT featured again", async () => {
   await page.getByTestId("products-tab-hidden").click();
   await page.getByTestId(`product-show-${A}`).click();
-  await page.getByText("Producto visible otra vez. No vuelve a estar destacado.").waitFor();
+  await page.getByText(/^Ya no está oculto\. Vuelve a mostrarse/).waitFor();
   const publicRead = await http("GET", `/listings/${A}`, { token: null });
   assert.equal(publicRead.status, 200, `GET /listings/{id} after show: ${publicRead.status} ${JSON.stringify(publicRead.json).slice(0, 200)}`);
   const inbox = await http("GET", "/providers/admin/moderation/listings?view=HIDDEN");

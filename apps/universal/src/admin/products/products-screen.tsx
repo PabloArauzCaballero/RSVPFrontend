@@ -23,21 +23,21 @@ import { AdminErrorNotice, QueryBoundary, ReasonDialog, Stack, useStamp } from "
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** One line of plain text: the server refuses control characters (422 INVALID_REASON), so a pasted line break becomes a space. */
-// eslint-disable-next-line no-control-regex -- the control range is exactly what the server refuses
-const CONTROL = /[\u0000-\u001f\u007f-\u009f]+/g;
+const CONTROL = /[\p{Cc}\p{Zl}\p{Zp}]+/gu;
+const cleanReason = (reason: string): string => reason.replace(CONTROL, " ");
 type Featured = "any" | "on" | "off";
 type Done = { readonly kind: "hidden" | "shown" | "featuredOn" | "featuredOff"; readonly replayed: boolean };
 
 interface Draft { readonly days: number; readonly providerId: string; readonly category: string; readonly featured: Featured; readonly completeness: ModerationCompleteness | "" }
 const NO_FILTERS: Draft = { days: MODERATION_DEFAULT_DAYS, providerId: "", category: "", featured: "any", completeness: "" };
 
+/** `days`, `featured` and `completeness` only mean something in RECENT (a hidden product is never featured and always HIDDEN_BY_ADMIN): HIDDEN never sends them. */
 function toFilters(view: ModerationView, draft: Draft, locale: string): ModerationFilters {
   return {
-    view, locale, days: draft.days,
+    view, locale,
     ...(draft.providerId.trim() ? { providerId: draft.providerId.trim() } : {}),
     ...(draft.category ? { category: draft.category } : {}),
-    ...(draft.featured !== "any" ? { featured: draft.featured === "on" } : {}),
-    ...(draft.completeness ? { completeness: draft.completeness } : {})
+    ...(view === "RECENT" ? { days: draft.days, ...(draft.featured !== "any" ? { featured: draft.featured === "on" } : {}), ...(draft.completeness ? { completeness: draft.completeness } : {}) } : {})
   };
 }
 
@@ -65,7 +65,7 @@ function Filters({ view, draft, onChange, categories }: { readonly view: Moderat
   const [provider, setProvider] = useState(draft.providerId);
   const providerInvalid = provider.trim() !== "" && !UUID.test(provider.trim());
   const cell = { flexGrow: 1, flexBasis: 180, gap: spacing[1] } as const;
-  const active = draft.providerId !== "" || draft.category !== "" || draft.featured !== "any" || draft.completeness !== "" || (view === "RECENT" && draft.days !== MODERATION_DEFAULT_DAYS);
+  const active = draft.providerId !== "" || draft.category !== "" || (view === "RECENT" && (draft.featured !== "any" || draft.completeness !== "" || draft.days !== MODERATION_DEFAULT_DAYS));
   const submitProvider = (): void => { if (!providerInvalid) onChange({ ...draft, providerId: provider.trim() }); };
   return (
     <View role="group" aria-label={t("admin.products.filters.label")} style={{ gap: spacing[3] }}>
@@ -76,11 +76,13 @@ function Filters({ view, draft, onChange, categories }: { readonly view: Moderat
         ) : null}
         <View style={cell}><Text style={styles.label}>{t("admin.products.filters.category")}</Text>
           <FilterSelect label={t("admin.products.filters.category")} value={draft.category} onChange={(category) => onChange({ ...draft, category })} options={[{ value: "", label: t("admin.products.filters.all") }, ...categories.map((category) => ({ value: category.code, label: category.name }))]} testID="products-category" /></View>
-        <View style={cell}><Text style={styles.label}>{t("admin.products.filters.featured")}</Text>
+        {view === "RECENT" ? (
+          <View style={cell}><Text style={styles.label}>{t("admin.products.filters.featured")}</Text>
           <FilterSelect<Featured> label={t("admin.products.filters.featured")} value={draft.featured} onChange={(featured) => onChange({ ...draft, featured })} options={[{ value: "any", label: t("admin.products.filters.allFeatured") }, { value: "on", label: t("admin.products.filters.featuredOn") }, { value: "off", label: t("admin.products.filters.featuredOff") }]} testID="products-featured" /></View>
+        ) : null}
         {view === "RECENT" ? (
           <View style={cell}><Text style={styles.label}>{t("admin.products.filters.completeness")}</Text>
-            <FilterSelect label={t("admin.products.filters.completeness")} value={draft.completeness} onChange={(completeness) => onChange({ ...draft, completeness: completeness as Draft["completeness"] })} options={[{ value: "", label: t("admin.products.filters.all") }, ...MODERATION_COMPLETENESS.map((state) => ({ value: state, label: t(`admin.products.completeness.${state}`) }))]} testID="products-completeness" /></View>
+            <FilterSelect label={t("admin.products.filters.completeness")} value={draft.completeness} onChange={(completeness) => onChange({ ...draft, completeness: completeness as Draft["completeness"] })} options={[{ value: "", label: t("admin.products.filters.all") }, ...MODERATION_COMPLETENESS.filter((state) => state !== "HIDDEN_BY_ADMIN").map((state) => ({ value: state, label: t(`admin.products.completeness.${state}`) }))]} testID="products-completeness" /></View>
         ) : null}
       </View>
       <View style={[styles.row, { alignItems: "flex-end" }]}>
@@ -94,7 +96,7 @@ function Filters({ view, draft, onChange, categories }: { readonly view: Moderat
 
 const COMPLETENESS_TONE = { COMPLETE: "yes", INCOMPLETE: "maybe", HIDDEN_BY_ADMIN: "no" } as const;
 
-function ProductRow({ item, busy, onHide, onShow, onFeatured }: { readonly item: ModerationListing; readonly busy: boolean; readonly onHide: () => void; readonly onShow: () => void; readonly onFeatured: (featured: boolean) => void }): ReactNode {
+function ProductRow({ item, busy, locked, categoryName, onHide, onShow, onFeatured }: { readonly item: ModerationListing; readonly busy: boolean; readonly locked: boolean; readonly categoryName: string; readonly onHide: () => void; readonly onShow: () => void; readonly onFeatured: (featured: boolean) => void }): ReactNode {
   const t = useT();
   const locale = useLocale();
   const stamp = useStamp();
@@ -108,7 +110,7 @@ function ProductRow({ item, busy, onHide, onShow, onFeatured }: { readonly item:
         <View style={{ flex: 1, flexShrink: 1, gap: spacing[1] }}>
           <Text accessibilityRole="header" style={[styles.subtitle, { overflowWrap: "anywhere" } as object]}>{item.title}</Text>
           <Text style={styles.muted}>{t("admin.products.row.provider", { name: item.providerName })}</Text>
-          <Text style={styles.muted}>{[item.category, item.priceMinor === null ? t("admin.products.row.noPrice") : formatMinor(item.priceMinor, item.currency, locale), item.publishedAt ? t("admin.products.row.published", { when: stamp(item.publishedAt) }) : t("admin.products.row.unpublished")].join(" · ")}</Text>
+          <Text style={styles.muted}>{[categoryName, item.priceMinor === null ? t("admin.products.row.noPrice") : formatMinor(item.priceMinor, item.currency, locale), item.publishedAt ? t("admin.products.row.published", { when: stamp(item.publishedAt) }) : t("admin.products.row.unpublished")].join(" · ")}</Text>
         </View>
       </View>
       <View style={styles.row}>
@@ -123,11 +125,11 @@ function ProductRow({ item, busy, onHide, onShow, onFeatured }: { readonly item:
           {item.adminHiddenAt ? <Text style={styles.muted}>{t("admin.products.row.hiddenOn", { when: stamp(item.adminHiddenAt) })}</Text> : null}
         </Notice>
       ) : null}
-      <SwitchRow label={t("admin.products.row.featuredNamed", { name: item.title })} hint={item.hidden ? t("admin.products.row.featuredHidden") : t("admin.products.row.featuredHint")} value={item.featured} disabled={busy || item.hidden} onChange={onFeatured} testID={`product-featured-${item.listingId}`} />
+      <SwitchRow label={t("admin.products.row.featuredNamed", { name: item.title })} hint={item.hidden ? t("admin.products.row.featuredHidden") : t("admin.products.row.featuredHint")} value={item.featured} disabled={locked || item.hidden} onChange={onFeatured} testID={`product-featured-${item.listingId}`} />
       <View style={styles.row}>
         {item.hidden
-          ? <ActionButton variant="secondary" label={t("admin.products.actions.show")} busy={busy} onPress={onShow} testID={`product-show-${item.listingId}`} />
-          : <ActionButton variant="danger" label={t("admin.products.actions.hide")} busy={busy} onPress={onHide} testID={`product-hide-${item.listingId}`} />}
+          ? <ActionButton variant="secondary" label={t("admin.products.actions.show")} busy={busy} disabled={locked} onPress={onShow} testID={`product-show-${item.listingId}`} />
+          : <ActionButton variant="danger" label={t("admin.products.actions.hide")} busy={busy} disabled={locked} onPress={onHide} testID={`product-hide-${item.listingId}`} />}
       </View>
     </View>
   );
@@ -152,11 +154,13 @@ function ProductsScreenContent({ onNavigate }: { readonly onNavigate: (href: str
   const featureOnce = useSingleMutation(feature);
   const items = useMemo(() => inbox.data?.pages.flatMap((page) => page.items) ?? [], [inbox.data]);
   const counts = moderationCounts(inbox.data?.pages);
-  const error = hide.error ?? show.error ?? feature.error;
+  const locked = hide.isPending || show.isPending || feature.isPending;
+  const pageError = asking ? (show.error ?? feature.error) : (hide.error ?? show.error ?? feature.error);
+  const names = useMemo(() => new Map((categories.data?.items ?? []).map((category) => [category.code, category.name])), [categories.data]);
   const reset = (): void => { hide.reset(); show.reset(); feature.reset(); setDone(null); };
   const busyId = hide.isPending ? hide.variables?.listingId : show.isPending ? show.variables?.listingId : feature.isPending ? feature.variables?.listingId : undefined;
   const finish = (kind: Done["kind"]) => ({ onSuccess: (result: unknown) => { setDone({ kind, replayed: typeof result === "object" && result !== null && "replayed" in result && result.replayed === true }); } });
-  const changeView = (next: ModerationView): void => { reset(); setView(next); };
+  const changeView = (next: ModerationView): void => { reset(); setDraft((current) => ({ ...current, featured: "any", completeness: "" })); setView(next); };
   const changeDraft = (next: Draft): void => { reset(); setDraft(next); };
   return (
     <AdminScreen title={t("admin.products.title")} current="products" onNavigate={onNavigate}>
@@ -165,25 +169,27 @@ function ProductsScreenContent({ onNavigate }: { readonly onNavigate: (href: str
         <Tabs view={view} counts={counts} onChange={changeView} />
         <Filters key={view} view={view} draft={draft} onChange={changeDraft} categories={categories.data?.items ?? []} />
         {done ? <Notice kind="success"><Text role="status" style={styles.body} testID="products-done">{done.replayed ? t("admin.products.done.replayed") : t(`admin.products.done.${done.kind}`)}</Text></Notice> : null}
-        <AdminErrorNotice error={error} onReload={() => { reset(); void inbox.refetch(); }} />
-        <QueryBoundary query={{ isPending: inbox.isPending, error: inbox.error, data: inbox.data ? { items } : undefined, refetch: inbox.refetch }} avatar illustration={view === "HIDDEN" ? "nothingPending" : "emptySearch"}
+        <AdminErrorNotice error={pageError} onReload={() => { reset(); void inbox.refetch(); }} />
+        <QueryBoundary query={{ isPending: inbox.isPending, error: inbox.data ? null : inbox.error, data: inbox.data ? { items } : undefined, refetch: inbox.refetch }} avatar illustration={view === "HIDDEN" ? "nothingPending" : "emptySearch"}
           empty={view === "HIDDEN" ? t("admin.products.empty.HIDDEN") : t("admin.products.empty.RECENT", { days: draft.days })}>
           {() => (
             <>
               {items.map((item) => (
-                <ProductRow key={item.listingId} item={item} busy={busyId === item.listingId}
+                <ProductRow key={item.listingId} item={item} busy={busyId === item.listingId} locked={locked} categoryName={names.get(item.category) ?? item.category}
                   onHide={() => { reset(); setAsking(item); }}
-                  onShow={() => { setDone(null); showOnce({ listingId: item.listingId }, finish("shown")); }}
-                  onFeatured={(featured) => { setDone(null); featureOnce({ listingId: item.listingId, featured }, finish(featured ? "featuredOn" : "featuredOff")); }} />
+                  onShow={() => { reset(); showOnce({ listingId: item.listingId }, finish("shown")); }}
+                  onFeatured={(featured) => { reset(); featureOnce({ listingId: item.listingId, featured }, finish(featured ? "featuredOn" : "featuredOff")); }} />
               ))}
-              {inbox.isFetchNextPageError ? <AdminErrorNotice error={inbox.error} onRetry={() => { void inbox.refetch(); }} /> : null}
+              {inbox.error && inbox.data ? <AdminErrorNotice error={inbox.error} onRetry={() => { void (inbox.isFetchNextPageError ? inbox.fetchNextPage() : inbox.refetch()); }} /> : null}
               {inbox.hasNextPage ? <ActionButton variant="secondary" label={t("admin.products.more")} busy={inbox.isFetchingNextPage} onPress={() => { void inbox.fetchNextPage(); }} testID="products-more" /> : null}
             </>
           )}
         </QueryBoundary>
-        <ReasonDialog visible={asking !== null} title={asking ? t("admin.products.hide.title", { name: asking.title }) : ""} body={t("admin.products.hide.body")} confirmLabel={t("admin.products.actions.hide")}
-          minLength={HIDE_REASON_MIN} maxLength={HIDE_REASON_MAX} multiline={false} onCancel={() => setAsking(null)}
-          onConfirm={(reason) => { if (asking) hideOnce({ listingId: asking.listingId, reason: reason.replace(CONTROL, " ").trim() }, finish("hidden")); setAsking(null); }} />
+        <ReasonDialog visible={asking !== null} busy={hide.isPending} title={asking ? t("admin.products.hide.title", { name: asking.title }) : ""} body={t("admin.products.hide.body")} confirmLabel={t("admin.products.actions.hide")}
+          minLength={HIDE_REASON_MIN} maxLength={HIDE_REASON_MAX} multiline={false} normalize={cleanReason}
+          error={asking ? <AdminErrorNotice error={hide.error} onReload={() => { reset(); setAsking(null); void inbox.refetch(); }} /> : null}
+          onCancel={() => { if (!hide.isPending) { hide.reset(); setAsking(null); } }}
+          onConfirm={(reason) => { if (asking) hideOnce({ listingId: asking.listingId, reason }, { onSuccess: (result) => { setDone({ kind: "hidden", replayed: result.replayed }); setAsking(null); } }); }} />
       </Stack>
     </AdminScreen>
   );
