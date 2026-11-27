@@ -33,3 +33,9 @@ Ninguna.
 
 ## Reversión
 Revertir el commit: solo CSS y una prueba.
+
+## Verificación del PR #160 del 27 de noviembre de 2026
+
+El cambio del carrusel de #156 agregó selectores válidos con `:is(picture, …)`. La aserción de PL-OF-1 buscaba esa sintaxis en toda la hoja CSS y fallaba también en la base de Coolify `d6d4aef8`. La búsqueda se limita a selectores de `.cdesign-cover`, con las aserciones existentes sobre `display: contents`, los `source` y el orden en móvil. [Check fallido](https://github.com/PabloArauzCaballero/RSVPFrontend/actions/runs/46043195429/job/140655833242?pr=160)
+
+`yarn workspace @rsvp/celebration-theme test src/design/render.test.tsx -t PL-OF-1` pasó con la hoja CSS actual y volvió a identificar el selector histórico al reintroducirlo en una copia temporal. El paso `yarn turbo run test --concurrency=2` con los filtros de `scripts/test-filters.mjs` completó sus 11 tareas, incluidas las 3015 pruebas de `celebration-theme`.
