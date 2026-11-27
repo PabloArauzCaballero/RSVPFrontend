@@ -1,22 +1,33 @@
 # Carrusel y visor de fotos de la invitación
 
-Validación del 27 de noviembre de 2026 sobre `chore/deploy-contabo-coolify` en `6a2b8a7f`.
+Validación del 27 de noviembre de 2026 sobre `chore/deploy-contabo-coolify` en `6a2b8a7f` (rama `fix/visor-galeria-invitacion`, HEAD de código `25ffe12e`).
 
 La galería compartida enlazaba directamente al archivo. Se comprobó ese comportamiento en el HTML de la invitación publicada con dos fotos. La galería ahora muestra una foto por vez y avanza mediante deslizamiento táctil, botones o flechas cuando la miniatura tiene el foco. Al pulsar Ampliar foto se abre el visor dentro de la invitación. Cerrar o Escape devuelve el foco a la miniatura. Con una foto se puede ampliar sin controles de recorrido. La sección permanece oculta cuando faltan fotos.
 
-El deslizamiento usa el desplazamiento nativo del navegador y las fotos conservan sus variantes responsivas, carga diferida y espacio reservado. Los botones cambian de foto al instante y las diapositivas avanzan por iniciativa del invitado. Se actualizaron ocho snapshots de los cuatro diseños tradicionales para reflejar el HTML del carrusel, en claro y oscuro.
+El deslizamiento usa el desplazamiento nativo del navegador y las fotos conservan sus variantes responsivas, carga diferida y espacio reservado. Los botones cambian de foto al instante y las diapositivas avanzan por iniciativa del invitado, sin reproducción automática y respetando `prefers-reduced-motion`. Se actualizaron ocho snapshots de los cuatro diseños tradicionales para reflejar el HTML del carrusel, en claro y oscuro.
+
+## Verificaciones y salidas observadas
 
 | Verificación | Resultado |
 | --- | --- |
-| `yarn workspace @rsvp/celebration-theme test` | 3014 pruebas, salida 0 |
-| `yarn workspace @rsvp/i18n test` | 16 pruebas, salida 0 |
-| `yarn workspace @rsvp/seo-web test` | 210 pruebas, salida 0 |
-| `yarn workspace @rsvp/seo-web build` con la API de fixtures | Build de producción, salida 0 |
-| `apps/seo-web/e2e/gallery-dialog.spec.ts` con Playwright y Chrome | Dos pruebas, salida 0. Recorrido del carrusel y visor con foco y URL conservados. Sin fotos, la invitación omite la galería y su ruta específica devuelve 404 |
-| `apps/seo-web/e2e/plantillas-v2.spec.ts` con `--grep "photo that fails to load"` | 12 pruebas del tratamiento de imágenes fallidas, salida 0 |
-| Playwright con Chrome y la API de fixtures | 12 combinaciones de 360, 768 y 1280 px, claro y oscuro, es-BO y en-US. Salida 0. Deslizamiento, controles en una fila, teclado, visor, foco, URL y axe |
-| Playwright con Chrome sobre el build local conectado al gateway desplegado | 12 combinaciones, salida 0. La invitación de prueba devolvió dos fotos reales. Pasaron los tres tamaños y ambas preferencias de tema al solicitar español e inglés, con la interfaz en español por el idioma publicado. Se comprobó la descarga de las fotos, deslizamiento en 360 px, botones, teclado, visor, cierre y retorno del foco. Las imágenes del gateway se entregaron a Chrome a través del cliente HTTP de la prueba por una limitación de red del navegador en este entorno. Axe no encontró violaciones serias ni críticas en el carrusel o el visor |
+| `corepack yarn install --immutable` | Dependencias verificadas sin cambios en el lockfile, salida `0` |
+| `node scripts/validate-harness.mjs` | 28 carriles, 61 skills y recarga por prompt válidos, salida `0` |
+| `corepack yarn workspace @rsvp/contracts check:generated` | 8 contratos verificados contra `PabloArauzCaballero/RSVPBackend@68c2b25b8e9c`, salida `0` |
+| `corepack yarn lint:code` | Limpio, salida `0` |
+| `corepack yarn workspace @rsvp/celebration-theme typecheck`, `@rsvp/i18n typecheck`, `@rsvp/seo-web typecheck` | Limpios, salida `0` |
+| `corepack yarn workspace @rsvp/celebration-theme test` | 17 archivos, 3014 pruebas, salida `0` |
+| `corepack yarn workspace @rsvp/i18n test` | 3 archivos, 16 pruebas, salida `0` |
+| `corepack yarn workspace @rsvp/seo-web test` | 25 archivos, 210 pruebas, salida `0` |
+| `corepack yarn workspace @rsvp/seo-web build` con `RSVP_API_URL` y `NEXT_PUBLIC_API_URL` apuntando al gateway real de QA (`https://rsvp-api.161.97.85.216.sslip.io`) | Build de producción, salida `0` |
+| `corepack yarn workspace @rsvp/seo-web test:visual gallery-dialog.spec.ts` (Playwright + Chrome contra fixtures) | 2 pruebas aprobadas, salida `0`. Recorrido del carrusel y visor con foco y URL conservados; sin fotos, la invitación omite la galería y `/galeria` devuelve `404` |
+| `apps/seo-web/e2e/plantillas-v2.spec.ts` con `--grep "photo that fails to load"` | 12 pruebas del tratamiento de imágenes fallidas, salida `0` |
+| Playwright con Chrome y la API de fixtures | 12 combinaciones (`360`, `768` y `1280` px; claro y oscuro; `es-BO` y `en-US`), salida `0`. Deslizamiento, controles en una fila, teclado, visor, foco, URL y `axe` |
+| Playwright con Chrome sobre el build local conectado al gateway real (referencia en español `fabio`) | Celebration HTTP `200`, `locale=es-BO`, 2 fotos reales. 12 combinaciones, salida `0`, `axe` sin violaciones serias ni críticas |
+| Playwright con Chrome `158.0.8127.88` sobre `corepack yarn workspace @rsvp/seo-web start` conectado al gateway real con invitación de QA en inglés (`locale=en-US`) | 6 combinaciones (`360`, `768` y `1280` px × claro y oscuro, `lang=en-US`, movimiento reducido), todas `APROBADO`, salida `0`. Celebration devolvió HTTP `200` con `locale=en-US` y Template Media entregó 2 fotos reales subidas por PUT firmado. Se verificaron textos en inglés (`Photo 1 of 2`, `Enlarge photo`, `Previous`, `Next`, `Close`), decodificación de ambas fotos, ausencia de desborde horizontal, deslizamiento táctil en `360` px, botones `Previous`/`Next`, flechas de teclado y `Enter`, ampliación de la segunda foto, navegación dentro del visor, cierre por `Escape` y `Close`, retorno del foco a la segunda miniatura y URL conservada. `axe` registró `0` violaciones en el carrusel y `0` en el visor en las 6 combinaciones. Comparación en TEST desplegado: HTTP `200` sin carrusel candidato (`candidate toolbar present=false`). La invitación temporal de QA fue despublicada al finalizar. Capturas locales de QA archivadas fuera de Git |
+| `gitleaks` sobre el diff de la rama | `0` hallazgos de secretos, salida `0` |
 
-Pasaron `corepack yarn lint:code`, el typecheck del área, `node scripts/validate-harness.mjs`, los checks de archivos generados y el escaneo de secretos del diff. El gateway sirve la invitación de prueba en español aun cuando se solicita `en-US`. Para acreditar la interfaz en inglés con el backend real queda pendiente una invitación de pruebas cuyo gateway devuelva `locale=en-US`.
+## Nivel alcanzado, límites y reversión
 
-Para revertir el visor, se revierte el commit de frontend. El cambio usa los campos de medios que ya entrega la API.
+- **Nivel:** `VERIFIED` en web responsive (`@rsvp/seo-web` sobre Chrome real contra Celebration y Template Media reales en `es-BO` y `en-US`).
+- **Fuera de alcance / no probado aquí:** binarios nativos iOS/Android (la galería pública pertenece únicamente a `@rsvp/seo-web`) y ejecución en runners Linux de CI (se valida en GitHub Actions del PR).
+- **Reversión:** revertir los commits de esta rama en frontend. El cambio consume los campos de medios ya expuestos por la API sin migraciones ni cambios de contrato.
