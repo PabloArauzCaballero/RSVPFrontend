@@ -1,10 +1,10 @@
 /** Lista de regalos pública (F22) y gestión del anfitrión (F23). */
 export const giftsEsBO = {
-  meta: { title: "Regalos · {{name}}", description: "Elige un regalo para {{name}}. Los productos de nuestros aliados aparecen primero." },
+  meta: { title: "Regalos · {{name}}", description: "Lista de regalos para {{name}}. Los productos de nuestros aliados aparecen primero." },
   back: "Volver a la celebración",
   filters: { label: "Filtrar regalos", maxPrice: "Precio máximo", source: "Origen", sourceAll: "Todos", sourcePartner: "De nuestros aliados", sourceOther: "Otras tiendas", onlyAvailable: "Solo disponibles", clear: "Quitar filtros", count_one: "{{count}} regalo", count_other: "{{count}} regalos" },
   card: { photo: "Foto de {{title}}", open: "Ver detalle de {{title}}", viaWhatsApp: "Consultar por WhatsApp", viaOther: "Ver en la tienda" },
-  detail: { title: "{{title}} · Regalos", back: "Volver a la lista", notFound: "Este regalo ya no está en la lista.", notFoundBody: "Puede que los anfitriones lo hayan quitado. La lista completa sigue abierta para ti.", partnerNote: "Este producto lo ofrece un aliado de DOne. Al abrir el enlace saldrás de DOne." },
+  detail: { title: "{{title}} · Regalos", back: "Volver a la lista", notFound: "Este regalo ya no está en la lista.", notFoundBody: "Puede que los anfitriones lo hayan quitado. La lista completa sigue abierta para ti.", notFoundBodyClosed: "Puede que los anfitriones lo hayan quitado. Puedes volver a la lista para ver los demás.", partnerNote: "Este producto lo ofrece un aliado de DOne. Al abrir el enlace saldrás de DOne." },
   outcome: { cancelledTitle: "Reserva cancelada", cancelledBody: "Esta reserva se canceló al cambiar tu asistencia. Si volvés a asistir, confirmá tu respuesta y elegí un regalo disponible." },
   error: {
     attendanceBody: "Para reservar un regalo, volvé a tu respuesta y confirmá que asistirás.",

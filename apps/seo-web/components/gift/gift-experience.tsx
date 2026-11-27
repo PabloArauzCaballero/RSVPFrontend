@@ -295,7 +295,7 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
         </div>
         {listClosed ? (
           // A refused tap removes the form that had focus: the note takes it, so the guest sees (and hears) why.
-          <FocusNote tone="info" testId="gift-list-closed" takeFocus={reserve.isPending || reserve.isError}>
+          <FocusNote tone="info" testId="gift-list-closed" takeFocus={target !== null}>
             <h2>{t('gifts.guest.closed.title')}</h2>
             <p>{t('gifts.guest.closed.body')}</p>
             {mine.size > 0 ? <p>{t('gifts.guest.closed.keepsMine')}</p> : null}
@@ -328,7 +328,7 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
           </form>
         ) : null}
 
-        {onlyItemId && scoped.length === 0 ? <EmptyNote art={<NoGiftsArt className="state__art" />} title={t('gifts.detail.notFound')} body={t('gifts.detail.notFoundBody')} /> : null}
+        {onlyItemId && scoped.length === 0 ? <EmptyNote art={<NoGiftsArt className="state__art" />} title={t('gifts.detail.notFound')} body={t(listClosed ? 'gifts.detail.notFoundBodyClosed' : 'gifts.detail.notFoundBody')} /> : null}
         {!onlyItemId && !listClosed && visibleCount === 0 ? <EmptyNote art={<NoGiftsArt className="state__art" />} title={t('gifts.guest.empty.title')} body={t('gifts.guest.empty.body')} /> : null}
         {visibleCount > 0 && items.length === 0 ? <EmptyNote art={<EmptyArt className="state__art" />} title={t('gifts.empty.filtered')} body={t('gifts.empty.filteredBody')} /> : null}
         {partner.length ? <section aria-labelledby="gifts-partner"><h2 id="gifts-partner" className="gift-group">{t('gifts.guest.groupPartner')}</h2><ul className="gift-rows" data-group="partner">{partner.map(renderRow)}</ul></section> : null}

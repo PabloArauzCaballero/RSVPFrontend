@@ -2,11 +2,11 @@ import type { DeepStrings } from "../types.js";
 import type { giftsEsBO } from "../es-BO/gifts.js";
 /** Public gift list (F22) and host gift management (F23). */
 export const giftsEnUS: DeepStrings<typeof giftsEsBO> = {
-  meta: { title: "Gifts · {{name}}", description: "Choose a gift for {{name}}. Products from our partners come first." },
+  meta: { title: "Gifts · {{name}}", description: "Gift list for {{name}}. Products from our partners come first." },
   back: "Back to the celebration",
   filters: { label: "Filter gifts", maxPrice: "Maximum price", source: "Source", sourceAll: "All", sourcePartner: "From our partners", sourceOther: "Other stores", onlyAvailable: "Available only", clear: "Clear filters", count_one: "{{count}} gift", count_other: "{{count}} gifts" },
   card: { photo: "Photo of {{title}}", open: "See details of {{title}}", viaWhatsApp: "Ask on WhatsApp", viaOther: "See at the store" },
-  detail: { title: "{{title}} · Gifts", back: "Back to the list", notFound: "This gift is no longer on the list.", notFoundBody: "The hosts may have removed it. The full list is still open to you.", partnerNote: "A DOne partner offers this product. Opening the link takes you out of DOne." },
+  detail: { title: "{{title}} · Gifts", back: "Back to the list", notFound: "This gift is no longer on the list.", notFoundBody: "The hosts may have removed it. The full list is still open to you.", notFoundBodyClosed: "The hosts may have removed it. You can go back to the list to see the others.", partnerNote: "A DOne partner offers this product. Opening the link takes you out of DOne." },
   outcome: { cancelledTitle: "Reservation cancelled", cancelledBody: "This reservation was cancelled when your attendance changed. If you are attending again, confirm your response and choose an available gift." },
   error: {
     attendanceBody: "To reserve a gift, return to your response and confirm that you are attending.",

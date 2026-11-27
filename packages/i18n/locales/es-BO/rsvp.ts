@@ -19,7 +19,7 @@ export const rsvpEsBO = {
     doneTitle: "Listo, estás dentro.", doneBodyUntil: "Quedó tu respuesta. Puedes cambiarla hasta el {{date}}.", doneBodyAnytime: "Quedó tu respuesta. Puedes cambiarla cuando quieras.",
     declinedTitle: "Gracias por avisar.", declinedBody: "Quedó registrado que no podrás venir. Si cambias de idea, puedes cambiar tu respuesta.",
     savedNote: "Cambios guardados.",
-    giftsCta: "Ver la lista de regalos", giftsHint: "¿Quieres regalar algo? Reserva uno en un toque.",
+    giftsCta: "Ver la lista de regalos", giftsClosedHint: "La lista de regalos está cerrada: ya no se pueden reservar.", giftsHint: "¿Quieres regalar algo? Reserva uno en un toque.",
     againTitleYes: "Tu asistencia está confirmada", againTitleNo: "Quedó registrado que no podrás venir", edit: "Cambiar mi respuesta", editHint: "Puedes cambiarla hasta que cierre el plazo.",
     summaryLabel: "Tu respuesta", summaryCompanions: "Acompañantes aprobados: {{count}}", summaryPending: "{{count}} por aprobar: lo decide quien te invita", summaryDietary: "Restricción alimentaria: {{value}}", summaryMessage: "Tu mensaje: {{value}}", summaryUpdated: "Actualizada el {{date}}",
     closedTitle: "El plazo para responder terminó", closedOn: "Las respuestas cerraron el {{date}} (hora de {{timeZone}}).", closedGeneric: "Quien te invitó cerró las respuestas.",
