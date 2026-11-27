@@ -20,13 +20,13 @@ const portal = (extra: Record<string, Handler> = {}): Record<string, Handler> =>
   [`GET /providers/${PID}`]: () => profile, "GET /providers/geo": () => GEO, [`GET /providers/${PID}/listings`]: () => ({ items: [listing] }),
   [`GET /providers/${PID}/metrics`]: () => ({ providerId: PID, from: "", to: "", totals: { impressions: 0, clicks: 0, validLeads: 0, invalidLeads: 0, ctr: 0 } }), ...extra
 });
-const SECRET_CELEBRATION = "celebracion-secreta-7788";
-const SECRET_GUEST = "invitado-secreto-9911";
-const SECRET_REFERRER = "https://referrer-secreto.example/inv";
-const lead = (id: string, extra: Record<string, unknown> = {}) => ({ celebrationId: SECRET_CELEBRATION, guestId: SECRET_GUEST, referrer: SECRET_REFERRER, id, listingId: LID, kind: "REDIRECT", destination: "WHATSAPP", valid: true, billable: true, occurredAt: "2026-11-26T02:30:00Z", listingTitle: "Torta de chocolate", eventType: "WEDDING", city: "la-paz", surface: "GIFT_LIST", device: "MOBILE", context: { surface: "GIFT_LIST", locale: "es-BO", device: "MOBILE", country: "BO", city: "la-paz", eventType: "WEDDING" }, ...extra });
+const FORBIDDEN_CELEBRATION_ID = "c-7788-no-debe-verse";
+const FORBIDDEN_GUEST_ID = "g-9911-no-debe-verse";
+const FORBIDDEN_REFERRER = "https://referrer-no-debe-verse.example/inv";
+const lead = (id: string, extra: Record<string, unknown> = {}) => ({ celebrationId: FORBIDDEN_CELEBRATION_ID, guestId: FORBIDDEN_GUEST_ID, referrer: FORBIDDEN_REFERRER, id, listingId: LID, kind: "REDIRECT", destination: "WHATSAPP", valid: true, billable: true, occurredAt: "2026-11-26T02:30:00Z", listingTitle: "Torta de chocolate", eventType: "WEDDING", city: "la-paz", surface: "GIFT_LIST", device: "MOBILE", context: { surface: "GIFT_LIST", locale: "es-BO", device: "MOBILE", country: "BO", city: "la-paz", eventType: "WEDDING" }, ...extra });
 const reasons = (extra: Record<string, number> = {}) => ({ dup: 0, bot: 0, PREVIEW: 0, NOT_ELIGIBLE: 0, PROVIDER_SELF: 0, HOST_OR_PLANNER: 0, OTHER: 0, ...extra });
 const providerRow = { providerId: PID, providerName: "Dulce Sol", billingModel: "CPC", monthlyCap: 100, validLeads: 7, invalidLeads: 3, invalidByReason: reasons({ HOST_OR_PLANNER: 2, dup: 1 }), billableLeads: 7 };
-const reportRow = { celebrationId: SECRET_CELEBRATION, guestId: SECRET_GUEST, providerId: PID, providerName: "Dulce Sol", listingId: LID, listingTitle: "Torta de chocolate", destination: "WHATSAPP", validLeads: 7, invalidLeads: 3, invalidByReason: reasons({ HOST_OR_PLANNER: 2, dup: 1 }), billableLeads: 7 };
+const reportRow = { celebrationId: FORBIDDEN_CELEBRATION_ID, guestId: FORBIDDEN_GUEST_ID, providerId: PID, providerName: "Dulce Sol", listingId: LID, listingTitle: "Torta de chocolate", destination: "WHATSAPP", validLeads: 7, invalidLeads: 3, invalidByReason: reasons({ HOST_OR_PLANNER: 2, dup: 1 }), billableLeads: 7 };
 
 beforeEach(async () => { resetSecureStore(); saveTextFile.mockClear(); await writeLocal("rsvp.provider.u-host", PID); });
 afterEach(() => { cleanup(); });
@@ -58,11 +58,11 @@ describe("portal · leads list with filters (D-10 #34, PF-1)", () => {
     expect(within(row).getByText(/Ciudad: La Paz/)).toBeTruthy();
     expect(within(row).getByText(/25 nov de 2026/i)).toBeTruthy(); // 02:30 UTC on the 26th is the 25th at 22:30 in La Paz
     // Even if a server sent them (it must not, A35), none of these values is ever drawn.
-    expect(document.body.textContent).not.toContain(SECRET_CELEBRATION);
-    expect(document.body.textContent).not.toContain(SECRET_GUEST);
-    expect(document.body.textContent).not.toContain("referrer-secreto");
-    expect(document.body.innerHTML).not.toContain(SECRET_CELEBRATION);
-    expect(document.body.innerHTML).not.toContain(SECRET_GUEST);
+    expect(document.body.textContent).not.toContain(FORBIDDEN_CELEBRATION_ID);
+    expect(document.body.textContent).not.toContain(FORBIDDEN_GUEST_ID);
+    expect(document.body.textContent).not.toContain("referrer-no-debe-verse");
+    expect(document.body.innerHTML).not.toContain(FORBIDDEN_CELEBRATION_ID);
+    expect(document.body.innerHTML).not.toContain(FORBIDDEN_GUEST_ID);
   });
   it("labels the new invalid reasons and an unknown event type is shown as received", async () => {
     const items = [lead("h", { valid: false, billable: false, invalidReason: "HOST_OR_PLANNER" }), lead("s", { valid: false, billable: false, invalidReason: "PROVIDER_SELF", eventType: "FUTURE_TYPE" }), lead("p", { valid: false, invalidReason: "PREVIEW" }), lead("n", { valid: false, invalidReason: "NOT_ELIGIBLE" })];
@@ -127,8 +127,8 @@ describe("portal · monthly report on Resultados", () => {
     expect(within(totals).getByText("Cobrables: 7")).toBeTruthy();
     expect(within(totals).getByText("Duplicado (mismo visitante en 24 h): 1 · Anfitrión u organizador: 2")).toBeTruthy();
     expect(within(screen.getByTestId("report-row")).getByText("Torta de chocolate · WhatsApp")).toBeTruthy();
-    expect(document.body.innerHTML).not.toContain(SECRET_CELEBRATION);
-    expect(document.body.innerHTML).not.toContain(SECRET_GUEST);
+    expect(document.body.innerHTML).not.toContain(FORBIDDEN_CELEBRATION_ID);
+    expect(document.body.innerHTML).not.toContain(FORBIDDEN_GUEST_ID);
     expect(calls.find((call) => call.path === `/providers/${PID}/leads/report`)?.url).toBe(`/providers/${PID}/leads/report?month=${currentMonth("America/La_Paz")}`);
   });
   it("a provider not billed per click sees why there is no billable figure", async () => {
