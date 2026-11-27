@@ -298,18 +298,18 @@ describe("restore (P15, M1)", () => {
     await waitFor(() => expect(screen.getByText(/copiada al borrador/)).toBeTruthy());
   });
 
-  it.each<[string, number | undefined, RegExp]>([
-    ["409 (and the conflict flow)", 409, /Otra pestaña o persona guardó un borrador más nuevo.*No se restauró/s],
-    ["401", 401, /Tu sesión terminó/],
-    ["403", 403, /No tienes permiso para restaurar/],
-    ["422", 422, /ya no cumple las reglas del diseño/],
-    ["network", undefined, /No pudimos restaurar esa versión\. Tu borrador no cambió/]
-  ])("a failed restore (%s) has its own words and leaves the draft alone", async (_label, status, pattern) => {
-    open(gateway({ restore: async () => { throw status === undefined ? new TypeError("offline") : failure(status); } }));
+  it.each([
+    [409, /Otra pestaña o persona guardó un borrador más nuevo.*No se restauró/s],
+    [401, /Tu sesión terminó/],
+    [403, /No tienes permiso para restaurar/],
+    [422, /ya no cumple las reglas del diseño/],
+    ["offline", /No pudimos restaurar esa versión\. Tu borrador no cambió/],
+  ] as const)("explains restore failure %s and leaves the draft alone", async (status, pattern) => {
+    open(gateway({ restore: async () => { throw status === "offline" ? new TypeError("offline") : failure(status); } }));
     const before = accent().value;
     fireEvent.click(await restoreButton(1));
     fireEvent.click(confirmRestore(1));
-    await waitFor(() => expect(screen.getByText(pattern), String(status)).toBeTruthy());
+    expect(await screen.findByText(pattern)).toBeTruthy();
     expect(accent().value).toBe(before);
     if (status === 409) expect(screen.getByTestId("save-status").getAttribute("data-kind")).toBe("conflict");
   });
