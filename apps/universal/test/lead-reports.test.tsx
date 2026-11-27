@@ -1,0 +1,194 @@
+import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { currentMonth, recentMonths } from "../src/provider/lead-report-view";
+import { LeadsScreen } from "../src/provider/leads-screen";
+import { MetricsScreen as PortalMetricsScreen } from "../src/provider/metrics-screen";
+import { MetricsScreen as AdminMetricsScreen } from "../src/admin/insight";
+import { writeLocal } from "../src/platform/local-store";
+import { resetSecureStore } from "./stubs/expo-secure-store";
+import { ADMIN, fakeClient, GEO, HOST, HttpFailure, renderApp, type Handler } from "./support";
+
+const saveTextFile = vi.hoisted(() => vi.fn(async (): Promise<"downloaded" | "shared" | "failed"> => "downloaded"));
+vi.mock("../src/platform/files", () => ({ saveTextFile, canPickTextFile: false, pickTextFile: async () => null }));
+
+/** R6b · provider portal lead list and monthly report, and the administrator's report with its CSV (provider-catalog 3.9.0). */
+const PID = "4f0f2d3d-0000-4000-8000-0000000000bb";
+const LID = "5a0f2d3d-0000-4000-8000-0000000000cc";
+const profile = { id: PID, slug: "dulce-sol", name: "Dulce Sol", status: "VERIFIED", plan: "FREE", currency: "BOB", timeZone: "America/La_Paz", version: 1, ownerId: "u-host" };
+const listing = { id: LID, providerId: PID, type: "PRODUCT", category: "TABLEWARE", city: "la-paz", title: "Torta de chocolate", published: true };
+const portal = (extra: Record<string, Handler> = {}): Record<string, Handler> => ({
+  [`GET /providers/${PID}`]: () => profile, "GET /providers/geo": () => GEO, [`GET /providers/${PID}/listings`]: () => ({ items: [listing] }),
+  [`GET /providers/${PID}/metrics`]: () => ({ providerId: PID, from: "", to: "", totals: { impressions: 0, clicks: 0, validLeads: 0, invalidLeads: 0, ctr: 0 } }), ...extra
+});
+const lead = (id: string, extra: Record<string, unknown> = {}) => ({ id, listingId: LID, kind: "REDIRECT", destination: "WHATSAPP", valid: true, billable: true, occurredAt: "2026-11-26T02:30:00Z", listingTitle: "Torta de chocolate", eventType: "WEDDING", city: "la-paz", surface: "GIFT_LIST", device: "MOBILE", context: { surface: "GIFT_LIST", locale: "es-BO", device: "MOBILE", country: "BO", city: "la-paz", eventType: "WEDDING" }, ...extra });
+const reasons = (extra: Record<string, number> = {}) => ({ dup: 0, bot: 0, PREVIEW: 0, NOT_ELIGIBLE: 0, PROVIDER_SELF: 0, HOST_OR_PLANNER: 0, OTHER: 0, ...extra });
+const providerRow = { providerId: PID, providerName: "Dulce Sol", billingModel: "CPC", monthlyCap: 100, validLeads: 7, invalidLeads: 3, invalidByReason: reasons({ HOST_OR_PLANNER: 2, dup: 1 }), billableLeads: 7 };
+const reportRow = { providerId: PID, providerName: "Dulce Sol", listingId: LID, listingTitle: "Torta de chocolate", destination: "WHATSAPP", validLeads: 7, invalidLeads: 3, invalidByReason: reasons({ HOST_OR_PLANNER: 2, dup: 1 }), billableLeads: 7 };
+
+beforeEach(async () => { resetSecureStore(); saveTextFile.mockClear(); await writeLocal("rsvp.provider.u-host", PID); });
+afterEach(() => { cleanup(); });
+
+describe("month helpers", () => {
+  it("currentMonth uses the provider's zone: 01:00 UTC of the 1st is still the previous month in La Paz", () => {
+    const now = new Date("2026-12-01T01:00:00Z");
+    expect(currentMonth("America/La_Paz", now)).toBe("2026-11");
+    expect(currentMonth("UTC", now)).toBe("2026-12");
+  });
+  it("recentMonths lists 12 months newest first and crosses the year", () => {
+    const months = recentMonths("America/La_Paz", 12, new Date("2026-02-15T12:00:00Z"));
+    expect(months[0]).toBe("2026-02");
+    expect(months[1]).toBe("2026-01");
+    expect(months[2]).toBe("2025-12");
+    expect(months).toHaveLength(12);
+    expect(months[11]).toBe("2025-03");
+  });
+});
+
+describe("portal · leads list with filters (D-10 #34, PF-1)", () => {
+  it("shows product, button, date in the provider's zone, event type and city, and nothing about the celebration or the guest", async () => {
+    const { client } = fakeClient(portal({ [`GET /providers/${PID}/leads`]: () => ({ items: [lead("a", { city: "la-paz" })], total: 1 }) }));
+    renderApp(<LeadsScreen />, client, HOST);
+    const row = await screen.findByTestId("lead-a");
+    expect(within(row).getByText("Producto: Torta de chocolate")).toBeTruthy();
+    expect(within(row).getByText("Destino: WhatsApp")).toBeTruthy();
+    expect(within(row).getByText("Tipo de evento: Boda")).toBeTruthy();
+    expect(within(row).getByText(/Ciudad: La Paz/)).toBeTruthy();
+    expect(within(row).getByText(/25 nov de 2026/i)).toBeTruthy(); // 02:30 UTC on the 26th is the 25th at 22:30 in La Paz
+    expect(row.textContent).not.toMatch(/celebration|guest|invitad|referrer/i);
+  });
+  it("labels the new invalid reasons and an unknown event type is shown as received", async () => {
+    const items = [lead("h", { valid: false, billable: false, invalidReason: "HOST_OR_PLANNER" }), lead("s", { valid: false, billable: false, invalidReason: "PROVIDER_SELF", eventType: "FUTURE_TYPE" }), lead("p", { valid: false, invalidReason: "PREVIEW" }), lead("n", { valid: false, invalidReason: "NOT_ELIGIBLE" })];
+    const { client } = fakeClient(portal({ [`GET /providers/${PID}/leads`]: () => ({ items, total: 4 }) }));
+    renderApp(<LeadsScreen />, client, HOST);
+    expect(await within(await screen.findByTestId("lead-h")).findByText("Anfitrión u organizador")).toBeTruthy();
+    expect(within(screen.getByTestId("lead-s")).getByText("Toque de tu propio negocio")).toBeTruthy();
+    expect(within(screen.getByTestId("lead-s")).getByText("Tipo de evento: FUTURE_TYPE")).toBeTruthy();
+    expect(within(screen.getByTestId("lead-p")).getByText("Vista previa")).toBeTruthy();
+    expect(within(screen.getByTestId("lead-n")).getByText("Producto no elegible")).toBeTruthy();
+  });
+  it("month, product and button filters are sent to the service, and an empty filtered result says so", async () => {
+    const { client, calls } = fakeClient(portal({ [`GET /providers/${PID}/leads`]: (call) => (call.url.includes("destination=PHONE") ? { items: [], total: 0 } : { items: [lead("a")], total: 1 }) }));
+    renderApp(<LeadsScreen />, client, HOST);
+    await screen.findByTestId("lead-a");
+    await waitFor(() => expect((screen.getByTestId("lead-filter-product") as HTMLSelectElement).options.length).toBe(2));
+    fireEvent.change(screen.getByTestId("lead-filter-month"), { target: { value: currentMonth("America/La_Paz") } });
+    fireEvent.change(screen.getByTestId("lead-filter-product"), { target: { value: LID } });
+    fireEvent.change(screen.getByTestId("lead-filter-destination"), { target: { value: "PHONE" } });
+    expect(await screen.findByText("Ningún toque coincide con estos filtros.")).toBeTruthy();
+    const last = calls.filter((call) => call.path === `/providers/${PID}/leads`).at(-1);
+    expect(last?.url).toBe(`/providers/${PID}/leads?limit=50&offset=0&month=${currentMonth("America/La_Paz")}&listingId=${LID}&destination=PHONE`);
+    fireEvent.change(screen.getByTestId("lead-filter-destination"), { target: { value: "__all__" } });
+    await screen.findByTestId("lead-a");
+    expect(calls.some((call) => call.url === `/providers/${PID}/leads?limit=50&offset=0&month=${currentMonth("America/La_Paz")}&listingId=${LID}`)).toBe(true);
+    expect(screen.queryByText("Ningún toque coincide con estos filtros.")).toBeNull();
+  });
+  it("shows the amiable error with retry when the list cannot load", async () => {
+    const { client } = fakeClient(portal({ [`GET /providers/${PID}/leads`]: () => new HttpFailure(503) }));
+    renderApp(<LeadsScreen />, client, HOST);
+    expect(await screen.findByTestId("error-retry")).toBeTruthy();
+  });
+});
+
+describe("portal · monthly report on Resultados", () => {
+  const reportHandler = (extra: Partial<Record<string, unknown>> = {}) => ({ [`GET /providers/${PID}/leads/report`]: () => ({ month: currentMonth("America/La_Paz"), providers: [providerRow], rows: [reportRow], ...extra }) });
+  it("asks for the current month of the provider's zone and shows totals, billable and the breakdown by reason", async () => {
+    const { client, calls } = fakeClient(portal(reportHandler()));
+    renderApp(<PortalMetricsScreen />, client, HOST);
+    const totals = await screen.findByTestId("lead-report-totals");
+    expect(within(totals).getByText("Válidos: 7")).toBeTruthy();
+    expect(within(totals).getByText("No válidos: 3")).toBeTruthy();
+    expect(within(totals).getByText("Cobrables: 7")).toBeTruthy();
+    expect(within(totals).getByText("Duplicado (mismo visitante en 24 h): 1 · Anfitrión u organizador: 2")).toBeTruthy();
+    expect(within(screen.getByTestId("lead-report-row")).getByText("Torta de chocolate · WhatsApp")).toBeTruthy();
+    expect(calls.find((call) => call.path === `/providers/${PID}/leads/report`)?.url).toBe(`/providers/${PID}/leads/report?month=${currentMonth("America/La_Paz")}`);
+  });
+  it("a provider not billed per click sees why there is no billable figure", async () => {
+    const flat = { ...providerRow, billingModel: "FLAT", billableLeads: null, monthlyCap: 0 };
+    const { client } = fakeClient(portal(reportHandler({ providers: [flat], rows: [{ ...reportRow, billableLeads: null }] })));
+    renderApp(<PortalMetricsScreen />, client, HOST);
+    const totals = await screen.findByTestId("lead-report-totals");
+    expect(within(totals).getByText("No se cobra por toque (tarifa fija)")).toBeTruthy();
+    expect(within(totals).getByText("Sin tope mensual")).toBeTruthy();
+    expect(within(screen.getByTestId("lead-report-row")).queryByText(/Cobrables/)).toBeNull();
+  });
+  it("changing the product and button sends them with the month; an empty month has its own state", async () => {
+    const { client, calls } = fakeClient(portal({ [`GET /providers/${PID}/leads/report`]: (call) => (call.url.includes("listingId") ? { month: "x", providers: [], rows: [] } : { month: "x", providers: [providerRow], rows: [reportRow] }) }));
+    renderApp(<PortalMetricsScreen />, client, HOST);
+    await screen.findByTestId("lead-report-totals");
+    await waitFor(() => expect((screen.getByTestId("lead-filter-product") as HTMLSelectElement).options.length).toBe(2));
+    fireEvent.change(screen.getByTestId("lead-filter-product"), { target: { value: LID } });
+    fireEvent.change(screen.getByTestId("lead-filter-destination"), { target: { value: "WHATSAPP" } });
+    expect(await screen.findByText("Sin toques este mes")).toBeTruthy();
+    expect(calls.filter((call) => call.path.endsWith("/leads/report")).at(-1)?.url).toContain(`listingId=${LID}&destination=WHATSAPP`);
+  });
+  it("a failed report shows the retry state and keeps the rest of Resultados", async () => {
+    const { client } = fakeClient(portal({ [`GET /providers/${PID}/leads/report`]: () => new HttpFailure(503) }));
+    renderApp(<PortalMetricsScreen />, client, HOST);
+    expect(await screen.findByTestId("error-retry")).toBeTruthy();
+    expect(screen.getByTestId("metric-totals")).toBeTruthy();
+  });
+  it("speaks English when the locale is en-US", async () => {
+    const { client } = fakeClient(portal(reportHandler()));
+    renderApp(<PortalMetricsScreen />, client, HOST, "en-US");
+    expect(await screen.findByText("Monthly request report")).toBeTruthy();
+    expect(within(await screen.findByTestId("lead-report-totals")).getByText("Valid: 7")).toBeTruthy();
+  });
+});
+
+describe("admin · billable lead report and CSV (D-10 #33)", () => {
+  const OTHER = "6b0f2d3d-0000-4000-8000-0000000000dd";
+  const other = { ...providerRow, providerId: OTHER, providerName: "Flores Sol", billingModel: "FLAT", billableLeads: null, validLeads: 2, invalidLeads: 0, invalidByReason: reasons() };
+  const otherRow = { ...reportRow, providerId: OTHER, providerName: "Flores Sol", listingTitle: "Ramo", destination: "PRODUCT_PAGE", validLeads: 2, invalidLeads: 0, invalidByReason: reasons(), billableLeads: null };
+  const adminHandlers = (extra: Record<string, Handler> = {}): Record<string, Handler> => ({
+    "GET /providers/admin/metrics/leads": () => ({ groupBy: "partner", from: "", to: "", total: 0, items: [] }),
+    "GET /providers/admin/leads/report": () => ({ providerId: null, month: "2026-11", providers: [providerRow, other], rows: [reportRow, otherRow] }), ...extra
+  });
+  it("lists every provider with its billing model and rows, and filters by provider", async () => {
+    const { client, calls } = fakeClient(adminHandlers());
+    renderApp(<AdminMetricsScreen onNavigate={vi.fn()} />, client, ADMIN);
+    expect(await screen.findByTestId(`admin-lead-totals-${PID}`)).toBeTruthy();
+    expect(within(screen.getByTestId(`admin-lead-totals-${OTHER}`)).getByText("No se cobra por clic")).toBeTruthy();
+    expect(screen.getAllByTestId("lead-report-row")).toHaveLength(2);
+    fireEvent.change(screen.getByTestId("admin-lead-provider"), { target: { value: OTHER } });
+    expect(screen.getAllByTestId("lead-report-row")).toHaveLength(1);
+    expect(screen.queryByTestId(`admin-lead-totals-${PID}`)).toBeNull();
+    expect(calls.find((call) => call.path === "/providers/admin/leads/report")?.url).toMatch(/^\/providers\/admin\/leads\/report\?month=20\d\d-\d\d$/);
+  });
+  it("downloads the CSV of the chosen month and provider through the file saver and confirms it", async () => {
+    const csv = "proveedor,producto\r\nDulce Sol,Torta\r\n";
+    const { client, calls } = fakeClient(adminHandlers({ "GET /providers/admin/leads/report.csv": () => csv }));
+    renderApp(<AdminMetricsScreen onNavigate={vi.fn()} />, client, ADMIN);
+    await screen.findByTestId(`admin-lead-totals-${PID}`);
+    fireEvent.change(screen.getByTestId("admin-lead-provider"), { target: { value: PID } });
+    fireEvent.click(screen.getByTestId("admin-lead-csv"));
+    await waitFor(() => expect(saveTextFile).toHaveBeenCalledTimes(1));
+    const month = (screen.getByTestId("admin-lead-month") as HTMLSelectElement).value;
+    expect(saveTextFile).toHaveBeenCalledWith(`leads-${month}.csv`, csv);
+    expect(calls.find((call) => call.path.endsWith("report.csv"))?.url).toBe(`/providers/admin/leads/report.csv?month=${month}&providerId=${PID}`);
+    expect(await screen.findByText(`Descargamos leads-${month}.csv.`)).toBeTruthy();
+  });
+  it("a failed CSV says so and a failed save too", async () => {
+    const failing = fakeClient(adminHandlers({ "GET /providers/admin/leads/report.csv": () => new HttpFailure(500) }));
+    renderApp(<AdminMetricsScreen onNavigate={vi.fn()} />, failing.client, ADMIN);
+    await screen.findByTestId(`admin-lead-totals-${PID}`);
+    fireEvent.click(screen.getByTestId("admin-lead-csv"));
+    expect(await screen.findByText("No pudimos preparar el CSV. Reintenta.")).toBeTruthy();
+    expect(saveTextFile).not.toHaveBeenCalled();
+    cleanup();
+    saveTextFile.mockResolvedValueOnce("failed");
+    const saving = fakeClient(adminHandlers({ "GET /providers/admin/leads/report.csv": () => "a\r\n" }));
+    renderApp(<AdminMetricsScreen onNavigate={vi.fn()} />, saving.client, ADMIN);
+    await screen.findByTestId(`admin-lead-totals-${PID}`);
+    fireEvent.click(screen.getByTestId("admin-lead-csv"));
+    expect(await screen.findByText("No pudimos preparar el CSV. Reintenta.")).toBeTruthy();
+  });
+  it("an empty month and a failed report have explicit states", async () => {
+    const empty = fakeClient(adminHandlers({ "GET /providers/admin/leads/report": () => ({ providerId: null, month: "2026-11", providers: [], rows: [] }) }));
+    renderApp(<AdminMetricsScreen onNavigate={vi.fn()} />, empty.client, ADMIN);
+    expect(await screen.findByText("Sin leads en este mes")).toBeTruthy();
+    cleanup();
+    const failing = fakeClient(adminHandlers({ "GET /providers/admin/leads/report": () => new HttpFailure(503) }));
+    renderApp(<AdminMetricsScreen onNavigate={vi.fn()} />, failing.client, ADMIN);
+    expect(await screen.findByTestId("admin-retry")).toBeTruthy();
+  });
+});

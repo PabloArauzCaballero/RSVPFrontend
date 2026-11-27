@@ -7,6 +7,7 @@ import { useApiClient, useT } from "../platform/providers";
 import { ActionButton, ChoiceGroup, ConfirmDialog, DateInput, Field, Loading, Notice, OverflowMenu, PageIntro, Section, useStyles } from "../host/ui";
 import { AdminScreen, adminOnly } from "./admin-screen";
 import { AdminErrorNotice, QueryBoundary, useStamp, Stack } from "./shared";
+import { AdminLeadReportSection } from "./lead-report";
 import { useSingleMutation } from "../platform/single-flight";
 
 /** E9 users, E10 organizations, E11 lead metrics (REQ-F14-05). */
@@ -65,6 +66,7 @@ function MetricsScreenContent({ onNavigate }: Nav): ReactNode {
           )}
         </QueryBoundary>
       ) : <Notice kind="error">{t("admin.metrics.invalidRange")}</Notice>}
+      <AdminLeadReportSection />
       </Stack>
     </AdminScreen>
   );
