@@ -129,7 +129,7 @@ function GiftsBody({ celebrationId, onNavigate }: { readonly celebrationId: stri
   const held = activeReservationsByItem(committed.data?.items);
   const release = useCancelGiftReservation(client, celebrationId);
   const [releaseTarget, setReleaseTarget] = useState<{ readonly item: GiftItem; readonly reservation: GiftReservation } | null>(null);
-  const [released, setReleased] = useState<string | null>(null);
+  const [released, setReleased] = useState<GiftItem | null>(null);
   const releaseKeys = useRef(new Map<string, string>());
   const approve = useApproveExternalGift(client, celebrationId);
   const reject = useRejectExternalGift(client, celebrationId);
@@ -149,6 +149,8 @@ function GiftsBody({ celebrationId, onNavigate }: { readonly celebrationId: stri
   const unavailable = all.filter(isGiftUnavailable);
   // The pending count comes from the reservations endpoint, not from these rows: a reservation waiting on a gift that became unavailable still counts, because the host still has to answer it.
   const waiting = reservations.data?.items.filter((entry) => entry.status === "PENDING_REVIEW").length ?? 0;
+  // Releasing does not make an unavailable gift available: what the dialog and the notice promise follows the gift as the list reads it now.
+  const releaseUnavailable = (target: GiftItem): boolean => isGiftUnavailable(all.find((item) => item.id === target.id) ?? target);
   const renderRow = (item: GiftItem, index: number): ReactNode => <GiftRow key={item.id} first={index === 0} item={item} currencyLocale={locale} onApprove={(id) => { setRejected(null); reject.reset(); if (flight.begin()) approve.mutate(id, { onSettled: flight.end }); }} onReject={(target) => { setRejected(null); approve.reset(); reject.reset(); setRejectTarget(target); }} approving={approve.isPending && approve.variables === item.id} rejecting={reject.isPending && reject.variables === item.id} locked={locked} {...(item.status === "COMMITTED" && held.get(item.id) ? { onRelease: () => { const reservation = held.get(item.id); if (!reservation) return; setReleased(null); release.reset(); setReleaseTarget({ item, reservation }); }, releasing: release.isPending && release.variables?.reservationId === held.get(item.id)?.id } : {})} />;
   return (
     <View style={{ gap: spacing[4] }}>
@@ -162,7 +164,7 @@ function GiftsBody({ celebrationId, onNavigate }: { readonly celebrationId: stri
       <GiftErrorNotice error={approve.error} onReload={() => { void list.refetch(); }} />
       <GiftErrorNotice error={reject.error} onReload={() => { void list.refetch(); }} />
       {rejected ? <Notice kind="success">{t("gifts.host.proposalRejected", { title: rejected })}</Notice> : null}
-      {released ? <Notice kind="success">{t("gifts.host.release.done", { title: released })}</Notice> : null}
+      {released ? <Notice kind="success">{t(releaseUnavailable(released) ? "gifts.host.release.doneUnavailable" : "gifts.host.release.done", { title: released.title })}</Notice> : null}
       {release.isError && !releaseTarget ? <GiftErrorNotice error={release.error} onReload={() => { void list.refetch(); }} /> : null}
       {all.length === 0 ? (
         <>
@@ -192,7 +194,7 @@ function GiftsBody({ celebrationId, onNavigate }: { readonly celebrationId: stri
       <ConfirmDialog visible={rejectTarget !== null} danger title={t("gifts.host.rejectConfirm.title")} body={rejectTarget ? t("gifts.host.rejectConfirm.body", { title: rejectTarget.title }) : ""} confirmLabel={t("gifts.host.rejectProposal")}
         onCancel={() => setRejectTarget(null)}
         onConfirm={() => { const target = rejectTarget; setRejectTarget(null); if (target && flight.begin()) reject.mutate(target.id, { onSuccess: () => setRejected(target.title), onSettled: flight.end }); }} />
-      <ConfirmDialog visible={releaseTarget !== null} danger busy={release.isPending} title={t("gifts.host.release.confirmTitle")} body={releaseTarget ? t("gifts.host.release.confirmBody", { title: releaseTarget.item.title }) : ""}
+      <ConfirmDialog visible={releaseTarget !== null} danger busy={release.isPending} title={t("gifts.host.release.confirmTitle")} body={releaseTarget ? t(releaseUnavailable(releaseTarget.item) ? "gifts.host.release.confirmBodyUnavailable" : "gifts.host.release.confirmBody", { title: releaseTarget.item.title }) : ""}
         confirmLabel={t("gifts.host.release.confirm")} cancelLabel={t("gifts.host.release.keep")} confirmTestID="release-confirm" cancelTestID="release-keep"
         onCancel={() => { setReleaseTarget(null); release.reset(); }}
         onConfirm={() => {
@@ -201,7 +203,7 @@ function GiftsBody({ celebrationId, onNavigate }: { readonly celebrationId: stri
           let key = releaseKeys.current.get(target.reservation.id);
           if (!key) { key = newIdempotencyKey(); releaseKeys.current.set(target.reservation.id, key); }
           release.mutate({ reservationId: target.reservation.id, idempotencyKey: key }, {
-            onSuccess: () => { setReleaseTarget(null); setReleased(target.item.title); },
+            onSuccess: () => { setReleaseTarget(null); setReleased(target.item); },
             // A reservation somebody already ended is not a failure to keep on screen: close and show the refreshed list.
             onError: (error) => { if (isReservationNotActive(error)) setReleaseTarget(null); },
             onSettled: flight.end
