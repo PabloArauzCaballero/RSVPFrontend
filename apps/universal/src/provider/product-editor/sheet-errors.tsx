@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Linking, Platform, Text, View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
 import { ApiError } from "@rsvp/api-client";
@@ -54,10 +54,11 @@ export const needsReload = (error: unknown): boolean => error instanceof ApiErro
 export function SheetErrorNotice({ error, onReload, onRetry, onMissing }: { readonly error: unknown; readonly onReload?: () => void; readonly onRetry?: () => void; readonly onMissing?: (missing: readonly MissingCode[]) => ReactNode }): ReactNode {
   const t = useT();
   const styles = useStyles();
+  const [settingsFailed, setSettingsFailed] = useState(false);
   if (!error) return null;
   const message = sheetErrorMessage(error, t);
   // Only a device can open its own settings; on the web the browser has no photo permission to give back.
-  const settings = error instanceof ImagePermissionError && Platform.OS !== "web" ? <ActionButton icon="settings" variant="secondary" label={t("portal.product.photos.openSettings")} onPress={() => { Linking.openSettings().catch(() => undefined); }} testID="photo-open-settings" /> : null;
+  const settings = error instanceof ImagePermissionError && Platform.OS !== "web" ? <ActionButton icon="settings" variant="secondary" label={t("portal.product.photos.openSettings")} onPress={() => { setSettingsFailed(false); Linking.openSettings().catch(() => setSettingsFailed(true)); }} testID="photo-open-settings" /> : null;
   if (message === null) return <PortalErrorNotice error={error} {...(onReload ? { onReload } : {})} {...(onRetry ? { onRetry } : {})} />;
   const missing = error instanceof ApiError && error.problem?.code === "LISTING_INCOMPLETE" ? sheetProblemDetails(error).missing ?? [] : [];
   return (
@@ -65,6 +66,7 @@ export function SheetErrorNotice({ error, onReload, onRetry, onMissing }: { read
       <View style={{ gap: spacing[2] }} testID="sheet-error">
         <Text style={styles.body}>{message}</Text>
         {settings}
+        {settings && settingsFailed ? <Text role="alert" style={styles.body} testID="photo-open-settings-failed">{t("portal.product.photos.openSettingsFailed")}</Text> : null}
         {missing.length && onMissing ? onMissing(missing) : null}
         {needsReload(error) && onReload ? <ActionButton icon="refresh" variant="secondary" label={t("portal.product.actions.reload")} onPress={onReload} testID="sheet-reload" /> : null}
       </View>

@@ -620,6 +620,32 @@ describe("review fixes of R2", () => {
     expect(screen.getByTestId("step-fotos").getAttribute("aria-disabled")).not.toBe("true");
   });
 
+  it("«Volver a ofertas» is locked while the ideas of the new category are being read, and leaving by another way sends no late PATCH", async () => {
+    setSearchParams({ lid: LID, paso: "basico" });
+    let release: (value: unknown) => void = () => undefined;
+    const gate = new Promise((resolve) => { release = resolve; });
+    const { client, calls } = fakeClient(handlers({
+      "GET /providers/gift-ideas": (call) => (call.url.includes("category=PASTRY") ? gate.then(() => PASTRY_IDEAS) : IDEAS),
+      [`PATCH /providers/${PID}/listings/${LID}`]: () => ({ ...SHEET, category: "PASTRY", version: 4 })
+    }));
+    const view = renderApp(<ProductEditorScreen />, client, HOST);
+    await screen.findByTestId("product-title");
+    fireEvent.change(await screen.findByTestId("product-category"), { target: { value: "PASTRY" } });
+    fireEvent.click(screen.getByTestId("step-next"));
+    await waitFor(() => expect(calls.some((call) => call.url.includes("category=PASTRY"))).toBe(true));
+    fireEvent.click(await screen.findByRole("button", { name: /Más opciones/ }));
+    const back = await screen.findByRole("menuitem", { name: "Volver a ofertas" });
+    expect(back.getAttribute("aria-disabled")).toBe("true");
+    fireEvent.click(back);
+    expect(routerCalls.filter((call) => call.method === "push")).toHaveLength(0);
+    view.unmount();
+    resetRouter();
+    release(undefined);
+    await new Promise((resolve) => { setTimeout(resolve, 20); });
+    expect(patches(calls)).toHaveLength(0);
+    expect(routerCalls).toHaveLength(0);
+  });
+
   it("Ideas says so when the category changed in Básico is not saved yet", async () => {
     setSearchParams({ lid: LID, paso: "basico" });
     const { client } = fakeClient(handlers({ "GET /providers/gift-ideas": ideasOf }));
@@ -630,7 +656,7 @@ describe("review fixes of R2", () => {
     expect((await screen.findByTestId("ideas-category-unsaved")).textContent).toMatch(/se ajustarán al guardar Básico/);
   });
 
-  it("a finished reorder is forgotten: «Reintentar» of a later error does not repeat it", async () => {
+  it("after a finished reorder, «Reintentar» of a later error repeats that action and not the reorder", async () => {
     setSearchParams({ lid: LID, paso: "fotos" });
     const sheet = { ...SHEET, photos: [photo("ph-1", "READY"), photo("ph-2", "READY")] };
     const { client, calls } = fakeClient(handlers({
@@ -646,6 +672,31 @@ describe("review fixes of R2", () => {
     fireEvent.click(await screen.findByTestId("error-retry"));
     await waitFor(() => expect(calls.filter((call) => call.path.endsWith("/duplicate"))).toHaveLength(2));
     expect(patches(calls)).toHaveLength(1);
+  });
+
+  it("M-3: when the device settings do not open, the notice says so instead of doing nothing, in both languages", async () => {
+    setSearchParams({ lid: LID, paso: "fotos" });
+    picked.denied = true;
+    const rn = Linking as unknown as { openSettings?: unknown };
+    const platform = Platform as unknown as { OS: string };
+    const before = platform.OS;
+    rn.openSettings = vi.fn(async () => { throw new Error("no settings"); });
+    platform.OS = "ios";
+    try {
+      for (const [locale, text] of [["es-BO", /No pudimos abrir los ajustes/], ["en-US", /We could not open the settings/]] as const) {
+        const { client } = fakeClient(handlers());
+        renderApp(<ProductEditorScreen />, client, HOST, locale);
+        fireEvent.click(await screen.findByTestId("photo-add"));
+        const open = await screen.findByTestId("photo-open-settings");
+        expect(screen.queryByTestId("photo-open-settings-failed")).toBeNull();
+        fireEvent.click(open);
+        expect((await screen.findByTestId("photo-open-settings-failed")).textContent).toMatch(text);
+        cleanup();
+      }
+    } finally {
+      platform.OS = before;
+      delete rn.openSettings;
+    }
   });
 
   it("M-3: on a device (iOS) the denied-permission notice offers «Abrir ajustes», which opens the app settings", async () => {
