@@ -18,9 +18,11 @@ const UTM_PREFIX = "utm_";
 /**
  * Context the backend validates and stores with the lead (RawLeadContext). `ctx` (R6a) is the signed lead context Gift Lists gives
  * a celebration member: it is forwarded to Provider Catalog unchanged so the member's own click is not billed, and it is never copied
- * into the partner URL (`withAttribution` only carries utm_* and correlationId).
+ * into the partner URL (`withAttribution` only carries utm_* and correlationId). Since 3.9.0 the portal's own ctx (PROVIDER_OWNER, PREVIEW) travels the same way,
+ * and `eventType` (the celebration's type, from the link) is forwarded for the provider's report. `sessionId` is no longer sent (M34): the visitor is the
+ * server's hash of address and user agent, never a value the client chooses.
  */
-const CONTEXT_KEYS = ["surface", "celebrationId", "guestId", "locale", "country", "city", "ctx"] as const;
+const CONTEXT_KEYS = ["surface", "celebrationId", "guestId", "locale", "country", "city", "ctx", "eventType"] as const;
 const BAD_REQUEST = 400;
 const NOT_FOUND = 404;
 const UNPROCESSABLE = 422;
@@ -39,7 +41,6 @@ export interface RedirectRequest {
   readonly userAgent?: string | null;
   readonly referrer?: string | null;
   readonly correlationId?: string | null;
-  readonly sessionId?: string | null;
   /** Visitor address resolved from the trusted proxy (B1); forwarded so Kong rate-limits each visitor separately. */
   readonly clientAddress?: string | null;
   readonly fetchFn?: typeof fetch;
@@ -87,7 +88,6 @@ export async function resolveRedirect(request: RedirectRequest): Promise<Redirec
   const headers: Record<string, string> = { [CORRELATION_HEADER]: correlationId, ...forwardedFor(request.clientAddress) };
   if (request.userAgent) headers["user-agent"] = request.userAgent;
   if (request.referrer) headers["referer"] = request.referrer;
-  if (request.sessionId) headers["x-session-id"] = request.sessionId;
 
   try {
     // redirect: "manual" so the 302 (and its Location) is read here and never followed server-side.
