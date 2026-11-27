@@ -16,10 +16,10 @@ const UTM_PREFIX = "utm_";
 /**
  * Context the backend validates and stores with the lead (RawLeadContext). `ctx` (R6a) is the signed lead context Gift Lists gives
  * a celebration member: it is forwarded to Provider Catalog unchanged so the member's own click is not billed, and it is never copied
- * into the partner URL (`withAttribution` only carries utm_* and correlationId). Since 3.9.0 the portal's own ctx (PROVIDER_OWNER, PREVIEW) travels the same way.
- * A click always redirects: an empty, oversized or malformed `ctx` is dropped here (an oversized one would be a 422 INVALID_LEAD_CONTEXT), so the click is
- * evaluated as an ordinary visitor's and still redirects. `eventType` (the celebration's type, from the link) is forwarded for the provider's report.
- * `sessionId` is no longer sent (M34): the visitor is the server's hash of address and user agent, never a value the client chooses.
+ * into the partner URL (`withAttribution` only carries utm_* and correlationId). A click always redirects: an empty, oversized or malformed `ctx` is
+ * dropped here (an oversized one would be a 422 INVALID_LEAD_CONTEXT), so the click is evaluated as an ordinary visitor's and still redirects.
+ * Since 3.9.0 the portal's own ctx (PROVIDER_OWNER, PREVIEW) travels the same way. `eventType` (the celebration's type, from the link) is forwarded for the
+ * provider's report only when it is a type code; `sessionId` is no longer sent (M34): the visitor is the server's hash of address and user agent.
  */
 const CONTEXT_KEYS = ["surface", "celebrationId", "guestId", "locale", "country", "city", "eventType"] as const;
 /**
@@ -30,7 +30,8 @@ const CONTEXT_KEYS = ["surface", "celebrationId", "guestId", "locale", "country"
 const MAX_CTX_LENGTH = 512;
 /** A signed token is printable ASCII without spaces; anything else (control characters, spaces) is not one and is not worth a 422. */
 const CTX_SHAPE = /^[\x21-\x7e]+$/;
-
+/** An event type code (WEDDING, BABY_SHOWER): anything else is dropped so the click still redirects instead of failing upstream. */
+const EVENT_TYPE_SHAPE = /^[A-Z][A-Z0-9_]{1,59}$/;
 const BAD_REQUEST = 400;
 const NOT_FOUND = 404;
 const UNPROCESSABLE = 422;
@@ -93,7 +94,8 @@ export async function resolveRedirect(request: RedirectRequest): Promise<Redirec
     if (destination) url.searchParams.set("destination", destination);
     for (const key of CONTEXT_KEYS) {
       const value = request.searchParams.get(key);
-      if (value) url.searchParams.set(key, value);
+      if (!value || (key === "eventType" && !EVENT_TYPE_SHAPE.test(value))) continue;
+      url.searchParams.set(key, value);
     }
     if (withCtx) url.searchParams.set("ctx", withCtx);
     if (!url.searchParams.has("surface")) url.searchParams.set("surface", "PUBLIC_SITE");

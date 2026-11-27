@@ -90,9 +90,9 @@ export const portalEsBO = {
   },
   leadReport: {
     title: "Reporte mensual de solicitudes", intro: "Cuántos toques recibió cada producto en el mes, por botón. Solo ves cifras: nunca quién te buscó.", month: "Mes", product: "Producto", destination: "Botón", allProducts: "Todos los productos", allDestinations: "Todos los botones",
-    totalsTitle: "Total del mes", valid: "Válidos", invalid: "No válidos", billable: "Cobrables", notPerClick: "No se cobra por toque ({{model}})", cap: "Tope mensual: {{cap}}", noCap: "Sin tope mensual",
-    billingModel: { CPC: "por toque", CPA: "por acción", FLAT: "tarifa fija", COMMISSION: "comisión" }, rowsTitle: "Detalle por producto y botón", row: "{{product}} · {{button}}", rowFigures: "{{valid}} válidos · {{invalid}} no válidos", invalidBreakdown: "No válidos por motivo",
-    emptyTitle: "Sin toques este mes", empty: "Cuando alguien toque los botones de tus productos, el mes aparecerá aquí. Prueba con otro mes o quita un filtro.", loading: "Cargando el reporte…", unknownProduct: "Producto sin título", tz: "Los meses se cuentan en la zona horaria de tu negocio ({{zone}}).",
+    valid: "Válidos", invalid: "No válidos", billable: "Cobrables", notPerClick: "No se cobra por toque ({{model}})", cap: "Tope mensual: {{cap}}", noCap: "Sin tope mensual",
+    billingModel: { CPC: "por toque", CPA: "por acción", FLAT: "tarifa fija", COMMISSION: "comisión" }, rowsTitle: "Detalle por producto y botón", row: "{{product}} · {{button}}", rowFigures: "{{valid}} válidos · {{invalid}} no válidos",
+    emptyTitle: "Sin toques este mes", empty: "Cuando alguien toque los botones de tus productos, el mes aparecerá aquí. Prueba con otro mes o quita un filtro.", unknownProduct: "Producto sin título", tz: "Los meses se cuentan en la zona horaria de tu negocio ({{zone}}).",
     dedupeNote: "Un mismo visitante cuenta una vez cada 24 h por producto y botón. Si cambia de red, puede contar dos veces."
   },
   errors: {

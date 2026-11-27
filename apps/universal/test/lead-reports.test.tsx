@@ -20,10 +20,13 @@ const portal = (extra: Record<string, Handler> = {}): Record<string, Handler> =>
   [`GET /providers/${PID}`]: () => profile, "GET /providers/geo": () => GEO, [`GET /providers/${PID}/listings`]: () => ({ items: [listing] }),
   [`GET /providers/${PID}/metrics`]: () => ({ providerId: PID, from: "", to: "", totals: { impressions: 0, clicks: 0, validLeads: 0, invalidLeads: 0, ctr: 0 } }), ...extra
 });
-const lead = (id: string, extra: Record<string, unknown> = {}) => ({ id, listingId: LID, kind: "REDIRECT", destination: "WHATSAPP", valid: true, billable: true, occurredAt: "2026-11-26T02:30:00Z", listingTitle: "Torta de chocolate", eventType: "WEDDING", city: "la-paz", surface: "GIFT_LIST", device: "MOBILE", context: { surface: "GIFT_LIST", locale: "es-BO", device: "MOBILE", country: "BO", city: "la-paz", eventType: "WEDDING" }, ...extra });
+const SECRET_CELEBRATION = "celebracion-secreta-7788";
+const SECRET_GUEST = "invitado-secreto-9911";
+const SECRET_REFERRER = "https://referrer-secreto.example/inv";
+const lead = (id: string, extra: Record<string, unknown> = {}) => ({ celebrationId: SECRET_CELEBRATION, guestId: SECRET_GUEST, referrer: SECRET_REFERRER, id, listingId: LID, kind: "REDIRECT", destination: "WHATSAPP", valid: true, billable: true, occurredAt: "2026-11-26T02:30:00Z", listingTitle: "Torta de chocolate", eventType: "WEDDING", city: "la-paz", surface: "GIFT_LIST", device: "MOBILE", context: { surface: "GIFT_LIST", locale: "es-BO", device: "MOBILE", country: "BO", city: "la-paz", eventType: "WEDDING" }, ...extra });
 const reasons = (extra: Record<string, number> = {}) => ({ dup: 0, bot: 0, PREVIEW: 0, NOT_ELIGIBLE: 0, PROVIDER_SELF: 0, HOST_OR_PLANNER: 0, OTHER: 0, ...extra });
 const providerRow = { providerId: PID, providerName: "Dulce Sol", billingModel: "CPC", monthlyCap: 100, validLeads: 7, invalidLeads: 3, invalidByReason: reasons({ HOST_OR_PLANNER: 2, dup: 1 }), billableLeads: 7 };
-const reportRow = { providerId: PID, providerName: "Dulce Sol", listingId: LID, listingTitle: "Torta de chocolate", destination: "WHATSAPP", validLeads: 7, invalidLeads: 3, invalidByReason: reasons({ HOST_OR_PLANNER: 2, dup: 1 }), billableLeads: 7 };
+const reportRow = { celebrationId: SECRET_CELEBRATION, guestId: SECRET_GUEST, providerId: PID, providerName: "Dulce Sol", listingId: LID, listingTitle: "Torta de chocolate", destination: "WHATSAPP", validLeads: 7, invalidLeads: 3, invalidByReason: reasons({ HOST_OR_PLANNER: 2, dup: 1 }), billableLeads: 7 };
 
 beforeEach(async () => { resetSecureStore(); saveTextFile.mockClear(); await writeLocal("rsvp.provider.u-host", PID); });
 afterEach(() => { cleanup(); });
@@ -54,7 +57,12 @@ describe("portal · leads list with filters (D-10 #34, PF-1)", () => {
     expect(within(row).getByText("Tipo de evento: Boda")).toBeTruthy();
     expect(within(row).getByText(/Ciudad: La Paz/)).toBeTruthy();
     expect(within(row).getByText(/25 nov de 2026/i)).toBeTruthy(); // 02:30 UTC on the 26th is the 25th at 22:30 in La Paz
-    expect(row.textContent).not.toMatch(/celebration|guest|invitad|referrer/i);
+    // Even if a server sent them (it must not, A35), none of these values is ever drawn.
+    expect(document.body.textContent).not.toContain(SECRET_CELEBRATION);
+    expect(document.body.textContent).not.toContain(SECRET_GUEST);
+    expect(document.body.textContent).not.toContain("referrer-secreto");
+    expect(document.body.innerHTML).not.toContain(SECRET_CELEBRATION);
+    expect(document.body.innerHTML).not.toContain(SECRET_GUEST);
   });
   it("labels the new invalid reasons and an unknown event type is shown as received", async () => {
     const items = [lead("h", { valid: false, billable: false, invalidReason: "HOST_OR_PLANNER" }), lead("s", { valid: false, billable: false, invalidReason: "PROVIDER_SELF", eventType: "FUTURE_TYPE" }), lead("p", { valid: false, invalidReason: "PREVIEW" }), lead("n", { valid: false, invalidReason: "NOT_ELIGIBLE" })];
@@ -82,10 +90,29 @@ describe("portal · leads list with filters (D-10 #34, PF-1)", () => {
     expect(calls.some((call) => call.url === `/providers/${PID}/leads?limit=50&offset=0&month=${currentMonth("America/La_Paz")}&listingId=${LID}`)).toBe(true);
     expect(screen.queryByText("Ningún toque coincide con estos filtros.")).toBeNull();
   });
-  it("shows the amiable error with retry when the list cannot load", async () => {
-    const { client } = fakeClient(portal({ [`GET /providers/${PID}/leads`]: () => new HttpFailure(503) }));
+  it("shows the amiable error with retry when the list cannot load, and the filters stay on screen", async () => {
+    const { client, calls } = fakeClient(portal({ [`GET /providers/${PID}/leads`]: (call) => (call.url.includes("destination=PHONE") ? new HttpFailure(503) : { items: [lead("a")], total: 1 }) }));
     renderApp(<LeadsScreen />, client, HOST);
+    await screen.findByTestId("lead-a");
+    fireEvent.change(screen.getByTestId("filter-destination"), { target: { value: "PHONE" } });
     expect(await screen.findByTestId("error-retry")).toBeTruthy();
+    expect(screen.getByTestId("filter-destination")).toBeTruthy();
+    expect(screen.getByTestId("filter-month")).toBeTruthy();
+    fireEvent.change(screen.getByTestId("filter-destination"), { target: { value: "__all__" } });
+    await screen.findByTestId("lead-a");
+    expect(calls.length).toBeGreaterThan(1);
+  });
+  it("marks the list busy while a new filter loads, keeping the previous rows", async () => {
+    let release: (() => void) | undefined;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    const { client } = fakeClient(portal({ [`GET /providers/${PID}/leads`]: (call) => (call.url.includes("destination=PHONE") ? gate.then(() => ({ items: [], total: 0 })) : { items: [lead("a")], total: 1 }) }));
+    renderApp(<LeadsScreen />, client, HOST);
+    await screen.findByTestId("lead-a");
+    fireEvent.change(screen.getByTestId("filter-destination"), { target: { value: "PHONE" } });
+    await waitFor(() => expect(screen.getByTestId("leads-body").getAttribute("aria-busy")).toBe("true"));
+    expect(screen.getByTestId("lead-a")).toBeTruthy();
+    release?.();
+    await waitFor(() => expect(screen.getByTestId("leads-body").getAttribute("aria-busy")).not.toBe("true"));
   });
 });
 
@@ -100,6 +127,8 @@ describe("portal · monthly report on Resultados", () => {
     expect(within(totals).getByText("Cobrables: 7")).toBeTruthy();
     expect(within(totals).getByText("Duplicado (mismo visitante en 24 h): 1 · Anfitrión u organizador: 2")).toBeTruthy();
     expect(within(screen.getByTestId("report-row")).getByText("Torta de chocolate · WhatsApp")).toBeTruthy();
+    expect(document.body.innerHTML).not.toContain(SECRET_CELEBRATION);
+    expect(document.body.innerHTML).not.toContain(SECRET_GUEST);
     expect(calls.find((call) => call.path === `/providers/${PID}/leads/report`)?.url).toBe(`/providers/${PID}/leads/report?month=${currentMonth("America/La_Paz")}`);
   });
   it("a provider not billed per click sees why there is no billable figure", async () => {
@@ -131,6 +160,7 @@ describe("portal · monthly report on Resultados", () => {
     const { client } = fakeClient(portal(reportHandler()));
     renderApp(<PortalMetricsScreen />, client, HOST, "en-US");
     expect(await screen.findByText("Monthly request report")).toBeTruthy();
+    expect(await screen.findByText("Months are counted in your business time zone (Bolivia Time).")).toBeTruthy();
     expect(within(await screen.findByTestId("report-totals")).getByText("Valid: 7")).toBeTruthy();
   });
 });
@@ -147,7 +177,7 @@ describe("admin · billable lead report and CSV (D-10 #33)", () => {
     const { client, calls } = fakeClient(adminHandlers());
     renderApp(<AdminMetricsScreen onNavigate={vi.fn()} />, client, ADMIN);
     expect(await screen.findByTestId(`admin-lead-totals-${PID}`)).toBeTruthy();
-    expect(within(screen.getByTestId(`admin-lead-totals-${OTHER}`)).getByText("No se cobra por clic")).toBeTruthy();
+    expect(within(screen.getByTestId(`admin-lead-totals-${OTHER}`)).getByText("No se cobra por clic (Tarifa fija)")).toBeTruthy();
     expect(screen.getAllByTestId("report-row")).toHaveLength(2);
     fireEvent.change(screen.getByTestId("admin-lead-provider"), { target: { value: OTHER } });
     expect(screen.getAllByTestId("report-row")).toHaveLength(1);

@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { ApiClient } from "@rsvp/api-client";
-import type { ProviderCatalogComponents } from "@rsvp/contracts";
+import type { ProviderCatalogComponents, ProviderCatalogOperations } from "@rsvp/contracts";
 
 /**
  * R6b (provider-catalog 3.9.0, D-10 #33 to #35, A35, M-1, M-2): the monthly lead report of a provider, the administrator's report with its CSV
@@ -17,7 +17,7 @@ export type AdminLeadReport = Schemas["AdminLeadReport"];
 export type InvalidLeadCounts = Schemas["InvalidLeadCounts"];
 export type LeadContext = Schemas["LeadContext"];
 export type LeadContextRequest = Schemas["LeadContextRequest"];
-export type LeadDestination = "OFFICIAL_SITE" | "LANDING" | "WHATSAPP" | "PHONE" | "EMAIL" | "INSTAGRAM" | "PRODUCT_PAGE" | "QUOTE_FORM";
+export type LeadDestination = NonNullable<NonNullable<ProviderCatalogOperations["listLeads"]["parameters"]["query"]>["destination"]>;
 /** The buttons a lead can come from (the `destination` filter of the contract). */
 export const LEAD_DESTINATIONS: readonly LeadDestination[] = ["OFFICIAL_SITE", "LANDING", "WHATSAPP", "PHONE", "EMAIL", "INSTAGRAM", "PRODUCT_PAGE", "QUOTE_FORM"];
 /** Every key of `invalidByReason`, in the order the reports show them. */
@@ -93,7 +93,7 @@ export function useLeadContext(client: ApiClient, providerId: string | undefined
     queryFn: () => leadReportApi(client).issueLeadContext(providerId ?? "", request),
     staleTime: (query) => msUntilLeadContextRenewal(query.state.data), gcTime: MIN_RENEW_GAP_MS,
     refetchInterval: (query) => (query.state.data ? Math.max(MIN_RENEW_GAP_MS, msUntilLeadContextRenewal(query.state.data)) : false),
-    refetchOnWindowFocus: true, refetchOnReconnect: true, retry: false,
+    refetchIntervalInBackground: true, refetchOnWindowFocus: true, refetchOnReconnect: true, retry: false,
     enabled: enabled && Boolean(providerId) && (request.relation === "PROVIDER_OWNER" || Boolean(request.listingId))
   });
 }

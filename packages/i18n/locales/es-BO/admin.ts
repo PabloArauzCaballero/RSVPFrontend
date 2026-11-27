@@ -58,8 +58,8 @@ export const adminEsBO = {
     title: "Reporte de leads para cobro", intro: "Leads del mes por proveedor, producto y botón. Válidos, no válidos por motivo y total cobrable según el modelo de cobro. Sin datos personales.", month: "Mes", provider: "Proveedor", allProviders: "Todos los proveedores", download: "Descargar CSV", downloading: "Preparando el CSV…",
     downloaded: "Descargamos {{name}}.", shared: "Compartimos {{name}}.", downloadFailed: "No pudimos preparar el CSV. Reintenta.", fileName: "leads-{{month}}.csv",
     valid: "Válidos", invalid: "No válidos", billable: "Cobrables", billingModel: { CPC: "CPC (por clic)", CPA: "CPA", FLAT: "Tarifa fija", COMMISSION: "Comisión" },
-    notPerClick: "No se cobra por clic", cap: "Tope: {{cap}}", noCap: "Sin tope", totals: "{{valid}} válidos · {{invalid}} no válidos", billableTotal: "Cobrable: {{count}}", invalidBreakdown: "No válidos por motivo",
-    emptyTitle: "Sin leads en este mes", empty: "No hubo clics registrados para este mes y este filtro.", invalidMonth: "Elige un mes válido.", unknownProduct: "Producto sin título", tz: "Cada proveedor cuenta el mes en su propia zona horaria.", rowsTitle: "Detalle por producto y botón"
+    notPerClick: "No se cobra por clic ({{model}})", cap: "Tope: {{cap}}", noCap: "Sin tope",
+    emptyTitle: "Sin leads en este mes", empty: "No hubo clics registrados para este mes y este filtro.", unknownProduct: "Producto sin título", tz: "Cada proveedor cuenta el mes en su propia zona horaria.", rowsTitle: "Detalle por producto y botón"
   },
   operations: {
     title: "Estado operativo", intro: "Si algo no responde, lo ves aquí primero.", services: "Servicios", allUpTitle: "Todo funciona", allUpBody: "Los servicios responden con normalidad.", someDownTitle: "Algo no responde", someDownBody: "Revisa los servicios marcados; el resto sigue disponible.", healthy: "Disponible", down: "No responde",

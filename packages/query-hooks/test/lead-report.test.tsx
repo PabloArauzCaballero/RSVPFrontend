@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider, focusManager } from "@tanstack/react-
 import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { createApiClient } from "@rsvp/api-client";
+import { createApiClient, type ApiClient } from "@rsvp/api-client";
 import * as hooks from "../src/index.js";
 
 /** R6b · lead report, CSV and ctx hooks through the real fetch client: method, path, query, headers and body. */
@@ -23,7 +23,7 @@ function harness(respond: (seen: Seen) => Response) {
   const client = createApiClient({ baseUrl: "http://gw.test", fetchFn, refreshSession: { refresh: async () => { throw new Error("no refresh"); } }, tokenStore: { getAccessToken: async () => "session", getRefreshToken: async () => null, setTokens: async () => undefined, clear: async () => undefined } });
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   const wrapper = ({ children }: { children: ReactNode }) => <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
-  return { client, calls, wrapper };
+  return { client, calls, wrapper, queryClient };
 }
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { "content-type": status >= 400 ? "application/problem+json" : "application/json" } });
 
@@ -56,15 +56,23 @@ describe("lead report hooks", () => {
     await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
     expect(h.calls[0]?.path).toBe(`/providers/admin/leads/report?month=2026-11&providerId=${PID}`);
   });
-  it("the CSV is read as text with Accept text/csv, keeps its CRLF lines and drops a leading byte order mark", async () => {
-    const csv = "﻿proveedor,producto\r\nDulce Sol,Torta\r\n";
+  it("the CSV is read as text with Accept text/csv and keeps its CRLF lines", async () => {
+    const csv = "proveedor,producto\r\nDulce Sol,Torta\r\n";
     const h = harness(() => new Response(csv, { status: 200, headers: { "content-type": "text/csv; charset=utf-8" } }));
     const view = renderHook(() => hooks.useDownloadLeadReportCsv(h.client), { wrapper: h.wrapper });
     let text = "";
     await act(async () => { text = await view.result.current.mutateAsync({ month: "2026-11" }); });
-    expect(text).toBe("proveedor,producto\r\nDulce Sol,Torta\r\n");
+    expect(text).toBe(csv);
     expect(h.calls[0]?.path).toBe("/providers/admin/leads/report.csv?month=2026-11");
     expect(h.calls[0]?.headers.get("accept")).toContain("text/csv");
+  });
+  it("drops a leading byte order mark from the text the client hands over (the file saver adds its own)", async () => {
+    const request = vi.fn(async () => "\uFEFFproveedor,producto\r\n");
+    const withBom = { request } as unknown as ApiClient;
+    await expect(hooks.leadReportApi(withBom).adminCsv("2026-11")).resolves.toBe("proveedor,producto\r\n");
+    expect(request).toHaveBeenCalledWith("/providers/admin/leads/report.csv?month=2026-11", { responseType: "text" });
+    const without = { request: vi.fn(async () => "a\r\n") } as unknown as ApiClient;
+    await expect(hooks.leadReportApi(without).adminCsv("2026-11", PID)).resolves.toBe("a\r\n");
   });
   it("a 403 on the CSV is an error and no text is returned", async () => {
     const h = harness(() => json({ title: "Forbidden", status: 403 }, 403));
