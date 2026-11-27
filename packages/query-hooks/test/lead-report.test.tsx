@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { createApiClient } from "@rsvp/api-client";
+import { createApiClient, type ApiClient } from "@rsvp/api-client";
 import * as hooks from "../src/index.js";
 
 /** R6b · lead report, CSV and ctx hooks through the real fetch client: method, path, query, headers and body. */
@@ -67,10 +67,11 @@ describe("lead report hooks", () => {
     expect(h.calls[0]?.headers.get("accept")).toContain("text/csv");
   });
   it("drops a leading byte order mark from the text the client hands over (the file saver adds its own)", async () => {
-    const withBom = { request: vi.fn(async () => "\uFEFFproveedor,producto\r\n") } as never;
+    const request = vi.fn(async () => "\uFEFFproveedor,producto\r\n");
+    const withBom = { request } as unknown as ApiClient;
     await expect(hooks.leadReportApi(withBom).adminCsv("2026-11")).resolves.toBe("proveedor,producto\r\n");
-    expect(withBom.request).toHaveBeenCalledWith("/providers/admin/leads/report.csv?month=2026-11", { responseType: "text" });
-    const without = { request: vi.fn(async () => "a\r\n") } as never;
+    expect(request).toHaveBeenCalledWith("/providers/admin/leads/report.csv?month=2026-11", { responseType: "text" });
+    const without = { request: vi.fn(async () => "a\r\n") } as unknown as ApiClient;
     await expect(hooks.leadReportApi(without).adminCsv("2026-11", PID)).resolves.toBe("a\r\n");
   });
   it("a 403 on the CSV is an error and no text is returned", async () => {
@@ -101,7 +102,7 @@ describe("useLeadContext (M-1, M-2)", () => {
     const h = harness(() => json({ ctx: "t", relation: "PROVIDER_OWNER", expiresAt: "2026-11-27T12:15:00Z" }));
     const view = renderHook(() => hooks.useLeadContext(h.client, PID, { relation: "PROVIDER_OWNER" }), { wrapper: h.wrapper });
     await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
-    const options = h.queryClient.getQueryCache().findAll()[0]?.options;
+    const options = h.queryClient.getQueryCache().findAll()[0]?.options as Record<string, unknown> | undefined;
     expect(hooks.PORTAL_LEAD_CONTEXT_REFRESH_MS).toBeLessThan(15 * 60_000);
     expect(options?.refetchInterval).toBe(hooks.PORTAL_LEAD_CONTEXT_REFRESH_MS);
     expect(options?.refetchIntervalInBackground).toBe(true);
