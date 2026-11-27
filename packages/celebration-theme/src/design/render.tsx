@@ -43,6 +43,10 @@ interface Context {
   readonly media: readonly GalleryImage[];
   /** Veil opacity each scheme needs over any picture so the text on it reads at AA. */
   readonly veil: { readonly light: number; readonly dark: number };
+  /** The reply's one actions block is on the page (not a section's own page). */
+  readonly merged: boolean;
+  /** The gifts page stays, without its button, because it has content of its own. */
+  readonly giftsApart: boolean;
   readonly cover?: GalleryImage;
   readonly t: Translate;
   readonly giftsHref: string;
@@ -247,16 +251,27 @@ function elementStyle(element: DesignElement, mobile: DesignElement | undefined,
 
 /** The reply page carries the one actions block (decision 8): the document's own gifts and reply buttons are replaced by it, so they never appear twice or apart. */
 const isActionsBlock = (page: DesignPage): boolean => page.kind === "section" && page.section === "rsvp";
+const isButton = (type: string | undefined): boolean => type === "giftsCta" || type === "rsvpCta";
+
+/** The gifts page keeps whatever is its own (its illustration, texts, background): only its button moves into the block (PL-139-01). */
+function hasOwnContent(page: DesignPage, design: DesignDocumentV2): boolean {
+  const types = new Map(design.blocks.map((block) => [block.id, block.type]));
+  const elements = [...page.canvases.mobile.elements, ...(page.canvases.desktop?.elements ?? [])];
+  return Boolean(page.background) || elements.some((item) => item.visible && types.get(item.block) !== "giftsCta");
+}
 
 function Canvas({ page, context }: { readonly page: DesignPage; readonly context: Context }): ReactNode {
   const { mobile, desktop } = page.canvases;
   const byId = (canvas: DesignCanvas | undefined): Map<string, DesignElement> => new Map((canvas?.elements ?? []).filter((item) => item.visible).map((item) => [item.id, item]));
-  const replaced = isActionsBlock(page);
   const blocks = new Map(context.design.blocks.map((block) => [block.id, block]));
-  const without = (map: Map<string, DesignElement>): Map<string, DesignElement> => (replaced ? new Map([...map].filter(([, item]) => !["giftsCta", "rsvpCta"].includes(blocks.get(item.block)?.type ?? ""))) : map);
+  // The reply page loses both buttons (the block has them); the gifts page, only its own when the block is on the page.
+  const dropped = isActionsBlock(page) ? (type: string | undefined) => isButton(type) : context.merged && page.section === "gifts" ? (type: string | undefined) => type === "giftsCta" : undefined;
+  const without = (map: Map<string, DesignElement>): Map<string, DesignElement> => (dropped ? new Map([...map].filter(([, item]) => !dropped(blocks.get(item.block)?.type))) : map);
   const phone = without(byId(mobile));
   const wide = without(byId(desktop));
   const ids = [...new Set([...phone.keys(), ...wide.keys()])];
+  // A canvas whose only element was a button that moved into the block has nothing left to draw: no empty box (PL-139-07).
+  if (dropped && ids.length === 0) return null;
   const vars = { "--cd-cols-m": mobile.columns, "--cd-row-m": `${mobile.rowHeight}px`, "--cd-cols-d": desktop?.columns ?? mobile.columns, "--cd-row-d": `${(desktop ?? mobile).rowHeight}px` } as CSSProperties;
   return (
     <div className="cdesign-canvas" data-mode={mobile.mode} data-desktop={desktop ? "" : undefined} style={vars}>
@@ -325,7 +340,7 @@ function PageBlock({ page, context, only }: { readonly page: DesignPage; readonl
     <section id={section} className="cdesign-page" data-page-kind="section" data-section={section} data-page={page.id} data-style={page.style} data-bg-media={page.background?.kind === "media" ? "" : undefined} aria-labelledby={headingId} style={backgroundStyle(page.background)}>
       <h2 id={headingId} className={only ? "celebration-visually-hidden" : "cdesign-page-title"}>{t(section === "rsvp" ? "celebration.actions.title" : sectionTitleKey(section))}</h2>
       {section === "gifts" ? <div className="cdesign-intro"><p>{t("celebration.gifts.intro")}</p></div> : null}
-      {section === "rsvp" ? <div className="cdesign-intro"><p>{t("celebration.rsvp.body")}</p><p>{t("celebration.gifts.intro")}</p></div> : null}
+      {section === "rsvp" ? <div className="cdesign-intro"><p>{t("celebration.rsvp.body")}</p>{context.giftsApart ? null : <p>{t("celebration.gifts.intro")}</p>}</div> : null}
       {inner}
       {section === "rsvp" ? <div className="cdesign-actions"><ActionsBlock t={t} giftsHref={context.giftsHref} giftsStatus={context.props.giftsStatus} rsvpHref={context.props.rsvpHref} rsvpHelpHref={context.props.rsvpHelpHref} rsvpAdaptive={context.props.rsvpAdaptive} /></div> : null}
     </section>
@@ -342,7 +357,6 @@ export function DesignRenderer(props: DesignRendererProps): ReactNode {
   const palette = designPalette(design, scheme ?? "light");
   const cover = gallery.find((image) => image.isCover);
   const veil = { light: requiredScrim(designPalette(design, "light")), dark: requiredScrim(designPalette(design, "dark")) };
-  const context: Context = { props, design, theme, view, content, gallery, media, veil, ...(cover ? { cover } : {}), t, giftsHref: giftsPath(view.slug), now: props.now ?? new Date() };
   const available = theme.sections.filter((section) => hasSectionContent(section, content, gallery));
   const monogram = design.tokens.typography.monogram;
   // Following the system, the colours live in `SystemColours` rules; a forced scheme sets them inline.
@@ -353,9 +367,12 @@ export function DesignRenderer(props: DesignRendererProps): ReactNode {
     ...(scheme ? artVariables(artPalette(palette)) : {})
   } as CSSProperties;
   const placed = design.pages.filter((page) => page.kind === "cover" || (page.section && available.includes(page.section as SectionId)));
-  // Decision 8: the gifts page does not stand apart when the reply page is placed; its button lives in the reply page's one block.
-  const merged = placed.some((page) => isActionsBlock(page));
-  const pages = props.only ? placed.filter((page) => page.kind === "section" && page.section === props.only) : placed.filter((page) => !(merged && page.kind === "section" && page.section === "gifts"));
+  // Decision 8: the button of the gifts page lives in the reply page's one block. The page itself stays when it has anything of its own (PL-139-01); without it, there is nothing to keep and it folds into the block.
+  const merged = !props.only && placed.some((page) => isActionsBlock(page));
+  const giftsPage = placed.find((page) => page.kind === "section" && page.section === "gifts");
+  const giftsApart = merged && giftsPage !== undefined && hasOwnContent(giftsPage, design);
+  const context: Context = { props, design, theme, view, content, gallery, media, veil, ...(cover ? { cover } : {}), t, giftsHref: giftsPath(view.slug), now: props.now ?? new Date(), merged, giftsApart };
+  const pages = props.only ? placed.filter((page) => page.kind === "section" && page.section === props.only) : placed.filter((page) => !(merged && page === giftsPage && !giftsApart));
   return (
     <article className="celebration celebration-design" data-design="2" data-layout={theme.layout} data-color-scheme={scheme ?? "light"} data-scheme-source={scheme ? "prop" : "system"}
       data-section-style={theme.sectionStyle} data-divider={layout.divider} data-images={layout.imageTreatment} lang={view.locale} style={style}>

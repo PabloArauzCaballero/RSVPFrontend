@@ -239,7 +239,8 @@ body:has(.cdesign-dock) { padding-bottom: 5.5rem; }
 @media (min-width: 56.25rem) {
   body:has(.cdesign-dock) { padding-bottom: 0; }
   .celebration .cdesign-dock { position: sticky; inset: 0 0 auto 0; justify-content: flex-end; border-top: 0; border-bottom: 1px solid var(--cd-line); padding-inline: var(--celebration-space); }
-  .celebration .cdesign-dock .celebration-cta { flex: 0 0 auto; padding-inline: 1.25rem; }
+  /* Same weight (decision 8): both buttons of the dock are the same width too, not the width of their words. */
+  .celebration .cdesign-dock .celebration-cta { flex: 0 0 16rem; padding-inline: 1.25rem; }
 }
 
 /* Entrance (P18): one time, transform and opacity only. Without motion preference the final state is what you get. */
@@ -329,7 +330,7 @@ html:has(.cdesign-dock) { scroll-padding-bottom: 6rem; }
    the author's stylesheet is scoped to that container (see CustomCss), so it cannot match the page, the canvas, `main` or these blocks, nor inherit anything into them. Whatever the
    author draws inside a container is clipped to it (plus a small margin for shadows) and lives in its own stacking context, below the protected blocks. */
 .celebration .cdesign-dock { z-index: 2000 !important; }
-.celebration-design .cdesign-el.rsvp-protected { position: relative; z-index: 1000; }
+.celebration-design .cdesign-el.rsvp-protected, .celebration .celebration-actions.rsvp-protected { position: relative; z-index: 1000; }
 .celebration-design .cdesign-author { position: relative; display: block; min-height: 100%; min-width: 0; isolation: isolate; contain: layout; overflow: clip; overflow-clip-margin: 1.5rem; border-radius: inherit; }
 /* Blocks that are a picture or a shape, not text, fill their cell. */
 .celebration-design .cdesign-el:is([data-block="image"], [data-block="spacer"], [data-block="illustration"], [data-block="ornament"]) .cdesign-author { height: 100%; }

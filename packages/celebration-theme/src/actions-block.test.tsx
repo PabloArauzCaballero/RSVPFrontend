@@ -14,6 +14,15 @@ const V2: readonly (readonly [string, TemplateDocument])[] = readdirSync(DOCUMEN
   return [entry.key, { id: entry.key, name: entry.name, description: entry.description, status: "PUBLISHED", eventTypeTags: entry.eventTypeTags, layout: entry.layout, theme: entry.theme, sectionOrder: entry.sectionOrder, version: 2 } as unknown as TemplateDocument] as const;
 });
 const V1 = TEMPLATES.map((template) => [`v1 ${template.layout}`, template] as const);
+/** The layouts whose sections carry a drawing (v1) and the documents whose gifts page has something besides the button (v2) keep their gifts section. */
+const keepsGiftsSection = (template: TemplateDocument): boolean => {
+  if (template.version !== 2) return ["classic", "festive", "corporate"].includes(template.layout);
+  const design = template.theme as unknown as { blocks: { id: string; type: string }[]; pages: { section?: string; background?: unknown; canvases: { mobile: { elements: { block: string; visible: boolean }[] }; desktop?: { elements: { block: string; visible: boolean }[] } } }[] };
+  const types = new Map(design.blocks.map((block) => [block.id, block.type]));
+  const page = design.pages.find((item) => item.section === "gifts");
+  const elements = [...(page?.canvases.mobile.elements ?? []), ...(page?.canvases.desktop?.elements ?? [])];
+  return Boolean(page?.background) || elements.some((item) => item.visible && types.get(item.block) !== "giftsCta");
+};
 const parse = (html: string): Document => new DOMParser().parseFromString(html, "text/html");
 const draw = (template: TemplateDocument, extra: Partial<Parameters<typeof CelebrationRenderer>[0]> = {}): Document =>
   parse(renderToStaticMarkup(<CelebrationRenderer theme={themeFromTemplate(template, VIEW.enabledSections)} view={VIEW} gallery={GALLERY} t={t} now={NOW} basePath={BASE} {...extra} />));
@@ -31,7 +40,7 @@ describe("the reply and the gifts button are one block", () => {
   });
 
   describe.each([...V1, ...V2])("%s", (_name, template) => {
-    it.each(CASES)("%s: both buttons share one container, gifts has no section of its own, and the link is /regalos", (_label, extra) => {
+    it.each(CASES)("%s: both buttons share one container, the gifts section keeps only what is its own, and the link is /regalos", (_label, extra) => {
       const document = draw(template, extra);
       const blocks = document.querySelectorAll("main [data-actions-block]");
       expect(blocks).toHaveLength(1);
@@ -46,7 +55,11 @@ describe("the reply and the gifts button are one block", () => {
       // Same weight: neither carries a quieter variant, and the block sits in the reply's section.
       for (const button of [reply, gifts]) expect(button?.getAttribute("data-variant")).toBeNull();
       expect(block.closest("section")?.getAttribute("data-section")).toBe("rsvp");
-      expect(document.querySelector('main section[data-section="gifts"]')).toBeNull();
+      // The gifts button exists ONCE in the page body (the block's). The gifts section stays, without the button, exactly when it has something of its own (PL-139-01).
+      expect(document.querySelectorAll('main a[data-action="gifts"]')).toHaveLength(1);
+      const apart = document.querySelector('main section[data-section="gifts"]');
+      expect(apart !== null).toBe(keepsGiftsSection(template));
+      expect(apart ? apart.querySelector("a") : null).toBeNull();
       // The block is not inside an author container, so no document CSS reaches it; it is protected like the dock.
       expect(block.closest(".cdesign-author")).toBeNull();
       expect(block.classList.contains("rsvp-protected")).toBe(true);
@@ -71,6 +84,61 @@ describe("the reply and the gifts button are one block", () => {
       expect(faq.querySelector("main [data-actions-block]")).toBeNull();
       expect(faq.querySelector(`.celebration-nav a[href="${BASE}/regalos"]`)).toBeTruthy();
     });
+  });
+
+  describe.each(["OPEN", "EMPTY", "CLOSED"] as const)("gift list %s", (status) => {
+    it.each([...V1, ...V2])(`%s: the block carries the gifts button once, to /regalos, with the status on it`, (_name, template) => {
+      const gifts = draw(template, { giftsStatus: status, rsvpHelpHref: `${BASE}/rsvp` }).querySelectorAll('main a[data-action="gifts"]');
+      expect(gifts).toHaveLength(1);
+      expect(gifts[0]?.getAttribute("data-gifts-status")).toBe(status);
+      expect(gifts[0]?.getAttribute("href")).toBe(`${BASE}/regalos`);
+      expect(gifts[0]?.closest("[data-actions-block]")).toBeTruthy();
+    });
+  });
+
+  describe.each(V2)("%s (v2): own content and no destination", (_name, template) => {
+    it("without any reply destination (a still preview) the block keeps the gifts button alone, never an empty block", () => {
+      const block = draw(template).querySelector("main [data-actions-block]");
+      expect(block?.querySelectorAll("a")).toHaveLength(1);
+      expect(block?.querySelector('a[data-action="gifts"]')).toBeTruthy();
+      expect(block?.querySelector('a[data-action^="rsvp"]')).toBeNull();
+    });
+
+    it("a page left with nothing to draw leaves no empty canvas, and a gifts page with content keeps it (illustration, no button)", () => {
+      const document = draw(template, { rsvpHelpHref: `${BASE}/rsvp` });
+      for (const canvas of document.querySelectorAll(".cdesign-canvas")) expect(canvas.children.length).toBeGreaterThan(0);
+      const apart = document.querySelector('main section[data-section="gifts"]');
+      if (keepsGiftsSection(template)) {
+        expect(apart?.querySelector('.cdesign-el[data-block="illustration"]')).toBeTruthy();
+        expect(apart?.querySelector('.cdesign-el[data-block="giftsCta"]')).toBeNull();
+      }
+      // The reply page never repeats its own illustration's neighbours as buttons: the buttons are the block's only.
+      expect(document.querySelectorAll('main .cdesign-el[data-block="giftsCta"], main .cdesign-el[data-block="rsvpCta"]')).toHaveLength(0);
+    });
+
+    it("the block has its own accessible name, distinct from the dock's", () => {
+      const document = draw(template, { rsvpHelpHref: `${BASE}/rsvp` });
+      const block = document.querySelector("main [data-actions-block]");
+      const dock = document.querySelector("[data-dock]");
+      expect(block?.getAttribute("aria-label")).toBe("celebration.actions.label");
+      expect(dock?.getAttribute("aria-label")).toBe("celebration.dock.label");
+      expect(block?.getAttribute("data-actions")).toBeNull();
+    });
+  });
+
+  it("negative: a gifts page that is only the button folds into the block (no empty page), and its own page still has the button", () => {
+    const bare = V2.filter(([, template]) => !keepsGiftsSection(template));
+    expect(bare.length).toBeGreaterThanOrEqual(2);
+    for (const [, template] of bare) {
+      expect(draw(template, { rsvpHelpHref: `${BASE}/rsvp` }).querySelector('main section[data-section="gifts"]')).toBeNull();
+      expect(draw(template, { only: "gifts" }).querySelector('main section[data-section="gifts"] a[data-action="gifts"]')).toBeTruthy();
+    }
+  });
+
+  it("the protected layer keeps its stacking defence: position relative and z-index 1000, under the dock (FE #131, PL-139-02)", () => {
+    const css = readFileSync(join(__dirname, "../styles.css"), "utf8");
+    expect(css).toMatch(/\.celebration \.celebration-actions\.rsvp-protected \{ position: relative; z-index: 1000; \}/);
+    expect(css).toMatch(/\.celebration \.cdesign-dock \{ z-index: 2000 !important; \}/);
   });
 
   it("the stylesheet puts the two side by side from 768 px, stacked below, and gives both the same size", () => {

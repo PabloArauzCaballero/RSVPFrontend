@@ -99,7 +99,10 @@ describe("rendered public page", () => {
     const button = document.querySelector('section[data-section="rsvp"] [data-actions-block] a[data-action="gifts"]');
     expect(button?.getAttribute("href")).toBe("/c/ana-y-luis/regalos");
     expect(button?.textContent).toBe("Ver regalos");
-    expect(document.querySelector('section[data-section="gifts"]')).toBeNull();
+    // The corporate layout draws the gifts section's drawing, so the section stays (PL-139-01) without a button.
+    expect(document.querySelector('section[data-section="gifts"] svg[data-art="regalo"]')).toBeTruthy();
+    expect(document.querySelector('section[data-section="gifts"] a')).toBeNull();
+    expect(document.querySelectorAll('main a[data-action="gifts"]')).toHaveLength(1);
     expect(document.querySelector('section[data-section="rsvp"] h2')?.textContent).toBe("Confirma y elige tu regalo");
     expect(document.querySelector('section[data-section="rsvp"] [data-actions-block] a[data-action^="rsvp"]')).toBeTruthy();
     expect(document.querySelector('.celebration-nav a[href="/c/ana-y-luis/regalos"]')?.textContent).toBe("Regalos");

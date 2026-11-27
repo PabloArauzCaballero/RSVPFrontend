@@ -84,8 +84,11 @@ describe("P22 · PL-A10 · the gifts button on every invitation", () => {
     const view = { ...VIEW, enabledSections: withoutGifts(WEDDING_SECTIONS) };
     for (const colorScheme of ["light", "dark"] as const) {
       const document = parse(renderToStaticMarkup(<CelebrationRenderer theme={themeFromTemplate(omitted, view.enabledSections)} view={view} gallery={GALLERY} t={t} now={NOW} basePath={BASE} colorScheme={colorScheme} />));
-      // Decision 8: the gifts button is in the reply's block, not in a section of its own.
-      expect(document.querySelector('section[data-section="gifts"]')).toBeNull();
+      // Decision 8: the gifts button is in the reply's block, not in a section of its own. The layouts that draw a section's art keep the gifts section (its drawing, PL-139-01) without a button.
+      const apart = document.querySelector('section[data-section="gifts"]');
+      expect(apart !== null).toBe(["classic", "festive", "corporate"].includes(template.layout));
+      expect(apart ? apart.querySelector("a") : null).toBeNull();
+      if (apart) expect(apart.querySelector('svg[data-art="regalo"]')).toBeTruthy();
       const section = document.querySelector('section[data-section="rsvp"]');
       expect(section?.querySelector("h2")?.textContent).toBe("celebration.actions.title");
       const button = section?.querySelector<HTMLAnchorElement>('a[data-action="gifts"]');
@@ -99,12 +102,12 @@ describe("P22 · PL-A10 · the gifts button on every invitation", () => {
     }
   });
 
-  it("goes in the reply's block, wherever the template places the gifts section", () => {
+  it("the button goes in the reply's block; the gifts section stays where the template places it (when it has a drawing) without the button", () => {
     const placed = parse(renderWith(TEMPLATES[0]));
-    expect([...placed.querySelectorAll("[data-section]")].map((node) => node.getAttribute("data-section"))).toEqual(["story", "schedule", "venues", "gallery", "dressCode", "faq", "recommendations", "rsvp"]);
+    expect([...placed.querySelectorAll("[data-section]")].map((node) => node.getAttribute("data-section"))).toEqual(["story", "schedule", "venues", "gallery", "dressCode", "gifts", "faq", "recommendations", "rsvp"]);
     expect(placed.querySelector('section[data-section="rsvp"] [data-actions-block] a[data-action="gifts"]')).toBeTruthy();
     const corporate = parse(renderWith(TEMPLATES[4]));
-    expect([...corporate.querySelectorAll("[data-section]")].map((node) => node.getAttribute("data-section"))).toEqual(["schedule", "venues", "faq", "recommendations", "rsvp"]);
+    expect([...corporate.querySelectorAll("[data-section]")].map((node) => node.getAttribute("data-section"))).toEqual(["schedule", "venues", "faq", "recommendations", "gifts", "rsvp"]);
     expect(corporate.querySelector('section[data-section="rsvp"] [data-actions-block] a[data-action="gifts"]')).toBeTruthy();
   });
 
