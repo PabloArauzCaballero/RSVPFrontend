@@ -20,15 +20,18 @@ export function reserveFieldErrors(input: { readonly name: string; readonly mess
   return { ...(input.name.trim().length > NAME_MAX ? { name: "tooLong" as const } : {}), ...(input.message.trim().length > MESSAGE_MAX ? { message: "tooLong" as const } : {}) };
 }
 
-export type ReserveFailure = "taken" | "limit" | "expired" | "forbidden" | "attendance" | "notFound" | "busy" | "validation" | "offline" | "generic";
+export type ReserveFailure = "taken" | "limit" | "closed" | "expired" | "forbidden" | "attendance" | "notFound" | "busy" | "validation" | "offline" | "generic";
 
 const isGiftTakenError = (error: ApiError): boolean => error.status === 409 && problemCode(error) === "GIFT_NOT_AVAILABLE";
+/** The host closed the list by hand: no gift can be reserved, so retrying the same tap never helps. */
+const isListClosedError = (error: ApiError): boolean => error.status === 409 && problemCode(error) === "LIST_CLOSED";
 const isRsvpRequiredError = (error: ApiError): boolean => error.status === 403 && ["GUEST_RSVP_DECLINED", "GUEST_RSVP_REQUIRED"].includes(problemCode(error) ?? "");
 
 /** One reading of a failed reservation, so the form always says what to do next. */
 export function reserveFailureKind(error: unknown): ReserveFailure {
   if (!(error instanceof ApiError)) return "offline";
   if (isGiftTakenError(error)) return "taken";
+  if (isListClosedError(error)) return "closed";
   if (isRsvpRequiredError(error)) return "attendance";
   if (error.problem?.code === "RESERVATION_LIMIT_REACHED") return "limit";
   if (error.status === 401) return "expired";
@@ -47,7 +50,7 @@ export interface GuestMessage { readonly key: string; readonly params?: Readonly
 
 const RESERVE_ERROR_KEY: Readonly<Record<Exclude<ReserveFailure, "taken">, string>> = {
   attendance: "gifts.error.attendanceBody",
-  limit: "gifts.guest.reserveError.limit", expired: "gifts.guest.reserveError.expired", forbidden: "gifts.guest.reserveError.forbidden", notFound: "gifts.guest.reserveError.notFound", busy: "gifts.guest.reserveError.busy",
+  limit: "gifts.guest.reserveError.limit", closed: "gifts.guest.reserveError.closed", expired: "gifts.guest.reserveError.expired", forbidden: "gifts.guest.reserveError.forbidden", notFound: "gifts.guest.reserveError.notFound", busy: "gifts.guest.reserveError.busy",
   validation: "gifts.guest.reserveError.validation", offline: "gifts.guest.reserveError.offline", generic: "gifts.guest.reserveError.generic"
 };
 
