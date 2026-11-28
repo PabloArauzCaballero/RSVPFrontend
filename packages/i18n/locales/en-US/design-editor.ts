@@ -109,6 +109,8 @@ export const designEditorEnUS: DeepStrings<typeof designEditorEsBO> = {
     restoreInvalid: "That version no longer meets the design rules, so it can't be restored. Your draft didn't change."
   },
   customCode: {
+    insertImage: "Insert an image", insertHelp: "Upload or choose a photo: there is no address to type.", insertHtml: "Insert into the HTML", insertCss: "Insert as a background in the CSS",
+    inserted: { html: "Image inserted at the end of the HTML.", css: "Rule \".{{name}}\" added to the CSS: use it as the class of an element." },
     title: "Custom code",
     html: "HTML",
     css: "CSS",
@@ -137,6 +139,16 @@ export const designEditorEnUS: DeepStrings<typeof designEditorEsBO> = {
       TOO_MANY_RULES: "There are too many rules; we ignored the last ones.",
       MEDIA_REJECTED: "We removed an @media query that isn't allowed ({{detail}})."
     }
+  },
+  photoPicker: {
+    loading: "Loading your photos…", failed: "We could not load your photos. Check your connection and try again.", empty: "You have not uploaded any photos yet. Upload the first one above.",
+    choose: "Your photos", help: "Choose a photo with the keyboard (arrow keys) or by tapping it.", selected: "You chose \"{{name}}\"."
+  },
+  images: {
+    title: "Invitation images", page: "On the page", alt: "Image description (for someone who cannot see it)", altHelp: "A short sentence. Leave it empty if it is only decoration.",
+    defaultText: "Write your message here.", added: "You added: {{what}}.", note: "Backgrounds and images are added at the end of the page; move them on the canvas.",
+    kind: { image: "Add as an image", imageText: "Add an image with text", monogram: "Add as a monogram", background: "Use as the background of \"{{page}}\"" },
+    removeBackground: "Remove the background of \"{{page}}\"", backgroundRemoved: "You removed the background of \"{{page}}\"."
   },
   canvasEditor: {
     stage: "Canvas",

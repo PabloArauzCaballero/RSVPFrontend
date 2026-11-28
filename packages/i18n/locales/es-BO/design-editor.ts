@@ -106,6 +106,8 @@ export const designEditorEsBO = {
     restoreInvalid: "Esa versión ya no cumple las reglas del diseño, así que no se puede restaurar. Tu borrador no cambió."
   },
   customCode: {
+    insertImage: "Insertar una imagen", insertHelp: "Sube o elige una foto: no hace falta escribir ninguna dirección.", insertHtml: "Insertar en el HTML", insertCss: "Insertar como fondo en el CSS",
+    inserted: { html: "Imagen insertada al final del HTML.", css: "Regla «.{{name}}» agregada al CSS: úsala como clase de un elemento." },
     title: "Código propio",
     html: "HTML",
     css: "CSS",
@@ -134,6 +136,16 @@ export const designEditorEsBO = {
       TOO_MANY_RULES: "Hay demasiadas reglas; ignoramos las del final.",
       MEDIA_REJECTED: "Quitamos una consulta @media no permitida ({{detail}})."
     }
+  },
+  photoPicker: {
+    loading: "Cargando tus fotos…", failed: "No pudimos cargar tus fotos. Revisa tu conexión e inténtalo otra vez.", empty: "Todavía no tienes fotos subidas. Sube la primera arriba.",
+    choose: "Tus fotos", help: "Elige una foto con el teclado (flechas) o tocándola.", selected: "Elegiste «{{name}}»."
+  },
+  images: {
+    title: "Imágenes de la invitación", page: "En la página", alt: "Descripción de la imagen (para quien no la ve)", altHelp: "Una frase corta. Déjala vacía si es solo decorativa.",
+    defaultText: "Escribe aquí tu mensaje.", added: "Agregaste: {{what}}.", note: "Los fondos y las imágenes se agregan al final de la página; muévelos en el lienzo.",
+    kind: { image: "Agregar como imagen", imageText: "Agregar imagen con texto", monogram: "Agregar como monograma", background: "Usar de fondo de «{{page}}»" },
+    removeBackground: "Quitar el fondo de «{{page}}»", backgroundRemoved: "Quitaste el fondo de «{{page}}»."
   },
   canvasEditor: {
     stage: "Lienzo",

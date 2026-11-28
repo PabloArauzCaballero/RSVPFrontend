@@ -209,3 +209,13 @@ a.de-btn { text-decoration: none; box-sizing: border-box; }
 .de-error { color: var(--de-danger); font-size: 13px; margin: 0 0 12px; min-height: 0; }
 .de-field p:empty { margin: 0; }
 .de-basic .de-field textarea[aria-invalid="true"] { border-color: var(--de-danger); border-width: 2px; }
+.de-photo-picker { display: grid; gap: 12px; margin-bottom: 12px; }
+.de-photo-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+.de-photo { position: relative; display: grid; gap: 4px; padding: 6px; border: 2px solid var(--de-border); border-radius: 8px; background: var(--de-surface); cursor: pointer; min-height: 44px; }
+.de-photo input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.de-photo:focus-within { outline: 2px solid var(--de-focus); outline-offset: 2px; }
+.de-photo[data-selected="true"] { border-color: var(--de-primary); }
+.de-photo img, .de-photo-blank { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; background: var(--de-field); }
+.de-photo-name { font-size: 12px; overflow-wrap: anywhere; }
+.de-insert-image { margin: 0 0 12px; }
+.de-insert-image summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; }

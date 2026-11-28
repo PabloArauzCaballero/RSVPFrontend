@@ -12,8 +12,10 @@ export interface TemplateSource { readonly list: () => Promise<readonly Template
 export interface DrawingChoice { readonly id: string; readonly name: string }
 export interface DrawingSource { readonly list: () => Promise<readonly DrawingChoice[]> }
 /** A photo of the host's media store (F6), by media id. Without a source the editor says so instead of pretending to upload. */
-export interface MediaChoice { readonly id: string; readonly name: string }
+export interface MediaChoice { readonly id: string; readonly name: string; /** Small version of the picture, to choose by looking and not by file name. */ readonly thumbUrl?: string }
 export interface MediaUploaderProps {
+  /** What the file is for, so the app files it right (`block` for an image block, `background` for a page background). */
+  readonly purpose?: "background" | "block" | "section" | "element" | "monogram";
   /** Called once per file the server accepted and finished processing, so the editor can offer it and use it as the cover. */
   readonly onUploaded: (choice: MediaChoice) => void;
 }
@@ -32,7 +34,7 @@ const HEADING_CATEGORIES: readonly design.FontCategory[] = ["serif", "script"];
 type Load<T> = { readonly state: "idle" | "loading" | "error" } | { readonly state: "ready"; readonly items: readonly T[] };
 
 /** Loads a list from an optional source: loading, error (with retry) and ready are three distinct states, never a silent absence. */
-function useList<T>(source: { readonly list: () => Promise<readonly T[]> } | undefined): readonly [Load<T>, () => void] {
+export function useList<T>(source: { readonly list: () => Promise<readonly T[]> } | undefined): readonly [Load<T>, () => void] {
   const [load, setLoad] = useState<Load<T>>({ state: source ? "loading" : "idle" });
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
@@ -45,7 +47,7 @@ function useList<T>(source: { readonly list: () => Promise<readonly T[]> } | und
   return [load, useCallback(() => setAttempt((count) => count + 1), [])];
 }
 
-function ListStatus({ load, retry, loading, failed, retryLabel }: { readonly load: Load<unknown>; readonly retry: () => void; readonly loading: string; readonly failed: string; readonly retryLabel: string }) {
+export function ListStatus({ load, retry, loading, failed, retryLabel }: { readonly load: Load<unknown>; readonly retry: () => void; readonly loading: string; readonly failed: string; readonly retryLabel: string }) {
   if (load.state === "loading") return <p className="de-hint" role="status" aria-busy="true">{loading}</p>;
   if (load.state === "error") return <div className="de-inline-error" role="alert"><p>{failed}</p><button type="button" className="de-btn" onClick={retry}>{retryLabel}</button></div>;
   return null;

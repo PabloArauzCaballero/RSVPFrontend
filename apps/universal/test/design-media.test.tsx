@@ -25,7 +25,7 @@ afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 describe("design editor photo source", () => {
   it("lists only finished, visible pictures: no music, nothing hidden by moderation, nothing still processing", async () => {
     const { client } = fakeClient({ "GET /media/celebrations/c-1/assets": () => ({ items: [asset("a"), asset("m", { purpose: "music" }), asset("h", { hidden: true }), asset("p", { status: "PROCESSING", variants: {} }), asset("b", { purpose: "background" })] }) });
-    expect(await designMediaSource(client, "c-1").list()).toEqual([{ id: "a", name: "a.png" }, { id: "b", name: "b.png" }]);
+    expect(await designMediaSource(client, "c-1").list()).toEqual([{ id: "a", name: "a.png", thumbUrl: "https://img.test/t" }, { id: "b", name: "b.png", thumbUrl: "https://img.test/t" }]);
   });
 
   it("a file dropped on the editor's uploader is sent as a background and reported once the server finished it", async () => {

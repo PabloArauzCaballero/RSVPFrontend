@@ -7,15 +7,15 @@ import { useMediaUploads } from "./media/use-media-uploads";
 
 /** What the editor may offer as a picture: finished, visible, not music and with something to draw. */
 const usable = (asset: MediaAsset): boolean => asset.status === "PROCESSED" && asset.purpose !== "music" && !asset.hidden && Boolean(asset.variants);
-export const toChoice = (asset: MediaAsset): MediaChoice => ({ id: asset.id, name: asset.filename });
+export const toChoice = (asset: MediaAsset): MediaChoice => ({ id: asset.id, name: asset.filename, ...(asset.variants.thumb ? { thumbUrl: asset.variants.thumb } : {}) });
 
 /**
  * The cover-photo upload of the design editor: the same surface and queue as the gallery (drag and drop, file dialog, camera on a
- * phone, progress, one error per file, retry), tagged `background` so the photo is a design picture and never a gallery photo.
+ * phone, progress, one error per file, retry), tagged `background` (or what the editor asks for: a block, a section) so the photo is a design picture and never a gallery photo.
  * A file counts as uploaded only when the server finished processing it, which is when the design can point at it.
  */
-export function DesignMediaUploader({ celebrationId, onUploaded }: MediaUploaderProps & { readonly celebrationId: string }): ReactNode {
-  const uploads = useMediaUploads({ celebrationId, purpose: "background" });
+export function DesignMediaUploader({ celebrationId, onUploaded, purpose = "background" }: MediaUploaderProps & { readonly celebrationId: string }): ReactNode {
+  const uploads = useMediaUploads({ celebrationId, purpose });
   const told = useRef(new Set<string>());
   useEffect(() => {
     uploads.items.forEach((item) => {
