@@ -983,12 +983,16 @@ describe("QA · turning the tablet keeps the selection of every step", () => {
   it("step 1: an idea ticked at <= 900 px is still ticked, and «Elegir productos» still enabled, at >= 1023 px (and back)", async () => {
     setWidth(900);
     await open();
+    const phoneLayout = (): boolean => screen.queryByRole("button", { name: "Más" }) !== null;
+    expect(phoneLayout()).toBe(true);
+    expect(screen.getByTestId("wizard-next").getAttribute("aria-disabled")).toBe("true");
     click("idea-CAKE");
     expect(screen.getByTestId("idea-CAKE").getAttribute("aria-checked")).toBe("true");
     setWidth(1023);
+    expect(phoneLayout()).toBe(false);
     expect(screen.getByTestId("idea-CAKE").getAttribute("aria-checked")).toBe("true");
-    expect(screen.getByTestId("wizard-next").hasAttribute("disabled") || screen.getByTestId("wizard-next").getAttribute("aria-disabled") === "true").toBe(false);
-    expect(screen.getByTestId("wizard-selected").textContent).toMatch(/1/);
+    expect(screen.getByTestId("wizard-next").getAttribute("aria-disabled")).not.toBe("true");
+    expect(screen.getByTestId("wizard-selected").textContent).toBe("1 idea elegida");
     setWidth(900);
     expect(screen.getByTestId("idea-CAKE").getAttribute("aria-checked")).toBe("true");
   });

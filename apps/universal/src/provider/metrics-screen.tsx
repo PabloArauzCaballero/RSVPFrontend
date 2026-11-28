@@ -22,6 +22,9 @@ export function lastDays(days: number, timeZone: string, now: Date = new Date())
 }
 export const validRange = (from: string, to: string): boolean => ISO.test(from) && ISO.test(to) && from <= to && !Number.isNaN(Date.parse(from)) && !Number.isNaN(Date.parse(to));
 
+/** A ratio (0..1) as a percentage in the person's locale. */
+export const formatPercent = (value: number, locale: ReturnType<typeof useLocale>): string => new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 1 }).format(value);
+
 /** A rounded bar scaled to `ratio` (0..1). Decorative: the figure beside it says the same in text. Track and fill are palette roles, so dark mode keeps the contrast. */
 function Bar({ ratio, color, height = BAR }: { readonly ratio: number; readonly color: string; readonly height?: number }): ReactNode {
   const palette = useColors();
@@ -41,7 +44,7 @@ export function RangeTotals({ totals }: { readonly totals: MetricTotals }): Reac
   const rows: readonly { readonly label: string; readonly value: string; readonly count?: number; readonly tone?: string }[] = [
     { label: t("portal.metrics.impressions"), value: formatNumber(totals.impressions, locale), count: totals.impressions },
     { label: t("portal.metrics.clicks"), value: formatNumber(totals.clicks, locale), count: totals.clicks },
-    { label: t("portal.metrics.ctr"), value: new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 1 }).format(totals.ctr) },
+    { label: t("portal.metrics.ctr"), value: formatPercent(totals.ctr, locale) },
     { label: t("portal.metrics.validLeads"), value: formatNumber(totals.validLeads, locale), count: totals.validLeads, tone: palette.success },
     { label: t("portal.metrics.invalidLeads"), value: formatNumber(totals.invalidLeads, locale), count: totals.invalidLeads, tone: palette.textMuted }
   ];
@@ -68,8 +71,8 @@ export function RangeTotals({ totals }: { readonly totals: MetricTotals }): Reac
 const FIELDS: readonly string[] = ["day", "category", "destination", "impressions", "clicks", "ctr", "validLeads", "invalidLeads", "leads"];
 /** A group figure as text: CTR is a ratio and reads as a percentage, the counts as numbers. */
 export function figureText(key: string, value: unknown, locale: ReturnType<typeof useLocale>): string {
-  if (typeof value !== "number") return String(value);
-  return key === "ctr" ? new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 1 }).format(value) : formatNumber(value, locale);
+  if (typeof value !== "number") return value === null || value === undefined ? "–" : String(value);
+  return key === "ctr" ? formatPercent(value, locale) : formatNumber(value, locale);
 }
 type Group = "day" | "category" | "destination";
 type Period = "d7" | "d30" | "d90" | "custom";

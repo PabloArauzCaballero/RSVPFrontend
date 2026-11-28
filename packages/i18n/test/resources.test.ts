@@ -80,16 +80,16 @@ describe("es-BO addresses the reader with tuteo, never voseo", () => {
   const collect = (tree: Tree, prefix = ""): Leaf[] =>
     Object.entries(tree).flatMap(([key, value]) => (typeof value === "string" ? [{ path: `${prefix}${key}`, text: value }] : collect(value, `${prefix}${key}.`)));
   // Voseo stresses the last syllable of the verb («volvé», «confirmá», «elegí», «podés», «tenés»). The stems are the verbs the interface uses to talk to people.
-  const VOSEO = new RegExp(`(?<![\\p{L}])(?:volv|confirm|eleg|pod|ten|quer|sab|ven|and|hac|mir|dec|pon|escrib|toc|segu|busc|agreg|guard|revis|cre|compart|invit|sub|ingres|us|prob|llam|abr|cerr|cambi|descarg|carg|entr|sal|ped|resolv|reintent|contact|respond|complet|acept|rechaz|apret|presion|dej|quit|elimin|edit|copi|fij|marc|desmarc|escog|comenz|empez|pens|continu|prefer|compr|reserv|regal|cancel|ayud|sum|resta|mostr|ocult|public|envi|pag)(?:á|é|í|ás|és|ís)(?![\\p{L}])`, "iu");
+  const VOSEO = new RegExp(`(?<![\\p{L}])(?:vos|sos)(?![\\p{L}])|(?<![\\p{L}])(?:volv|confirm|eleg|pod|ten|quer|sab|ven|and|hac|mir|dec|pon|escrib|toc|segu|busc|agreg|guard|revis|cre|compart|invit|sub|ingres|us|prob|llam|abr|cerr|cambi|descarg|carg|entr|sal|ped|resolv|reintent|contact|respond|complet|acept|rechaz|apret|presion|dej|quit|elimin|edit|copi|fij|marc|desmarc|escog|comenz|empez|pens|continu|prefer|compr|reserv|regal|cancel|ayud|sum|resta|mostr|ocult|public|envi|pag|avis|intent|esper|record|mant|recib|pas|encontr|verific|seleccion|escuch|fij|acord|compr)(?:á|é|í|ás|és|ís)(?![\\p{L}])`, "iu");
   // First-person preterites that share the stress («Ya entré», «las que recibí»): they speak of the writer, not to the reader.
-  const FIRST_PERSON = new Set(["entré", "revisé", "recibí", "compré", "olvidé", "cambié", "guardé", "envié", "pagué", "reservé", "regalé", "publiqué", "compartí", "cancelé", "ayudé"]);
+  const FIRST_PERSON = new Set(["entré", "revisé", "dejé", "usé", "probé", "pedí", "salí", "subí", "abrí", "creé", "recibí", "compré", "olvidé", "cambié", "guardé", "envié", "pagué", "reservé", "regalé", "publiqué", "compartí", "cancelé", "ayudé"]);
   it("has no voseo form in any text", () => {
     const hits = collect(resources["es-BO"] as Tree).flatMap(({ path, text }) =>
       (text.match(new RegExp(VOSEO.source, "giu")) ?? []).filter((word) => !FIRST_PERSON.has(word.toLowerCase())).map((word) => `${path}: ${word}`));
     expect(hits).toEqual([]);
   });
   it("the detector does catch the forms that once slipped in", () => {
-    for (const sample of ["volvé a tu respuesta", "confirmá que asistirás", "elegí un regalo", "si volvés a asistir", "podés cambiarlo", "tenés que elegir"]) expect(VOSEO.test(sample)).toBe(true);
+    for (const sample of ["volvé a tu respuesta", "confirmá que asistirás", "elegí un regalo", "si volvés a asistir", "podés cambiarlo", "tenés que elegir", "avisá si cambia", "vos sabés"]) expect(VOSEO.test(sample)).toBe(true);
     for (const sample of ["vuelve a tu respuesta", "confirma que asistirás", "elige un regalo", "podrás cambiarlo", "está aquí", "después"]) expect(VOSEO.test(sample)).toBe(false);
   });
 });
