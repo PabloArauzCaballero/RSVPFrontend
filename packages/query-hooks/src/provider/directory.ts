@@ -44,6 +44,8 @@ export function categoryLabel(code: string, translate: (key: string) => string, 
   // The catalogue answers the code as the name of a category with no translation: that is not a name.
   const name = published[code];
   if (name && name !== code) return name;
+  // "" is how the verification queue says "no listing yet".
+  if (!code) return "";
   const key = `directory.category.${code}`;
   const own = translate(key);
   if (own && own !== key) return own;

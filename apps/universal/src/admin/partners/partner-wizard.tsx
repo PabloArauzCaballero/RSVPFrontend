@@ -3,7 +3,7 @@ import { Text, View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
 import { Checkbox, Chip, PressFeedback, useColors } from "@rsvp/ui";
 import { ApiError } from "@rsvp/api-client";
-import { useOfferCategories } from "@rsvp/query-hooks";
+import { categoryLabel, useOfferCategories } from "@rsvp/query-hooks";
 import {
   useAdminPartner, useAdminUserByEmail, useAdminUsersByIds, useCommitIntake, useCreateIntake, useGrantRole, useIntake, usePartnerAction, usePartnerGeo, usePatchIntake, usePatchPartner,
   type IdentityUser, type NitMatch, type PartnerDetail, type SectionName
@@ -103,8 +103,8 @@ function NitAcknowledgement({ value, onChange, error }: { readonly value: boolea
   return <Checkbox label={t("admin.partners.nit.acknowledge")} value={value} onChange={onChange} {...(error && !value ? { error: t("admin.partners.nit.acknowledgeRequired") } : {})} />;
 }
 
-function SummaryStep({ form, owner, geo, documents, confirmed, onConfirm, confirmError, duplicates }: {
-  readonly form: PartnerForm; readonly owner: string; readonly geo: ReturnType<typeof useGeography>; readonly documents: readonly { readonly kind: string; readonly fileName: string; readonly status: string }[];
+function SummaryStep({ form, owner, geo, categoryName, documents, confirmed, onConfirm, confirmError, duplicates }: {
+  readonly form: PartnerForm; readonly owner: string; readonly geo: ReturnType<typeof useGeography>; readonly categoryName: (code: string) => string; readonly documents: readonly { readonly kind: string; readonly fileName: string; readonly status: string }[];
   readonly confirmed: boolean; readonly onConfirm: (value: boolean) => void; readonly confirmError: boolean; readonly duplicates?: ReactNode;
 }): ReactNode {
   const t = useT();
@@ -122,7 +122,7 @@ function SummaryStep({ form, owner, geo, documents, confirmed, onConfirm, confir
       {section(t("admin.partners.steps.identity"))}
       <Line label={t("admin.partners.fields.name")} value={id.name} />
       <Line label={t("admin.partners.fields.slug")} value={id.slug} />
-      <Line label={t("admin.partners.fields.categories")} value={(id.categoryCodes ?? []).join(", ")} />
+      <Line label={t("admin.partners.fields.categories")} value={(id.categoryCodes ?? []).map(categoryName).join(", ")} />
       <Line label={t("admin.partners.fields.plan")} value={id.plan ? t(`admin.partners.plans.${id.plan}`) : ""} />
       <Line label={t("admin.partners.fields.description")} value={id.description} />
       {section(t("admin.partners.steps.contact"))}
@@ -370,7 +370,7 @@ export function PartnerWizard({ mode, onClose, onDone, onOpenPartner }: {
           </>
         );
       }
-      case "summary": return <SummaryStep form={form} owner={ownerEmail} geo={geo} documents={documents} confirmed={confirmed} onConfirm={(value) => { setConfirmed(value); setConfirmError(false); }} confirmError={confirmError}
+      case "summary": return <SummaryStep form={form} owner={ownerEmail} geo={geo} categoryName={(code) => categoryLabel(code, t, Object.fromEntries(categories.map((item) => [item.code, item.name])))} documents={documents} confirmed={confirmed} onConfirm={(value) => { setConfirmed(value); setConfirmError(false); }} confirmError={confirmError}
         duplicates={nitInUse.length > 0 ? <>{duplicates}{acknowledgement}</> : null} />;
     }
   };

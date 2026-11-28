@@ -1,6 +1,6 @@
 /** Microsite del partner (F25) y redirector de salida (F27). */
 export const partnerEsBO = {
-  meta: { title: "{{name}} · {{category}} en {{city}}", description: "{{name}}: {{category}} verificado en {{city}}. Mira lo que ofrece, su zona de cobertura y contáctalo directamente." },
+  meta: { title: "{{name}} · {{category}} en {{city}}", description: "{{name}}: proveedor verificado de {{category}} en {{city}}. Mira lo que ofrece, su zona de cobertura y contáctalo directamente." },
   about: "Sobre el proveedor",
   factLeadService_one: "{{name}} es un proveedor de {{category}} en {{city}}, verificado por DOne. Publica {{count}} servicio.",
   factLeadService_other: "{{name}} es un proveedor de {{category}} en {{city}}, verificado por DOne. Publica {{count}} servicios.",

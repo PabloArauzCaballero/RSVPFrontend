@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { ApiClient } from "@rsvp/api-client";
 import { PAGE_SIZE, providerSearchPath, type DirectoryCard, type DirectoryQuery, type OfferCategory } from "@rsvp/query-hooks";
 import { publicClient } from "./api";
@@ -24,20 +25,26 @@ export interface ProviderPage {
 
 export type ProviderQuery = DirectoryQuery;
 
+/** The names are an improvement over the static translation: a slow catalogue must not hold the page back. */
+const CATEGORIES_TIMEOUT_MS = 2500;
+
 /**
  * The categories the catalogue publishes in one language (GET /providers/categories): names and listing types. They are
  * extended by the admin, so the static translation can lag behind; an unreachable catalogue leaves the translation alone.
  */
-export async function loadCategories(locale: string, client: ApiClient = publicClient()): Promise<readonly OfferCategory[]> {
+export async function loadCategories(locale: string, client: ApiClient = publicClient(), timeoutMs: number = CATEGORIES_TIMEOUT_MS): Promise<readonly OfferCategory[]> {
   try {
-    const { items } = await client.request<{ readonly items: readonly OfferCategory[] }>(`/providers/categories?locale=${encodeURIComponent(locale)}`, { auth: false });
-    return items;
+    const { items } = await client.request<{ readonly items?: readonly OfferCategory[] }>(`/providers/categories?locale=${encodeURIComponent(locale)}`, { auth: false, signal: AbortSignal.timeout(timeoutMs) });
+    return items ?? [];
   } catch {
     return [];
   }
 }
 
 export const categoryNamesOf = (categories: readonly OfferCategory[]): Readonly<Record<string, string>> => Object.fromEntries(categories.map((item) => [item.code, item.name]));
+
+/** One read per request and language, shared by a page and its metadata. */
+export const requestCategories = cache((locale: string) => loadCategories(locale));
 
 export const loadCategoryNames = async (locale: string, client?: ApiClient): Promise<Readonly<Record<string, string>>> => categoryNamesOf(await loadCategories(locale, client));
 

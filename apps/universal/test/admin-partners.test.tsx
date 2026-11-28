@@ -295,9 +295,12 @@ describe("A24 · «Crear partner» dialog", () => {
     const order: string[] = [];
     const calls = await walkToSummary({
       "PUT /identity/users/11111111-1111-1111-1111-111111111111/roles/PROVIDER": () => { order.push("grant"); return { ...OWNER, roles: ["HOST", "PROVIDER"] }; },
-      "POST /providers/admin/intakes/i-1/commit": () => { order.push("commit"); return { ...DETAIL, status: "VERIFIED", kypStatus: "COMPLETE" }; }
+      "POST /providers/admin/intakes/i-1/commit": () => { order.push("commit"); return { ...DETAIL, status: "VERIFIED", kypStatus: "COMPLETE" }; },
+      "GET /providers/categories": () => ({ items: [{ code: "FLORES", name: "Flores del catálogo" }] })
     });
-    expect(screen.getByTestId("partner-summary")).toBeTruthy();
+    // The summary names the categories; it does not print their codes.
+    await waitFor(() => expect(screen.getByTestId("partner-summary").textContent).toContain("Flores del catálogo"));
+    expect(screen.getByTestId("partner-summary").textContent).not.toContain("FLORES");
     next();
     expect(await screen.findByText("Marca la casilla para confirmar que revisaste los documentos.")).toBeTruthy();
     expect(order).toEqual([]);

@@ -40,6 +40,13 @@ describe("REQ-F14-03 · verification queue", () => {
     expect(calls.some((call) => call.method === "POST" && call.path === "/providers/p-1/verify")).toBe(true);
   });
 
+  it("names each row's category as the catalogue publishes it, never the bare code", async () => {
+    const { client } = fakeClient({ ...queue([{ ...PROVIDERS[0], category: "TABLEWARE" }]), "GET /providers/categories": () => ({ items: [{ code: "TABLEWARE", name: "Loza del catálogo" }] }) });
+    renderApp(<VerificationScreen onNavigate={navigate} />, client, ADMIN);
+    expect(await screen.findByText(/^Loza del catálogo · La Paz · /)).toBeTruthy();
+    expect(screen.queryByText(/TABLEWARE/)).toBeNull();
+  });
+
   it("rejecting needs a reason: empty is refused in place, then the reason is sent", async () => {
     const { client, calls } = fakeClient({ ...queue(PROVIDERS), "POST /providers/p-2/reject": () => ({}) });
     renderApp(<VerificationScreen onNavigate={navigate} />, client, ADMIN);
