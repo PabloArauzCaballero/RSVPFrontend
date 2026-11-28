@@ -13,7 +13,6 @@
     "test": "vitest run"
   },
   "devDependencies": {
-    "@rsvp/celebration-theme": "workspace:*",
     "@rsvp/config-ts": "workspace:*",
     "typescript": "^5.8.3",
     "vitest": "^3.1.2"

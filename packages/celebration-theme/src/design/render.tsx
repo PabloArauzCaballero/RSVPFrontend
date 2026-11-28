@@ -1,7 +1,7 @@
 import { Fragment, type CSSProperties, type ReactNode } from "react";
 import { artPalette, artVariables } from "../art/palette.js";
 import { drawingById, InvitationArt, ornamentSetById, OrnamentCorner, OrnamentFrame, OrnamentSeparator } from "../art/index.js";
-import { daysUntil, giftsPath, hasSectionContent, partnerHref, readContent, SECTION_PATHS, sectionTitleKey, type CelebrationContent, type GalleryImage, type PublicCelebrationView } from "../content.js";
+import { daysUntil, giftsPath, hasSectionContent, partnerHref, readContent, SECTION_PATHS, sectionTitleKey, shownVenues, type CelebrationContent, type GalleryImage, type PublicCelebrationView } from "../content.js";
 import { Dock } from "../dock.js";
 import { Flourish } from "../flourish.js";
 import { formatDate } from "../format.js";
@@ -9,7 +9,8 @@ import type { CelebrationRendererProps } from "../renderer.js";
 import { SectionNav } from "../section-nav.js";
 import { GiftsAction, RsvpAction, SECTIONS } from "../sections/index.js";
 import { AudioPlayer, EmbedFacade, MediaBackdrop, MediaImage } from "../media/components.js";
-import { embedFromConfig, mapEmbed } from "../media/embed.js";
+import { embedFromConfig } from "../media/embed.js";
+import { VenueDetails } from "../location/venue-details.js";
 import { clampScrim, type PublicMedia } from "../media/variants.js";
 import { layoutOf, themeVariables } from "../theme.js";
 import type { CelebrationTheme, SectionId, Translate } from "../types.js";
@@ -193,9 +194,12 @@ function BlockBody({ block, element, context }: { readonly block: DesignBlock; r
       return <EmbedFacade embed={embedFromConfig("music", settings)} title={content.title} t={t} />;
     }
     case "map": {
-      const venue = content.venues[Number(settings["venueIndex"])];
-      const query = venue ? [venue.name, venue.address].filter(Boolean).join(", ") : "";
-      return venue ? <EmbedFacade embed={mapEmbed(query)} title={venue.name} t={t} /> : null;
+      const index = Number(settings["venueIndex"]);
+      const listed = content.venues[index];
+      // `venueIndex` counts `content.venues`; with no list at all, the first one is the main venue.
+      const key = listed ? listed.key : index === 0 && !content.venues.length && content.venueName ? "main" : undefined;
+      const venue = key === undefined ? undefined : shownVenues(content).find((candidate) => candidate.key === key);
+      return venue ? <div className="celebration-map-block"><VenueDetails venue={venue} t={t} /></div> : null;
     }
     // Blocks the renderer does not draw yet (wedding party, free HTML) are left out, never half-drawn.
     default: return null;

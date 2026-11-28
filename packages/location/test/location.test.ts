@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { mapUrl, pointOf, pointUrl } from "@rsvp/celebration-theme/model";
-import { isValidCoordinates, locationFromLegacyLink, osmPointUrl } from "../src/index";
+import { isValidCoordinates, locationFromLegacyLink, mainVenueLocation, osmDirectionsUrl, osmPointUrl, readLocations, venueLocation } from "../src/index";
 
 describe("rangos de las coordenadas", () => {
   it.each([[0, 0], [-90, -180], [90, 180], [-17.783327, -63.18214]])("acepta (%d, %d)", (lat, lng) => {
@@ -29,6 +28,7 @@ describe("coordenadas de enlaces heredados", () => {
     "https://www.google.com/maps?q=-17.78,%20-63.18",
     "https://maps.apple.com/?ll=-17.78,-63.18",
     "https://waze.com/ul?ll=-17.78%2C-63.18&navigate=yes",
+    "https://www.google.com/maps?q=-17.78,-63.18&ll=-10,-50",
     "https://www.openstreetmap.org/?mlat=-17.78&mlon=-63.18",
     "https://www.openstreetmap.org/?mlat=-17.78&mlon=-63.18#map=17/-10/-50",
     "https://osm.org/?mlon=-63.18&mlat=-17.78",
@@ -40,7 +40,10 @@ describe("coordenadas de enlaces heredados", () => {
   it.each([
     "https://www.google.com/maps/@-17.78,-63.18,17z",
     "https://www.google.com/maps/place/Salon/@-17.78,-63.18,17z/data=abc",
-    "https://www.google.com/maps/@-17.78,-63.18"
+    "https://www.google.com/maps/@-17.78,-63.18",
+    "https://www.google.com/maps?ll=-17.78,-63.18",
+    "https://maps.google.com/?ll=-17.78,-63.18&q=Sal%C3%B3n",
+    "https://google.com.bo/maps?ll=-17.78%2C-63.18"
   ])("marca como sin verificar el centro de la vista de %s", (link) => {
     expect(locationFromLegacyLink(link)).toEqual({ ...point, source: "legacy-link-unverified" });
   });
@@ -102,26 +105,51 @@ describe("URL de compatibilidad de OpenStreetMap", () => {
   });
 });
 
-describe("compatibilidad con la invitación actual (celebration-theme)", () => {
-  const point = { lat: -17.783327, lng: -63.18214 };
-
-  it("el lector actual admite y entiende la URL de OpenStreetMap", () => {
-    expect(mapUrl(osmPointUrl(point))).toBe(osmPointUrl(point));
-    expect(pointOf(osmPointUrl(point))).toEqual(point);
+describe("indicaciones de OpenStreetMap", () => {
+  it("lleva el punto como destino", () => {
+    expect(osmDirectionsUrl({ lat: -17.7833271234, lng: -63.18214 })).toBe("https://www.openstreetmap.org/directions?to=-17.783327%2C-63.182140");
   });
 
-  it("lee los pines que la invitación guarda hoy", () => {
-    expect(locationFromLegacyLink(pointUrl(point))).toEqual({ ...point, source: "legacy-link" });
+  it("no escribe indicaciones hacia coordenadas fuera de rango", () => {
+    expect(() => osmDirectionsUrl({ lat: 0, lng: 181 })).toThrow(RangeError);
+  });
+});
+
+describe("content.locations", () => {
+  const entry = { lat: -17.78, lng: -63.18, source: "pin" };
+  const link = "https://www.openstreetmap.org/?mlat=-17.780000&mlon=-63.180000";
+
+  it("deja fuera todo lo que no sea una ubicación válida", () => {
+    expect(readLocations({
+      ok: { ...entry, address: " Calle 1 ", reference: "x".repeat(201), forName: "Salón", extra: 1 },
+      texto: { ...entry, lat: "-17.78" }, rango: { ...entry, lat: 95 }, sinOrigen: { lat: 1, lng: 1 }, origen: { ...entry, source: "map" }, nulo: null
+    })).toEqual({ ok: { ...entry, address: "Calle 1", forName: "Salón" } });
+    for (const value of [undefined, null, "x", [entry]]) expect(readLocations(value)).toEqual({});
   });
 
-  it("todo enlace del que se extrae un punto es un enlace que la invitación acepta", () => {
-    const links = [
-      "https://www.google.com.bo/maps?q=-17.78,-63.18", "https://google.com/maps/@-17.78,-63.18,17z", "https://maps.google.com.bo/?ll=-17.78,-63.18",
-      "https://maps.apple.com/?q=-17.78,-63.18", "https://ul.waze.com/ul?ll=-17.78,-63.18", "https://www.waze.com/ul?ll=-17.78,-63.18", "https://openstreetmap.org/?mlat=-17.78&mlon=-63.18"
-    ];
-    for (const link of links) {
-      expect(locationFromLegacyLink(link), link).not.toBeNull();
-      expect(mapUrl(link), link).toBeTruthy();
+  it("una sede usa su punto, salvo que sea de otro nombre o esté sin verificar", () => {
+    const stored = readLocations({ v: { ...entry, forName: "Catedral" } })["v"];
+    expect(venueLocation(stored, "Catedral")).toEqual(stored);
+    expect(venueLocation(stored, "Otro lugar")).toBeUndefined();
+    expect(venueLocation({ lat: 1, lng: 1, source: "legacy-link-unverified" }, "Catedral")).toBeUndefined();
+    expect(venueLocation(undefined, "Catedral")).toBeUndefined();
+  });
+
+  it("en el lugar principal el punto guardado completa al del enlace cuando coinciden", () => {
+    const stored = { lat: -17.78, lng: -63.18, source: "search" as const, reference: "portón azul" };
+    expect(mainVenueLocation(stored, link, "Salón")).toEqual(stored);
+  });
+
+  it("si el enlace cambió gana el enlace; un nombre distinto descarta lo guardado", () => {
+    const stored = { lat: -10, lng: -50, source: "pin" as const, reference: "viejo" };
+    expect(mainVenueLocation(stored, link, "Salón")).toEqual({ lat: -17.78, lng: -63.18, source: "legacy-link" });
+    expect(mainVenueLocation({ ...stored, lat: -17.78, lng: -63.18, forName: "Antes" }, link, "Salón")).toEqual({ lat: -17.78, lng: -63.18, source: "legacy-link" });
+  });
+
+  it("sin enlace, o con un enlace sin punto verificado, no hay punto principal", () => {
+    const stored = { lat: -17.78, lng: -63.18, source: "pin" as const };
+    for (const value of [undefined, "https://maps.app.goo.gl/ABCD", "https://www.google.com/maps/@-17.78,-63.18,17z", "https://www.google.com/maps?ll=-17.78,-63.18"]) {
+      expect(mainVenueLocation(stored, value, "Salón")).toBeUndefined();
     }
   });
 });

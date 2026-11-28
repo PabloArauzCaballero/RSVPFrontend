@@ -13,7 +13,7 @@ export interface Coordinates {
  * link saved before. `legacy-link-unverified` is a point taken from the `@lat,lng` of a link: that is where the map was
  * centred when the link was copied, which may not be the place itself, so a person has to confirm it.
  */
-export type LocationSource = "map" | "search" | "device" | "legacy-link" | "legacy-link-unverified";
+export type LocationSource = "pin" | "search" | "device" | "legacy-link" | "legacy-link-unverified";
 
 export interface Location extends Coordinates {
   /** Postal address as people read it. */

@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
-import { GIFTS_CTA_KEYS, navigationHref, partnerHref, shownVenues, type CelebrationContent, type GalleryImage, type GiftsStatus } from "../content.js";
+import { GIFTS_CTA_KEYS, partnerHref, shownVenues, type CelebrationContent, type GalleryImage, type GiftsStatus } from "../content.js";
 import { formatTime, zoneLabel } from "../format.js";
 import { ActionIcon } from "../icon.js";
+import { VenueDetails } from "../location/venue-details.js";
 import type { SectionId, Translate } from "../types.js";
 import { GalleryView } from "./gallery-view.js";
 
@@ -58,9 +59,7 @@ function Venues({ content, t }: SectionProps): ReactNode {
       {venues.map((venue) => (
         <li key={venue.key}>
           <p className="celebration-eyebrow">{t(`celebration.venues.kind.${venue.kind}`)}</p>
-          <strong>{venue.name}</strong>
-          {venue.address ? <p>{venue.address}</p> : null}
-          <a href={navigationHref(venue)} target="_blank" rel="noopener noreferrer" data-link-kind="navigation">{t("celebration.venues.howToGetThere")}</a>
+          <VenueDetails venue={venue} t={t} />
         </li>
       ))}
     </ul>

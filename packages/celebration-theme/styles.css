@@ -360,8 +360,8 @@ html:has(.cdesign-dock) { scroll-padding-bottom: 6rem; }
 .celebration-embed { min-height: 10rem; }
 /* Air around pictures and cards: the document sets its own margins inline, which win over this. */
 .celebration-design .cdesign-el:is([data-block="image"], [data-block="video"], [data-block="map"], [data-block="music"]) { margin-block: 1rem; }
-/* Once tapped, a video or a map takes the 16:9 of its player. */
-.celebration-embed[data-loaded="true"]:is([data-kind="video"], [data-kind="map"]) { aspect-ratio: 16 / 9; padding: 0; }
+/* Once tapped, a video takes the 16:9 of its player. */
+.celebration-embed[data-loaded="true"][data-kind="video"] { aspect-ratio: 16 / 9; padding: 0; }
 .celebration-embed[data-loaded="true"] { padding: 0; }
 .celebration-embed-frame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .celebration-embed > .celebration-media-image { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }
@@ -419,3 +419,22 @@ html:has(.cdesign-dock) { scroll-padding-bottom: 6rem; }
 .celebration-design .cdesign-section-body[data-display="list"] .celebration-schedule li { counter-increment: act; }
 .celebration-design .cdesign-section-body[data-display="list"] .celebration-schedule li::before { content: counter(act, upper-roman); left: 6.75rem; top: .95rem; width: 2.5rem; height: auto; border-radius: 0; background: none; box-shadow: none; text-align: center; font-family: var(--celebration-heading-font); font-weight: 600; font-size: 1rem; line-height: 1.6; color: var(--celebration-accent); }
 .celebration-design .cdesign-section-body[data-display="list"] .celebration-schedule li::after { display: none; }
+
+/* E9 · a place: its OpenStreetMap map (loaded on tap), «how to get there» and «copy address». `isolation` keeps Leaflet's own z-indexes under the dock. */
+.celebration-venue-tools { display: grid; gap: .6rem; justify-self: stretch; min-width: 0; margin-top: .5rem; }
+.celebration-map { position: relative; isolation: isolate; display: grid; gap: .4rem; justify-items: center; text-align: center; min-width: 0; }
+.celebration-map-canvas { box-sizing: border-box; justify-self: stretch; width: 100%; height: 15rem; overflow: hidden; border: 1px solid color-mix(in srgb, var(--celebration-text) 18%, transparent); border-radius: var(--celebration-radius, 0); }
+.celebration-map-canvas:focus-visible { outline: 3px solid var(--celebration-accent); outline-offset: 3px; }
+.celebration-venue-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: .25rem 1.25rem; }
+.celebration[data-align="start"] .celebration-venue-actions { justify-content: flex-start; }
+.celebration-map-open, .celebration-venue-actions button { min-height: 44px; min-width: 44px; padding: .5rem 1.1rem; border: 2px solid var(--celebration-accent); border-radius: 9999px; background: var(--celebration-surface); color: var(--celebration-text); font: inherit; font-weight: 600; cursor: pointer; }
+.celebration-map-open:focus-visible, .celebration-venue-actions button:focus-visible { outline: 3px solid var(--celebration-accent); outline-offset: 3px; }
+.celebration-venue-status { text-align: center; overflow-wrap: anywhere; }
+.celebration-venue-copytext { user-select: all; }
+.celebration-map-block { display: grid; gap: .25rem; width: 100%; max-width: 40rem; margin-inline: auto; text-align: center; }
+.celebration-map-block p { margin: 0; }
+/* Leaflet's own links keep their shape (the rules for the invitation's links would stretch them); the zoom buttons get a 44 px target. */
+.celebration .celebration-map .leaflet-control-attribution a { display: inline; min-height: 0; font-weight: 400; }
+.celebration .celebration-map .leaflet-control-zoom a { display: block; width: 44px; height: 44px; min-height: 0; line-height: 44px; }
+/* The pin sits on map tiles, not on the invitation's surfaces: fixed ink with a light edge reads on streets and on parks, in both schemes. Its tip is the point. */
+.celebration-map-pin::before { content: ""; position: absolute; left: 2px; top: 5px; width: 24px; height: 24px; box-sizing: border-box; border: 3px solid #fff; border-radius: 50% 50% 50% 0; background: #1c1c1a; box-shadow: 0 1px 4px rgb(0 0 0 / .4); transform: rotate(-45deg); }

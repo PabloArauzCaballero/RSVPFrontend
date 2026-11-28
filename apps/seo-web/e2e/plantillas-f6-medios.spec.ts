@@ -7,7 +7,7 @@ import sharp from "sharp";
 // Afirma lo que debe cumplirse; solo escribe imágenes cuando F6_EVIDENCE_DIR está definido (evidencia, nunca línea base).
 const SLUG = "fixture-v2-medios";
 const OUT = process.env.F6_EVIDENCE_DIR;
-const PROVIDERS = /^https:\/\/(www\.youtube-nocookie\.com|www\.google\.com)\//;
+const PROVIDERS = /^https:\/\/www\.youtube-nocookie\.com\//;
 
 async function open(page: Page, width: number, scheme: "light" | "dark" = "light", reduced = true): Promise<void> {
   await page.setViewportSize({ width, height: 900 });
@@ -91,7 +91,7 @@ test("no request to any provider before the guest taps; one tap loads exactly on
   expect(requested.filter((url) => url.includes("youtube-nocookie"))).toHaveLength(1);
 });
 
-test("keyboard: Tab reaches the play button of the video with a visible focus ring and Enter loads it; the map loads the same way", async ({ page }) => {
+test("keyboard: Tab reaches the play button of the video with a visible focus ring and Enter loads it; the map block offers no third party for a venue without a point", async ({ page }) => {
   const requested: string[] = [];
   await stubProviders(page, requested);
   await open(page, 390);
@@ -104,10 +104,9 @@ test("keyboard: Tab reaches the play button of the video with a visible focus ri
   expect(box!.height).toBeGreaterThanOrEqual(44);
   await page.keyboard.press("Enter");
   await expect(page.locator('.celebration-embed[data-provider="youtube"] iframe')).toHaveCount(1);
-  const map = page.getByRole("button", { name: /Ver el mapa/ });
-  await map.focus();
-  await page.keyboard.press("Space");
-  await expect(page.locator('.celebration-embed[data-provider="google_maps"] iframe')).toHaveAttribute("src", /^https:\/\/www\.google\.com\/maps\?q=Iglesia/);
+  // The fixture's venue has no marked point: its map block is the place in words with «copy address», never a map made from its name.
+  await expect(page.locator(".celebration-map-block").getByRole("button", { name: /Copiar dirección/ })).toBeVisible();
+  await expect(page.locator('.celebration-map-block a, .celebration-map-block iframe, a[href*="google.com/maps"]')).toHaveCount(0);
 });
 
 test("no network: after the tap, going offline ends in an alert with a retry (no silent blank box)", async ({ page, context }) => {

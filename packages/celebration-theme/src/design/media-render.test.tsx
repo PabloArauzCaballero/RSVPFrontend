@@ -162,13 +162,14 @@ describe("F6 · embeds (P17)", () => {
     }
   });
 
-  it("the map shows the venue the block points at, loads on tap from Google Maps, and nothing if the venue does not exist", () => {
-    const { container, getByRole } = draw(documentWith([{ block: block("map", "map", { venueIndex: 0 }), element: {} }]));
-    expect(container.querySelector("iframe")).toBeNull();
-    fireEvent.click(getByRole("button", { name: /celebration\.media\.showMap/ }));
-    expect(container.querySelector("iframe")?.getAttribute("src")).toContain("https://www.google.com/maps?q=Iglesia%20San%20Francisco");
+  it("the map block never asks Google for a venue by name: without a point it shows the place in words, and nothing if the venue does not exist", () => {
+    const { container } = draw(documentWith([{ block: block("map", "map", { venueIndex: 0 }), element: {} }]));
+    const place = container.querySelector(".celebration-map-block");
+    expect(place?.textContent).toContain("Iglesia San Francisco");
+    expect(place?.querySelector("a, iframe, .celebration-map-open")).toBeNull();
+    expect(container.innerHTML).not.toContain("google.com/maps");
     cleanup();
-    expect(draw(documentWith([{ block: block("map", "map", { venueIndex: 7 }), element: {} }])).container.querySelector(".celebration-embed")).toBeNull();
+    expect(draw(documentWith([{ block: block("map", "map", { venueIndex: 7 }), element: {} }])).container.querySelector(".celebration-map-block")).toBeNull();
   });
 
   it("music from a Spotify link is a facade; a link that is not Spotify draws nothing", () => {

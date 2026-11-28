@@ -20,6 +20,8 @@ const MAP_HOSTS: readonly { readonly host: RegExp; readonly path?: RegExp }[] = 
   { host: /^osm\.org$/ }
 ];
 
+const GOOGLE_HOST = /(^|\.)google\./;
+
 /** A plain decimal number and nothing else: no exponent, no hexadecimal, no empty text. */
 const DECIMAL = /^\s*[+-]?\d+(?:\.\d+)?\s*$/;
 /** `@lat,lng` as one path segment, optionally followed by the zoom: `/@-17.78,-63.18,15z`. */
@@ -48,17 +50,20 @@ function knownMapLink(link: string): URL | null {
 }
 
 /**
- * The point carried by a saved map link, or null. `query`, `q`, `ll` and `mlat`+`mlon` name the place
- * (`legacy-link`); `@lat,lng` only says where the map was centred and comes out as `legacy-link-unverified`.
+ * The point carried by a saved map link, or null. `query`, `q`, `mlat`+`mlon` and the `ll` of Apple and Waze name the place
+ * (`legacy-link`); `@lat,lng` and Google's `ll` only say where the map was centred and come out as `legacy-link-unverified`.
  */
 export function locationFromLegacyLink(link: unknown): Location | null {
   const url = typeof link === "string" ? knownMapLink(link) : null;
   if (!url) return null;
   const params = url.searchParams;
-  const named = pair(params.get("query")) ?? pair(params.get("q")) ?? pair(params.get("ll")) ?? point(params.get("mlat"), params.get("mlon"));
+  // In Google's links `ll` is where the map was centred, not the place; in Apple's and Waze's it is the destination.
+  const ll = pair(params.get("ll"));
+  const google = GOOGLE_HOST.test(url.hostname.toLowerCase());
+  const named = pair(params.get("query")) ?? pair(params.get("q")) ?? (google ? null : ll) ?? point(params.get("mlat"), params.get("mlon"));
   if (named) return { ...named, source: "legacy-link" };
   const view = AT_SEGMENT.exec(url.pathname);
-  const centre = view ? point(view[1], view[2]) : null;
+  const centre = (google ? ll : null) ?? (view ? point(view[1], view[2]) : null);
   return centre ? { ...centre, source: "legacy-link-unverified" } : null;
 }
 
@@ -69,4 +74,18 @@ export function locationFromLegacyLink(link: unknown): Location | null {
 export function osmPointUrl(coordinates: Coordinates): string {
   if (!isValidCoordinates(coordinates)) throw new RangeError("Coordinates out of range");
   return `${OSM_BASE}?mlat=${coordinates.lat.toFixed(COORDINATE_DIGITS)}&mlon=${coordinates.lng.toFixed(COORDINATE_DIGITS)}`;
+}
+
+/**
+ * OpenStreetMap's directions page with the point as destination: what «how to get there» opens. The visitor picks the origin
+ * there. `to=lat,lng` is what the site itself reads (openstreetmap-website, `index_modules/directions.js`).
+ */
+export function osmDirectionsUrl(coordinates: Coordinates): string {
+  return `${OSM_BASE}directions?to=${encodeURIComponent(formatCoordinates(coordinates, ","))}`;
+}
+
+/** "lat,lng" with six decimals. Throws a `RangeError` for coordinates outside the globe. */
+export function formatCoordinates(coordinates: Coordinates, separator = ", "): string {
+  if (!isValidCoordinates(coordinates)) throw new RangeError("Coordinates out of range");
+  return `${coordinates.lat.toFixed(COORDINATE_DIGITS)}${separator}${coordinates.lng.toFixed(COORDINATE_DIGITS)}`;
 }

@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { cleanup, render, screen } from "@testing-library/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it } from "vitest";
-import { CelebrationRenderer, COMPONENT_CONTRAST, contrastRatio, paletteFor, TEXT_CONTRAST, readContent, themeFromTemplate, daysUntil, sectionForPath, partnerHref, navigationHref, mapUrl, giftsPath, type GiftsStatus, type TemplateDocument } from "./index.js";
+import { CelebrationRenderer, COMPONENT_CONTRAST, contrastRatio, paletteFor, TEXT_CONTRAST, readContent, themeFromTemplate, daysUntil, sectionForPath, partnerHref, mapUrl, giftsPath, type GiftsStatus, type TemplateDocument } from "./index.js";
 import seeded from "../test/seeded-palettes.json";
 import { GALLERY, NOW, t, TEMPLATES, VIEW, WEDDING_SECTIONS } from "../test/fixtures.js";
 
@@ -246,7 +246,6 @@ describe("content helpers", () => {
     expect(sectionForPath("itinerario")).toBe("schedule");
     expect(sectionForPath("admin")).toBeUndefined();
     expect(partnerHref("a b")).toBe("/r/a%20b");
-    expect(navigationHref({ name: "Iglesia", address: "Plaza" })).toBe("https://www.google.com/maps/search/?api=1&query=Iglesia%2C%20Plaza");
     expect(daysUntil(null, NOW)).toBeNull();
     expect(daysUntil("not a date", NOW)).toBeNull();
     expect(daysUntil("2026-10-01T00:00:00Z", NOW)).toBe(0);

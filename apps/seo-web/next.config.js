@@ -10,7 +10,7 @@ const path = require('node:path');
  * Privacy-enhanced hosts only
  * (youtube-nocookie, Vimeo with dnt). Nothing else may be framed, and `frame-ancestors 'none'` still forbids framing this site.
  */
-const frameHosts = ['www.youtube-nocookie.com', 'player.vimeo.com', 'open.spotify.com', 'www.google.com'];
+const frameHosts = ['www.youtube-nocookie.com', 'player.vimeo.com', 'open.spotify.com'];
 const frameSrc = `frame-src ${frameHosts.map((host) => `https://${host}`).join(' ')}`;
 
 const securityHeaders = [
@@ -34,7 +34,7 @@ const nextConfig = {
   outputFileTracingRoot: path.join(__dirname, '../..'),
   // A6 · Do not advertise the framework.
   poweredByHeader: false,
-  transpilePackages: ['@rsvp/api-client', '@rsvp/auth', '@rsvp/celebration-theme', '@rsvp/design-tokens', '@rsvp/forms', '@rsvp/i18n', '@rsvp/query-hooks', '@rsvp/ui-web'],
+  transpilePackages: ['@rsvp/api-client', '@rsvp/auth', '@rsvp/celebration-theme', '@rsvp/design-tokens', '@rsvp/forms', '@rsvp/i18n', '@rsvp/location', '@rsvp/query-hooks', '@rsvp/ui-web'],
   reactStrictMode: true,
   // L18 · Baked at build time (not read from the running server's environment): only the visual test build opens the dev-only
   // /catalogo (lib/dev-surfaces.ts). The deployed image is built without it, and setting it on a running container changes nothing.
