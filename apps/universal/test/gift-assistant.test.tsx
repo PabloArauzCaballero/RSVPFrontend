@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import axe from "axe-core";
 import { QueryClient } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -970,3 +970,44 @@ function render3(): ReturnType<typeof renderApp> {
   const made = fakeClient(handlers());
   return renderApp(<AddGiftScreen celebrationId="c-1" initial="catalog" onNavigate={navigate} />, made.client);
 }
+
+/** react-native-web reads `documentElement.clientWidth` (0 in jsdom, so a test that does not set it renders the narrow layout). */
+function setWidth(width: number): void {
+  Object.defineProperty(document.documentElement, "clientWidth", { configurable: true, value: width });
+  act(() => { window.dispatchEvent(new Event("resize")); });
+}
+
+describe("QA · turning the tablet keeps the selection of every step", () => {
+  afterEach(() => setWidth(1024));
+
+  it("step 1: an idea ticked at <= 900 px is still ticked, and «Elegir productos» still enabled, at >= 1023 px (and back)", async () => {
+    setWidth(900);
+    await open();
+    click("idea-CAKE");
+    expect(screen.getByTestId("idea-CAKE").getAttribute("aria-checked")).toBe("true");
+    setWidth(1023);
+    expect(screen.getByTestId("idea-CAKE").getAttribute("aria-checked")).toBe("true");
+    expect(screen.getByTestId("wizard-next").hasAttribute("disabled") || screen.getByTestId("wizard-next").getAttribute("aria-disabled") === "true").toBe(false);
+    expect(screen.getByTestId("wizard-selected").textContent).toMatch(/1/);
+    setWidth(900);
+    expect(screen.getByTestId("idea-CAKE").getAttribute("aria-checked")).toBe("true");
+  });
+
+  it("steps 2 and 3: the product picked and the delivery notes survive the same turn", async () => {
+    setWidth(900);
+    await open();
+    click("idea-CAKE");
+    await next(/producto/i);
+    click("choose-torta");
+    setWidth(1100);
+    expect(screen.getByTestId("wizard-next").getAttribute("aria-disabled")).not.toBe("true");
+    await next(/resumen|revis/i);
+    const notes = screen.getByTestId("wizard-notes") as HTMLTextAreaElement;
+    fireEvent.change(notes, { target: { value: "Dejar en porteria" } });
+    setWidth(900);
+    expect((screen.getByTestId("wizard-notes") as HTMLTextAreaElement).value).toBe("Dejar en porteria");
+    setWidth(1100);
+    expect((screen.getByTestId("wizard-notes") as HTMLTextAreaElement).value).toBe("Dejar en porteria");
+    expect(screen.getByTestId("wizard-submit")).toBeTruthy();
+  });
+});

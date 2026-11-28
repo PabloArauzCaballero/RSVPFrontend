@@ -65,7 +65,12 @@ export function RangeTotals({ totals }: { readonly totals: MetricTotals }): Reac
   );
 }
 
-const FIELDS: readonly string[] = ["day", "category", "destination", "impressions", "clicks", "validLeads", "invalidLeads", "leads"];
+const FIELDS: readonly string[] = ["day", "category", "destination", "impressions", "clicks", "ctr", "validLeads", "invalidLeads", "leads"];
+/** A group figure as text: CTR is a ratio and reads as a percentage, the counts as numbers. */
+export function figureText(key: string, value: unknown, locale: ReturnType<typeof useLocale>): string {
+  if (typeof value !== "number") return String(value);
+  return key === "ctr" ? new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 1 }).format(value) : formatNumber(value, locale);
+}
 type Group = "day" | "category" | "destination";
 type Period = "d7" | "d30" | "d90" | "custom";
 const PERIOD_DAYS: Readonly<Record<Exclude<Period, "custom">, number>> = { d7: 7, d30: 30, d90: 90 };
@@ -125,7 +130,8 @@ function Metrics({ provider }: { readonly provider: Provider }): ReactNode {
                   // The backend answers a group as {key, ...totals}; for categories the key is the code.
                   const id = String(row[group] ?? Object.values(row).find((value) => typeof value === "string") ?? "");
                   const title = group === "category" ? categoryLabel(String(row["categoryCode"] ?? id), t, categoryNames) : id;
-                  const figures = Object.entries(row).filter(([key, value]) => key !== group && value !== id).map(([key, value]) => `${FIELDS.includes(key) ? t(`portal.metrics.field.${key}`) : key}: ${typeof value === "number" ? formatNumber(value, locale) : String(value)}`);
+                  // Only the figures the screen has a name for: a key the backend adds later never reaches the person as raw text.
+                  const figures = Object.entries(row).filter(([key, value]) => key !== group && value !== id && FIELDS.includes(key)).map(([key, value]) => `${t(`portal.metrics.field.${key}`)}: ${figureText(key, value, locale)}`);
                   return (
                     <View key={`${title}-${index}`} style={{ gap: spacing[1], paddingVertical: spacing[3], borderTopWidth: 1, borderTopColor: palette.border }} testID="metric-row">
                       <Text style={styles.label}>{title}</Text>
