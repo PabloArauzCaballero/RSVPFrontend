@@ -3,7 +3,7 @@ export const portalEsBO = {
   label: "Portal del proveedor",
   nav: { label: "Secciones del portal", home: "Resumen", services: "Ofertas", products: "Productos", delivery: "Entrega", microsite: "Perfil público", documents: "Documentos", destinations: "Contacto", agenda: "Agenda", quotes: "Cotizaciones", leads: "Solicitudes", metrics: "Resultados" },
   dest: { overview: "Resumen", offers: "Ofertas", agenda: "Agenda", clients: "Clientes", profile: "Perfil" },
-  microsite: {
+  microsite: { pinMark: "Marcar en el mapa", pinChange: "Cambiar el punto", pinRemove: "Quitar el punto", pinMarked: "Punto marcado. Tus clientes verán el mapa en tu perfil.", pinNone: "Sin punto en el mapa: tus clientes verán solo la dirección escrita.", pinReview: "Cambiaste la dirección. Revisa que el punto siga en el lugar correcto.", 
     moderationRejected: "El equipo rechazó tu perfil público y dejó de mostrarse. Motivo: {{reason}}. Corrígelo y guárdalo: volverá a publicarse cuando lo aprobemos.", moderationHeld: "Tus cambios esperan la revisión del equipo. Hasta que los aprobemos, tu perfil público no se muestra.",
     title: "Perfil público", intro: "Así te ven las parejas en tu página. Se guarda completo; si alguien más lo cambió, te avisamos antes de pisarlo.",
     descEs: "Descripción (español)", descEn: "Descripción (inglés)", descHelp: "Hasta 2000 caracteres.", website: "Sitio web", instagram: "Instagram", facebook: "Facebook", whatsapp: "WhatsApp (con código de país)",

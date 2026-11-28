@@ -13,7 +13,7 @@ import { searchProviders, type ProviderCard } from "./providers";
 const MAX_SLUG_PAGES = 20;
 
 // The partner model (built from the directory cards) is shared with the app's microsite.
-export { PARTNER_CONTACT_ORDER, addressText, partnerFromListings, type Partner, type PartnerLookup } from "@rsvp/query-hooks";
+export { PARTNER_CONTACT_ORDER, addressPoint, addressText, partnerFromListings, type Partner, type PartnerLookup } from "@rsvp/query-hooks";
 
 export async function loadPartner(slug: string, client: ApiClient = publicClient()): Promise<PartnerLookup> {
   // Provider Catalog 2.0.0 ignores `?slug=` (it returns the whole directory), so the partner's cards are collected

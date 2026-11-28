@@ -4,7 +4,9 @@ import { ApiError } from "@rsvp/api-client";
 import { spacing } from "@rsvp/design-tokens";
 import { useMicrosite, useSaveMicrosite, type Microsite, type MicrositeInput, type Provider } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../platform/providers";
-import { Field, Notice, PageIntro, TimeInput } from "../host/ui";
+import type { MapPoint } from "@rsvp/celebration-theme/model";
+import { ActionButton, Field, Notice, PageIntro, TimeInput } from "../host/ui";
+import { MapPicker } from "../host/map-picker";
 import { PortalErrorNotice as ErrorNotice } from "./errors";
 import { PortalScreen, usePortalHeader } from "./frame";
 import { useSingleMutation } from "../platform/single-flight";
@@ -52,10 +54,13 @@ export function validateMicrosite(form: Form): { readonly input: MicrositeInput;
  * The PUT replaces the whole document, and this form edits only part of it: the gallery, the weekly hours blocks after the first and
  * the address city/coordinates are carried over from the version loaded so saving the form never erases what it cannot show.
  */
-export function mergeMicrosite(input: MicrositeInput, loaded: Microsite): MicrositeInput {
+export function mergeMicrosite(input: MicrositeInput, loaded: Microsite, point?: MapPoint | null): MicrositeInput {
   const rest = loaded.hours.weekly.slice(1);
   const weekly = input.hours?.weekly.length ? [...input.hours.weekly, ...rest] : [];
-  const { city, latitude, longitude } = loaded.address ?? {};
+  // `point` undefined keeps the loaded coordinates; a point replaces them; null removes them (the host took the pin off).
+  const { city } = loaded.address ?? {};
+  const latitude = point === undefined ? loaded.address?.latitude : point?.lat;
+  const longitude = point === undefined ? loaded.address?.longitude : point?.lng;
   return {
     ...input,
     gallery: loaded.gallery,
@@ -78,7 +83,15 @@ function Editor({ microsite, providerId, onReload }: { readonly microsite: Micro
   const [saved, setSaved] = useState<number | null>(null);
   const [conflict, setConflict] = useState(false);
   const [more, setMore] = useState(() => hasAdvanced(toForm(microsite)));
-  useEffect(() => { setForm(toForm(microsite)); }, [microsite.version]);
+  /** The exact point of the public address (optional): marked on the map, searched or kept from before. Never a link. */
+  const [point, setPoint] = useState<MapPoint | null>(() => (microsite.address?.latitude !== undefined && microsite.address.longitude !== undefined ? { lat: microsite.address.latitude, lng: microsite.address.longitude } : null));
+  const [markedFor, setMarkedFor] = useState(() => toForm(microsite).line.trim());
+  const [picking, setPicking] = useState(false);
+  useEffect(() => {
+    setForm(toForm(microsite));
+    setPoint(microsite.address?.latitude !== undefined && microsite.address.longitude !== undefined ? { lat: microsite.address.latitude, lng: microsite.address.longitude } : null);
+    setMarkedFor(toForm(microsite).line.trim());
+  }, [microsite.version]);
   const set = (patch: Partial<Form>): void => { setForm((current) => ({ ...current, ...patch })); setSaved(null); };
   const text = (key: keyof Form): string | undefined => (errors[key] ? t(errors[key] as string) : undefined);
   const submit = (): void => {
@@ -86,7 +99,7 @@ function Editor({ microsite, providerId, onReload }: { readonly microsite: Micro
     setErrors(result.errors); setConflict(false);
     if (ADVANCED.some((key) => result.errors[key])) setMore(true);
     if (Object.keys(result.errors).length) return;
-    saveOnce({ input: mergeMicrosite(result.input, microsite), version: microsite.version }, {
+    saveOnce({ input: mergeMicrosite(result.input, microsite, form.line.trim() ? point : null), version: microsite.version }, {
       onSuccess: (next) => setSaved(next.version),
       onError: (error) => { if (error instanceof ApiError && error.status === CONFLICT) { setConflict(true); onReload(); } }
     });
@@ -103,6 +116,13 @@ function Editor({ microsite, providerId, onReload }: { readonly microsite: Micro
         <Field label={t("portal.microsite.website")} value={form.website} onChange={(website) => set({ website })} error={text("website")} testID="microsite-website" />
         <Field label={t("portal.microsite.whatsapp")} keyboardType="phone-pad" value={form.whatsapp} onChange={(whatsapp) => set({ whatsapp })} error={text("whatsapp")} />
         <Field label={t("portal.microsite.address")} help={t("portal.microsite.addressHelp")} value={form.line} onChange={(line) => set({ line })} testID="microsite-address" />
+        {form.line.trim() ? (
+          <View style={{ gap: spacing[2], alignItems: "flex-start" }}>
+            <ActionButton variant="secondary" icon="pin" label={t(point ? "portal.microsite.pinChange" : "portal.microsite.pinMark")} onPress={() => setPicking(true)} testID="microsite-pin" />
+            {point ? <ActionButton variant="secondary" icon="close" label={t("portal.microsite.pinRemove")} onPress={() => { setPoint(null); setSaved(null); }} testID="microsite-pin-remove" /> : null}
+            <Notice>{point ? (markedFor !== form.line.trim() ? t("portal.microsite.pinReview") : t("portal.microsite.pinMarked")) : t("portal.microsite.pinNone")}</Notice>
+          </View>
+        ) : null}
         <MoreToggle label={t(more ? "portal.home.less" : "portal.home.more")} onPress={() => setMore((current) => !current)} testID="microsite-more" />
         {more ? (
           <View style={{ gap: spacing[3] }}>
@@ -121,6 +141,7 @@ function Editor({ microsite, providerId, onReload }: { readonly microsite: Micro
         {save.isError && !conflict ? <ErrorNotice error={save.error} onRetry={submit} /> : null}
         {saved !== null ? <Notice kind="success">{t("portal.microsite.saved", { version: saved })}</Notice> : null}
       </View>
+      {picking ? <MapPicker initial={point} query={form.line.trim()} onClose={() => setPicking(false)} onPick={(next) => { setPoint(next); setMarkedFor(form.line.trim()); setSaved(null); setPicking(false); }} /> : null}
     </View>
   );
 }

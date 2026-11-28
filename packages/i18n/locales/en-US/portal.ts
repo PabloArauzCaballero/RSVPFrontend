@@ -6,7 +6,7 @@ export const portalEnUS: DeepStrings<typeof portalEsBO> = {
   label: "Provider portal",
   nav: { label: "Portal sections", home: "Overview", services: "Offers", products: "Products", delivery: "Delivery", microsite: "Public profile", documents: "Documents", destinations: "Contact", agenda: "Schedule", quotes: "Quotes", leads: "Requests", metrics: "Results" },
   dest: { overview: "Overview", offers: "Offers", agenda: "Schedule", clients: "Clients", profile: "Profile" },
-  microsite: {
+  microsite: { pinMark: "Mark on the map", pinChange: "Change the point", pinRemove: "Remove the point", pinMarked: "Point marked. Your customers will see the map on your profile.", pinNone: "No point on the map: your customers will see only the written address.", pinReview: "You changed the address. Check that the point is still in the right place.", 
     moderationRejected: "The team rejected your public profile and it is no longer shown. Reason: {{reason}}. Fix it and save it: it will be published again once we approve it.", moderationHeld: "Your changes are waiting for the team's review. Until we approve them, your public profile is not shown.",
     title: "Public profile", intro: "This is how couples see you on your page. It saves as a whole; if someone else changed it, we warn you before overwriting.",
     descEs: "Description (Spanish)", descEn: "Description (English)", descHelp: "Up to 2000 characters.", website: "Website", instagram: "Instagram", facebook: "Facebook", whatsapp: "WhatsApp (with country code)",

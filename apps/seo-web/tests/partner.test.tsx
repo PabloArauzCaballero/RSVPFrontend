@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { addressText } from "../lib/partner";
+import { addressPoint, addressText } from "../lib/partner";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createApiClient, type ApiClient } from "@rsvp/api-client";
 import { createTranslator } from "@rsvp/i18n/server";
@@ -131,5 +131,27 @@ describe("address shapes from the catalogue", () => {
     expect(addressText({ city: "La Paz", line: "Av. Arce 2000", latitude: -16.5, longitude: -68.1, reference: "frente a la plaza" })).toBe("Av. Arce 2000, frente a la plaza");
     expect(addressText({ city: "La Paz" })).toBeUndefined();
     expect(addressText(undefined)).toBeUndefined();
+  });
+});
+
+describe("the partner's marked point (MAP)", () => {
+  it("only valid coordinates of the address object become a point", () => {
+    expect(addressPoint({ line: "Av. Arce 2000", latitude: -16.5, longitude: -68.1 })).toEqual({ lat: -16.5, lng: -68.1 });
+    for (const bad of ["Calle 1", null, { latitude: -16.5 }, { latitude: "x", longitude: 1 }, { latitude: 95, longitude: 0 }, { latitude: 0, longitude: 181 }]) expect(addressPoint(bad)).toBeUndefined();
+  });
+
+  it("the public profile shows the map actions and GeoCoordinates only when the partner marked the point; otherwise only the written address", () => {
+    const marked = partnerFromListings("hotel-andino", [card({ address: { line: "Av. Arce 2000", latitude: -16.5, longitude: -68.1 } } as never)]);
+    if (!marked) throw new Error("expected partner");
+    const document = dom(renderToStaticMarkup(<PartnerMicrosite partner={marked} t={t} locale="es-BO" />));
+    expect(document.body.textContent).toContain("Av. Arce 2000");
+    expect(document.body.textContent).toContain("Ver mapa");
+    expect(document.querySelector('a[href^="https://www.openstreetmap.org/directions"]')).not.toBeNull();
+    expect(JSON.parse(document.querySelector('script[type="application/ld+json"]')!.textContent!)["geo"]).toEqual({ "@type": "GeoCoordinates", latitude: -16.5, longitude: -68.1 });
+    expect(document.documentElement.innerHTML).not.toContain("google.com");
+    const plain = partnerFromListings("hotel-andino", [card({ address: "Calle Comercio 123" } as never)]);
+    const text = dom(renderToStaticMarkup(<PartnerMicrosite partner={plain!} t={t} locale="es-BO" />));
+    expect(text.body.textContent).toContain("Calle Comercio 123");
+    expect(text.body.textContent).not.toContain("Ver mapa");
   });
 });

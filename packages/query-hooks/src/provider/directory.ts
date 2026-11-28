@@ -64,7 +64,8 @@ export interface DirectoryCard {
   readonly destinations?: readonly string[];
   /** Cities or areas the provider serves (F25 coverage zone). */
   readonly coverage?: readonly string[];
-  readonly address?: string;
+  /** A line of text or, as the catalogue really sends it, an object `{ line, city, reference, latitude, longitude }` (see `addressText`, `addressPoint`). */
+  readonly address?: string | { readonly line?: string; readonly city?: string; readonly reference?: string; readonly latitude?: number; readonly longitude?: number };
   readonly hours?: readonly string[];
   /** Present in the Provider Catalog 2.0.0 card: who fulfils, coverage zones, transport cost and lead time (F25-04). */
   readonly fulfillment?: { readonly responsible: string; readonly coverageZones: readonly string[]; readonly transportCostMinor?: number; readonly leadTimeDays: number; readonly conditions: string; readonly disclaimer: string };

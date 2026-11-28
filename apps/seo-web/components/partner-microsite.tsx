@@ -7,6 +7,8 @@ import { CheckMark } from "./brand/check-mark";
 import { OfflineArt } from "./brand/illustrations";
 import { Monogram } from "./brand/monogram";
 import { zoneName } from "@rsvp/query-hooks";
+import { LocationView, locationLabels } from "@rsvp/celebration-theme";
+import { guestApiBase } from "../lib/guest-client";
 import { PROVIDER_CATEGORIES } from "../lib/providers";
 import { Breadcrumbs } from "./provider-directory";
 
@@ -32,6 +34,7 @@ export function PartnerMicrosite({ partner, t, locale }: { readonly partner: Par
     ...(partner.imageUrl ? { image: partner.imageUrl } : {}),
     ...(partner.summary ? { description: partner.summary } : {}),
     address: { "@type": "PostalAddress", ...(partner.address ? { streetAddress: partner.address } : {}), addressLocality: partner.city, addressRegion: partner.department, addressCountry: "BO" },
+    ...(partner.point ? { geo: { "@type": "GeoCoordinates", latitude: partner.point.lat, longitude: partner.point.lng } } : {}),
     ...(partner.hours.length ? { openingHours: partner.hours } : {}),
     ...(partner.coverage.length ? { areaServed: partner.coverage.map((zone) => ({ "@type": "City", name: zoneName(zone) })) } : {})
   };
@@ -94,7 +97,9 @@ export function PartnerMicrosite({ partner, t, locale }: { readonly partner: Par
           <section aria-labelledby="partner-coverage" className="partner-section">
             <h2 id="partner-coverage">{t("partner.coverage")}</h2>
             {partner.coverage.length ? <ul className="directory-links directory-links--cities">{partner.coverage.map((area) => <li key={area}><span>{zoneName(area)}</span></li>)}</ul> : <p>{t("partner.noCoverage", { city: partner.city })}</p>}
-            {partner.address ? <p>{partner.address}</p> : null}
+            {partner.point ? (
+              <LocationView name={partner.name} lines={partner.address ? [partner.address] : []} location={{ lat: partner.point.lat, lng: partner.point.lng, source: "pin" }} labels={locationLabels(t, partner.name)} mapConfigUrl={`${guestApiBase().replace(/\/$/, "")}/providers/geo/map-config`} />
+            ) : partner.address ? <p>{partner.address}</p> : null}
             {partner.hours.length ? <ul className="partner-hours">{partner.hours.map((line) => <li key={line}>{line}</li>)}</ul> : null}
           </section>
         </div>

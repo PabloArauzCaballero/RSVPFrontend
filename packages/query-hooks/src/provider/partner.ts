@@ -21,6 +21,8 @@ export interface Partner {
   readonly summary?: string;
   readonly imageUrl?: string;
   readonly address?: string;
+  /** The exact point of the public address, when the partner marked it (`address.latitude/longitude` of the microsite); never a link. */
+  readonly point?: { readonly lat: number; readonly lng: number };
   readonly hours: readonly string[];
   readonly coverage: readonly string[];
   /** Listing that carries the contact buttons; every destination is reached via /r/{listingId}. */
@@ -47,6 +49,13 @@ export function addressText(value: unknown): string | undefined {
     return parts.length ? parts.join(", ") : undefined;
   }
   return undefined;
+}
+
+/** The point of an address object (`latitude`/`longitude`), only when both are valid coordinates. */
+export function addressPoint(value: unknown): { readonly lat: number; readonly lng: number } | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const { latitude, longitude } = value as { latitude?: unknown; longitude?: unknown };
+  return typeof latitude === "number" && typeof longitude === "number" && Number.isFinite(latitude) && Number.isFinite(longitude) && Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180 ? { lat: latitude, lng: longitude } : undefined;
 }
 
 /**
@@ -81,6 +90,7 @@ export function partnerFromListings(slug: string, cards: readonly DirectoryCard[
     ...(head.summary ? { summary: head.summary } : {}),
     ...(head.imageUrl ? { imageUrl: head.imageUrl } : {}),
     ...(addressText(head.address) ? { address: addressText(head.address) } : {}),
+    ...(addressPoint(head.address) ? { point: addressPoint(head.address) as { lat: number; lng: number } } : {}),
     hours: head.hours ?? [],
     coverage: uniqueZones(own.flatMap((card) => [...(card.coverage ?? []), ...(card.fulfillment?.coverageZones ?? [])])),
     ...(own.find((card) => card.providerId)?.providerId ? { providerId: own.find((card) => card.providerId)?.providerId as string } : {}),
