@@ -39,6 +39,6 @@ export const hasImage = (media: PublicMedia): boolean => Boolean(media.variants.
 export const MAX_SCRIM = 0.8;
 export const clampScrim = (value: number | undefined): number => (Number.isFinite(value) ? Math.min(MAX_SCRIM, Math.max(0, value as number)) : 0);
 
-/** The strongest veil the renderer paints behind text (the graded veil of contract 1.8.0 is .85, above what a document may ask for). */
-export const MAX_TEXT_VEIL = 0.95;
+/** The strongest veil the renderer paints behind text: the graded veil of contract 1.8.0 (`x-rsvp-veil.gradedBehindText`, .85), above the .8 a document may ask for and never above the contract. */
+export const MAX_TEXT_VEIL = 0.85;
 export const clampVeil = (value: number | undefined): number => (Number.isFinite(value) ? Math.min(MAX_TEXT_VEIL, Math.max(0, value as number)) : 0);
