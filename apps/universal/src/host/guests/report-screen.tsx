@@ -31,7 +31,7 @@ function useReportExport(celebrationId: string | undefined, status: RsvpStatus |
   const run = async (kind: ExportKind, slug: string): Promise<void> => {
     if (!celebrationId || !flight.begin()) return;
     setExporting(true); setMessage(null);
-    const done = (name: string, outcome: Awaited<ReturnType<typeof saveTextFile>>, note = ""): void => setMessage(outcome === "failed" ? { kind: "error", text: t("guests.report.exportFailed") } : { kind: "success", text: `${t("guests.report.exported", { name })}${note ? ` ${note}` : ""}` });
+    const done = (name: string, outcome: Awaited<ReturnType<typeof saveTextFile>>, note = ""): void => setMessage(outcome === "dismissed" ? null : outcome === "failed" ? { kind: "error", text: t("guests.report.exportFailed") } : { kind: "success", text: `${t("guests.report.exported", { name })}${note ? ` ${note}` : ""}` });
     try {
       if (kind === "catering") {
         const header = CATERING_COLUMNS.map((column) => t(`guests.report.columns.${{ guestKey: "guestKey", group: "group", status: "status", partySize: "partySize", dietaryNotes: "dietary", message: "message" }[column]}`));

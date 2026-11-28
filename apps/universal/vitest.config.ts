@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 const TEST_TIMEOUT_MS = 20_000;
 const MIN_LINE_COVERAGE_PERCENT = 85;
 
-const stub = (name: string): string => fileURLToPath(new URL(`./test/stubs/${name}.ts`, import.meta.url));
+const stub = (name: string): string => fileURLToPath(new URL(`./test/stubs/${name}.${name === "react-native-webview" ? "tsx" : "ts"}`, import.meta.url));
 
 export default defineConfig({
   esbuild: { jsx: "automatic" },
@@ -37,6 +37,8 @@ export default defineConfig({
       { find: /^expo-router$/, replacement: stub("expo-router") },
       // Exact module id only: matches "expo-secure-store".
       { find: /^expo-secure-store$/, replacement: stub("expo-secure-store") },
+      // The real package is a native module; the stub lets a test play the page.
+      { find: /^react-native-webview$/, replacement: stub("react-native-webview") },
       { find: /^expo-clipboard$/, replacement: stub("expo-clipboard") },
       { find: /^expo-notifications$/, replacement: stub("expo-notifications") },
       { find: /^expo-device$/, replacement: stub("expo-device") },

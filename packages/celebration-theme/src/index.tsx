@@ -1,8 +1,18 @@
+export * as design from "./design/index.js";
 export * from "./types.js";
 export * from "./theme.js";
 export * from "./content.js";
+export * from "./location.js";
+export * from "./map/picker-bridge.js";
+export { LeafletMap, type LeafletMapHandle } from "./map/leaflet-map.js";
+export { LocationView, type LocationLabels, type LocationViewProps } from "./map/location-view.js";
+export { locationLabels } from "./map/labels.js";
 export * from "./format.js";
+export * from "./preview-protocol.js";
 export { LAYOUTS } from "./layouts/index.js";
 export { SECTIONS, type SectionProps } from "./sections/index.js";
 export { CelebrationRenderer, type CelebrationRendererProps } from "./renderer.js";
 export { CelebrationThemeProvider, useCelebrationTheme, type ThemeContextValue } from "./theme-context.js";
+export * from "./media/embed.js";
+export * from "./media/variants.js";
+export { AudioPlayer, EmbedFacade, MediaBackdrop, MediaImage, type AudioPlayerProps, type EmbedFacadeProps, type MediaBackdropProps, type MediaImageProps } from "./media/components.js";

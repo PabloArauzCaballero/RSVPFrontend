@@ -1,8 +1,11 @@
 import type { ReactNode } from "react";
-import { GIFTS_CTA_KEYS, navigationHref, partnerHref, shownVenues, type CelebrationContent, type GalleryImage, type GiftsStatus } from "../content.js";
+import { GIFTS_CTA_KEYS, partnerHref, shownVenues, venueLines, type CelebrationContent, type GalleryImage, type GiftsStatus } from "../content.js";
 import { formatTime, zoneLabel } from "../format.js";
 import { ActionIcon } from "../icon.js";
 import type { SectionId, Translate } from "../types.js";
+import { LocationView } from "../map/location-view.js";
+import { locationLabels } from "../map/labels.js";
+import { GalleryView } from "./gallery-view.js";
 
 /** What every section receives. Sections never fetch and never hold copy of their own. */
 export interface SectionProps {
@@ -25,6 +28,8 @@ export interface SectionProps {
   readonly giftsHref: string;
   /** What the gift list holds; until the public view says it, OPEN. Only the button's label depends on it. */
   readonly giftsStatus?: GiftsStatus;
+  /** Backend `GET /providers/geo/map-config`, so the tile server can change without publishing; absent: OpenStreetMap's own. */
+  readonly mapConfigUrl?: string;
 }
 
 type Section = (props: SectionProps) => ReactNode;
@@ -35,13 +40,14 @@ function Story({ content }: SectionProps): ReactNode {
 
 function Schedule({ content, timeZone, locale, t }: SectionProps): ReactNode {
   const first = content.schedule[0];
+  const placeOf = (key: string | undefined): string | undefined => (key ? shownVenues(content).find((venue) => venue.key === key)?.name : undefined);
   return (
     <>
       <ol className="celebration-schedule">
         {content.schedule.map((item) => (
           <li key={item.id}>
             <time dateTime={item.startsAt}>{formatTime(item.startsAt, timeZone, locale)}</time>
-            <div><strong>{item.title}</strong>{item.description ? <p>{item.description}</p> : null}</div>
+            <div><strong>{item.title}</strong>{item.description ? <p>{item.description}</p> : null}{placeOf(item.venueKey) ? <p className="celebration-schedule-place">{t("celebration.schedule.at", { place: placeOf(item.venueKey) as string })}</p> : null}</div>
           </li>
         ))}
       </ol>
@@ -50,7 +56,7 @@ function Schedule({ content, timeZone, locale, t }: SectionProps): ReactNode {
   );
 }
 
-function Venues({ content, t }: SectionProps): ReactNode {
+function Venues({ content, t, mapConfigUrl }: SectionProps): ReactNode {
   const venues = shownVenues(content);
   return (
     <ul className="celebration-venues">
@@ -58,35 +64,30 @@ function Venues({ content, t }: SectionProps): ReactNode {
         <li key={venue.key}>
           <p className="celebration-eyebrow">{t(`celebration.venues.kind.${venue.kind}`)}</p>
           <strong>{venue.name}</strong>
-          {venue.address ? <p>{venue.address}</p> : null}
-          <a href={navigationHref(venue)} target="_blank" rel="noopener noreferrer" data-link-kind="navigation">{t("celebration.venues.howToGetThere")}</a>
+          <LocationView name={venue.name} lines={venueLines(venue)} location={venue.location} labels={locationLabels(t, venue.name)} mapConfigUrl={mapConfigUrl} />
         </li>
       ))}
     </ul>
   );
 }
 
-const IMAGE_WIDTHS = { thumb: 320, medium: 960, full: 1920 } as const;
-
 function Gallery({ gallery, t }: SectionProps): ReactNode {
-  return (
-    <ul className="celebration-gallery">
-      {gallery.map((image, index) => {
-        const srcSet = (["thumb", "medium", "full"] as const)
-          .filter((size) => image.variants[size])
-          .map((size) => `${image.variants[size]} ${IMAGE_WIDTHS[size]}w`).join(", ");
-        const label = t("celebration.gallery.photo", { n: index + 1, total: gallery.length });
-        return (
-          <li key={image.id}>
-            <a href={image.variants.full ?? image.variants.webp} data-link-kind="image" aria-label={t("celebration.gallery.open", { label })}>
-              <img src={image.variants.medium ?? image.variants.webp} srcSet={srcSet || undefined} sizes="(min-width: 768px) 33vw, 100vw" alt={label}
-                width={image.width ?? undefined} height={image.height ?? undefined} loading={index ? "lazy" : "eager"} decoding="async" />
-            </a>
-          </li>
-        );
-      })}
-    </ul>
-  );
+  const available = gallery.flatMap(({ id, width, height, variants }) => {
+    const href = variants.full ?? variants.webp ?? variants.svg ?? variants.medium ?? variants.thumb;
+    return href ? [{ media: { id, width, height, variants }, href }] : [];
+  });
+  const photos = available.map((photo, index) => {
+    const label = t("celebration.gallery.photo", { n: index + 1, total: available.length });
+    return { ...photo, label, openLabel: t("celebration.gallery.open", { label }) };
+  });
+  const labels = {
+    title: t("celebration.sections.gallery"),
+    enlarge: t("celebration.gallery.enlarge"),
+    close: t("celebration.gallery.close"),
+    previous: t("celebration.gallery.previous"),
+    next: t("celebration.gallery.next")
+  };
+  return <GalleryView photos={photos} labels={labels} />;
 }
 
 function DressCode({ content }: SectionProps): ReactNode {
@@ -121,38 +122,50 @@ function Recommendations({ content, t }: SectionProps): ReactNode {
  * PL-A11: the reply always leads somewhere. With the personal link, «Confirmar asistencia»; without it, the help that
  * explains the personal link and lets an open celebration register the visitor (`/c/{slug}/rsvp`).
  */
-function Rsvp({ t, rsvpHref, rsvpHelpHref, rsvpAdaptive }: SectionProps): ReactNode {
+export function RsvpAction({ t, rsvpHref, rsvpHelpHref, rsvpAdaptive, label, variant }: Pick<SectionProps, "t" | "rsvpHref" | "rsvpHelpHref" | "rsvpAdaptive"> & { readonly label?: string; readonly variant?: string }): ReactNode {
+  const confirm = label ?? t("celebration.rsvp.cta");
   const action = rsvpHref
-    ? <a className="celebration-cta" href={rsvpHref} data-link-kind="internal" data-action="rsvp"><ActionIcon name="check" /><span>{t("celebration.rsvp.cta")}</span></a>
+    ? <a className="celebration-cta" href={rsvpHref} data-link-kind="internal" data-action="rsvp" data-variant={variant}><ActionIcon name="check" /><span>{confirm}</span></a>
     : null;
   const help = !rsvpHref && rsvpHelpHref
     ? rsvpAdaptive
       ? (
-        <a className="celebration-cta" href={rsvpHelpHref} data-link-kind="internal" data-action="rsvp-help" data-credential="absent">
+        <a className="celebration-cta" href={rsvpHelpHref} data-link-kind="internal" data-action="rsvp-help" data-credential="absent" data-variant={variant}>
           <span className="celebration-cta-face" data-face="find"><ActionIcon name="invitation" /><span>{t("celebration.rsvp.findLink")}</span></span>
-          <span className="celebration-cta-face" data-face="confirm" aria-hidden="true"><ActionIcon name="check" /><span>{t("celebration.rsvp.cta")}</span></span>
+          <span className="celebration-cta-face" data-face="confirm" aria-hidden="true"><ActionIcon name="check" /><span>{confirm}</span></span>
         </a>
       )
-      : <a className="celebration-cta" href={rsvpHelpHref} data-link-kind="internal" data-action="rsvp-help"><ActionIcon name="invitation" /><span>{t("celebration.rsvp.findLink")}</span></a>
+      : <a className="celebration-cta" href={rsvpHelpHref} data-link-kind="internal" data-action="rsvp-help" data-variant={variant}><ActionIcon name="invitation" /><span>{t("celebration.rsvp.findLink")}</span></a>
     : null;
+  return <>{action}{help}</>;
+}
+
+function Rsvp(props: SectionProps): ReactNode {
   return (
     <>
-      <p>{t("celebration.rsvp.body")}</p>
-      {action}
-      {help}
+      <p>{props.t("celebration.rsvp.body")}</p>
+      <RsvpAction {...props} />
     </>
   );
+}
+
+/**
+ * P22 / PL-A10: the gifts button. Always `giftsHref` (`/c/{slug}/regalos`, never the guest's token); only its label depends on the
+ * gift list's status, unless a design document gives it a label of its own.
+ */
+export function GiftsAction({ t, giftsHref, giftsStatus, label, variant, dock }: Pick<SectionProps, "t" | "giftsHref" | "giftsStatus"> & { readonly label?: string; readonly variant?: string; readonly dock?: boolean }): ReactNode {
+  return <a className="celebration-cta" href={giftsHref} data-link-kind="internal" data-action="gifts" data-gifts-status={giftsStatus} data-variant={variant} data-dock={dock ? "" : undefined}><ActionIcon name="gifts" /><span>{label ?? t(GIFTS_CTA_KEYS[giftsStatus ?? "OPEN"])}</span></a>;
 }
 
 /**
  * P22 / PL-A10: the gifts button, present on every invitation. The list itself lives on its own page, which resolves the
  * guest's credential; this link never carries it.
  */
-function Gifts({ t, giftsHref, giftsStatus }: SectionProps): ReactNode {
+function Gifts(props: SectionProps): ReactNode {
   return (
     <>
-      <p>{t("celebration.gifts.intro")}</p>
-      <a className="celebration-cta" href={giftsHref} data-link-kind="internal" data-action="gifts"><ActionIcon name="gifts" /><span>{t(GIFTS_CTA_KEYS[giftsStatus ?? "OPEN"])}</span></a>
+      <p>{props.t("celebration.gifts.intro")}</p>
+      <GiftsAction {...props} />
     </>
   );
 }

@@ -1,6 +1,6 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { pointUrl } from "@rsvp/celebration-theme";
+import { legacyLink } from "@rsvp/celebration-theme/model";
 import { ContentEditorScreen } from "../src/host/content-editor";
 import { readyCount, sectionStates } from "../src/host/editor-sections";
 import { GalleryEditorScreen } from "../src/host/gallery-editor";
@@ -8,6 +8,7 @@ import { fitScale } from "../src/host/preview-stage";
 import { TemplatesScreen } from "../src/host/templates-screen";
 import { TranslationEditorScreen, translationProgress } from "../src/host/translation-editor";
 import { baseHandlers, CELEBRATION, fakeClient, HttpFailure, renderApp, TEMPLATES, WEDDING, pickTime } from "./support";
+import { previewSeenBy } from "./preview-frame";
 
 const navigate = vi.fn();
 const draft = { title: "Ana y Luis", subtitle: "Los esperamos", venueName: "Iglesia", hosts: { BRIDE: "Ana", GROOM: "Luis" } };
@@ -26,7 +27,7 @@ describe("parts of the invitation and their progress", () => {
     const incomplete = sectionStates({ ...base, draft: { title: "Ana y Luis", hosts: { BRIDE: "Ana" } }, eventDate: { date: "", time: "" } });
     expect(incomplete.general).toBe("missing");
     expect(incomplete.anfitriones).toBe("missing");
-    const filled = sectionStates({ ...base, draft: { ...draft, story: "Nos conocimos", venues: [{ name: "Salón" }], faq: [{ question: "¿Niños?" }] }, schedule: [{ id: "s", title: "Brindis", description: "", date: "", time: "" }] });
+    const filled = sectionStates({ ...base, draft: { ...draft, story: "Nos conocimos", venues: [{ name: "Salón" }], faq: [{ question: "¿Niños?" }] }, schedule: [{ id: "s", title: "Brindis", description: "", date: "", time: "", venueKey: "" }] });
     expect(readyCount(filled)).toBe(6);
   });
 
@@ -51,7 +52,7 @@ describe("parts of the invitation and their progress", () => {
     fireEvent.click(screen.getByRole("button", { name: "Más opciones" }));
     fireEvent.click(await screen.findByTestId("view-preview"));
     expect(await screen.findByRole("dialog", { name: "Así la ven tus invitados" })).toBeTruthy();
-    await waitFor(() => expect(screen.getByTestId("preview-mobile").textContent).toContain("Boda de Ana y Luis"));
+    await waitFor(() => expect(previewSeenBy("preview-frame-mobile")).toContain("Boda de Ana y Luis"));
     expect(calls.some((call) => call.method === "PATCH")).toBe(false);
     fireEvent.click(screen.getByTestId("close-preview"));
     fireEvent.click(screen.getByTestId("save-content"));
@@ -81,43 +82,126 @@ describe("parts of the invitation and their progress", () => {
     expect(calls.some((call) => call.method === "PATCH")).toBe(false);
   });
 
-  it("can pick a place directly, keeping the pasted map link until a result is chosen", async () => {
+  const FLORESTA = { id: "node/7", name: "Floresta", label: "Floresta, Santa Cruz, Bolivia", lat: -17.8, lng: -63.2, osmType: "node", osmId: 7 };
+  const searching = (handler: () => unknown) => ({ "GET /providers/geo/search": handler as never });
+  const patchBody = (calls: readonly { method: string; body?: unknown }[]): { content: Record<string, unknown> } => calls.find((call) => call.method === "PATCH")?.body as { content: Record<string, unknown> };
+
+  it("can pick a place by searching: no link field, the search goes through the service on request only, and the point is saved as locations.main plus an OpenStreetMap mirror", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-11-20T12:00:00Z"));
-    const point = { lat: -17.8, lng: -63.2 };
-    const mapUrl = "https://maps.app.goo.gl/ABCD";
-    const fetch = vi.fn().mockResolvedValue(Response.json([{ place_id: 1, name: "Floresta", display_name: "Floresta, Santa Cruz", lat: "-17.8", lon: "-63.2" }]));
+    const fetch = vi.fn();
     vi.stubGlobal("fetch", fetch);
-    const { client, calls } = fakeClient({ ...baseHandlers(), "PATCH /celebrations/c-1": () => ({ ...CELEBRATION, version: 4 }) });
+    const { client, calls } = fakeClient({ ...baseHandlers(), ...searching(() => ({ items: [FLORESTA], attribution: "© OpenStreetMap contributors" })), "PATCH /celebrations/c-1": () => ({ ...CELEBRATION, version: 4 }) });
     renderApp(<ContentEditorScreen section="general" celebrationId="c-1" onNavigate={navigate} />, client);
     const venue = await screen.findByTestId("field-venue-name") as HTMLInputElement;
-    const link = screen.getByTestId("field-venue-link") as HTMLInputElement;
-    fireEvent.change(link, { target: { value: mapUrl } });
+    expect(screen.queryByTestId("field-venue-link")).toBeNull();
+    expect(screen.queryByText(/Enlace del mapa/)).toBeNull();
     fireEvent.change(venue, { target: { value: "floresta" } });
-    expect(fetch).not.toHaveBeenCalled();
+    expect(calls.some((call) => call.path === "/providers/geo/search")).toBe(false);
     fireEvent.click(screen.getByTestId("field-venue-search"));
-    const result = await screen.findByRole("button", { name: "Floresta, Santa Cruz" });
-    expect(link.value).toBe(mapUrl);
+    const result = await screen.findByRole("button", { name: "Floresta, Santa Cruz, Bolivia" });
+    expect(new URL(`https://x${calls.find((call) => call.path === "/providers/geo/search")?.url}`).searchParams.get("q")).toBe("floresta");
     fireEvent.click(result);
     expect(venue.value).toBe("Floresta");
-    expect(link.value).toBe(pointUrl(point));
+    expect(screen.getByText(/Punto marcado cerca de «Floresta, Santa Cruz, Bolivia»/)).toBeTruthy();
     expect(screen.queryByTestId("map-picker")).toBeNull();
+    expect(fetch).not.toHaveBeenCalled();
     fireEvent.click(screen.getByTestId("field-event-date"));
     fireEvent.click(screen.getByTestId("calendar-day-2026-12-20"));
     fireEvent.click(screen.getByTestId("save-content"));
-    await waitFor(() => expect(calls.find((call) => call.method === "PATCH")?.body).toMatchObject({ content: { eventDate: "2026-12-20T19:00", venueName: "Floresta", venueMapUrl: pointUrl(point) } }));
+    await waitFor(() => expect(patchBody(calls)).toBeTruthy());
+    expect(patchBody(calls).content).toMatchObject({
+      eventDate: "2026-12-20T19:00", venueName: "Floresta", venueMapUrl: legacyLink({ lat: -17.8, lng: -63.2 }),
+      locations: { main: { lat: -17.8, lng: -63.2, source: "search", address: "Floresta, Santa Cruz, Bolivia", forName: "Floresta", osm: { type: "node", id: 7 } } }
+    });
+    expect(JSON.stringify(patchBody(calls).content)).not.toContain("google");
   });
 
-  it("keeps the address and allows retry when a search fails or returns no places", async () => {
-    const fetch = vi.fn().mockResolvedValueOnce(new Response('', { status: 429 })).mockResolvedValueOnce(Response.json([]));
-    vi.stubGlobal("fetch", fetch);
-    const { client } = fakeClient(baseHandlers());
+  it("removing the point removes locations and the mirror; renaming the place asks to check the point; the reference is saved with it", async () => {
+    const withPoint = { ...CELEBRATION, content: { ...CELEBRATION.content, venueMapUrl: legacyLink({ lat: -17.8, lng: -63.2 }), locations: { main: { lat: -17.8, lng: -63.2, source: "pin", forName: "Salón Las Palmas" } } } };
+    const { client, calls } = fakeClient({ ...baseHandlers(), "GET /celebrations/c-1": () => withPoint, "PATCH /celebrations/c-1": () => ({ ...withPoint, version: 4 }) });
+    renderApp(<ContentEditorScreen section="general" celebrationId="c-1" onNavigate={navigate} />, client);
+    const venue = await screen.findByTestId("field-venue-name") as HTMLInputElement;
+    expect(screen.getByText(/Punto marcado en el mapa/)).toBeTruthy();
+    expect(screen.queryByText(/Cambiaste el nombre del lugar/)).toBeNull();
+    fireEvent.change(screen.getByTestId("field-venue-reference"), { target: { value: "Portón verde" } });
+    fireEvent.change(venue, { target: { value: "Otro salón" } });
+    expect(screen.getByText(/Cambiaste el nombre del lugar/)).toBeTruthy();
+    fireEvent.click(screen.getByTestId("save-content"));
+    await waitFor(() => expect(patchBody(calls)).toBeTruthy());
+    expect(patchBody(calls).content).toMatchObject({ venueName: "Otro salón", locations: { main: { lat: -17.8, lng: -63.2, reference: "Portón verde" } } });
+    calls.length = 0;
+    fireEvent.click(screen.getByTestId("field-venue-remove"));
+    expect(screen.getByText(/Sin punto en el mapa/)).toBeTruthy();
+    fireEvent.click(screen.getByTestId("save-content"));
+    await waitFor(() => expect(patchBody(calls)).toBeTruthy());
+    expect(patchBody(calls).content).toMatchObject({ locations: null, venueMapUrl: null });
+  });
+
+  it("saving another section never loses the points: locations is a top-level key and only changed keys are sent", async () => {
+    const withPoints = { ...CELEBRATION, content: { ...CELEBRATION.content, locations: { main: { lat: -17.8, lng: -63.2, source: "pin" } } } };
+    const { client, calls } = fakeClient({ ...baseHandlers(), "GET /celebrations/c-1": () => withPoints, "PATCH /celebrations/c-1": () => ({ ...withPoints, version: 4 }) });
+    renderApp(<ContentEditorScreen section="historia" celebrationId="c-1" onNavigate={navigate} />, client);
+    fireEvent.change(await screen.findByLabelText("Su historia"), { target: { value: "Nos conocimos en Sucre" } });
+    fireEvent.click(screen.getByTestId("save-content"));
+    await waitFor(() => expect(patchBody(calls)).toBeTruthy());
+    expect(Object.keys(patchBody(calls).content)).toEqual(["story"]);
+  });
+
+  it("each venue of the list can have its own point, a removed venue takes its point with it, and an activity keeps and can choose its venueKey", async () => {
+    const base = { ...CELEBRATION, content: { ...CELEBRATION.content, venues: [{ key: "v1", kind: "ceremony", name: "Catedral" }, { key: "v2", kind: "reception", name: "Salón" }], locations: { v1: { lat: -17.78, lng: -63.18, source: "pin", forName: "Catedral" }, v2: { lat: -17.79, lng: -63.19, source: "pin", forName: "Salón" } },
+      schedule: [{ id: "s1", title: "Misa", startsAt: "2026-12-19T23:00:00.000Z", venueKey: "v1" }] } };
+    const { client, calls } = fakeClient({ ...baseHandlers(), "GET /celebrations/c-1": () => base, "PATCH /celebrations/c-1": () => ({ ...base, version: 4 }) });
+    renderApp(<ContentEditorScreen section="lugares" celebrationId="c-1" onNavigate={navigate} />, client);
+    expect(await screen.findByTestId("field-venue-v1-name")).toBeTruthy();
+    expect(screen.getByTestId("field-venue-v2-remove")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("field-venue-v2-remove"));
+    fireEvent.click(screen.getByTestId("save-content"));
+    await waitFor(() => expect(patchBody(calls)).toBeTruthy());
+    expect((patchBody(calls).content["locations"] as Record<string, unknown>)).toEqual({ v1: expect.objectContaining({ lat: -17.78 }) });
+  });
+
+  it("a venue saved before keys existed gets a key when it is pinned, so its point is saved with it", async () => {
+    const base = { ...CELEBRATION, content: { ...CELEBRATION.content, venues: [{ kind: "ceremony", name: "Catedral" }] } };
+    const place = { id: "node/3", name: "Catedral", label: "Catedral, La Paz", lat: -16.5, lng: -68.1 };
+    const { client, calls } = fakeClient({ ...baseHandlers(), "GET /celebrations/c-1": () => base, "GET /providers/geo/search": () => ({ items: [place], attribution: "x" }), "PATCH /celebrations/c-1": () => ({ ...base, version: 4 }) });
+    renderApp(<ContentEditorScreen section="lugares" celebrationId="c-1" onNavigate={navigate} />, client);
+    fireEvent.click(await screen.findByTestId("field-venue-new-search"));
+    fireEvent.click(await screen.findByRole("button", { name: "Catedral, La Paz" }));
+    fireEvent.click(screen.getByTestId("save-content"));
+    await waitFor(() => expect(patchBody(calls)).toBeTruthy());
+    const venues = patchBody(calls).content["venues"] as { key?: string }[];
+    const key = venues[0]?.key;
+    expect(key).toBeTruthy();
+    expect(Object.keys(patchBody(calls).content["locations"] as object)).toEqual([key]);
+  });
+
+  it("the programme keeps the venueKey of an activity when it is edited, and offers the venues of the list", async () => {
+    const base = { ...CELEBRATION, content: { ...CELEBRATION.content, venues: [{ key: "v1", kind: "ceremony", name: "Catedral" }], schedule: [{ id: "s1", title: "Misa", startsAt: "2026-12-19T23:00:00.000Z", venueKey: "v1" }] } };
+    const { client, calls } = fakeClient({ ...baseHandlers(), "GET /celebrations/c-1": () => base, "PATCH /celebrations/c-1": () => ({ ...base, version: 4 }) });
+    renderApp(<ContentEditorScreen section="itinerario" celebrationId="c-1" onNavigate={navigate} />, client);
+    const title = await screen.findByLabelText("Actividad") as HTMLInputElement;
+    expect(screen.getByRole("radio", { name: "Catedral" }).getAttribute("aria-checked")).toBe("true");
+    fireEvent.change(title, { target: { value: "Misa solemne" } });
+    fireEvent.click(screen.getByTestId("save-content"));
+    await waitFor(() => expect(patchBody(calls)).toBeTruthy());
+    expect(patchBody(calls).content["schedule"]).toEqual([expect.objectContaining({ id: "s1", title: "Misa solemne", venueKey: "v1" })]);
+  });
+
+  it("explains a search that is busy (429), off (503) or empty, keeps what was typed, and offers the pin and plain text", async () => {
+    let answer: () => unknown = () => new HttpFailure(429, { title: "Too many" });
+    const { client } = fakeClient({ ...baseHandlers(), ...searching(() => answer()) });
     renderApp(<ContentEditorScreen section="general" celebrationId="c-1" onNavigate={navigate} />, client);
     const venue = await screen.findByTestId("field-venue-name") as HTMLInputElement;
     fireEvent.change(venue, { target: { value: "Avenida desconocida" } });
     fireEvent.click(screen.getByTestId("field-venue-search"));
-    expect(await screen.findByText(/No pudimos buscar ahora/)).toBeTruthy();
+    expect(await screen.findByText(/Hay muchas búsquedas ahora/)).toBeTruthy();
     expect(venue.value).toBe("Avenida desconocida");
+    answer = () => new HttpFailure(503, { title: "Off", code: "GEOCODING_UNAVAILABLE" });
+    fireEvent.click(screen.getByTestId("field-venue-search"));
+    expect(await screen.findByText(/La búsqueda no está disponible ahora/)).toBeTruthy();
+    expect(screen.getByTestId("field-venue-map")).toBeTruthy();
+    answer = () => ({ items: [], attribution: "x" });
     fireEvent.click(screen.getByTestId("field-venue-search"));
     expect(await screen.findByText(/No encontramos ese lugar/)).toBeTruthy();
     expect(venue.value).toBe("Avenida desconocida");
@@ -151,7 +235,7 @@ describe("photos, languages and styles: empty and failed states", () => {
     const { client } = fakeClient({ ...baseHandlers(), "GET /media/templates": () => ({ items: TEMPLATES }), "PUT /celebrations/c-1/template": () => CELEBRATION });
     renderApp(<TemplatesScreen celebrationId="c-1" onNavigate={navigate} />, client);
     fireEvent.click(await screen.findByRole("radio", { name: "Minimalista" }));
-    expect(screen.getByTestId("preview-mobile").textContent).toContain("Ana y Luis");
+    expect(previewSeenBy("preview-frame-mobile")).toContain("Ana y Luis");
     fireEvent.click(screen.getByTestId("apply-template"));
     expect(await screen.findByText("Listo, tu invitación ahora usa Minimalista.")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Más opciones" }));

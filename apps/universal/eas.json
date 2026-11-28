@@ -6,13 +6,15 @@
       "env": {
         "EXPO_PUBLIC_API_URL": "https://rsvp-api.161.97.85.216.sslip.io",
         "EXPO_PUBLIC_SITE_URL": "https://rsvp-web.161.97.85.216.sslip.io",
-        "EXPO_PUBLIC_RSVP_ORIGIN": "https://dev.done.arauzsoftware.com"
+        "EXPO_PUBLIC_RSVP_ORIGIN": "https://dev.done.arauzsoftware.com",
+        "EXPO_PUBLIC_GIFT_QUANTITY": ""
       }
     },
     "development": { "extends": "base", "developmentClient": true, "distribution": "internal", "channel": "development" },
     "preview": { "extends": "base", "distribution": "internal", "channel": "preview", "android": { "buildType": "apk" }, "ios": { "simulator": false } },
     "simulator": { "extends": "production", "distribution": "internal", "autoIncrement": false, "ios": { "simulator": true } },
-    "production": { "extends": "base", "autoIncrement": true, "channel": "production" }
+    "production": { "extends": "base", "autoIncrement": true, "channel": "production" },
+    "testflight": { "extends": "production", "env": { "EXPO_PUBLIC_EAS_OWNER": "pablo28809", "EXPO_PUBLIC_EAS_PROJECT_ID": "addd43ee-7779-4dfa-bf74-b7bd0f1ca1f7", "EXPO_IOS_BUNDLE_IDENTIFIER": "com.pablo28809.done" } }
   },
-  "submit": { "production": { "android": { "track": "internal" } } }
+  "submit": { "production": { "android": { "track": "internal" } }, "testflight": { "ios": { "ascAppId": "6835281552" } } }
 }

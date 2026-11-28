@@ -1,0 +1,10 @@
+import { readFileSync, writeFileSync } from 'node:fs';
+const st = JSON.parse(readFileSync(`${process.env.R6B_DIR ?? '/var/tmp/r6b'}/state.json`, 'utf8'));
+const call = async (method, path, { token, body, headers = {} } = {}) => { const r = await fetch('http://localhost:8000' + path, { method, headers: { ...(token ? { authorization: `Bearer ${token}` } : {}), ...(body ? { 'content-type': 'application/json' } : {}), ...headers }, body: body ? JSON.stringify(body) : undefined }); const t = await r.text(); return { status: r.status, body: t ? JSON.parse(t) : undefined }; };
+const PW = 'Correct-horse-9battery';
+st.tokenA = (await call('POST', '/identity/auth/login', { body: { email: 'r6b-prov-a@example.test', password: PW } })).body.accessToken;
+const l = await call('POST', `/providers/${st.A.providerId}/listings`, { token: st.tokenA, headers: { 'idempotency-key': crypto.randomUUID() }, body: { type: 'PRODUCT', category: 'TABLEWARE', city: 'la-paz', titles: { 'es-BO': 'Juego de copas R6b' }, destinations: { WHATSAPP: 'https://wa.me/59170000000', PRODUCT_PAGE: 'https://tienda.example/copas' } } });
+console.log(l.status, JSON.stringify(l.body).slice(0, 300));
+st.product = l.body.id; writeFileSync(`${process.env.R6B_DIR ?? '/var/tmp/r6b'}/state.json`, JSON.stringify(st, null, 1));
+const sheet = await call('GET', `/providers/${st.A.providerId}/listings/${l.body.id}`, { token: st.tokenA });
+console.log(sheet.status, sheet.body.completeness, JSON.stringify(sheet.body.missing), JSON.stringify(sheet.body.destinations));

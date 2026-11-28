@@ -1,6 +1,12 @@
 import type { CSSProperties, ReactNode } from "react";
-import { daysUntil, giftsPath, hasSectionContent, readContent, SECTION_PATHS, sectionTitleKey, type GalleryImage, type GiftsStatus, type PublicCelebrationView } from "./content.js";
+import { daysUntil, giftsPath, hasSectionContent, isPhotoImage, readContent, sectionTitleKey, type GalleryImage, type GiftsStatus, type PublicCelebrationView } from "./content.js";
+import { drawingById, InvitationArt, ornamentSetById, OrnamentSeparator } from "./art/index.js";
 import { formatDate } from "./format.js";
+import { SECTION_ART } from "./hero-art.js";
+import { DesignRenderer } from "./design/render.js";
+import { Dock } from "./dock.js";
+import { Flourish } from "./flourish.js";
+import { SectionNav } from "./section-nav.js";
 import { SECTIONS } from "./sections/index.js";
 import { layoutOf, themeVariables, type ColorScheme } from "./theme.js";
 import type { CelebrationTheme, SectionId, Translate } from "./types.js";
@@ -22,20 +28,11 @@ export interface CelebrationRendererProps {
   readonly rsvpAdaptive?: boolean;
   /** What the gift list holds (rsvp-f1's `gifts.status`); absent means OPEN. Only the gifts button's label changes. */
   readonly giftsStatus?: GiftsStatus;
+  /** Backend `GET /providers/geo/map-config` (tile server and attribution at run time); absent, OpenStreetMap's own public server. */
+  readonly mapConfigUrl?: string;
   /** Injected for deterministic rendering in tests and previews. */
   readonly now?: Date;
   readonly colorScheme?: ColorScheme;
-}
-
-/** The flourish of the layouts that ask for an ornament; it takes the accent colour of the template. */
-function Ornament(): ReactNode {
-  return (
-    <svg className="celebration-ornament" viewBox="0 0 120 24" width="120" height="24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-      <path d="M4 12h44M72 12h44" />
-      <path d="M60 5c-4 3-4 11 0 14c4-3 4-11 0-14Z" />
-      <path d="M52 12c-3-4-8-4-10-1c3 3 7 3 10 1ZM68 12c3-4 8-4 10-1c-3 3-7 3-10 1Z" />
-    </svg>
-  );
 }
 
 /**
@@ -48,17 +45,20 @@ function Hero({ props, cover }: { readonly props: CelebrationRendererProps; read
   const layout = layoutOf(theme);
   const days = daysUntil(content.eventDate, props.now ?? new Date());
   const countdownKey = days ? "celebration.hero.countdown" : "celebration.hero.today";
-  const image = cover?.variants.full && layout.hero !== "compact" ? cover.variants.full : null;
+  // A vector drawing has no raster variants: the worker may make one the automatic cover.
+  const image = cover?.variants.full ?? cover?.variants.svg ?? null;
+  const heroDrawing = theme.heroArt ? drawingById(theme.heroArt) : undefined;
+  const ornamentSet = theme.ornamentSet ? ornamentSetById(theme.ornamentSet) : undefined;
   // A title made of the hosts' names ("Ana y Luis") already says who: repeating them underneath is noise.
   const hostsInTitle = content.hosts.length > 0 && content.hosts.every((host) => content.title.includes(host.name));
   return (
     <header className="celebration-hero" data-hero={layout.hero} data-has-image={image ? "true" : "false"}>
       {image ? <img className="celebration-hero-image" src={image} alt="" fetchPriority="high" /> : null}
       <div className="celebration-hero-copy">
-        <p className="celebration-eyebrow">{view.eventType.name}</p>
+        {heroDrawing ? <InvitationArt drawing={heroDrawing} className="celebration-hero-art" animate /> : null}
         <h1>{content.title}</h1>
         {content.hosts.length && !hostsInTitle ? <p className="celebration-hosts">{content.hosts.map((host, index) => <span key={host.role}>{index ? <span className="celebration-amp"> &amp; </span> : null}{host.name}</span>)}</p> : null}
-        {layout.divider === "ornament" ? <Ornament /> : <span className="celebration-rule" aria-hidden="true" />}
+        {ornamentSet ? <OrnamentSeparator set={ornamentSet} className="celebration-ornament" /> : layout.divider === "ornament" ? <Flourish /> : <span className="celebration-rule" aria-hidden="true" />}
         {content.eventDate ? <p className="celebration-date"><time dateTime={content.eventDate}>{formatDate(content.eventDate, view.timeZone, view.locale)}</time></p> : null}
         {content.venueName ? <p className="celebration-venue">{content.venueName}</p> : null}
         {days !== null ? <p className="celebration-countdown">{t(countdownKey, { count: days })}</p> : null}
@@ -67,19 +67,10 @@ function Hero({ props, cover }: { readonly props: CelebrationRendererProps; read
   );
 }
 
-function SectionNav({ props, sections }: { readonly props: CelebrationRendererProps; readonly sections: readonly SectionId[] }): ReactNode {
-  const linked = sections.filter((section) => SECTION_PATHS[section]);
-  if (!props.basePath || !linked.length) return null;
-  return (
-    <nav className="celebration-nav" aria-label={props.t("celebration.nav.label")}>
-      <a href={props.basePath} aria-current={props.only ? undefined : "page"} data-link-kind="internal">{props.t("celebration.nav.home")}</a>
-      {linked.map((section) => (
-        <a key={section} href={`${props.basePath}/${SECTION_PATHS[section]}`} aria-current={props.only === section ? "page" : undefined} data-link-kind="internal">
-          {props.t(`celebration.sections.${section}`)}
-        </a>
-      ))}
-    </nav>
-  );
+/** The small drawing that heads a section: decorative, on the page ground, never the only carrier of meaning. */
+function SectionDrawing({ id }: { readonly id: string | undefined }): ReactNode {
+  const drawing = id ? drawingById(id) : undefined;
+  return drawing ? <InvitationArt drawing={drawing} className="celebration-section-art" animate /> : null;
 }
 
 /**
@@ -89,7 +80,9 @@ function SectionNav({ props, sections }: { readonly props: CelebrationRendererPr
  */
 export function CelebrationRenderer(props: CelebrationRendererProps): ReactNode {
   const { theme, view, t } = props;
-  const gallery = props.gallery ?? [];
+  // F4 b: a design document v2 is drawn from its pages and canvases; v1 templates keep the layout engine below.
+  if (theme.design) return <DesignRenderer {...props} design={theme.design} />;
+  const gallery = (props.gallery ?? []).filter(isPhotoImage);
   const content = readContent(view);
   const layout = layoutOf(theme);
   const available = theme.sections.filter((section) => hasSectionContent(section, content, gallery));
@@ -99,6 +92,7 @@ export function CelebrationRenderer(props: CelebrationRendererProps): ReactNode 
   return (
     <article className="celebration" data-layout={theme.layout} data-color-scheme={props.colorScheme ?? "light"} data-section-style={theme.sectionStyle} data-divider={layout.divider}
       data-align={layout.align} data-heading-case={layout.headingCase} data-images={layout.imageTreatment} lang={view.locale} style={style}>
+      <Dock t={t} giftsHref={giftsPath(view.slug)} giftsStatus={props.giftsStatus} rsvpHref={props.rsvpHref} rsvpHelpHref={props.rsvpHelpHref} rsvpAdaptive={props.rsvpAdaptive} />
       {props.only ? <header className="celebration-hero" data-hero="compact"><p className="celebration-eyebrow">{content.title}</p><h1>{t(`celebration.sections.${props.only}`)}</h1></header> : <Hero props={props} cover={gallery.find((image) => image.isCover)} />}
       <SectionNav props={props} sections={available} />
       <main className="celebration-sections">
@@ -108,9 +102,10 @@ export function CelebrationRenderer(props: CelebrationRendererProps): ReactNode 
           return (
             <section key={section} id={section} data-section={section} aria-labelledby={headingId}>
               {/* On a section's own page the h1 already names it; the h2 stays for the outline only. */}
+              {layout.sectionArt && !props.only && SECTION_ART[section] ? <SectionDrawing id={SECTION_ART[section]} /> : null}
               <h2 id={headingId} className={props.only ? "celebration-visually-hidden" : undefined}>{t(sectionTitleKey(section))}</h2>
               <Body content={content} gallery={gallery} timeZone={view.timeZone} locale={view.locale} t={t} rsvpHref={props.rsvpHref} rsvpHelpHref={props.rsvpHelpHref} rsvpAdaptive={props.rsvpAdaptive}
-                giftsHref={giftsPath(view.slug)} giftsStatus={props.giftsStatus} />
+                giftsHref={giftsPath(view.slug)} giftsStatus={props.giftsStatus} {...(props.mapConfigUrl ? { mapConfigUrl: props.mapConfigUrl } : {})} />
             </section>
           );
         })}

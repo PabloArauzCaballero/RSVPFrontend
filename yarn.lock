@@ -4360,22 +4360,21 @@ __metadata:
     "@rsvp/design-tokens": "workspace:*"
     "@testing-library/dom": "npm:^10.4.1"
     "@testing-library/react": "npm:^16.3.0"
+    "@types/leaflet": "npm:1.9.12"
     "@types/react": "npm:~19.1.0"
     "@types/react-dom": "npm:~19.1.0"
     "@vitest/coverage-v8": "npm:^3.1.2"
     jsdom: "npm:^26.1.0"
+    leaflet: "npm:1.9.4"
+    postcss: "npm:^8.5.3"
+    postcss-selector-parser: "npm:^6.1.2"
+    postcss-value-parser: "npm:^4.2.0"
     react: "npm:19.1.0"
     react-dom: "npm:19.1.0"
-    react-native: "npm:0.81.5"
-    react-native-web: "npm:^0.21.0"
     typescript: "npm:^5.8.3"
     vitest: "npm:^3.1.2"
   peerDependencies:
     react: ">=18"
-    react-native: ">=0.79"
-  peerDependenciesMeta:
-    react-native:
-      optional: true
   languageName: unknown
   linkType: soft
 
@@ -4425,6 +4424,32 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@rsvp/design-editor@workspace:*, @rsvp/design-editor@workspace:packages/design-editor":
+  version: 0.0.0-use.local
+  resolution: "@rsvp/design-editor@workspace:packages/design-editor"
+  dependencies:
+    "@rsvp/celebration-theme": "workspace:*"
+    "@rsvp/config-ts": "workspace:*"
+    "@rsvp/i18n": "workspace:*"
+    "@testing-library/dom": "npm:^10.4.1"
+    "@testing-library/react": "npm:^16.3.0"
+    "@types/react": "npm:~19.1.0"
+    "@types/react-dom": "npm:~19.1.0"
+    "@vitest/coverage-v8": "npm:^3.1.2"
+    jsdom: "npm:^26.1.0"
+    parse5: "npm:^7.3.0"
+    postcss: "npm:^8.5.3"
+    postcss-selector-parser: "npm:^6.1.2"
+    postcss-value-parser: "npm:^4.2.0"
+    react: "npm:19.1.0"
+    react-dom: "npm:19.1.0"
+    typescript: "npm:^5.8.3"
+    vitest: "npm:^3.1.2"
+  peerDependencies:
+    react: ">=18"
+  languageName: unknown
+  linkType: soft
+
 "@rsvp/design-tokens@workspace:*, @rsvp/design-tokens@workspace:packages/design-tokens":
   version: 0.0.0-use.local
   resolution: "@rsvp/design-tokens@workspace:packages/design-tokens"
@@ -4469,6 +4494,7 @@ __metadata:
   resolution: "@rsvp/query-hooks@workspace:packages/query-hooks"
   dependencies:
     "@rsvp/api-client": "workspace:*"
+    "@rsvp/celebration-theme": "workspace:*"
     "@rsvp/config-ts": "workspace:*"
     "@rsvp/contracts": "workspace:*"
     "@rsvp/testing": "workspace:*"
@@ -4609,7 +4635,9 @@ __metadata:
     "@rsvp/auth": "workspace:*"
     "@rsvp/celebration-theme": "workspace:*"
     "@rsvp/config-ts": "workspace:*"
+    "@rsvp/design-editor": "workspace:*"
     "@rsvp/design-tokens": "workspace:*"
+    "@rsvp/forms": "workspace:*"
     "@rsvp/i18n": "workspace:*"
     "@rsvp/query-hooks": "workspace:*"
     "@rsvp/telemetry": "workspace:*"
@@ -4649,6 +4677,7 @@ __metadata:
     react-native-screens: "npm:~4.16.0"
     react-native-svg: "npm:15.12.1"
     react-native-web: "npm:^0.21.0"
+    react-native-webview: "npm:13.15.0"
     react-native-worklets: "npm:0.5.1"
     tailwindcss: "npm:^3.4.17"
     typescript: "npm:^5.8.3"
@@ -8991,7 +9020,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"invariant@npm:^2.2.4":
+"invariant@npm:2.2.4, invariant@npm:^2.2.4":
   version: 2.2.4
   resolution: "invariant@npm:2.2.4"
   dependencies:
@@ -11279,7 +11308,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"parse5@npm:^7.2.1":
+"parse5@npm:^7.2.1, parse5@npm:^7.3.0":
   version: 7.3.0
   resolution: "parse5@npm:7.3.0"
   dependencies:
@@ -12008,6 +12037,19 @@ __metadata:
     react: ^18.0.0 || ^19.0.0
     react-dom: ^18.0.0 || ^19.0.0
   checksum: 10c0/4eee467365d8081b04c9c4cac8ab296cb19a1f06ac0ed30ad3d08172f42557f8dbd7eec9ea651ebfe9f5ddbd1e3326e45d9235e91d82f48e70b07822eb9c3873
+  languageName: node
+  linkType: hard
+
+"react-native-webview@npm:13.15.0":
+  version: 13.15.0
+  resolution: "react-native-webview@npm:13.15.0"
+  dependencies:
+    escape-string-regexp: "npm:^4.0.0"
+    invariant: "npm:2.2.4"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 10c0/29b8ad4c1c8623c62e868893e829d20ef1ab51b38f44d0f422e0c19df9d8747ae25d1fcceec4e6d78106f263dce66b7984eeb12c0e5046c7c898b81673b0b6d6
   languageName: node
   linkType: hard
 

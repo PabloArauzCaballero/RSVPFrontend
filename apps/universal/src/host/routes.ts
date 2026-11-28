@@ -9,6 +9,7 @@ export const HOST_ROUTES = {
   gallery: "/editor/galeria",
   translations: "/editor/traducciones",
   templates: "/templates",
+  design: "/diseno",
   preview: "/preview",
   publish: "/publicar",
   settings: "/configuracion",

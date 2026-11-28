@@ -40,6 +40,13 @@ describe("REQ-F14-03 · verification queue", () => {
     expect(calls.some((call) => call.method === "POST" && call.path === "/providers/p-1/verify")).toBe(true);
   });
 
+  it("names each row's category as the catalogue publishes it, never the bare code", async () => {
+    const { client } = fakeClient({ ...queue([{ ...PROVIDERS[0], category: "TABLEWARE" }]), "GET /providers/categories": () => ({ items: [{ code: "TABLEWARE", name: "Loza del catálogo" }] }) });
+    renderApp(<VerificationScreen onNavigate={navigate} />, client, ADMIN);
+    expect(await screen.findByText(/^Loza del catálogo · La Paz · /)).toBeTruthy();
+    expect(screen.queryByText(/TABLEWARE/)).toBeNull();
+  });
+
   it("rejecting needs a reason: empty is refused in place, then the reason is sent", async () => {
     const { client, calls } = fakeClient({ ...queue(PROVIDERS), "POST /providers/p-2/reject": () => ({}) });
     renderApp(<VerificationScreen onNavigate={navigate} />, client, ADMIN);
@@ -208,6 +215,19 @@ describe("REQ-F14-01 · categories, geography, users, organizations", () => {
     fireEvent.click(screen.getByTestId("save-geo"));
     expect(await screen.findByText("Guardado.")).toBeTruthy();
     expect(calls.find((call) => call.method === "PUT")?.body).toMatchObject({ kind: "CITY", parentCode: "SC", names: { "es-BO": "Santa Cruz" }, latitude: -17.78, longitude: -63.18 });
+  });
+
+  it("geography: a city's coordinates can be marked on the map (the numbers stay as the exact alternative)", async () => {
+    const { client, calls } = fakeClient({ "GET /providers/admin/geography": () => ({ items: [{ code: "BO", kind: "COUNTRY", parentCode: null, names: { "es-BO": "Bolivia" }, active: true }, { code: "SC", kind: "REGION", parentCode: "BO", names: { "es-BO": "Santa Cruz (departamento)" }, active: true }] }), "PUT /providers/admin/geography/santa-cruz": (call) => call.body });
+    renderApp(<GeographyScreen onNavigate={navigate} />, client, ADMIN);
+    await screen.findByRole("button", { name: "Editar Bolivia" });
+    fireEvent.click(screen.getByTestId("new-geo"));
+    expect(screen.getByTestId("geo-latitude")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("geo-map"));
+    expect(await screen.findByTestId("map-picker")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("map-cancel"));
+    expect(screen.queryByTestId("map-picker")).toBeNull();
+    expect(calls.some((call) => call.method === "PUT")).toBe(false);
   });
 
   it("geography: editing the country shows it read-only and sends nothing", async () => {

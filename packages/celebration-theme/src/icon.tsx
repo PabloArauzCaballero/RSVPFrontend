@@ -2,11 +2,11 @@ import { NAV_ICONS, NAV_ICON_STROKE } from "@rsvp/design-tokens";
 import type { ReactNode } from "react";
 
 /** Icons the invitation's buttons carry (DESIGN.md: every button is icon + text), named as in the product's one icon set. */
-export type CelebrationIcon = "gifts" | "check" | "invitation";
+export type CelebrationIcon = "gifts" | "check" | "invitation" | "close" | "back" | "arrow" | "search";
 
 /**
  * Web: the icon set's shape drawn in the button's ink (`currentColor`). Decorative, because the label next to it names
- * the action. The native renderer receives the app's `NavIcon` instead (`renderIcon`), which draws the same shapes.
+ * the action.
  */
 export function ActionIcon({ name, size = 20 }: { readonly name: CelebrationIcon; readonly size?: number }): ReactNode {
   const shapes = NAV_ICONS[name];

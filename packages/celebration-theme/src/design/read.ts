@@ -1,0 +1,213 @@
+/**
+ * Reading a design document v2 at the edge of the renderers (F4 b). The public page must never break because a row is
+ * malformed (the same rule as v1: unknown values degrade to the safe defaults), so `readDesign` checks the structure the
+ * renderers rely on and answers `null` for anything else; the caller then falls back to the neutral template. The full
+ * schema is the backend's job (`validate_theme`); this is the minimum a renderer needs not to throw.
+ */
+import type { LayoutSpec } from "../types.js";
+import { familyById } from "./catalog.js";
+import { ANIMATION_NAMES, DESIGN_FRAME_STYLES, ELEMENT_ANIMATIONS, DESIGN_MASKS, DESIGN_VEILS, PAGE_ANIMATIONS, type AnimationName, type ColourScheme, type DesignAnimation, type DesignBackground, type DesignFrame, type DesignMask, type DesignBox, type DesignCanvas, type DesignDocumentV2, type DesignElement, type DesignFont, type DesignLink, type DesignPage, type DesignPalette, type DesignTypographyOverride, type PaletteRole } from "./types.js";
+
+const ROLES: readonly PaletteRole[] = ["canvas", "surface", "text", "muted", "accent", "accentFill", "onAccent", "line"];
+const HEX = /^#[0-9a-fA-F]{6}$/;
+const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
+const isPalette = (value: unknown): value is DesignPalette => isRecord(value) && ROLES.every((role) => typeof value[role] === "string" && HEX.test(value[role] as string));
+const isFont = (value: unknown): value is DesignFont => isRecord(value) && typeof value["family"] === "string" && Array.isArray(value["weights"]) && value["weights"].every((weight) => Number.isInteger(weight));
+
+/** True for a theme that declares itself a design document v2 (the integer 2, as the backend decides it). */
+export function isDesignV2(value: unknown): boolean {
+  return isRecord(value) && typeof value["schemaVersion"] === "number" && value["schemaVersion"] === 2;
+}
+
+const num = (value: unknown, min: number, max: number): value is number => typeof value === "number" && Number.isFinite(value) && value >= min && value <= max;
+const int = (value: unknown, min: number, max: number): value is number => num(value, min, max) && Number.isInteger(value);
+const oneOf = <T extends string>(value: unknown, allowed: readonly T[]): value is T => typeof value === "string" && (allowed as readonly string[]).includes(value);
+const BOX_SIDES = ["top", "right", "bottom", "left"] as const;
+
+/** A box of four sides in 0..256 px, or nothing: a malformed one is dropped, never half read. */
+function box(value: unknown): DesignBox | undefined {
+  if (!isRecord(value) || !BOX_SIDES.every((side) => int(value[side], 0, 256))) return undefined;
+  return { top: value["top"] as number, right: value["right"] as number, bottom: value["bottom"] as number, left: value["left"] as number };
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** A background as the renderer may trust it: a palette role, a drawing id, or (F6) a file id with its fit and a veil in 0..0.8.
+ * The veil kind is normalised here, explicitly: a document saved before 1.8.0 has none and keeps the uniform veil it always had (`even`); only a document that says `graded` gets the graded one. */
+function backgroundOf(value: unknown): DesignBackground | undefined {
+  if (!isRecord(value)) return undefined;
+  if (value["kind"] === "colour" && oneOf(value["role"], ROLES)) return { kind: "colour", role: value["role"] };
+  if (value["kind"] === "illustration" && typeof value["illustrationId"] === "string") return { kind: "illustration", illustrationId: value["illustrationId"] };
+  if (value["kind"] === "media" && typeof value["mediaId"] === "string" && UUID.test(value["mediaId"]) && oneOf(value["fit"], ["cover", "contain"] as const)) {
+    return { kind: "media", mediaId: value["mediaId"], fit: value["fit"], ...(num(value["scrim"], 0, 0.8) ? { scrim: value["scrim"] } : {}), veil: oneOf(value["veil"], DESIGN_VEILS) ? value["veil"] : "even" };
+  }
+  return undefined;
+}
+
+function typographyOf(value: unknown): DesignTypographyOverride | undefined {
+  if (!isRecord(value)) return undefined;
+  const out: Record<string, string | number> = {};
+  if (oneOf(value["role"], ["heading", "body", "monogram"] as const)) out["role"] = value["role"];
+  if (int(value["size"], 13, 160)) out["size"] = value["size"];
+  if (int(value["weight"], 100, 900)) out["weight"] = value["weight"];
+  if (oneOf(value["align"], ["start", "center", "end", "justify"] as const)) out["align"] = value["align"];
+  if (num(value["lineHeight"], 1, 2.5)) out["lineHeight"] = value["lineHeight"];
+  if (num(value["letterSpacing"], -0.05, 0.5)) out["letterSpacing"] = value["letterSpacing"];
+  if (oneOf(value["transform"], ["none", "uppercase", "lowercase", "capitalize"] as const)) out["transform"] = value["transform"];
+  if (oneOf(value["colour"], ROLES)) out["colour"] = value["colour"];
+  return out as DesignTypographyOverride;
+}
+
+/**
+ * An animation as the renderer may trust it. A named animation (contract 1.8.0) takes its duration from the renderer's tokens, so a `name` carries no
+ * `durationMs`; a name outside the curated list is dropped and the entrance stands; `allowed` is what the place accepts (a page cannot sway).
+ */
+function animationOf(value: unknown, allowed: readonly AnimationName[]): DesignAnimation | undefined {
+  if (!isRecord(value) || !oneOf(value["entrance"], ["none", "fade", "rise", "scale", "draw", "envelope"] as const)) return undefined;
+  const name = oneOf(value["name"], ANIMATION_NAMES) && allowed.includes(value["name"]) ? value["name"] : undefined;
+  return {
+    entrance: value["entrance"], ...(name ? { name } : {}), ...(int(value["delayMs"], 0, 5000) ? { delayMs: value["delayMs"] } : {}),
+    ...(!name && int(value["durationMs"], 100, 3000) ? { durationMs: value["durationMs"] } : {})
+  };
+}
+
+function frameOf(value: unknown): DesignFrame | undefined {
+  return isRecord(value) && oneOf(value["style"], DESIGN_FRAME_STYLES) && oneOf(value["colour"], ROLES) ? { style: value["style"], colour: value["colour"] } : undefined;
+}
+
+function linkOf(value: unknown): DesignLink | undefined {
+  if (!isRecord(value)) return undefined;
+  switch (value["kind"]) {
+    case "gifts": case "rsvp": return { kind: value["kind"] };
+    case "section": return typeof value["section"] === "string" ? { kind: "section", section: value["section"] } : undefined;
+    case "listing": return typeof value["listingId"] === "string" ? { kind: "listing", listingId: value["listingId"] } : undefined;
+    case "url": return typeof value["href"] === "string" && /^https:\/\/[^\s]+$/.test(value["href"]) ? { kind: "url", href: value["href"] } : undefined;
+    default: return undefined;
+  }
+}
+
+/**
+ * An element as the renderer may trust it: position and size are finite integers in the contract's range or the element is
+ * dropped (a `null` in the list, a string where a number goes); every optional style field is kept only when it has the contract's
+ * type and range, so nothing that is not a number or one of the contract's enums can reach a CSS value (defence in depth: the
+ * backend validates the same ranges before a document is stored).
+ */
+function elementOf(value: unknown): DesignElement | null {
+  if (!isRecord(value) || typeof value["id"] !== "string" || typeof value["block"] !== "string" || value["visible"] !== true && value["visible"] !== false) return null;
+  if (!int(value["x"], 0, 999) || !int(value["y"], 0, 999) || !int(value["w"], 1, 999) || !int(value["h"], 1, 999)) return null;
+  const border = value["border"];
+  const animation = animationOf(value["animation"], ELEMENT_ANIMATIONS);
+  const background = value["background"];
+  const mask: DesignMask | undefined = oneOf(value["mask"], DESIGN_MASKS) ? value["mask"] : undefined;
+  const frame = frameOf(value["frame"]);
+  const padding = box(value["padding"]);
+  const margin = box(value["margin"]);
+  const typography = typographyOf(value["typography"]);
+  const link = linkOf(value["link"]);
+  return {
+    id: value["id"], block: value["block"], x: value["x"], y: value["y"], w: value["w"], h: value["h"], visible: value["visible"],
+    ...(num(value["rotation"], -180, 180) ? { rotation: value["rotation"] } : {}),
+    ...(int(value["z"], -100, 100) ? { z: value["z"] } : {}),
+    ...(padding ? { padding } : {}), ...(margin ? { margin } : {}),
+    ...(int(value["radius"], 0, 999) ? { radius: value["radius"] } : {}),
+    ...(num(value["opacity"], 0, 1) ? { opacity: value["opacity"] } : {}),
+    ...(isRecord(border) && int(border["width"], 0, 16) && oneOf(border["style"], ["solid", "dashed", "dotted"] as const) && oneOf(border["colour"], ROLES) ? { border: { width: border["width"], style: border["style"], colour: border["colour"] } } : {}),
+    ...(backgroundOf(background) ? { background: backgroundOf(background) } : {}),
+    ...(typography ? { typography } : {}),
+    ...(animation ? { animation } : {}),
+    ...(link ? { link } : {}),
+    ...(mask ? { mask } : {}), ...(frame ? { frame } : {})
+  };
+}
+
+function canvasOf(value: unknown): DesignCanvas | null {
+  if (!isRecord(value) || !oneOf(value["mode"], ["flow", "free"] as const) || !int(value["columns"], 2, 24) || !int(value["rowHeight"], 4, 64) || !Array.isArray(value["elements"])) return null;
+  const elements = value["elements"].flatMap((item) => { const element = elementOf(item); return element ? [element] : []; });
+  return { mode: value["mode"], columns: value["columns"], rowHeight: value["rowHeight"], elements };
+}
+
+function pageOf(value: unknown): DesignPage | null {
+  if (!isRecord(value) || typeof value["id"] !== "string" || !oneOf(value["kind"], ["cover", "section"] as const) || !isRecord(value["canvases"])) return null;
+  const mobile = canvasOf(value["canvases"]["mobile"]);
+  if (!mobile) return null;
+  const desktop = value["canvases"]["desktop"] === undefined ? null : canvasOf(value["canvases"]["desktop"]);
+  const background = value["background"];
+  const animation = animationOf(value["animation"], PAGE_ANIMATIONS);
+  return {
+    id: value["id"], kind: value["kind"], ...(animation ? { animation } : {}), ...(typeof value["section"] === "string" ? { section: value["section"] } : {}),
+    style: oneOf(value["style"], ["plain", "cards", "bands"] as const) ? value["style"] : "plain",
+    ...(backgroundOf(background) ? { background: backgroundOf(background) } : {}),
+    canvases: { mobile, ...(desktop ? { desktop } : {}) }
+  };
+}
+
+/** The document when it has the structure and ranges the renderers read; null otherwise. Never throws. */
+export function readDesign(value: unknown): DesignDocumentV2 | null {
+  if (!isDesignV2(value) || !isRecord(value)) return null;
+  const tokens = value["tokens"];
+  if (!isRecord(tokens) || !Array.isArray(value["pages"]) || !Array.isArray(value["blocks"])) return null;
+  const palettes = tokens["palettes"];
+  const typography = tokens["typography"];
+  const spacing = tokens["spacing"];
+  const radii = tokens["radii"];
+  if (!isRecord(palettes) || !isPalette(palettes["light"]) || !isPalette(palettes["dark"])) return null;
+  if (!isRecord(typography) || !isFont(typography["heading"]) || !isFont(typography["body"]) || !isRecord(typography["scale"])) return null;
+  if (!num(typography["scale"]["base"], 14, 20) || !num(typography["scale"]["ratio"], 1, 1.6)) return null;
+  if (!isRecord(spacing) || !int(spacing["section"], 0, 256) || !int(spacing["contentMaxWidth"], 320, 1600) || !(spacing["unit"] === 4 || spacing["unit"] === 8)) return null;
+  if (!isRecord(radii) || !int(radii["sm"], 0, 64) || !int(radii["md"], 0, 64) || !int(radii["lg"], 0, 64)) return null;
+  const pages = value["pages"].map(pageOf);
+  if (pages.some((page) => page === null)) return null;
+  const blocksOk = value["blocks"].every((block) => isRecord(block) && typeof block["id"] === "string" && typeof block["type"] === "string" && isRecord(block["config"]));
+  if (!blocksOk) return null;
+  // The optional monogram face is read like the other two; one without family or weights is dropped (the heading's face stands in), never left to throw in the font sheet.
+  const monogram = typography["monogram"];
+  const readTypography = monogram === undefined || isFont(monogram) ? typography : Object.fromEntries(Object.entries(typography).filter(([key]) => key !== "monogram"));
+  return { ...(value as unknown as DesignDocumentV2), tokens: { ...(tokens as unknown as DesignDocumentV2["tokens"]), typography: readTypography as unknown as DesignDocumentV2["tokens"]["typography"] }, pages: pages as DesignPage[] };
+}
+
+export const designPalette = (document: DesignDocumentV2, scheme: ColourScheme): DesignPalette => document.tokens.palettes[scheme];
+
+/** The CSS font stack of a catalogue family: its name first, then the generic fallback the catalogue declares. */
+export function fontStack(font: DesignFont): string {
+  const family = familyById(font.family);
+  return family ? `'${family.family}', ${family.fallback}` : "Georgia, serif";
+}
+
+const GOOGLE_FONTS = "https://fonts.googleapis.com/css2";
+
+/**
+ * The Google Fonts stylesheet with exactly the weights the document lists (PL-M10), one request for heading, body and the
+ * optional monogram. Roman styles only: an italic is not requested because not every catalogue family has one, and one
+ * unsupported axis makes Google answer for none of them.
+ */
+export function designFontStylesheet(document: DesignDocumentV2): string | undefined {
+  const { heading, body, monogram } = document.tokens.typography;
+  const wanted = new Map<string, Set<number>>();
+  for (const font of [heading, body, ...(monogram ? [monogram] : [])]) {
+    const family = familyById(font.family);
+    if (!family) continue;
+    const weights = wanted.get(family.family) ?? new Set<number>();
+    for (const weight of font.weights) if (family.weights.includes(weight)) weights.add(weight);
+    wanted.set(family.family, weights);
+  }
+  if (!wanted.size) return undefined;
+  const query = [...wanted].map(([family, weights]) => {
+    const list = [...weights].sort((a, b) => a - b);
+    const axis = list.length === 1 && list[0] === 400 ? "" : `:wght@${list.join(";")}`;
+    return `family=${encodeURIComponent(family).replaceAll("%20", "+")}${axis}`;
+  }).join("&");
+  return `${GOOGLE_FONTS}?${query}&display=swap`;
+}
+
+/** The layout spec a v2 document asks for: the data of its cover variant, overridden by the tokens the document sets itself. */
+export function designLayout(document: DesignDocumentV2, base: LayoutSpec): LayoutSpec {
+  const { spacing, radii, typography, ornament } = document.tokens;
+  return {
+    ...base,
+    headingScale: typography.scale.ratio,
+    radius: radii.md,
+    sectionGap: spacing.section,
+    maxWidth: spacing.contentMaxWidth,
+    divider: ornament === "flourish" ? "ornament" : ornament === "rule" ? "line" : "none"
+  };
+}

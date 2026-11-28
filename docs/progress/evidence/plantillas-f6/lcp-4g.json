@@ -1,0 +1,13 @@
+{
+  "viewport": "390x844",
+  "network": "4G 1.6 Mbit/s, 150 ms RTT",
+  "cpu": "4x slowdown",
+  "entries": [
+    {
+      "time": 1116,
+      "tag": "IMG",
+      "url": "http://localhost:41224/img/5-960.avif"
+    }
+  ],
+  "lcpMs": 1116
+}

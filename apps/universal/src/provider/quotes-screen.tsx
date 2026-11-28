@@ -3,7 +3,7 @@ import { Linking, Text, View } from "react-native";
 import { radius, spacing } from "@rsvp/design-tokens";
 import { Chip, Stagger, depth, useColors, useTheme } from "@rsvp/ui";
 import { formatCelebrationDate, formatMinor } from "@rsvp/i18n";
-import { useInfiniteProviderQuotes, useProviderQuote, type Provider, type ProviderQuoteSummary } from "@rsvp/query-hooks";
+import { useInfiniteProviderQuotes, useProviderQuote, zoneName, type Provider, type ProviderQuoteSummary } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../platform/providers";
 import { ActionButton, EmptyState, PageIntro, useStyles } from "../host/ui";
 import { PortalErrorNotice, PortalErrorState } from "./errors";
@@ -53,7 +53,7 @@ function QuoteRow({ quote, provider }: { readonly quote: ProviderQuoteSummary; r
       <Text style={styles.body}>{t("portal.quotes.event", { date: calendarDate(quote.eventDate, locale) })}</Text>
       <Text style={styles.body}>{t("portal.quotes.guests", { count: quote.guestCount })}</Text>
       <Text style={styles.body}>{quote.budget ? t("portal.quotes.budget", { amount: formatMinor(quote.budget.amountMinor, quote.budget.currency, locale) }) : t("portal.quotes.noBudget")}</Text>
-      {quote.eventCity ? <Text style={styles.body}>{t("portal.quotes.city", { city: quote.eventCity })}</Text> : null}
+      {quote.eventCity ? <Text style={styles.body}>{t("portal.quotes.city", { city: zoneName(quote.eventCity) })}</Text> : null}
       {quote.hasMessage ? <Text style={styles.muted}>{t("portal.quotes.withMessage")}</Text> : null}
       <ActionButton icon="arrow" variant={open ? "secondary" : "primary"} label={t(open ? "portal.quotes.close" : "portal.quotes.open")} onPress={() => { setOpen((value) => !value); }} testID={`quote-toggle-${quote.id}`} />
       {open ? <QuoteContact providerId={provider.id} quoteId={quote.id} /> : null}

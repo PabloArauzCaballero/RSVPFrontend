@@ -1,0 +1,156 @@
+{
+  "walk6a-identity-service-1": {
+    "lineas": 2491,
+    "ctx completo": 0,
+    "carga o firma del ctx": 0,
+    "parámetro ctx=": 0,
+    "prefijo v1.eyJ": 0,
+    "correo de prueba (@example.test)": 0,
+    "nombres de la celebración (Ana/Luis)": 0,
+    "contraseñas de prueba": 0,
+    "tokens de acceso": 0
+  },
+  "walk6a-guest-rsvp-service-1": {
+    "lineas": 100,
+    "ctx completo": 0,
+    "carga o firma del ctx": 0,
+    "parámetro ctx=": 0,
+    "prefijo v1.eyJ": 0,
+    "correo de prueba (@example.test)": 0,
+    "nombres de la celebración (Ana/Luis)": 0,
+    "contraseñas de prueba": 0,
+    "tokens de acceso": 0
+  },
+  "walk6a-provider-catalog-service-1": {
+    "lineas": 233,
+    "ctx completo": 0,
+    "carga o firma del ctx": 0,
+    "parámetro ctx=": 0,
+    "prefijo v1.eyJ": 0,
+    "correo de prueba (@example.test)": 0,
+    "nombres de la celebración (Ana/Luis)": 0,
+    "contraseñas de prueba": 0,
+    "tokens de acceso": 0
+  },
+  "walk6a-provider-marketplace-workers-1": {
+    "lineas": 4,
+    "ctx completo": 0,
+    "carga o firma del ctx": 0,
+    "parámetro ctx=": 0,
+    "prefijo v1.eyJ": 0,
+    "correo de prueba (@example.test)": 0,
+    "nombres de la celebración (Ana/Luis)": 0,
+    "contraseñas de prueba": 0,
+    "tokens de acceso": 0
+  },
+  "walk6a-gift-list-service-1": {
+    "lineas": 37,
+    "ctx completo": 0,
+    "carga o firma del ctx": 0,
+    "parámetro ctx=": 0,
+    "prefijo v1.eyJ": 0,
+    "correo de prueba (@example.test)": 0,
+    "nombres de la celebración (Ana/Luis)": 0,
+    "contraseñas de prueba": 0,
+    "tokens de acceso": 0
+  },
+  "walk6a-gift-list-workers-1": {
+    "lineas": 13,
+    "ctx completo": 0,
+    "carga o firma del ctx": 0,
+    "parámetro ctx=": 0,
+    "prefijo v1.eyJ": 0,
+    "correo de prueba (@example.test)": 0,
+    "nombres de la celebración (Ana/Luis)": 0,
+    "contraseñas de prueba": 0,
+    "tokens de acceso": 0
+  },
+  "walk6a-provider-migrate-1": {
+    "lineas": 106,
+    "ctx completo": 0,
+    "carga o firma del ctx": 0,
+    "parámetro ctx=": 0,
+    "prefijo v1.eyJ": 0,
+    "correo de prueba (@example.test)": 0,
+    "nombres de la celebración (Ana/Luis)": 0,
+    "contraseñas de prueba": 0,
+    "tokens de acceso": 0
+  },
+  "walk6a-gift-migrate-1": {
+    "lineas": 67,
+    "ctx completo": 0,
+    "carga o firma del ctx": 0,
+    "parámetro ctx=": 0,
+    "prefijo v1.eyJ": 0,
+    "correo de prueba (@example.test)": 0,
+    "nombres de la celebración (Ana/Luis)": 0,
+    "contraseñas de prueba": 0,
+    "tokens de acceso": 0
+  },
+  "walk6a-celebration-site-service-1": {
+    "lineas": 160,
+    "ctx completo": 0,
+    "carga o firma del ctx": 0,
+    "parámetro ctx=": 0,
+    "prefijo v1.eyJ": 0,
+    "correo de prueba (@example.test)": 0,
+    "nombres de la celebración (Ana/Luis)": 0,
+    "contraseñas de prueba": 0,
+    "tokens de acceso": 0
+  },
+  "walk6a-postgres-1": {
+    "lineas": 112,
+    "ctx completo": 0,
+    "carga o firma del ctx": 0,
+    "parámetro ctx=": 0,
+    "prefijo v1.eyJ": 0,
+    "correo de prueba (@example.test)": 0,
+    "nombres de la celebración (Ana/Luis)": 0,
+    "contraseñas de prueba": 0,
+    "tokens de acceso": 0
+  },
+  "walk6a-redis-1": {
+    "lineas": 73,
+    "ctx completo": 0,
+    "carga o firma del ctx": 0,
+    "parámetro ctx=": 0,
+    "prefijo v1.eyJ": 0,
+    "correo de prueba (@example.test)": 0,
+    "nombres de la celebración (Ana/Luis)": 0,
+    "contraseñas de prueba": 0,
+    "tokens de acceso": 0
+  },
+  "walk6a-rabbitmq-1": {
+    "lineas": 268,
+    "ctx completo": 0,
+    "carga o firma del ctx": 0,
+    "parámetro ctx=": 0,
+    "prefijo v1.eyJ": 0,
+    "correo de prueba (@example.test)": 0,
+    "nombres de la celebración (Ana/Luis)": 0,
+    "contraseñas de prueba": 0,
+    "tokens de acceso": 0
+  },
+  "walk6a-kong-1": {
+    "lineas": 354,
+    "ctx completo": 0,
+    "carga o firma del ctx": 0,
+    "parámetro ctx=": 0,
+    "prefijo v1.eyJ": 0,
+    "correo de prueba (@example.test)": 0,
+    "nombres de la celebración (Ana/Luis)": 0,
+    "contraseñas de prueba": 0,
+    "tokens de acceso": 0
+  },
+  "seo-web (next start)": {
+    "lineas": 8,
+    "ctx completo": 0,
+    "carga o firma del ctx": 0,
+    "parámetro ctx=": 0,
+    "prefijo v1.eyJ": 0,
+    "correo de prueba (@example.test)": 0,
+    "nombres de la celebración (Ana/Luis)": 0,
+    "contraseñas de prueba": 0,
+    "tokens de acceso": 0
+  }
+}

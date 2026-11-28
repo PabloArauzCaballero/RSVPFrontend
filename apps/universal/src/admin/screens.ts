@@ -6,6 +6,8 @@ export { CategoriesScreen, GeographyScreen } from "./catalog";
 export { DashboardScreen, OperationsScreen } from "./other-screens";
 export { MetricsScreen, OrganizationsScreen, UsersScreen } from "./insight";
 export { ModerationScreen, VerificationScreen } from "./queues";
+export { ReportsScreen } from "./reports";
 export { TemplatesAdminScreen } from "./templates";
 export { EventTypesScreen } from "./event-types";
+export { ProductsScreen } from "./products/products-screen";
 export { PartnersScreen } from "./partners/partners-screen";

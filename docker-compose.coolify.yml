@@ -15,6 +15,10 @@ services:
         EXPO_PUBLIC_API_URL: ${EXPO_PUBLIC_API_URL}
         EXPO_PUBLIC_SITE_URL: ${EXPO_PUBLIC_SITE_URL}
         EXPO_PUBLIC_RSVP_ORIGIN: ${EXPO_PUBLIC_RSVP_ORIGIN}
+        # Opcional (OSM): plantilla https con {z}/{x}/{y}; vacia = tile.openstreetmap.org.
+        EXPO_PUBLIC_MAP_TILE_URL: ${EXPO_PUBLIC_MAP_TILE_URL:-}
+        # Regalos R4 (PF-5): "true" o "1" enciende cantidad y «entre varios» en el asistente; vacia los deja apagados hasta desplegar R5.
+        EXPO_PUBLIC_GIFT_QUANTITY: ${EXPO_PUBLIC_GIFT_QUANTITY:-}
     mem_limit: 128m
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1/health"]
@@ -30,6 +34,11 @@ services:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
         NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
         NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+        # Lista explicita (separada por comas, sin comodines) de origenes ADICIONALES que pueden embeber /vista-previa, p. ej. el segundo
+        # dominio de la app (https://dev.doneapp.events). Opcional; vacio = solo NEXT_PUBLIC_APP_URL.
+        NEXT_PUBLIC_PREVIEW_EXTRA_ORIGINS: ${NEXT_PUBLIC_PREVIEW_EXTRA_ORIGINS:-}
+        # «Proveedores para tu evento»: tambien en build (next build ve el mismo interruptor que el runtime); `on` lo enciende, cualquier otro valor lo apaga.
+        GUEST_MARKETPLACE: ${GUEST_MARKETPLACE:-off}
     environment:
       # Server-side calls (/r) go to the gateway. RSVP_API_INTERNAL_URL (optional) points them at Kong over a shared Docker
       # network instead of the public domain, so no second Traefik hop can drop the visitor address (B1).
@@ -43,6 +52,9 @@ services:
       RSVP_APPLE_APP_ID: ${RSVP_APPLE_APP_ID:-}
       RSVP_ANDROID_PACKAGE: ${RSVP_ANDROID_PACKAGE:-}
       RSVP_ANDROID_SHA256_FINGERPRINTS: ${RSVP_ANDROID_SHA256_FINGERPRINTS:-}
+      # «Proveedores para tu evento» (/c/{slug}/proveedores y sus entradas): runtime, apagado por defecto. Solo el valor `on` lo enciende; sin el
+      # backend provider-catalog 3.15.0+ la pagina muestra su estado de error. Ver docs/progress/marketplace-invitado-fe.md.
+      GUEST_MARKETPLACE: ${GUEST_MARKETPLACE:-off}
     mem_limit: 768m
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))"]

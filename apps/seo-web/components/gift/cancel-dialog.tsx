@@ -9,8 +9,8 @@ import type { GiftItem } from '@rsvp/query-hooks';
  * `gifts.guest.mine.*`). A native <dialog>: focus is trapped, Escape keeps the reservation and focus returns to the opener.
  * The two buttons name both outcomes, because «Cancelar» alone would be ambiguous. `failure` is the already-translated reason.
  */
-export function CancelReservationDialog({ item, t, pending, failure, onKeep, onConfirm }: {
-  readonly item: GiftItem | null; readonly t: Translate; readonly pending: boolean; readonly failure: string | null;
+export function CancelReservationDialog({ item, listClosed, contributor, t, pending, failure, onKeep, onConfirm }: {
+  readonly item: GiftItem | null; /** REG-01 · cancelling on a closed list cannot be undone: the body says so. */ readonly listClosed: boolean; /** The guest only chips in on a group gift (no units): the words say «salirte», not «cancelar tu reserva». */ readonly contributor: boolean; readonly t: Translate; readonly pending: boolean; readonly failure: string | null;
   readonly onKeep: () => void; readonly onConfirm: () => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -25,12 +25,12 @@ export function CancelReservationDialog({ item, t, pending, failure, onKeep, onC
     <dialog ref={ref} className="gift-dialog" aria-labelledby={`${id}-title`} aria-describedby={`${id}-body`} onCancel={(event) => { event.preventDefault(); if (!pending) onKeep(); }}>
       {item ? (
         <form method="dialog" onSubmit={(event) => { event.preventDefault(); onConfirm(); }}>
-          <h2 id={`${id}-title`}>{t('gifts.guest.mine.confirmTitle')}</h2>
-          <p id={`${id}-body`}>{t('gifts.guest.mine.confirmBody', { title: item.title })}</p>
+          <h2 id={`${id}-title`}>{t(contributor ? 'gifts.guest.group.leaveTitle' : 'gifts.guest.mine.confirmTitle')}</h2>
+          <p id={`${id}-body`}>{t(contributor ? (listClosed ? 'gifts.guest.group.leaveBodyClosed' : 'gifts.guest.group.leaveBody') : (listClosed ? 'gifts.guest.mine.confirmBodyClosed' : 'gifts.guest.mine.confirmBody'), { title: item.title })}</p>
           {failure ? <p className="rsvp-error" role="alert">{failure}</p> : null}
           <div className="rsvp-actions">
-            <button type="submit" className="rsvp-button" disabled={pending} aria-disabled={pending}>{pending ? t('gifts.guest.mine.cancelling') : t('gifts.guest.mine.confirm')}</button>
-            <button type="button" className="rsvp-button rsvp-button--secondary" disabled={pending} onClick={onKeep}>{t('gifts.guest.mine.keep')}</button>
+            <button type="submit" className="rsvp-button" disabled={pending} aria-disabled={pending}>{pending ? t(contributor ? 'gifts.guest.group.leaveBusy' : 'gifts.guest.mine.cancelling') : t(contributor ? 'gifts.guest.group.leaveConfirm' : 'gifts.guest.mine.confirm')}</button>
+            <button type="button" className="rsvp-button rsvp-button--secondary" disabled={pending} onClick={onKeep}>{t(contributor ? 'gifts.guest.group.leaveKeep' : 'gifts.guest.mine.keep')}</button>
           </div>
         </form>
       ) : null}

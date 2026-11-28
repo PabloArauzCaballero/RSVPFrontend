@@ -3,7 +3,7 @@
  * routes). The copy lives in the `legal` namespace; here only the order of the sections and how a body is split into blocks.
  */
 export const LEGAL_DOCUMENTS = {
-  privacy: { path: "/privacidad", sections: ["controller", "data", "purposes", "basis", "sharing", "retention", "rights", "security", "changes"] },
+  privacy: { path: "/privacidad", sections: ["controller", "data", "purposes", "basis", "sharing", "maps", "retention", "rights", "security", "changes"] },
   terms: { path: "/terminos", sections: ["service", "account", "guests", "content", "acceptableUse", "providers", "liability", "termination", "changes"] }
 } as const;
 export type LegalDocument = keyof typeof LEGAL_DOCUMENTS;

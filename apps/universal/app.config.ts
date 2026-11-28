@@ -4,9 +4,10 @@ const linkDomain = process.env.EXPO_PUBLIC_LINK_DOMAIN;
 /**
  * Identity of the app in EAS (@pablo28809s-team/rsvp) and in Apple. Neither is secret nor depends on the environment: every
  * EAS command (build, submit, update) reads them from here. The variables exist only to point a fork at another project.
- * The bundle id cannot change once the first build is uploaded to App Store Connect.
+ * The bundle id cannot change once the first build is uploaded to App Store Connect. The `testflight` profile of eas.json
+ * points all three at the original app (@pablo28809/rsvp, com.pablo28809.done), whose EAS credentials carry the APNs key.
  */
-const EAS_OWNER = "pablo28809s-team";
+const EAS_OWNER = process.env.EXPO_PUBLIC_EAS_OWNER ?? "pablo28809s-team";
 const EAS_PROJECT_ID = "a7c4435b-6494-458c-b142-83b2b0705ef1";
 const IOS_BUNDLE_ID = "com.arauzsoftware.done";
 const ANDROID_PACKAGE = "com.arauzsoftware.done";
@@ -23,7 +24,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   web: { bundler: "metro", output: "single", favicon: "./assets/favicon.png" },
   plugins: [
     "expo-router",
-    ["expo-image-picker", { photosPermission: "DOne usa tus fotos solo para la galería de tu invitación y el catálogo de regalos." }],
+    // Camera and library only to upload photos. No video is recorded, so no microphone: without this the plugin adds RECORD_AUDIO.
+    ["expo-image-picker", { photosPermission: "DOne usa tus fotos solo para la galería de tu invitación y el catálogo de regalos.", cameraPermission: "DOne usa la cámara solo para tomar las fotos que decides subir.", microphonePermission: false }],
     ["expo-notifications", { icon: "./assets/notification-icon.png", color: "#111111" }],
     // The app's languages, declared to the OS: iOS writes CFBundleLocalizations (without it the bundle runs in English and
     // Settings offers no per-app language) and Android its locales_config. Keep in step with `supportedLocales` of @rsvp/i18n.

@@ -1,7 +1,7 @@
 import { useState, type PropsWithChildren, type ReactNode } from "react";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions, type TextInputProps } from "react-native";
 import { colors, radius, spacing, typography, type ColorTheme } from "@rsvp/design-tokens";
-import { CheckMark, Enter, Illustration, Logo, NoticeMark, PressFeedback, fonts, useTheme, type IllustrationName } from "@rsvp/ui";
+import { ActionDock, CheckMark, Enter, Illustration, Logo, NoticeMark, PressFeedback, fonts, useTheme, type IllustrationName } from "@rsvp/ui";
 import type { AppLocale } from "@rsvp/i18n";
 import { useLocalePreference, useT } from "../platform/providers";
 
@@ -120,7 +120,8 @@ export function AuthLayout({ title, intro, illustration = "invitation", children
           <View />
         </View>
       ) : null}
-      <ScrollView role="main" tabIndex={0} style={[authStyles.panel, !wide && authStyles.panelNarrow, wide && authStyles.panelWide]} contentContainerStyle={[authStyles.panelContent, wide ? authStyles.panelContentWide : authStyles.panelContentNarrow]} keyboardShouldPersistTaps="handled">
+      <ActionDock inset={spacing[6]} style={wide ? authStyles.panelWide : undefined}>
+      <ScrollView role="main" tabIndex={0} style={[authStyles.panel, !wide && authStyles.panelNarrow, wide && Platform.OS === "web" && authStyles.panelWide]} contentContainerStyle={[authStyles.panelContent, wide ? authStyles.panelContentWide : authStyles.panelContentNarrow]} keyboardShouldPersistTaps="handled">
         {wide ? null : <View style={[authStyles.column, { paddingBottom: spacing[8] }]}><Logo tone="auto" height={28} /></View>}
         <View style={authStyles.column}>
           <Enter from="down"><View style={{ gap: spacing[3] }}>
@@ -131,6 +132,7 @@ export function AuthLayout({ title, intro, illustration = "invitation", children
           <LanguageSwitch />
         </View>
       </ScrollView>
+      </ActionDock>
     </View>
   );
 }

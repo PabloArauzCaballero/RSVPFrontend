@@ -9,6 +9,8 @@ export const ADMIN_ROUTES = {
   geography: "/admin/geografia",
   verification: "/admin/verificacion",
   moderation: "/admin/moderacion",
+  reports: "/admin/denuncias",
+  products: "/admin/productos",
   users: "/admin/usuarios",
   organizations: "/admin/organizaciones",
   partners: "/admin/partners",
@@ -19,7 +21,7 @@ export type AdminRoute = keyof typeof ADMIN_ROUTES;
 
 /** Four destinations, with each module a tab of its group. */
 const ADMIN_GROUPS: readonly { readonly key: string; readonly tabs: readonly AdminRoute[] }[] = [
-  { key: "review", tabs: ["verification", "moderation"] },
+  { key: "review", tabs: ["verification", "moderation", "reports", "products"] },
   { key: "catalog", tabs: ["categories", "geography", "eventTypes", "templates"] },
   { key: "people", tabs: ["users", "organizations", "partners"] },
   { key: "operation", tabs: ["dashboard", "metrics", "operations"] }

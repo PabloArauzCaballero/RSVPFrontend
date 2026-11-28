@@ -4,7 +4,12 @@ import { Share } from "react-native";
 export const canPickTextFile = false;
 export async function pickTextFile(): Promise<{ readonly name: string; readonly text: string; readonly size: number } | null> { return null; }
 
-export type SaveOutcome = "downloaded" | "shared" | "failed";
+/** `dismissed`: the share sheet was closed without choosing where the file goes; nothing was saved or sent. */
+export type SaveOutcome = "downloaded" | "shared" | "dismissed" | "failed";
 export async function saveTextFile(name: string, text: string): Promise<SaveOutcome> {
-  try { await Share.share({ title: name, message: text }); return "shared"; } catch { return "failed"; }
+  try {
+    // iOS resolves also when the sheet is closed: only `sharedAction` means the text went somewhere.
+    const result = await Share.share({ title: name, message: text });
+    return result.action === Share.dismissedAction ? "dismissed" : "shared";
+  } catch { return "failed"; }
 }

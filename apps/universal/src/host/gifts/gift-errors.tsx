@@ -10,7 +10,11 @@ import { ErrorNotice, Notice } from "../ui";
 const CODE_KEY: Readonly<Record<string, string>> = {
   GIFT_NOT_AVAILABLE: "notAvailable", INVALID_GIFT_TRANSITION: "alreadyAnswered", INVALID_TRANSITION: "alreadyAnswered", RESERVATION_NOT_PENDING: "reservationAnswered",
   IDEMPOTENCY_KEY_REUSED: "requestReused", VALIDATION_FAILED: "validation", INVALID_EXTERNAL_URL: "invalidUrl", INVALID_MONEY: "invalidMoney", INVALID_TITLE: "invalidTitle",
-  INVALID_CURRENCY: "invalidCurrency", GIFT_NOT_FOUND: "giftGone", GIFT_LIST_NOT_FOUND: "listMissing", RESERVATION_NOT_FOUND: "reservationGone", RESERVATION_NOT_ACTIVE: "reservationNotActive", HOST_REQUIRED: "forbidden"
+  INVALID_CURRENCY: "invalidCurrency", GIFT_NOT_FOUND: "giftGone", GIFT_LIST_NOT_FOUND: "listMissing", RESERVATION_NOT_FOUND: "reservationGone", RESERVATION_NOT_ACTIVE: "reservationNotActive", HOST_REQUIRED: "forbidden",
+  // 1.14.0 (R1): a CATALOGED listing that is a SERVICE cannot be a gift.
+  GIFT_LISTING_NOT_PRODUCT: "notProduct",
+  // 1.20.0 (R7): taking an unavailable gift off the list.
+  GIFT_NOT_REMOVABLE: "notRemovable", GIFT_HAS_RESERVATIONS: "hasReservations"
 };
 
 export function GiftErrorNotice({ error, onReload }: { readonly error: unknown; readonly onReload?: () => void }): ReactNode {

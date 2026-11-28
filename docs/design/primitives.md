@@ -120,7 +120,7 @@ Barra inferior móvil: caben cinco espacios. Si destinos + «Más» (con sesión
 
 - `actions?: ReactNode`: la acción primaria única de la pantalla (un solo botón). `menu?: ReactNode`: las secundarias (`OverflowMenu`).
 - Desde 768 px: `[⋯][acción primaria]` arriba a la derecha de la cabecera, alineados con el título (`headRow`/`headActions` en shell.tsx). El título y la intro ocupan el resto y envuelven sin chocar.
-- Menos de 768 px: el `⋯` queda arriba a la derecha junto al título y la acción primaria pasa a `StickyActions` al pie del contenido (`testID="screen-sticky-actions"`). No pongas tu propio `StickyActions` además de `actions`.
+- Menos de 768 px: el `⋯` queda arriba a la derecha junto al título y la acción primaria pasa a `StickyActions` fija al pie de la pantalla (`testID="screen-sticky-actions"`). No pongas tu propio `StickyActions` además de `actions`.
 - Formularios con su propio «Guardar»: no pases `actions`; siguen usando `StickyActions` como antes. Sin `actions` ni `menu` la cabecera no cambia.
 
 - `status?: ReactNode`: una línea sobre el trabajo en curso («Tienes cambios sin guardar», «Cambios guardados»). Desde 768 px va arriba del contenido; en móvil, sobre la barra fija.
@@ -212,15 +212,18 @@ Barra de acción fija al pie para formularios largos en móvil. Un botón primar
 
 ```tsx
 import { ActionButton, StickyActions } from "../host/ui";
-<StickyActions summary={<Text style={styles.muted}>{t("guests.form.unsaved")}</Text>}>
+<StickyActions label={t("common.actions")} summary={<Text style={styles.muted}>{t("guests.form.unsaved")}</Text>}>
   <ActionButton label={t("common.save")} onPress={save} busy={saving} />
   <ActionButton variant="secondary" label={t("common.cancel")} onPress={back} />
 </StickyActions>
 ```
 
+- `label` es obligatorio: el nombre accesible del grupo (`aria-label`, «Acciones»/«Actions» con `common.actions`), tanto en la barra en el flujo como en la acoplada.
 - Web: `position: sticky; bottom: 0` dentro del área que hace scroll, `padding-bottom: max(12px, env(safe-area-inset-bottom))` (respeta la barra de inicio), borde superior y superficie opaca. Ocupa su propio espacio en el flujo: no tapa el último campo ni el teclado del navegador.
-- Nativo: va en el flujo tras el formulario con el mismo estilo; el teclado lo gestiona el `ScrollView` de la pantalla (`keyboardShouldPersistTaps="handled"`). No hay barra flotante nativa todavía.
-- Ponla como último hijo del formulario, fuera de cualquier `Section`. No la uses en pantallas cortas: allí el botón va tras el último campo.
+- Nativo (decisión MV-D1: la acción siempre fija abajo, el contenido se desplaza): el contenedor de scroll de la pantalla va envuelto en `ActionDock` (`@rsvp/ui`). Un `StickyActions` que encuentra un dock encima **no se dibuja donde está**: publica su barra y el dock la pinta bajo el área de scroll, a todo el ancho (relleno 16 px, contenido hasta 560 px), sobre el borde seguro que ya reserva `SafeFrame`. El scroll termina donde empieza la barra, así que nada queda tapado. El teclado sube el dock lo que cubre su borde inferior (medido en coordenadas de ventana), de modo que la barra viaja encima del teclado (también si ya estaba abierto al montar el dock, y al girar). **No** hace scroll hasta el campo enfocado: con el teclado abierto el área de scroll se acorta y un campo bajo puede quedar fuera de la parte visible hasta que la persona desplace; sin verificar en dispositivo (seguimiento: scroll al campo enfocado, o `automaticallyAdjustKeyboardInsets` si la prueba en iPhone lo justifica).
+- Los tres contenedores que ya llevan `ActionDock`: `Screen` (`host/shell.tsx`, móvil; cubre host, proveedor y admin), `AuthLayout` (`auth/auth-ui.tsx`) y `GuestFrame` (`guest/frame.tsx`). Una pantalla nueva con su propio `ScrollView` y un `StickyActions` debe envolver ese `ScrollView` en `ActionDock`; sin dock la barra vuelve al flujo (comportamiento anterior).
+- Si hay varias barras montadas bajo un dock manda la de mayor `priority` y, a igualdad, la montada más tarde: la acción de cabecera de `Screen` usa `priority={0}`, así el «Crear» de un formulario abierto la reemplaza y, al cerrarlo, vuelve. `Sheet` y `Modal` de `@rsvp/ui` cortan el dock para su contenido (la barra se queda dentro de la hoja); los diálogos propios con `Modal` de react-native deben llevar su pie y no usar `StickyActions`. El relleno horizontal de la barra es el `inset` del dock, igual al margen de la pantalla (`Screen` 20 px, `AuthLayout` 24 px, `GuestFrame` 16 px). Mientras un formulario ocupa la barra, el `status` de `Screen` (que viaja con la acción de cabecera) no se muestra en móvil; vuelve al cerrar el formulario. Los contextos de React que un formulario provea entre el dock y su `StickyActions` no llegan a los botones docked.
+- Ponla como último hijo del formulario, fuera de cualquier `Section` (`NewOffer` del portal lo cumple desde MV-A2). No la uses en pantallas cortas: allí el botón va tras el último campo.
 
 ### Botón, centrado y feedback
 

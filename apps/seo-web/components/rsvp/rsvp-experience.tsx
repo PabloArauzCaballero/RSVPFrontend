@@ -28,7 +28,11 @@ import { AnswerSummary, Celebrate, ClosedView, Countdown, DeadlineLine, Declined
  * connection returns.
  */
 
-interface Props { readonly slug: string; readonly token?: string; readonly locale: AppLocale; readonly siteOrigin: string; readonly client?: ApiClient }
+interface Props {
+  readonly slug: string; readonly token?: string; readonly locale: AppLocale; readonly siteOrigin: string; readonly client?: ApiClient;
+  /** `/c/{slug}/proveedores` when the deployment offers the guest marketplace (never carries the token); absent = no entry. */
+  readonly providersHref?: string;
+}
 type Saved = 'first' | 'edit' | null;
 
 /**
@@ -64,7 +68,7 @@ const coverFor = (view: PublicCelebrationView, locale: AppLocale, t: Translate):
   guestCover(view, { locale, t, formatDate: (iso) => formatCelebrationDate(iso, { locale, timeZone: view.timeZone }, { dateStyle: 'full' }) });
 
 /** `fromStored`: the token is the one this tab saved, not the one in the route; if it no longer works the visit falls to the registration, as if there were none. */
-function Flow({ slug, token, fromStored = false, locale, siteOrigin, client: injected }: Props & { readonly fromStored?: boolean }): ReactNode {
+function Flow({ slug, token, fromStored = false, locale, siteOrigin, client: injected, providersHref }: Props & { readonly fromStored?: boolean }): ReactNode {
   const t = useMemo(() => createTranslator(locale), [locale]);
   const client = useMemo(() => injected ?? createGuestClient(), [injected]);
   const celebration = useCelebrationBySlug<PublicCelebrationView>(client, slug);
@@ -143,6 +147,7 @@ function Flow({ slug, token, fromStored = false, locale, siteOrigin, client: inj
       )}
       {saved === 'edit' ? <p className="rsvp-notice rsvp-notice--success" role="status">{t('rsvp.invite.savedNote')}</p> : null}
       {!editing ? giftsLink : null}
+      {!editing && providersHref ? <ProvidersEntry href={providersHref} locale={locale} t={t} /> : null}
       <div className="guest-intro">
         <AnswerSummary state={state} locale={locale} t={t} />
         {saved === 'first' ? null : <DeadlineLine state={state} locale={locale} t={t} />}
@@ -153,15 +158,29 @@ function Flow({ slug, token, fromStored = false, locale, siteOrigin, client: inj
   );
 }
 
-/** One tap to the gift list (the app's `GiftsLink`), shown only when the list has something to give or could not be checked. */
+/** After answering: a quiet second line, below the gifts, to the vendors tab. Not a button: it must never compete with the answer or the gifts. */
+function ProvidersEntry({ href, locale, t }: { href: string; locale: AppLocale; t: Translate }): ReactNode {
+  return (
+    <aside className="celebration-providers" data-testid="providers-entry">
+      <p>{t('directory.guestMarketplace.entryBody')}</p>
+      <a href={`${href}?lang=${locale}`} data-link-kind="internal">{t('directory.guestMarketplace.entry')}</a>
+    </aside>
+  );
+}
+
+/**
+ * One tap to the gift list (the app's `GiftsLink`), shown only when the list has something to give or could not be checked. The
+ * line under it invites to reserve only when the list is known to be open; closed by hand it says so.
+ */
 function GiftsLink({ client, celebrationId, slug, token, locale, t }: { client: ApiClient; celebrationId: string; slug: string; token: string; locale: AppLocale; t: Translate }): ReactNode {
   const list = useGiftList(client, celebrationId, token);
   if (list.isSuccess && guestVisible(list.data.items).length === 0) return null;
+  const hint = !list.isSuccess ? null : list.data.closed ? 'rsvp.invite.giftsClosedHint' : 'rsvp.invite.giftsHint';
   return (
     <div className="guest-gifts">
       {/* The credential travels in the fragment (never to a server log); see lib/guest-credential. */}
       <button type="button" className="rsvp-button" onClick={() => window.location.assign(guestGiftPath(slug, token, locale))} data-testid="open-gifts">{t('rsvp.invite.giftsCta')}</button>
-      <p className="rsvp-hint">{t('rsvp.invite.giftsHint')}</p>
+      {hint ? <p className="rsvp-hint">{t(hint)}</p> : null}
     </div>
   );
 }

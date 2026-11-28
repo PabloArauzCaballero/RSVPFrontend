@@ -1,9 +1,9 @@
-import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ContentEditorScreen } from "../src/host/content-editor";
 import { contentPatch, scheduleContent, slugify, toWallClock } from "../src/host/content-draft";
 import { CelebrationsScreen, forgetAutoOpen } from "../src/host/celebrations";
-import { GalleryEditorScreen, imageProblem } from "../src/host/gallery-editor";
+import { GalleryEditorScreen } from "../src/host/gallery-editor";
 import { ModesScreen } from "../src/host/modes-screen";
 import { defaultCurrency, OnboardingScreen, suggestedTitle, zoneLabel } from "../src/host/onboarding";
 import { PublishScreen, taskFor } from "../src/host/publish-checklist";
@@ -13,6 +13,7 @@ import { TranslationEditorScreen } from "../src/host/translation-editor";
 import { DevicePreviewScreen } from "../src/host/device-preview";
 import { createTranslator } from "@rsvp/i18n";
 import { baseHandlers, BAUTIZO, CELEBRATION, fakeClient, GUEST, HttpFailure, QUINCE, renderApp, TEMPLATES, WEDDING, pickOnboardingDate, pickTime, timeField } from "./support";
+import { previewSeenBy } from "./preview-frame";
 
 const navigate = vi.fn();
 const field = (label: string): HTMLInputElement => screen.getByLabelText(label) as HTMLInputElement;
@@ -133,13 +134,12 @@ describe("C2–C5 · picker and onboarding", () => {
     fireEvent.click(screen.getByTestId("onboarding-next"));
     type("Novia", "Ana");
     type("Novio", "Luis");
-    const frame = screen.getAllByTestId("preview-mobile")[0] as HTMLElement;
-    expect(frame.textContent).toContain("Ana");
+    expect(previewSeenBy("preview-frame-mobile")).toContain("Ana");
     fillWhenWhere();
     fireEvent.click(screen.getByTestId("onboarding-next"));
     expect(field("Nombre de la celebración").value).toBe("Ana y Luis");
     type("Nombre de la celebración", "Boda de Ana y Luis");
-    await waitFor(() => expect((screen.getAllByTestId("preview-mobile")[0] as HTMLElement).textContent).toContain("Boda de Ana y Luis"));
+    await waitFor(() => expect(previewSeenBy("preview-frame-mobile")).toContain("Boda de Ana y Luis"));
   });
 
   it("every field of the second step is mandatory: an empty one stops the step, says so next to the field and nothing is sent", async () => {
@@ -165,23 +165,40 @@ describe("C2–C5 · picker and onboarding", () => {
     expect(calls.some((call) => call.method === "POST")).toBe(false);
   });
 
-  it("the venue is a real place: a pasted maps link travels with the creation, anything that is not a maps link stops the step", async () => {
-    const { client, calls } = fakeClient({ "GET /celebrations/event-types": () => ({ items: [WEDDING] }), "POST /celebrations": () => ({ ...CELEBRATION, id: "c-new" }) });
+  it("the venue is a real place: searching marks its point, which travels with the creation as locations.main plus an OpenStreetMap mirror; there is no link field", async () => {
+    const place = { id: "way/9", name: "Salón Las Palmas", label: "Salón Las Palmas, Santa Cruz, Bolivia", lat: -17.7833, lng: -63.1821, osmType: "way", osmId: 9 };
+    const { client, calls } = fakeClient({ "GET /celebrations/event-types": () => ({ items: [WEDDING] }), "GET /providers/geo/search": () => ({ items: [place], attribution: "© OpenStreetMap contributors" }), "POST /celebrations": () => ({ ...CELEBRATION, id: "c-new" }) });
     renderApp(<OnboardingScreen step={1} onNavigate={navigate} />, client);
     fireEvent.click(await screen.findByRole("radio", { name: "Boda" }));
     fireEvent.click(screen.getByTestId("onboarding-next"));
     type("Novia", "Ana"); type("Novio", "Luis"); fillWhenWhere();
     expect(screen.getByTestId("onboarding-venue-map")).toBeTruthy();
-    type("Enlace del mapa", "javascript:alert(1)");
-    expect(screen.getByText(/Pega un enlace de Google Maps/)).toBeTruthy();
-    fireEvent.click(screen.getByTestId("onboarding-next"));
-    expect(screen.queryByLabelText("Nombre de la celebración")).toBeNull();
-    type("Enlace del mapa", "https://maps.app.goo.gl/AbC123");
-    expect(screen.getByText(/Punto marcado/)).toBeTruthy();
+    expect(screen.queryByLabelText("Enlace del mapa")).toBeNull();
+    expect(screen.getByText(/Sin punto en el mapa/)).toBeTruthy();
+    fireEvent.click(screen.getByTestId("onboarding-venue-search"));
+    fireEvent.click(await screen.findByRole("button", { name: "Salón Las Palmas, Santa Cruz, Bolivia" }));
+    expect(screen.getByText(/Punto marcado cerca de/)).toBeTruthy();
     fireEvent.click(screen.getByTestId("onboarding-next"));
     fireEvent.click(screen.getByTestId("onboarding-create"));
     await waitFor(() => expect(navigate).toHaveBeenCalledWith("/onboarding/listo?c=c-new"));
-    expect((calls.find((call) => call.method === "POST")?.body as { content: Record<string, unknown> }).content).toMatchObject({ venueName: "Salón Las Palmas", venueMapUrl: "https://maps.app.goo.gl/AbC123" });
+    const content = (calls.find((call) => call.method === "POST")?.body as { content: Record<string, unknown> }).content;
+    expect(content).toMatchObject({ venueName: "Salón Las Palmas", venueMapUrl: "https://www.openstreetmap.org/?mlat=-17.783300&mlon=-63.182100", locations: { main: { lat: -17.7833, lng: -63.1821, source: "search", forName: "Salón Las Palmas", osm: { type: "way", id: 9 } } } });
+    expect(JSON.stringify(content)).not.toContain("google");
+  });
+
+  it("without a point the invitation is created with the venue as text only", async () => {
+    const { client, calls } = fakeClient({ "GET /celebrations/event-types": () => ({ items: [WEDDING] }), "POST /celebrations": () => ({ ...CELEBRATION, id: "c-new" }) });
+    renderApp(<OnboardingScreen step={1} onNavigate={navigate} />, client);
+    fireEvent.click(await screen.findByRole("radio", { name: "Boda" }));
+    fireEvent.click(screen.getByTestId("onboarding-next"));
+    type("Novia", "Ana"); type("Novio", "Luis"); fillWhenWhere();
+    fireEvent.click(screen.getByTestId("onboarding-next"));
+    fireEvent.click(screen.getByTestId("onboarding-create"));
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith("/onboarding/listo?c=c-new"));
+    const content = (calls.find((call) => call.method === "POST")?.body as { content: Record<string, unknown> }).content;
+    expect(content["venueName"]).toBe("Salón Las Palmas");
+    expect(content).not.toHaveProperty("locations");
+    expect(content).not.toHaveProperty("venueMapUrl");
   });
 
   it("half a date (a time without its day, or a day without its time) stops the step with a clear message and keeps what was typed", async () => {
@@ -221,7 +238,7 @@ describe("C2–C5 · picker and onboarding", () => {
     const { client } = fakeClient({ ...baseHandlers(), "GET /celebrations/c-1": () => CELEBRATION });
     renderApp(<OnboardingScreen step={1} celebrationId="c-1" onNavigate={navigate} />, client);
     expect(await screen.findByText("Tu invitación está lista")).toBeTruthy();
-    expect(screen.getByTestId("preview-mobile").textContent).toContain("Ana y Luis");
+    expect(previewSeenBy("preview-frame-mobile")).toContain("Ana y Luis");
     // The milestone is a quiet status region with the drawn check: the decorative backdrop of the old identity is gone.
     expect(screen.getByText("Tu invitación está lista").closest('[role="status"]')).not.toBeNull();
     expect(document.querySelector('[data-illustration^="moment-"]')).toBeNull();
@@ -303,7 +320,8 @@ describe("C7–C11 · content editor", () => {
   it("states: loading, not found, read-only, no celebration chosen, and roles", async () => {
     const missing = fakeClient({ "GET /celebrations/event-types": () => ({ items: [] }) });
     renderApp(<ContentEditorScreen section="general" celebrationId="nope" onNavigate={navigate} />, missing.client);
-    expect(screen.getAllByRole("status").length).toBeGreaterThan(0);
+    // The skeleton waits out MOTION.loadingDelayMs: this fast answer never flashes it (test/shell-persistence.test.tsx covers the slow one).
+    expect(screen.queryAllByRole("status")).toHaveLength(0);
     expect(await screen.findByText(/No encontramos esta celebración/)).toBeTruthy();
     const readOnly = fakeClient(baseHandlers({ ...CELEBRATION, access: "READ" }));
     renderApp(<ContentEditorScreen section="general" celebrationId="c-1" onNavigate={navigate} />, readOnly.client);
@@ -317,15 +335,18 @@ describe("C7–C11 · content editor", () => {
 });
 
 describe("C12 · gallery", () => {
+  beforeEach(() => localStorage.clear());
+  afterEach(() => vi.useRealTimers());
+
   it("an invalid file is refused with a clear message, before any upload", async () => {
     const { client, calls } = fakeClient({ ...baseHandlers(), "GET /media/celebrations/c-1/assets": () => ({ items: [] }) });
-    const pick = vi.fn(async () => ({ file: new Blob(["%PDF"]), name: "contrato.pdf", type: "application/pdf", size: 4 }));
+    const pick = vi.fn(async () => [{ file: new Blob(["%PDF"]), name: "contrato.pdf", type: "application/pdf", size: 4 }, { file: new Blob(["x"]), name: "enorme.png", type: "image/png", size: 11 * 1024 * 1024 }]);
     renderApp(<GalleryEditorScreen celebrationId="c-1" onNavigate={navigate} pick={pick} />, client);
     fireEvent.click(await screen.findByTestId("add-photo"));
-    expect(await screen.findByText("Ese archivo no es una imagen JPG, PNG o WebP.")).toBeTruthy();
+    // Each file gets its own reason.
+    expect(await screen.findByText("contrato.pdf: este tipo de archivo no se puede subir aquí.")).toBeTruthy();
+    expect(screen.getByText("enorme.png es demasiado grande. Prueba con una versión más liviana.")).toBeTruthy();
     expect(calls.some((call) => call.path.includes("presign"))).toBe(false);
-    expect(imageProblem({ type: "image/png", size: 11 * 1024 * 1024 })).toBe("tooLarge");
-    expect(imageProblem({ type: "image/webp", size: 10 })).toBeNull();
   });
 
   it("reorders and chooses the cover through the API", async () => {
@@ -337,6 +358,51 @@ describe("C12 · gallery", () => {
     fireEvent.click(menu[1] as HTMLElement);
     fireEvent.click(await screen.findByRole("menuitem", { name: "Usar como portada" }));
     await waitFor(() => expect(calls.find((call) => call.method === "PUT")?.body).toEqual({ assetIds: ["a1", "a2"], coverAssetId: "a2" }));
+  });
+
+  const processingPhoto = (id: string, createdAt: string) => ({ id, celebrationId: "c-1", filename: `${id}.jpg`, contentType: "image/jpeg", sizeBytes: 100, status: "PROCESSING" as const, createdAt, width: null, height: null, sortOrder: 0, isCover: false, variants: {} });
+  const showGallery = (asset: ReturnType<typeof processingPhoto>) => {
+    const { client } = fakeClient({ ...baseHandlers(), "GET /media/celebrations/c-1/assets": () => ({ items: [asset] }) });
+    renderApp(<GalleryEditorScreen celebrationId="c-1" onNavigate={navigate} pick={vi.fn()} />, client);
+  };
+
+  it("does not offer to delete a photo first seen in PROCESSING after a slow upload or with a device clock ahead", async () => {
+    showGallery(processingPhoto("sana", new Date(Date.now() - 10 * 60_000).toISOString()));
+    expect(await screen.findByText(/sana\.jpg/)).toBeTruthy();
+    expect(screen.queryByTestId("processing-stale-sana")).toBeNull();
+    expect(screen.queryByTestId("delete-processing-sana")).toBeNull();
+  });
+
+  it("offers to delete on first sight a photo still in PROCESSING a day after its upload was signed", async () => {
+    showGallery(processingPhoto("olvidada", new Date(Date.now() - 25 * 60 * 60_000).toISOString()));
+    expect(await screen.findByTestId("delete-processing-olvidada")).toBeTruthy();
+  });
+
+  it("offers check-again and delete actions when a PROCESSING photo is stale and deletes it on confirm", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    // The device clock is far behind the server: only the time spent watching may mark the photo as stuck.
+    const createdAt = new Date(Date.now() + 60 * 60_000).toISOString();
+    let list = [
+      { id: "a1", celebrationId: "c-1", filename: "ok.jpg", contentType: "image/jpeg", sizeBytes: 100, status: "PROCESSED" as const, width: 10, height: 10, sortOrder: 0, isCover: true, variants: { thumb: "https://api.test/rsvp-media/a1-thumb.webp?X-Amz-Signature=s1" } },
+      { id: "stuck", celebrationId: "c-1", filename: "58042.jpg", contentType: "image/jpeg", sizeBytes: 6_318_943, status: "PROCESSING" as const, createdAt, width: null, height: null, sortOrder: 1, isCover: false, variants: {} }
+    ];
+    const { client, calls } = fakeClient({
+      ...baseHandlers(),
+      "GET /media/celebrations/c-1/assets": () => ({ items: list }),
+      "DELETE /media/assets/stuck": () => { list = list.filter((item) => item.id !== "stuck"); return {}; }
+    });
+    renderApp(<GalleryEditorScreen celebrationId="c-1" onNavigate={navigate} pick={vi.fn()} />, client);
+    expect(await screen.findByText(/58042\.jpg/)).toBeTruthy();
+    expect(screen.queryByTestId("processing-stale-stuck")).toBeNull();
+    // Every answer is identical from here on: the screen must still notice the time passing.
+    await act(async () => { await vi.advanceTimersByTimeAsync(3 * 60_000 + 10_000); });
+    expect(await screen.findByTestId("processing-stale-stuck")).toBeTruthy();
+    expect(screen.getByText(/58042\.jpg está tardando más de lo normal/)).toBeTruthy();
+    fireEvent.click(screen.getByTestId("retry-processing-stuck"));
+    await waitFor(() => expect(calls.filter((call) => call.path === "/media/celebrations/c-1/assets").length).toBeGreaterThanOrEqual(2));
+    fireEvent.click(screen.getByTestId("delete-processing-stuck"));
+    fireEvent.click(await screen.findByTestId("confirm-delete-photo"));
+    await waitFor(() => expect(calls.some((call) => call.method === "DELETE" && call.path === "/media/assets/stuck")).toBe(true));
   });
 });
 
@@ -390,6 +456,17 @@ describe("C13–C16 · translations, templates, preview, publishing", () => {
     fireEvent.click(screen.getAllByText("Publicar celebración").at(-1) as HTMLElement);
     await waitFor(() => expect(calls.find((call) => call.method === "POST")?.headers.get("if-match")).toBe('"3"'));
     expect(screen.getByTestId("whatsapp-card").textContent).toContain("Ana y Luis");
+  });
+});
+
+describe("C16 · shared link card", () => {
+  it("with an SVG cover it previews the first gallery photo that has raster variants", async () => {
+    const asset = (id: string, over: Record<string, unknown>) => ({ id, celebrationId: "c-1", filename: id, contentType: "image/png", sizeBytes: 1, status: "PROCESSED", width: 1, height: 1, sortOrder: 0, isCover: false, ...over });
+    const items = [asset("d", { isCover: true, variants: { svg: "https://x.test/d.svg" } }), asset("fondo", { purpose: "background", variants: { medium: "https://x.test/fondo.webp" } }), asset("foto", { purpose: "gallery", variants: { medium: "https://x.test/foto.webp" } })];
+    const { client } = fakeClient({ ...baseHandlers(), "GET /celebrations/c-1/publish-check": () => ({ ready: true, missingFields: [], status: "DRAFT", version: 3 }), "GET /media/celebrations/c-1/assets": () => ({ items }) });
+    renderApp(<PublishScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    await waitFor(() => expect(screen.getByTestId("whatsapp-card").innerHTML).toContain("https://x.test/foto.webp"));
+    expect(screen.getByTestId("whatsapp-card").innerHTML).not.toContain("fondo.webp");
   });
 });
 

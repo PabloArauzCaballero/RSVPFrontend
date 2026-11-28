@@ -7,7 +7,12 @@ export const directoryEsBO = {
   citiesHeading: "O busca por ciudad",
   category: {
     VENUE: "Salones de eventos", CATERING: "Catering", PHOTOGRAPHY: "Fotografía", MUSIC: "Música", DECORATION: "Decoración", MAKEUP: "Maquillaje",
-    TRANSPORT: "Transporte", INVITATIONS: "Invitaciones", WEDDING_PLANNER: "Wedding planners", ACCOMMODATION: "Hospedaje", HONEYMOON: "Luna de miel"
+    TRANSPORT: "Transporte", INVITATIONS: "Invitaciones", WEDDING_PLANNER: "Wedding planners", ACCOMMODATION: "Hospedaje", HONEYMOON: "Luna de miel",
+    PASTRY: "Pastelería", KITCHENWARE: "Utensilios de cocina", CLOTHING: "Ropa y accesorios", TABLEWARE: "Vajilla y cristalería", SMALL_APPLIANCES: "Electrodomésticos",
+    HOME_DECOR: "Decoración del hogar", BED_BATH: "Blancos: cama y baño", FURNITURE: "Muebles", FLOWERS: "Flores y arreglos", GIFT_BASKETS: "Desayunos y canastas sorpresa",
+    WINES_GOURMET: "Vinos y gourmet", JEWELRY: "Joyería y relojes", BEAUTY: "Belleza y cuidado personal", BABY: "Bebé y maternidad", TOYS: "Juguetes y didácticos",
+    RELIGIOUS: "Artículos religiosos", ELECTRONICS: "Tecnología", BOOKS_STATIONERY: "Libros y papelería", SPORTS_OUTDOOR: "Deporte y aire libre", PERSONALIZED: "Personalizados y corporativos",
+    GIFT_CARDS: "Tarjetas de regalo"
   },
   categoryTitle: "{{category}} en Bolivia",
   categoryDescription: "Compara {{category}} verificados para tu boda, quinceaños o evento, y pide cotización sin compromiso.",
@@ -43,5 +48,20 @@ export const directoryEsBO = {
   partnerCta: { title: "¿Tienes un negocio de eventos?", body: "Publica tus servicios en DOne. Cuéntanos de tu negocio y el equipo te contacta.", link: "Solicita ser partner" },
   trust: "«Verificado» quiere decir que el proveedor pasó la verificación de DOne. DOne no presta ni garantiza el servicio: precio, cobertura y plazos los acuerdas con el proveedor.",
   notFound: { title: "Esta página del directorio no existe", body: "Puede que la categoría o la ciudad del enlace esté mal escrita. Desde el directorio puedes buscar por las dos." },
-  breadcrumb: { label: "Ruta de navegación", home: "Inicio", directory: "Proveedores" }
+  breadcrumb: { label: "Ruta de navegación", home: "Inicio", directory: "Proveedores" },
+  guestMarketplace: {
+    entry: "Proveedores para tu evento", entryBody: "Salones, catering, foto y más, verificados por DOne.", entryCta: "Ver proveedores",
+    title: "Proveedores para tu evento", metaTitle: "Proveedores para tu evento · {{name}}", metaDescription: "Proveedores verificados para organizar tu propia celebración.",
+    lead: "Para tu propia celebración, a la medida de lo que necesites.",
+    // REVISIÓN LEGAL PENDIENTE (decisión 10, 2026-11-28): se publica en TEST; no encender GUEST_MARKETPLACE en producción sin revisión.
+    trust: "DOne verifica a los proveedores; no presta el servicio. El proveedor puede pagar a DOne por tu contacto.",
+    back: "Volver a la invitación", categoriesLabel: "Categorías de proveedores", all: "Todas", cityLabel: "Ciudad", allBolivia: "Toda Bolivia", apply: "Ver proveedores",
+    resultCount_one: "{{count}} proveedor", resultCount_other: "{{count}} proveedores", resultsLabel: "Proveedores",
+    sponsored: "Destacado", verified: "Verificado", viewProvider: "Ver proveedor", priceFrom: "Desde {{price}}", offerOf: "{{offer}} · {{category}}",
+    previous: "Anterior", next: "Siguiente", pagination: "Páginas de proveedores", pageOf: "Página {{page}} de {{pages}}",
+    empty: { title: "Todavía no hay proveedores aquí", body: "Prueba con otra categoría o ciudad.", seeAll: "Ver toda Bolivia", clear: "Quitar filtros" },
+    emptyCatalog: { title: "Estamos reuniendo proveedores", body: "Vuelve pronto: te mostraremos opciones verificadas para tu evento." },
+    error: { title: "No pudimos cargar los proveedores", body: "Revisa tu conexión e inténtalo de nuevo.", retry: "Reintentar" },
+    notFound: { title: "Esta página no está disponible" }
+  }
 } as const;

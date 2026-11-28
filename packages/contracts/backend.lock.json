@@ -2,40 +2,40 @@
   "$comment": "Backend commit whose OpenAPI specs are vendored in specs/. It must be the backend deployed with this frontend. Change it only with: yarn workspace @rsvp/contracts generate --ref <sha|branch|tag> (see README.md).",
   "repository": "PabloArauzCaballero/RSVPBackend",
   "path": "packages/contracts-openapi/specs",
-  "ref": "9eed44b695ecdb23b6581b939bd9ac6b5a534b0d",
-  "refName": "9eed44b",
+  "ref": "96d7fbb4d1fd7594a54a42894584805a6a93b921",
+  "refName": "96d7fbb4d1fd7594a54a42894584805a6a93b921",
   "specs": {
     "celebration": {
-      "version": "1.4.0",
-      "sha256": "24224f080788265a788042fa410889bbab6bb42eada65a35bfda8fc1d262c1fa"
+      "version": "1.9.0",
+      "sha256": "53d04b840fc8340b6d4d18848ba3b65d8b7732e9937b623b37900f2a50a3a7c0"
     },
     "gateway": {
       "version": "1.0.0",
       "sha256": "1307c08dc3ff407e77cb4a56b7f60a699ea42fcd898232825f213a40205486a5"
     },
     "gift-list": {
-      "version": "1.12.0",
-      "sha256": "d946e69dacc89ad65091f15aa3134c10fcd181348d02d5109712d8631bef9590"
+      "version": "1.21.0",
+      "sha256": "cdcea42e9c508ca71459746185378cd0734a9e7766269bb9e16a0dffef2d2dd0"
     },
     "guest-rsvp": {
       "version": "1.13.0",
       "sha256": "532ec48dcd10e0c589c5daa1f2319330d9eef7e918406f35474942fe232ea004"
     },
     "identity": {
-      "version": "2.1.0",
-      "sha256": "1607e87aee8ae9d9bc663bcf941429f58d242714b7f3c94184fcc8c1b3b906b7"
+      "version": "2.3.1",
+      "sha256": "83e9f6b6907513864ed644dc70cd5ea6873b0c8d6fa4b32e6f74ce5247293f2a"
     },
     "notification": {
       "version": "1.5.0",
       "sha256": "670dd80c6c1e7fd0492ee69122e6ed7868da17328e7857fe5931428405670a39"
     },
     "provider-catalog": {
-      "version": "3.3.0",
-      "sha256": "174212bf4309381095f44e09a821fefb4b259e05605b816385a24c2b5bebf33b"
+      "version": "3.15.0",
+      "sha256": "7d4f70f92a640675626b10c4f2e39ffd2389cc343d2654d12731193bccfa3ff4"
     },
     "template-media": {
-      "version": "1.0.0",
-      "sha256": "84f42a8849c3b34ee225ce52e2b42ce2ea04e310befc3be22dab64de479d8360"
+      "version": "1.11.0",
+      "sha256": "9af3032f538b537c14eecd8b19312162d674e271ea4e4f012efb04a194508fb2"
     }
   }
 }

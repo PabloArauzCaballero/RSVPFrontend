@@ -17,6 +17,7 @@ export const HOST_LOADING = {
   gallery: { kind: "gallery", title: "host.gallery.title", intro: "host.gallery.intro" },
   translations: { kind: "form", title: "host.translations.title", intro: "host.translations.intro" },
   templates: { kind: "preview", title: "host.templates.title", intro: "host.templates.intro" },
+  design: { kind: "form", title: "designEditor.title" },
   preview: { kind: "preview", title: "host.preview.title", intro: "host.preview.intro" },
   publish: { kind: "checklist", title: "host.publish.title", intro: "host.publish.intro" },
   settings: { kind: "form", title: "host.settings.title", intro: "host.settings.intro" },
@@ -49,6 +50,8 @@ const ADMIN_LOADING = {
   geography: { kind: "form", title: "admin.geography.title" },
   verification: { kind: "list", title: "admin.verification.title" },
   moderation: { kind: "list", title: "admin.moderation.title" },
+  reports: { kind: "list", title: "moderation.admin.title" },
+  products: { kind: "list", title: "admin.products.title" },
   users: { kind: "people", title: "admin.users.title" },
   organizations: { kind: "form", title: "admin.organizations.title" },
   partners: { kind: "list", title: "admin.partners.title" },
@@ -89,6 +92,8 @@ for (const key of Object.keys(PORTAL_ROUTES) as PortalRoute[]) {
   profiles.set(PORTAL_ROUTES[key], { ...PORTAL_LOADING[key], area: "portal", current: portalActiveRoute(key) });
 }
 
+/** R2 · the product sheet editor (`/portal/productos/nuevo` and `/portal/productos/{id}`) loads inside «Ofertas». */
+const PRODUCT_SHEET: LoadingRoute = { area: "portal", current: "services", kind: "form", title: "portal.product.editTitle" };
 const GUEST_DETAIL: LoadingRoute = { area: "host", current: "guests", kind: "form", title: "guests.detail.title", intro: "guests.detail.intro" };
 
 export function loadingProfile(pathname: string): LoadingRoute | undefined {
@@ -96,6 +101,7 @@ export function loadingProfile(pathname: string): LoadingRoute | undefined {
   const exact = profiles.get(path);
   if (exact) return exact;
   if (/^\/invitados\/[^/]+$/.test(path)) return GUEST_DETAIL;
+  if (/^\/portal\/productos\/[^/]+$/.test(path)) return PRODUCT_SHEET;
   if (/^\/editor\/[^/]+$/.test(path)) return profiles.get(HOST_ROUTES.editor);
   if (/^\/onboarding\/[^/]+$/.test(path)) return profiles.get(HOST_ROUTES.onboarding);
   return undefined;

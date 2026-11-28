@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Text, View, useWindowDimensions } from "react-native";
-import { themeFromTemplate } from "@rsvp/celebration-theme";
+import { MAIN_LOCATION, LOCATIONS_KEY, legacyLink, themeFromTemplate, type CelebrationLocation } from "@rsvp/celebration-theme/model";
 import { Enter, PressFeedback, Skeleton, SkeletonList, StepTransition, useColors } from "@rsvp/ui";
 import { radius, spacing } from "@rsvp/design-tokens";
 import { useCelebration, useCreateCelebration, useEventTypes, type Celebration, type TranslatedEventType } from "@rsvp/query-hooks";
@@ -16,7 +16,7 @@ import { extraFields, fieldLabel } from "./content-editor";
 import { CenteredActions, LoadFailed } from "./load-failed";
 import { previewView, type PreviewSource } from "./preview-model";
 import { PreviewFrame } from "./preview-stage";
-import { LocationField, mapLinkProblem } from "./location-field";
+import { LocationField } from "./location-field";
 import { MoreOptions } from "./more-options";
 import { StepProgress } from "./step-progress";
 import { ActionButton, Celebrate, ChoiceGroup, DateInput, Field, FilterSelect, Illustration, Notice, Screen, TimeInput, useStyles } from "./ui";
@@ -40,7 +40,6 @@ const STEPS = ["type", "who", "name"] as const;
 type StepName = (typeof STEPS)[number];
 const LAST = STEPS.length;
 const HOST_PREFIX = "hosts.";
-const MAP_LINK = "venueMapUrl";
 const WIDE = 960;
 const PREVIEW_WIDTH = 360;
 const MAX_PREVIEW_NAMES = 2;
@@ -105,6 +104,8 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
   const [hosts, setHosts] = useState<Record<string, string>>({});
   /** Text content the event type needs to publish, by content key: the venue and the type's own fields. */
   const [details, setDetails] = useState<Record<string, string>>({});
+  /** The exact point of the venue, when the host searched or marked it. Optional: without it the invitation shows the name only. */
+  const [location, setLocation] = useState<CelebrationLocation | null>(null);
   const [tried, setTried] = useState(false);
   const once = useSingleFlight();
   const type = types.data?.items.find((item) => item.code === (typeCode ?? existing.data?.eventTypeCode));
@@ -132,12 +133,14 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
     const count = overLimit(value, max);
     return count === null ? {} : { error: t("host.limits.tooLong", { count, max }) };
   };
-  const filledDetails = Object.fromEntries(["venueName", MAP_LINK, ...ownFields].map((key) => [key, detail(key).trim()] as const).filter(([, value]) => value));
+  const filledDetails = Object.fromEntries(["venueName", ...ownFields].map((key) => [key, detail(key).trim()] as const).filter(([, value]) => value));
+  /** The point is saved as `locations.main` and mirrored as an OpenStreetMap link in `venueMapUrl` for apps that do not know `locations` yet. */
+  const locationContent = location && detail("venueName").trim() ? { [LOCATIONS_KEY]: { [MAIN_LOCATION]: location }, venueMapUrl: legacyLink(location) } : {};
   // Everything the event type needs to publish is asked for here and is mandatory: the step does not let an empty field through.
   const requiredRoles = (type?.requiredFieldsForPublish ?? []).filter((field) => field.startsWith(HOST_PREFIX)).map((field) => field.slice(HOST_PREFIX.length));
   const missing = (value: string): { error: string } | Record<string, never> => (tried && !value.trim() ? { error: t("host.onboarding.required") } : {});
   const whoIncomplete = !localDateTime || !detail("venueName").trim() || ownFields.some((key) => !detail(key).trim()) || requiredRoles.some((role) => !(hosts[role] ?? "").trim());
-  const whoOverLimit = mapLinkProblem(detail(MAP_LINK)) || overLimit(detail("venueName"), LIMITS.venueName) !== null || ownFields.some((key) => overLimit(detail(key), LIMITS.extraField) !== null) || Object.values(hosts).some((name) => overLimit(name, LIMITS.hostName) !== null);
+  const whoOverLimit = overLimit(detail("venueName"), LIMITS.venueName) !== null || ownFields.some((key) => overLimit(detail(key), LIMITS.extraField) !== null) || Object.values(hosts).some((name) => overLimit(name, LIMITS.hostName) !== null);
   const titleProblem = !effectiveTitle.trim() ? t("host.onboarding.titleRequired") : overLimit(effectiveTitle, LIMITS.title) !== null ? t("host.limits.tooLong", { count: overLimit(effectiveTitle, LIMITS.title) ?? 0, max: LIMITS.title }) : null;
   const slugIssue = slugProblem(effectiveSlug);
 
@@ -147,6 +150,7 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
       title: effectiveTitle.trim() || t("host.onboarding.previewFallbackTitle"),
       ...(instant !== null && !pastDate && !serverDateError ? { eventDate: new Date(instant).toISOString() } : {}),
       ...filledDetails,
+      ...locationContent,
       ...(Object.values(hosts).some((name) => name.trim()) ? { hosts: Object.fromEntries(Object.entries(hosts).filter(([, name]) => name.trim())) } : {})
     }
   };
@@ -160,7 +164,7 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
     const namedHosts = Object.fromEntries(Object.entries(hosts).filter(([, name]) => name.trim()));
     once((release) => create.mutate({
       slug: effectiveSlug, eventTypeCode: typeCode, defaultLocale: language, supportedLocales: [language], timeZone, currency,
-      content: { title: effectiveTitle.trim(), eventDate: localDateTime, ...filledDetails, ...(Object.keys(namedHosts).length ? { hosts: namedHosts } : {}) }
+      content: { title: effectiveTitle.trim(), eventDate: localDateTime, ...filledDetails, ...locationContent, ...(Object.keys(namedHosts).length ? { hosts: namedHosts } : {}) }
     }, {
       onSuccess: (created) => onNavigate(withCelebration(`${HOST_ROUTES.onboarding}/listo`, created.id)),
       onError: (error) => { if (eventDateErrorKey(error)) setStep(2); },
@@ -216,7 +220,7 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
         </View>
         {types.isPending ? <SkeletonList label={t("host.common.loading")}><View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing[2] }}>{[120, 96, 140, 110, 128].map((width, index) => <Skeleton key={index} width={width} height={44} radius={radius.md} />)}</View></SkeletonList> : null}
         {types.isError ? <LoadFailed title={t("host.onboarding.typeTitle")} error={types.error} onRetry={() => { void types.refetch(); }} /> : null}
-        <ChoiceGroup label={t("host.onboarding.typeLabel")} value={typeCode} onChange={(code) => { if (code !== typeCode) { setHosts({}); setDetails((current): Record<string, string> => (current["venueName"] ? { venueName: current["venueName"], ...(current[MAP_LINK] ? { [MAP_LINK]: current[MAP_LINK] } : {}) } : {})); } setTypeCode(code); }} choices={(types.data?.items ?? []).map((item) => ({ value: item.code, label: item.name }))} />
+        <ChoiceGroup label={t("host.onboarding.typeLabel")} value={typeCode} onChange={(code) => { if (code !== typeCode) { setHosts({}); setDetails((current): Record<string, string> => (current["venueName"] ? { venueName: current["venueName"] } : {})); } setTypeCode(code); }} choices={(types.data?.items ?? []).map((item) => ({ value: item.code, label: item.name }))} />
         {type?.description ? <Text style={styles.muted}>{type.description}</Text> : null}
       </View>
     ),
@@ -232,7 +236,7 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
           <View style={{ flexGrow: 1, flexBasis: 150 }}><TimeInput label={t("host.onboarding.timeLabel")} value={when.time} onChange={(time) => setDatePart("time", time)} testID="onboarding-time" {...(tried && (!when.time.trim() || (!dateMissing && !wall.ok)) ? { error: t("host.onboarding.timeInvalid") } : {})} /></View>
         </View>
         <Text style={styles.muted}>{t("host.editor.schedule.zoneHelp", { timeZone: zoneLabel(timeZone) })}</Text>
-        <LocationField name={detail("venueName")} onName={(value) => setDetail("venueName", value)} link={detail(MAP_LINK)} onLink={(value) => setDetail(MAP_LINK, value)} placeholder={t("host.onboarding.venuePlaceholder")} testID="onboarding-venue"
+        <LocationField name={detail("venueName")} onName={(value) => setDetail("venueName", value)} location={location} onLocation={setLocation} placeholder={t("host.onboarding.venuePlaceholder")} testID="onboarding-venue"
           {...(missing(detail("venueName")).error ?? tooLong(detail("venueName"), LIMITS.venueName).error ? { nameError: missing(detail("venueName")).error ?? tooLong(detail("venueName"), LIMITS.venueName).error } : {})} />
         <Text style={styles.muted}>{t("host.onboarding.dateHelp")}</Text>
       </View>

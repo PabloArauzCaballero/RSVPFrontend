@@ -2,6 +2,7 @@ import { defineConfig } from "@playwright/test";
 
 // Visual gate of the Expo app (host, guest, auth). Screens render against the contract mock
 // (scripts/visual-mock.ts), never the real backend, so pixels are deterministic.
+//   VISUAL_REUSE_SERVERS=1 reuses servers you already started (faster loop; CI never sets it).
 //   CHROMIUM_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" yarn workspace @rsvp/universal test:visual
 // Update after an intentional visual change: add `--update-snapshots`, LOOK at the images, then commit them in the PR.
 const MOCK_PORT = Number(process.env["MOCK_PORT"] ?? 28300);
@@ -15,7 +16,7 @@ const platformSuffix = process.env["VISUAL_PLATFORM"] ? `-${process.env["VISUAL_
 const expo = (port: number, env: Record<string, string>) => ({
   command: `npx expo start --web --port ${port} --clear`,
   url: `http://localhost:${port}`,
-  reuseExistingServer: false,
+  reuseExistingServer: process.env["VISUAL_REUSE_SERVERS"] === "1",
   timeout: 240_000,
   env: { CI: "1", EXPO_PUBLIC_API_URL: `http://localhost:${MOCK_PORT}`, ...env }
 });
@@ -31,6 +32,7 @@ export default defineConfig({
   projects: [
     { name: "authed", testMatch: /authed\.visual\.spec\.ts/, use: { baseURL: `http://localhost:${AUTHED_PORT}` } },
     { name: "anon", testMatch: /anon\.visual\.spec\.ts/, use: { baseURL: `http://localhost:${ANON_PORT}` } },
+    { name: "transitions", testMatch: /transitions\.spec\.ts/, use: { baseURL: `http://localhost:${AUTHED_PORT}` } },
     { name: "authed-dark", testMatch: /authed\.dark\.visual\.spec\.ts/, use: { baseURL: `http://localhost:${AUTHED_PORT}` } },
     { name: "anon-dark", testMatch: /anon\.dark\.visual\.spec\.ts/, use: { baseURL: `http://localhost:${ANON_PORT}` } }
   ],

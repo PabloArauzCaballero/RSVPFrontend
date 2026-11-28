@@ -1,4 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, type Query } from "@tanstack/react-query";
+import { effectiveAmountMinor } from "./guest-card.js";
 import { ApiError, type ApiClient } from "@rsvp/api-client";
 import { cachePolicy } from "../policy.js";
 import { queryKeys } from "../keys.js";
@@ -35,9 +36,14 @@ export function useApproveReservation<TResponse>(client: ApiClient, celebrationI
 
 // ---- Typed gift flows (F22 guest list, F23 host management). Contract: gift-list.openapi.json 1.1.0. ----
 import { addGiftWithList, giftApi as giftService } from "./api.js";
-import type { AddGiftInput, UpdateGiftSettingsInput, GiftItemList, GiftReservation, ReservationStatus, ReserveGiftInput } from "./types.js";
+import { isGiftUnavailable, type AddGiftInput, type UpdateGiftSettingsInput, type GiftItemList, type GiftReservation, type ReservationStatus, type ReserveGiftInput } from "./types.js";
 export * from "./types.js";
 export * from "./reserve-rules.js";
+export * from "./guest-card.js";
+export * from "./purchase-attempts.js";
+export * from "./purchase-prompt.js";
+export * from "./replacements.js";
+export * from "./replacements-hooks.js";
 export { giftApi as giftService, isGiftListMissing, suggestionsOf, problemCode } from "./api.js";
 import { suggestionsOf, problemCode } from "./api.js";
 
@@ -46,8 +52,11 @@ export function catalogedFirst<T extends { readonly source: string }>(items: rea
   return [...items.filter((item) => item.source === "CATALOGED"), ...items.filter((item) => item.source !== "CATALOGED")];
 }
 
-/** Guest-visible gifts: the host also receives PROPOSED/REJECTED, which a guest must never see. */
-export const guestVisible = <T extends { readonly status: string }>(items: readonly T[]): T[] => items.filter((item) => item.status === "AVAILABLE" || item.status === "PENDING_REVIEW" || item.status === "COMMITTED");
+/**
+ * Guest-visible gifts: the host also receives PROPOSED/REJECTED and the UNAVAILABLE ones (`availability`), which a guest must NEVER see (M41, owner decision:
+ * the guest does not see a gift its provider no longer offers; only the host does, with the replacements). Also decides whether the RSVP shows a gifts block.
+ */
+export const guestVisible = <T extends { readonly status: string; readonly availability?: string }>(items: readonly T[]): T[] => items.filter((item) => !isGiftUnavailable(item) && (item.status === "AVAILABLE" || item.status === "PENDING_REVIEW" || item.status === "COMMITTED"));
 
 /** `credential` = the guest's bearer; omit it for the host session. The credential is never part of the query key. */
 /** Where a gift comes from, as a guest filters it: a DOne partner (CATALOGED) or any other store. */
@@ -58,8 +67,8 @@ export interface GiftFilters { readonly maxMinor?: number; readonly source: Gift
  * The guest's list as the web page and the app show it: only what a guest may see, the guest's filters applied, and partner
  * gifts before the others whatever the order they arrived in. One function so both surfaces filter identically.
  */
-export function arrangeGifts<T extends { readonly source: string; readonly status: string; readonly price: { readonly amountMinor: number } }>(items: readonly T[], filters: GiftFilters): { readonly partner: T[]; readonly other: T[] } {
-  const kept = guestVisible(items).filter((item) => (filters.maxMinor === undefined || item.price.amountMinor <= filters.maxMinor) && (!filters.onlyAvailable || item.status === "AVAILABLE") && (filters.source === "all" || (filters.source === "partner") === (item.source === "CATALOGED")));
+export function arrangeGifts<T extends { readonly source: string; readonly status: string; readonly availability?: string; readonly price: { readonly amountMinor: number }; readonly currentPrice?: { readonly amountMinor: number } | null }>(items: readonly T[], filters: GiftFilters): { readonly partner: T[]; readonly other: T[] } {
+  const kept = guestVisible(items).filter((item) => (filters.maxMinor === undefined || effectiveAmountMinor(item) <= filters.maxMinor) && (!filters.onlyAvailable || item.status === "AVAILABLE") && (filters.source === "all" || (filters.source === "partner") === (item.source === "CATALOGED")));
   const ordered = catalogedFirst(kept);
   return { partner: ordered.filter((item) => item.source === "CATALOGED"), other: ordered.filter((item) => item.source !== "CATALOGED") };
 }
@@ -80,10 +89,35 @@ export function maxPriceMinor(text: string): number | undefined {
   return value !== "" && Number.isFinite(Number(value)) ? Math.round(Number(value) * 100) : undefined;
 }
 
-export function useGiftList(client: ApiClient, celebrationId: string | undefined, credential?: string | null, initialData?: GiftItemList) {
+/**
+ * R6a · The lead context (`leadContext`) is signed by Gift List with a TTL of GIFT_LEAD_CONTEXT_TTL_SECONDS (default 300, allowed 60..3600).
+ * With `refreshLeadContext`, a member's list is re-read every 240 s, so the `ctx` of the links is always younger than the TTL (a stale one proves
+ * nothing and the member's click is billed to the provider). SUPPORTED TTL: at least 300 s. The contract does not expose the expiry (decision 5 of the PR:
+ * ask the backend for `leadContextExpiresAt` and derive this interval from it), so a deployment with a shorter TTL silently loses the benefit: the ctx
+ * expires between reads and the click is billed. Only a read that carries a context polls (guests never get one). The poll pauses in the background, so the query also refetches every time the tab or the app returns to the foreground (`refetchOnWindowFocus: "always"` overrides the app default, which seo-web turns off, and ignores staleTime). On Expo the foreground signal is React Query's focusManager, fed by AppState in the app providers.
+ */
+export const LEAD_CONTEXT_REFRESH_MS = 240_000;
+
+/** The `ctx` of the `/r/` links of a list: the member's signed lead context, or undefined (guest, public read, older server). */
+export const leadContextOf = (list: Pick<GiftItemList, "leadContext"> | undefined | null): string | undefined => list?.leadContext || undefined;
+
+export interface GiftListOptions {
+  /** Re-read the list before its lead context expires. On only where `/r/{listingId}` links are rendered with that `ctx`; off elsewhere (no pointless polling). */
+  readonly refreshLeadContext?: boolean;
+}
+
+export function useGiftList(client: ApiClient, celebrationId: string | undefined, credential?: string | null, initialData?: GiftItemList, options: GiftListOptions = {}) {
+  // Documented limit: the app default is read only when it is a boolean or "always". React Query also allows a function of the query there; this repo's
+  // apps (seo-web: false, universal: unset) never use one, and the function's parameter type (Query<unknown>) cannot take a typed gift query without a cast,
+  // so a function default is treated as React Query's own default (true) for a read without a lead context.
+  const configured = useQueryClient().getDefaultOptions().queries?.refetchOnWindowFocus;
+  const appFocusDefault = typeof configured === "function" || configured === undefined ? true : configured;
   return useQuery({
     queryKey: [...queryKeys.gift.list(celebrationId ?? ""), credential === undefined ? "host" : "guest"] as const,
     queryFn: ({ signal }) => giftService(client).list(celebrationId ?? "", credential, signal),
+    refetchInterval: (query) => (options.refreshLeadContext && leadContextOf(query.state.data) ? LEAD_CONTEXT_REFRESH_MS : false),
+    // Only a read that carries a context overrides the app default; any other keeps it (seo-web: off, universal: React Query's on).
+    ...(options.refreshLeadContext ? { refetchOnWindowFocus: (query: Query<GiftItemList>) => (leadContextOf(query.state.data) ? "always" as const : appFocusDefault) } : {}),
     ...cachePolicy.gift, ...(initialData ? { initialData } : {}), enabled: Boolean(celebrationId), retry: (count, error) => !(error instanceof ApiError && error.status < 500) && count < 1
   });
 }
@@ -158,6 +192,11 @@ export function useRejectExternalGift(client: ApiClient, celebrationId: string) 
   const queryClient = useQueryClient();
   return useMutation({ mutationFn: (giftItemId: string) => giftService(client).rejectExternal(celebrationId, giftItemId), onSettled: () => refetchAll(queryClient, invalidation.giftReservationChanged(celebrationId)) });
 }
+/** Gift List 1.20.0 · the host takes a gift that is «No disponible» off the list (removeGiftItem). 409 GIFT_NOT_REMOVABLE / GIFT_HAS_RESERVATIONS; repeating it is harmless. */
+export function useRemoveGiftItem(client: ApiClient, celebrationId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({ mutationFn: (giftItemId: string) => giftService(client).remove(celebrationId, giftItemId), onSettled: () => refetchAll(queryClient, invalidation.giftReservationChanged(celebrationId)) });
+}
 export const partnerSuggestionsOf = suggestionsOf;
 
 /** REQ-F23-06 · who may see the requester of a reservation (host only). */
@@ -168,3 +207,6 @@ export function useUpdateGiftSettings(client: ApiClient, celebrationId: string) 
   const queryClient = useQueryClient();
   return useMutation({ mutationFn: (input: UpdateGiftSettingsInput) => giftService(client).updateSettings(celebrationId, input), onSuccess: () => refetchAll(queryClient, invalidation.giftReservationChanged(celebrationId)) });
 }
+
+export * from "./assistant.js";
+export * from "./assistant-hooks.js";

@@ -29,7 +29,7 @@ function Block({ title, children }: { readonly title: string; readonly children:
 }
 
 /** The KYP as stored: the CI and the account arrive masked. «Mostrar CI» reads it in clear with ?reveal=ci, which the server audits. */
-function KypBlock({ partner }: { readonly partner: PartnerDetail }): ReactNode {
+function KypBlock({ partner, cityName }: { readonly partner: PartnerDetail; readonly cityName: (code: string) => string }): ReactNode {
   const t = useT();
   const styles = useStyles();
   const [reveal, setReveal] = useState(false);
@@ -45,7 +45,7 @@ function KypBlock({ partner }: { readonly partner: PartnerDetail }): ReactNode {
       <Line label={t("admin.partners.fields.nit")} value={kyp.nit} />
       <Line label={t("admin.partners.fields.seprec")} value={[kyp.seprecRegistration, kyp.seprecDate].filter(Boolean).join(" · ")} />
       <Line label={t("admin.partners.fields.companyType")} value={kyp.companyType} />
-      <Line label={t("admin.partners.fields.addressLine")} value={[kyp.legalAddress?.line, kyp.legalAddress?.cityCode, kyp.legalAddress?.departmentCode].filter(Boolean).join(", ")} />
+      <Line label={t("admin.partners.fields.addressLine")} value={[kyp.legalAddress?.line, kyp.legalAddress?.cityCode ? cityName(kyp.legalAddress.cityCode) : undefined, kyp.legalAddress?.departmentCode].filter(Boolean).join(", ")} />
       <Line label={t("admin.partners.fields.repFullName")} value={rep?.fullName} />
       <Line label={t("admin.partners.fields.ci")} value={ci ? `${ci} ${rep?.ciExtension ?? ""} ${rep?.ciComplement ?? ""}`.trim() : ""} testID="partner-ci" />
       <View style={[styles.row, { gap: spacing[2] }]}>
@@ -166,7 +166,7 @@ export function PartnerDetailDialog({ partnerId, onClose, onEdit, onCompleteKyp,
             <Line label={t("admin.partners.fields.city")} value={partner.coverage.cityCode ? cityName(partner.coverage.cityCode) : ""} />
             <Line label={t("admin.partners.fields.zones")} value={(partner.coverage.zoneCodes ?? []).map(cityName).join(", ")} />
           </Block>
-          <KypBlock partner={partner} />
+          <KypBlock partner={partner} cityName={cityName} />
           <DocumentsBlock partner={partner} />
           <AuditBlock partner={partner} people={people} />
         </View>

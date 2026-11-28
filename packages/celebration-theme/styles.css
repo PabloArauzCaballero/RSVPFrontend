@@ -14,21 +14,20 @@
 .celebration h1, .celebration h2 { font-family: var(--celebration-heading-font); line-height: 1.15; margin: 0; }
 .celebration[data-heading-case="uppercase"] h1, .celebration[data-heading-case="uppercase"] h2 { text-transform: uppercase; letter-spacing: .04em; }
 .celebration h1 { font-size: calc(clamp(2.2rem, 7vw, 4.5rem) * var(--celebration-heading-scale)); }
-.celebration h2 { font-size: calc(clamp(1.5rem, 4vw, 2.1rem) * var(--celebration-heading-scale)); color: var(--celebration-accent); margin-bottom: 1rem; }
+.celebration h2 { font-size: calc(clamp(1.5rem, 4vw, 2.1rem) * var(--celebration-heading-scale)); color: var(--celebration-text); margin-bottom: 1rem; }
 .celebration a { color: var(--celebration-accent); text-underline-offset: .2em; }
 .celebration a:focus-visible, .celebration summary:focus-visible { outline: 3px solid var(--celebration-accent); outline-offset: 3px; }
 
-.celebration-eyebrow { margin: 0 0 .5rem; color: var(--celebration-accent); font-size: .85rem; letter-spacing: .14em; text-transform: uppercase; font-weight: 600; }
+.celebration-eyebrow { margin: 0 0 .5rem; color: var(--celebration-muted); font-size: .875rem; letter-spacing: .01em; font-weight: 600; }
 .celebration-note { color: var(--celebration-muted); font-size: .9rem; }
 .celebration-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* Cover. Each layout composes it its own way; without a photo the cover is still designed (frame, band or bar), never bare text. */
-.celebration-hero { position: relative; display: grid; gap: 1rem; padding: clamp(3rem, 11vw, 7rem) var(--celebration-space) clamp(2.5rem, 7vw, 4.5rem); background: radial-gradient(60rem 26rem at 50% 0%, color-mix(in srgb, var(--celebration-accent) 13%, transparent), transparent 70%); overflow: hidden; }
+.celebration-hero { position: relative; display: grid; gap: 1rem; padding: clamp(3rem, 11vw, 7rem) var(--celebration-space) clamp(2.5rem, 7vw, 4.5rem); overflow: hidden; }
 .celebration-hero-copy { position: relative; display: grid; gap: .6rem; width: min(100%, var(--celebration-max-width)); margin: 0 auto; }
 .celebration[data-align="center"] .celebration-hero-copy { text-align: center; justify-items: center; }
 .celebration-hero p { margin: 0; }
 .celebration-hero h1 { font-size: calc(clamp(2.5rem, 8.5vw, 5rem) * var(--celebration-heading-scale)); line-height: 1.02; letter-spacing: -.015em; overflow-wrap: anywhere; text-wrap: balance; }
-.celebration-hero .celebration-eyebrow { margin-bottom: .75rem; font-size: .8125rem; letter-spacing: .26em; }
 .celebration-hosts { font-family: var(--celebration-heading-font); font-size: clamp(1.2rem, 3.2vw, 1.6rem); }
 .celebration-amp { font-style: italic; color: var(--celebration-accent); }
 .celebration-ornament { display: block; width: clamp(6rem, 22vw, 9rem); height: auto; margin: .75rem 0; color: var(--celebration-accent); }
@@ -36,39 +35,41 @@
 .celebration-date { font-family: var(--celebration-heading-font); font-size: clamp(1.15rem, 3.2vw, 1.6rem); letter-spacing: .03em; }
 .celebration-date time::first-letter { text-transform: uppercase; }
 .celebration-venue { color: var(--celebration-muted); font-size: 1.05rem; }
-.celebration-countdown { margin-top: .75rem !important; width: fit-content; padding: .3rem 1rem; border: 1px solid color-mix(in srgb, currentColor 35%, transparent); border-radius: 9999px; font-size: .8125rem; letter-spacing: .12em; text-transform: uppercase; color: var(--celebration-muted); }
+.celebration-countdown { margin-top: .5rem !important; font-size: .9375rem; color: var(--celebration-muted); font-variant-numeric: tabular-nums; }
+.celebration-hero-art { display: block; width: clamp(5.5rem, 26vw, 9.5rem); height: auto; margin-bottom: .25rem; }
+.celebration-hero[data-has-image="true"] .celebration-hero-art { width: clamp(4rem, 16vw, 6rem); }
+.celebration-section-art { display: block; width: 3.5rem; height: auto; margin-bottom: .5rem; }
+.celebration[data-align="center"] .celebration-section-art { margin-inline: auto; }
 .celebration-hero-image { width: 100%; height: 100%; object-fit: cover; }
 
 /* centered (classic): a card with a double hairline, like a printed invitation. */
 .celebration-hero[data-hero="centered"] .celebration-hero-copy { padding: clamp(2.25rem, 7vw, 4.5rem) clamp(1.25rem, 5vw, 3.5rem); background: color-mix(in srgb, var(--celebration-surface) 82%, transparent); border: 1px solid color-mix(in srgb, var(--celebration-accent) 55%, transparent); outline: 1px solid color-mix(in srgb, var(--celebration-accent) 28%, transparent); outline-offset: 7px; }
-.celebration-hero[data-hero="centered"] .celebration-hero-image { max-height: 26rem; width: min(100%, var(--celebration-max-width)); margin: 0 auto 1.5rem; }
+.celebration-hero[data-hero="centered"] .celebration-hero-image { height: min(34vh, 17rem); width: min(72vw, 14rem); margin: 0 auto 1.5rem; border-radius: 999px 999px 0 0; border: 1px solid color-mix(in srgb, var(--celebration-accent) 55%, transparent); outline: 1px solid color-mix(in srgb, var(--celebration-accent) 28%, transparent); outline-offset: 6px; }
 
-/* overlay (editorial): the title over the photo; without one, over a band of the accent colour. */
-.celebration-hero[data-hero="overlay"] { min-height: min(78vh, 46rem); align-content: end; color: #fff; background: linear-gradient(160deg, var(--celebration-accent-fill), color-mix(in srgb, var(--celebration-accent-fill) 72%, #000)); }
-.celebration-hero[data-hero="overlay"] .celebration-hero-image { position: absolute; inset: 0; filter: brightness(.5); }
-.celebration-hero[data-hero="overlay"] :is(.celebration-venue, .celebration-countdown, .celebration-eyebrow, .celebration-amp) { color: #fff; }
-.celebration-hero[data-hero="overlay"] .celebration-rule { width: 100%; height: 1px; background: rgb(255 255 255 / .55); }
-.celebration-hero[data-hero="overlay"] h1 { line-height: .95; letter-spacing: -.02em; }
+/* overlay (editorial): a magazine cover. Without a photo it is paper and ink with a heavy accent rule; with one, the title sits over the darkened photo. */
+.celebration-hero[data-hero="overlay"] { min-height: min(70vh, 40rem); align-content: end; border-bottom: 1px solid var(--celebration-accent); }
+.celebration-hero[data-hero="overlay"] .celebration-hero-copy { margin-inline: auto; }
+.celebration-hero[data-hero="overlay"] h1 { line-height: .95; letter-spacing: -.02em; font-size: calc(clamp(2.75rem, 10vw, 6.5rem) * var(--celebration-heading-scale)); }
+.celebration-hero[data-hero="overlay"][data-has-image="true"] { color: #fff; border-bottom-color: transparent; }
+.celebration-hero[data-hero="overlay"] .celebration-hero-image { position: absolute; inset: 0; filter: brightness(.35); }
+.celebration-hero[data-hero="overlay"][data-has-image="true"] :is(.celebration-venue, .celebration-countdown, .celebration-amp, .celebration-hosts, .celebration-date) { color: #fff; }
+.celebration-hero[data-hero="overlay"][data-has-image="true"] .celebration-rule { background: rgb(255 255 255 / .75); }
+.celebration-hero[data-hero="overlay"][data-has-image="true"] .celebration-hero-art { display: none; }
 
-/* banner (festive): a rounded block of the accent colour with confetti. */
-.celebration-hero[data-hero="banner"] { color: var(--celebration-on-accent); border-radius: 0 0 calc(var(--celebration-radius) * 1.6) calc(var(--celebration-radius) * 1.6); background:
-  radial-gradient(circle at 12% 22%, color-mix(in srgb, var(--celebration-surface) 55%, transparent) 0 .3rem, transparent .32rem),
-  radial-gradient(circle at 86% 18%, color-mix(in srgb, var(--celebration-surface) 40%, transparent) 0 .45rem, transparent .47rem),
-  radial-gradient(circle at 72% 78%, color-mix(in srgb, var(--celebration-surface) 30%, transparent) 0 .25rem, transparent .27rem),
-  radial-gradient(circle at 22% 84%, color-mix(in srgb, var(--celebration-surface) 38%, transparent) 0 .5rem, transparent .52rem),
-  radial-gradient(circle at 48% 8%, color-mix(in srgb, var(--celebration-surface) 30%, transparent) 0 .2rem, transparent .22rem),
-  var(--celebration-accent-fill); }
+/* banner (festive): paper and a big, friendly title; the accent only in small pieces (the drawing, the rule, the "&"). No saturated block, no confetti (PL-A3, PL-M6). */
+.celebration-hero[data-hero="banner"] { padding-top: clamp(2.5rem, 8vw, 5rem); }
+.celebration-hero[data-hero="banner"] h1 { font-weight: 700; }
 .celebration-hero[data-hero="banner"] .celebration-hero-image { max-height: 22rem; border-radius: var(--celebration-radius); order: 2; width: min(100%, var(--celebration-max-width)); margin: 0 auto; }
-.celebration-hero[data-hero="banner"] :is(.celebration-eyebrow, .celebration-venue, .celebration-countdown, .celebration-amp) { color: var(--celebration-on-accent); }
-.celebration-hero[data-hero="banner"] .celebration-rule { background: var(--celebration-on-accent); }
 
 /* split (corporate): the copy behind a bar of the accent colour, the photo beside it. */
-.celebration-hero[data-hero="split"] .celebration-hero-copy { padding-left: clamp(1rem, 4vw, 2rem); border-left: 6px solid var(--celebration-accent); }
+.celebration-hero[data-hero="split"] .celebration-hero-copy { padding-left: clamp(1rem, 4vw, 2rem); border-left: 2px solid var(--celebration-accent); }
 .celebration-hero[data-hero="split"] .celebration-hero-image { max-height: 18rem; border-radius: var(--celebration-radius); }
 
 /* compact (minimal): quiet, left-aligned, all air. */
 .celebration-hero[data-hero="compact"] { padding-block: clamp(3rem, 9vw, 5.5rem) clamp(1.5rem, 4vw, 2.5rem); background: none; }
 .celebration-hero[data-hero="compact"] h1 { font-weight: 400; }
+.celebration-hero[data-hero="compact"] .celebration-hero-image { height: auto; max-height: 18rem; width: min(100%, var(--celebration-max-width)); margin: 0 auto; border-radius: var(--celebration-radius); }
+.celebration-hero[data-hero="compact"] .celebration-hero-art { width: clamp(4rem, 14vw, 5.5rem); }
 @media (min-width: 48rem) {
   .celebration-hero[data-hero="split"][data-has-image="true"] { grid-template-columns: 1fr 1fr; align-items: center; }
   .celebration-hero[data-hero="split"] .celebration-hero-copy { order: -1; }
@@ -77,7 +78,7 @@
 /* Navigation */
 .celebration-nav { display: flex; flex-wrap: wrap; gap: .25rem 1rem; justify-content: center; padding: .75rem var(--celebration-space); border-block: 1px solid color-mix(in srgb, var(--celebration-muted) 30%, transparent); }
 .celebration[data-align="start"] .celebration-nav { justify-content: flex-start; }
-.celebration-nav a { min-height: 44px; display: inline-flex; align-items: center; text-decoration: none; color: var(--celebration-text); }
+.celebration-nav a { min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; color: var(--celebration-text); }
 .celebration-nav a[aria-current="page"] { color: var(--celebration-accent); font-weight: 700; text-decoration: underline; }
 
 /* Sections */
@@ -100,7 +101,7 @@
 .celebration-schedule li::before { content: ""; position: absolute; left: 7.7rem; top: 1.45rem; width: .6rem; height: .6rem; border-radius: 50%; background: var(--celebration-accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--celebration-accent) 18%, transparent); }
 .celebration-schedule li::after { content: ""; position: absolute; left: calc(7.7rem + .3rem - .5px); top: 0; bottom: 0; width: 1px; background: color-mix(in srgb, var(--celebration-muted) 40%, transparent); }
 .celebration-schedule li:first-child::after { top: 1.45rem; } .celebration-schedule li:last-child::after { bottom: calc(100% - 1.45rem); } .celebration-schedule li:only-child::after { display: none; }
-.celebration-schedule time { font-family: var(--celebration-heading-font); font-weight: 700; font-size: 1.1rem; color: var(--celebration-accent); text-align: end; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.celebration-schedule time { font-family: var(--celebration-heading-font); font-weight: 700; font-size: 1.1rem; color: var(--celebration-text); text-align: end; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .celebration-schedule strong { font-size: 1.05rem; }
 .celebration-schedule p { margin: .25rem 0 0; color: var(--celebration-muted); }
 .celebration-venues, .celebration-recommendations { list-style: none; padding: 0; margin: 0; display: grid; gap: 1.25rem; }
@@ -124,10 +125,78 @@
 .celebration-cta[data-credential] { display: inline-grid; place-items: center; }
 .celebration-cta-face { grid-area: 1 / 1; display: inline-flex; align-items: center; justify-content: center; gap: .5rem; }
 .celebration-cta[data-credential="absent"] .celebration-cta-face[data-face="confirm"], .celebration-cta[data-credential="present"] .celebration-cta-face[data-face="find"] { visibility: hidden; }
-.celebration-gallery { list-style: none; padding: 0; margin: 0; display: grid; gap: .75rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr)); }
-.celebration-gallery img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; }
-.celebration[data-images="rounded"] .celebration-gallery img { border-radius: var(--celebration-radius); }
-.celebration[data-images="framed"] .celebration-gallery img { border: 6px solid var(--celebration-surface); box-shadow: 0 1px 4px rgb(0 0 0 / .15); }
+.celebration-gallery-carousel { inline-size: min(100%, 48rem); margin-inline: auto; container-type: inline-size; }
+.celebration-gallery {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+.celebration-gallery > li { flex: 0 0 100%; min-width: 0; scroll-snap-align: start; }
+.celebration-gallery a { display: block; width: 100%; position: relative; aspect-ratio: 4 / 3; max-height: 30rem; cursor: zoom-in; text-decoration: none; }
+.celebration .celebration-gallery a:focus-visible { outline: none; }
+.celebration-gallery :is(picture, img, [data-photo-failed]) { display: block; width: 100%; height: 100%; box-sizing: border-box; }
+.celebration[data-images="rounded"] .celebration-gallery :is(img, [data-photo-failed]) { border-radius: var(--celebration-radius); }
+.celebration[data-images="framed"] .celebration-gallery :is(img, [data-photo-failed]) { border: 6px solid var(--celebration-surface); box-shadow: 0 1px 4px rgb(0 0 0 / .15); }
+.celebration-gallery-enlarge {
+  position: absolute;
+  inset-inline-end: .75rem;
+  inset-block-end: .75rem;
+  pointer-events: none;
+}
+.celebration-gallery-dialog {
+  box-sizing: border-box;
+  width: min(calc(100% - 1.5rem), 70rem);
+  height: min(calc(100dvh - 1.5rem), 54rem);
+  max-width: none;
+  max-height: none;
+  margin: auto;
+  padding: clamp(.75rem, 2vw, 1.25rem);
+  border: 1px solid color-mix(in srgb, var(--celebration-text) 20%, transparent);
+  border-radius: max(var(--celebration-radius), .5rem);
+  background: var(--celebration-surface);
+  color: var(--celebration-text);
+}
+.celebration-gallery-dialog[open] { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: .75rem; }
+.celebration-gallery-dialog::backdrop { background: rgb(0 0 0 / .8); }
+html:has(.celebration-gallery-dialog[open]) { overflow: hidden; }
+.celebration-gallery-toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .5rem; }
+.celebration-gallery-toolbar button, .celebration-gallery-enlarge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  min-width: 44px;
+  min-height: 44px;
+  padding: .375rem .875rem;
+  border: 1px solid currentColor;
+  border-radius: .375rem;
+  background: var(--celebration-surface);
+  color: var(--celebration-text);
+  font: inherit;
+  font-size: .9375rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.celebration-gallery-toolbar button:not([aria-disabled="true"]):hover, .celebration-gallery a:hover .celebration-gallery-enlarge { background: color-mix(in srgb, currentColor 10%, var(--celebration-surface)); }
+.celebration-gallery-toolbar button[aria-disabled="true"] { opacity: .5; cursor: default; }
+.celebration-gallery-toolbar button:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+.celebration-gallery a:focus-visible .celebration-gallery-enlarge { outline: 2px solid currentColor; outline-offset: 3px; }
+.celebration-gallery-navigation { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); margin-block-start: .75rem; }
+.celebration-gallery-navigation button:first-child { justify-self: start; }
+.celebration-gallery-navigation button:last-child { justify-self: end; }
+.celebration-gallery-navigation [role="status"] { font-variant-numeric: tabular-nums; text-align: center; }
+@container (max-width: 24rem) {
+  .celebration-gallery-navigation button span { display: none; }
+  .celebration-gallery-navigation button { padding-inline: .625rem; }
+}
+.celebration-gallery-stage { display: grid; place-items: center; min-width: 0; overflow: hidden; }
+.celebration-gallery-stage :is(picture, img) { display: block; width: 100%; height: 100%; }
+.celebration-gallery-stage [data-photo-failed] { width: min(100%, 20rem); max-height: 100%; }
 .celebration details { text-align: start; border-bottom: 1px solid color-mix(in srgb, var(--celebration-muted) 30%, transparent); padding: .75rem 0; }
 .celebration summary { cursor: pointer; font-weight: 600; min-height: 44px; display: flex; align-items: center; }
 
@@ -138,6 +207,7 @@
 /* Story and dress code read as a letter: a narrow measure and a larger opening paragraph. */
 .celebration-sections > section[data-section="story"] p, .celebration-sections > section[data-section="dressCode"] p { max-width: 40rem; }
 .celebration[data-align="center"] .celebration-sections > section :is(p, details) { margin-inline: auto; }
+.celebration[data-align="center"] .celebration-sections > section:is([data-section="story"], [data-section="dressCode"]) p { text-align: start; }
 .celebration-sections > section[data-section="story"] p:first-of-type { font-size: 1.15em; }
 /* The reply is what the page is for: it gets its own tinted block. */
 .celebration-sections > section[data-section="rsvp"] { padding: clamp(1.75rem, 6vw, 3.5rem) clamp(1.25rem, 5vw, 3rem); border-radius: max(var(--celebration-radius), 2px); background: color-mix(in srgb, var(--celebration-accent) 9%, var(--celebration-surface)); border: 1px solid color-mix(in srgb, var(--celebration-accent) 30%, transparent); }
@@ -146,3 +216,339 @@
 /* Gifts (P22): on every invitation, quiet like the other sections, with the same filled button as the reply. */
 .celebration-sections > section[data-section="gifts"] p { max-width: 40rem; }
 .celebration-sections > section[data-section="gifts"] .celebration-cta, .celebration-sections > section[data-section="rsvp"] .celebration-cta { margin-top: .5rem; }
+
+/* ---------------------------------------------------------------------------------------------------------------------
+   Design document v2 (F4 b). Everything below is keyed to `.celebration-design`; v1 templates never match it.
+   The canvases are grids: the phone's from the document's `mobile` canvas, and from 900 px the `desktop` one when it has one.
+   The tokens (palette, fonts, radii, spacing) arrive as the same custom properties the v1 engine uses.
+   --------------------------------------------------------------------------------------------------------------------- */
+.celebration-design { overflow-x: clip; }
+.celebration { --cd-line: var(--celebration-line, color-mix(in srgb, var(--celebration-text) 30%, var(--celebration-canvas))); }
+/* The bar covers the foot of the page on the phone: the whole document (footer included) ends above it. */
+body:has(.cdesign-dock) { padding-bottom: 5.5rem; }
+.celebration-design h1 { font-size: calc(clamp(2.4rem, 8vw, 4.75rem) * var(--celebration-heading-scale)); font-weight: 600; line-height: 1.02; }
+.celebration-design .cdesign-heading { font-size: calc(clamp(1.4rem, 3.4vw, 1.9rem) * var(--celebration-heading-scale)); color: var(--celebration-text); margin: 0; }
+.celebration-design .cdesign-page-title { width: min(100%, var(--celebration-max-width)); margin: calc(var(--celebration-gap) / 2) auto .5rem; padding-inline: var(--celebration-space); box-sizing: border-box; }
+.celebration-design .cdesign-text, .celebration-design .cdesign-quote p { margin: 0; max-width: 40rem; }
+.celebration-design .cdesign-quote { margin: 0; border-inline-start: 2px solid var(--celebration-accent); padding-inline-start: 1rem; font-family: var(--celebration-heading-font); font-size: 1.25rem; }
+.celebration-design .cdesign-monogram { margin: 0; font-family: var(--celebration-monogram-font); font-size: clamp(2.5rem, 12vw, 5rem); line-height: 1; color: var(--cd-ink, var(--celebration-accent)); }
+.celebration-design .cdesign-spacer { display: block; height: 100%; }
+.celebration-design .cdesign-image { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+.celebration-design .cdesign-art { display: block; width: 100%; height: auto; max-height: 100%; }
+.celebration-design .cdesign-ornament { display: block; width: 100%; height: auto; color: var(--celebration-accent); }
+.celebration-design .cdesign-frame, .celebration-design .cdesign-corner { display: block; width: 100%; height: auto; }
+.celebration-design .cdesign-bg-art { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .5; pointer-events: none; z-index: 0; }
+.celebration-design .cdesign-el-link { display: block; color: inherit; text-decoration: none; }
+
+/* The canvas: a grid of the document's columns. In a flow canvas the rows grow with their content, in a free one they are exact. */
+.celebration-design .cdesign-pages { display: block; }
+.celebration-design .cdesign-page { position: relative; display: block; }
+.celebration-design .cdesign-page[data-style="cards"] { background-color: var(--celebration-surface); }
+.celebration-design .cdesign-page[data-style="bands"]:nth-of-type(even) { background-color: var(--celebration-surface); }
+.celebration-design .cdesign-canvas { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(var(--cd-cols-m), minmax(0, 1fr)); grid-auto-rows: minmax(var(--cd-row-m), auto);
+  width: min(100%, var(--celebration-max-width)); margin: 0 auto; padding: var(--celebration-gap) var(--celebration-space); box-sizing: border-box; }
+/* A free canvas places by rows, but a row is a MINIMUM: text enlarged to 200% (WCAG 1.4.4) makes its cell grow instead of being cut. */
+.celebration-design .cdesign-canvas[data-mode="free"] { grid-auto-rows: minmax(var(--cd-row-m), auto); }
+.celebration-design .cdesign-page[data-page-kind="cover"] .cdesign-canvas { padding-block: clamp(2rem, 7vw, 4rem); }
+/* The phone canvas does not stretch with a tablet: the drawings of the cover are sized by the width of their columns, so past 30rem (480 px) the canvas stays centred and the title keeps its place in the first screen. */
+@media (max-width: 56.1875rem) { .celebration-design .cdesign-page[data-page-kind="cover"] .cdesign-canvas { width: min(100%, 30rem); } }
+.celebration-design .cdesign-el { display: none; min-width: 0; box-sizing: border-box; position: relative; container-type: inline-size; align-self: start;
+  grid-column: var(--mx) / span var(--mw); grid-row: var(--my) / span var(--mh); }
+.celebration-design .cdesign-canvas[data-mode="free"] .cdesign-el { align-self: stretch; }
+.celebration-design .cdesign-el[data-m] { display: block; }
+.celebration-design .cdesign-el[data-round] { overflow: clip; }
+/* The monogram of a rounded element is a seal: a circle in ink with a fine rule, centred on its columns. It has no fill and no action, so nothing about it reads as a button. */
+.celebration-design .cdesign-el[data-block="monogram"][data-round] { width: min(100%, 6.5rem); aspect-ratio: 1; justify-self: center; display: grid; place-items: center; background: none; }
+.celebration-design .cdesign-el p { margin: 0; }
+@media (min-width: 56.25rem) {
+  .celebration-design .cdesign-canvas { grid-template-columns: repeat(var(--cd-cols-d), minmax(0, 1fr)); grid-auto-rows: minmax(var(--cd-row-d), auto); }
+  .celebration-design .cdesign-canvas[data-mode="free"] { grid-auto-rows: minmax(var(--cd-row-d), auto); }
+  .celebration-design .cdesign-el { grid-column: var(--dx) / span var(--dw); grid-row: var(--dy) / span var(--dh); }
+  .celebration-design .cdesign-el[data-m]:not([data-d]) { display: none; }
+  .celebration-design .cdesign-el[data-d] { display: block; }
+}
+/* An element with its own size: the cover title scales with it and the lines under it stay readable. */
+.celebration-design .cdesign-el[data-sized] :is(h1, h2, h3, .cdesign-monogram) { font-size: 1em; }
+.celebration-design .cdesign-el[data-sized] :is(.celebration-date, .celebration-hosts) { font-size: max(1.1rem, calc(var(--cd-size, 16px) * .3)); }
+.celebration-design .cdesign-el[data-sized] .celebration-venue { font-size: max(1rem, calc(var(--cd-size, 16px) * .22)); }
+
+/* A script face (Allura) is for the title only (PL-FE143-V1): at 15 to 21 px its x-height is 5 to 7 px, so the date, the place, the countdown, the times and the venue names (the facts a guest
+   comes for) keep the body face. Headings at 32 px and up keep the script. */
+.celebration-design[data-heading-face="script"] :is(.celebration-hosts, .celebration-date, .celebration-venue, .celebration-countdown, p, li, time, strong, dt, dd, summary, label, small, a, button, .cdesign-el, .cdesign-cover) { font-family: var(--celebration-body-font); }
+.celebration-design[data-heading-face="script"] :is(h1, h2, h3, .cdesign-monogram) { font-family: var(--celebration-heading-font); }
+
+/* Cover block. The photo and the copy are one block; where the block sits and how wide it is is the document's call. */
+.celebration-design .cdesign-cover { display: grid; gap: 1rem; justify-items: start; align-content: start; }
+/* The photo comes wrapped in a <picture> (AVIF and WebP sources), which would be the grid item instead of the <img>: every rule keyed to `.cdesign-cover-photo`
+   (order, grid-column, justify-items, widths in %) would then hit a child that is not placed by the grid (PL-OF-1, PL-FE146-1). `display: contents` makes the <img> the item.
+   The <source> elements then become children of the cover for the grid (Chrome reports them `display: block`): each opened an empty row, and the gap above it pushed the photo and the title 1 rem down, so they are hidden. */
+.celebration-design .cdesign-cover > picture { display: contents; }
+.celebration-design .cdesign-cover > picture > source { display: none; }
+.celebration-design .cdesign-cover-copy { display: grid; gap: .5rem; justify-items: inherit; min-width: 0; }
+.celebration-design .cdesign-cover-photo { display: block; width: 100%; max-height: 22rem; object-fit: cover; border-radius: inherit; }
+.celebration-design .cdesign-cover h1, .celebration-design .cdesign-cover p { overflow-wrap: anywhere; text-wrap: balance; }
+.celebration-design .cdesign-cover[data-variant="classic"], .celebration-design .cdesign-cover[data-variant="corporate"] { justify-items: center; text-align: center; }
+.celebration-design .cdesign-cover[data-variant="classic"] .cdesign-cover-photo { width: min(72%, 14rem); aspect-ratio: 3 / 4; height: auto; max-height: none; border-radius: 999px 999px 0 0; border: 1px solid color-mix(in srgb, var(--celebration-accent) 55%, transparent); outline: 1px solid color-mix(in srgb, var(--celebration-accent) 28%, transparent); outline-offset: 6px; }
+.celebration-design .cdesign-cover[data-variant="festive"] .cdesign-cover-photo { width: min(72%, 16rem); aspect-ratio: 1; height: auto; border-radius: 50%; box-shadow: .5rem .5rem 0 0 color-mix(in srgb, var(--celebration-text) 14%, var(--celebration-canvas)); }
+.celebration-design .cdesign-cover[data-variant="corporate"] .cdesign-cover-photo { aspect-ratio: 4 / 3; height: auto; }
+@container (min-width: 34rem) {
+  .cdesign-cover[data-variant="classic"] { justify-items: start; text-align: start; }
+  .cdesign-cover[data-variant="classic"] .cdesign-cover-copy { justify-items: start; }
+}
+/* The document centres the cover text: the photo (inside its <picture>) and the copy share that axis, also from 34 rem up (PL-FE143-V2). */
+.celebration-design .cdesign-cover[data-align="center"] { justify-items: center; text-align: center; }
+.celebration-design .cdesign-cover[data-align="center"] .cdesign-cover-copy { justify-items: center; }
+.celebration-design .cdesign-cover[data-align="center"][data-variant="classic"] { row-gap: 1.25rem; } /* the arch's ring is 7 px outside the photo: the names do not touch it */
+.celebration-design .cdesign-cover[data-align="center"] picture { display: flex; justify-content: center; width: 100%; }
+.celebration-design .cdesign-intro { width: min(100%, var(--celebration-max-width)); margin: 0 auto .5rem; padding-inline: var(--celebration-space); box-sizing: border-box; }
+.celebration-design .cdesign-intro p { max-width: 40rem; }
+.celebration-design .cdesign-page[data-section="gifts"] .celebration-cta, .celebration-design .cdesign-page[data-section="rsvp"] .celebration-cta { width: 100%; max-width: 22rem; }
+
+/* Buttons of the document (gifts, reply, link). Solid is the default of .celebration-cta; outline and link are quieter. */
+.celebration .celebration-cta[data-variant="outline"] { background: transparent; color: var(--celebration-accent) !important; border: 2px solid var(--celebration-accent); }
+.celebration-design .celebration-cta[data-variant="link"] { background: transparent; color: var(--celebration-accent) !important; text-decoration: underline; padding-inline: .25rem; }
+
+/* The dock (P22): the gifts button and the reply are always in view. Bottom bar on the phone, top bar from 900 px. */
+.celebration .cdesign-dock { position: fixed; z-index: 40; inset: auto 0 0 0; display: flex; gap: .5rem; padding: .5rem max(.75rem, env(safe-area-inset-right)) max(.5rem, env(safe-area-inset-bottom)) max(.75rem, env(safe-area-inset-left));
+  background: var(--celebration-canvas); border-top: 1px solid var(--cd-line); box-sizing: border-box; }
+.celebration .cdesign-dock .celebration-cta { flex: 1 1 0; min-width: 0; padding: .6rem .75rem; font-size: .95rem; line-height: 1.2; }
+.celebration .cdesign-dock .celebration-cta[data-action="rsvp"], .celebration .cdesign-dock .celebration-cta[data-action="rsvp-help"] { background: transparent; color: var(--celebration-accent) !important; border: 2px solid var(--celebration-accent); }
+@media (max-width: 25rem) { .celebration .cdesign-dock .celebration-icon { display: none; } }
+@media (min-width: 56.25rem) {
+  body:has(.cdesign-dock) { padding-bottom: 0; }
+  .celebration .cdesign-dock { position: sticky; inset: 0 0 auto 0; justify-content: flex-end; border-top: 0; border-bottom: 1px solid var(--cd-line); padding-inline: var(--celebration-space); }
+  .celebration .cdesign-dock .celebration-cta { flex: 0 0 auto; padding-inline: 1.25rem; }
+}
+
+/* Entrance (P18): one time, transform and opacity only. Without motion preference the final state is what you get. */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes cdesign-fade { from { opacity: 0 } to { opacity: 1 } }
+  @keyframes cdesign-rise { from { opacity: 0; transform: translateY(14px) } to { opacity: 1; transform: none } }
+  @keyframes cdesign-scale { from { opacity: 0; transform: scale(.86) } to { opacity: 1; transform: none } }
+  .celebration-design .cdesign-page[data-page-kind="cover"] .cdesign-el[data-entrance] { animation-duration: var(--cdesign-duration, 700ms); animation-delay: var(--cdesign-delay, 0ms); animation-fill-mode: both; animation-timing-function: cubic-bezier(.16, 1, .3, 1); }
+  .celebration-design .cdesign-el[data-entrance="fade"] { animation-name: cdesign-fade; }
+  .celebration-design .cdesign-el[data-entrance="rise"], .celebration-design .cdesign-el[data-entrance="envelope"] { animation-name: cdesign-rise; }
+  .celebration-design .cdesign-el[data-entrance="scale"] { animation-name: cdesign-scale; }
+  @supports (animation-timeline: view()) {
+    .celebration-design .cdesign-page[data-page-kind="section"] .cdesign-el[data-entrance]:not([data-entrance="draw"]) { animation-duration: 1ms; animation-timing-function: linear; animation-fill-mode: both; animation-timeline: view(); animation-range: entry 0% entry 55%; }
+  }
+}
+/* A titled section keeps the section gap split around the title and below the content (half above, half below), not between its title and its content: the canvas starts one grid step under the title (8 px), so the title, its drawing and the first line read as one group. */
+.celebration-design .cdesign-page[data-page-kind="section"] > :is(.cdesign-page-title, .cdesign-intro) ~ .cdesign-canvas { padding-top: .5rem; }
+.celebration-design .cdesign-page-title ~ .cdesign-canvas { padding-bottom: calc(var(--celebration-gap) / 2); }
+/* A tablet in portrait (600 to 899 px) draws the phone canvas on a much wider page: the cover drawings stop at 13 rem so the title, with a photo above it, still starts in the first screen instead of under the fixed bar. */
+@media (min-width: 37.5rem) and (max-width: 56.1875rem) {
+  .celebration-design .cdesign-page[data-page-kind="cover"] .cdesign-art { max-height: 13rem; width: auto; max-width: 100%; margin-inline: auto; }
+}
+/* The three states of «Ver regalos» (`giftsStatus`): the button stays and keeps its link; OPEN is the solid accent button, EMPTY (no gifts yet) a dashed accent outline on the surface, CLOSED a quiet line-and-muted one. Colours are palette roles, so each holds its contrast in both schemes. */
+.celebration .celebration-cta[data-action="gifts"][data-gifts-status="EMPTY"] { background: var(--celebration-surface); color: var(--celebration-accent) !important; border: 2px dashed var(--celebration-accent); }
+.celebration .celebration-cta[data-action="gifts"][data-gifts-status="CLOSED"] { background: var(--celebration-surface); color: var(--celebration-muted) !important; border: 2px solid var(--cd-line); }
+@media (hover: hover) { .celebration .celebration-cta[data-action="gifts"]:is([data-gifts-status="EMPTY"], [data-gifts-status="CLOSED"]):hover { background: color-mix(in srgb, var(--celebration-accent) 8%, var(--celebration-surface)); } }
+/* A photo that did not load (`Photo`): the same box on the palette's surface with the camera drawing, never a broken hole. */
+.celebration [data-photo-failed] { display: grid; place-items: center; box-sizing: border-box; background: var(--celebration-surface); border: 1px solid var(--cd-line); aspect-ratio: 4 / 3; width: 100%; overflow: clip; }
+.celebration .celebration-photo-art { display: block; width: min(40%, 6rem); height: auto; }
+.celebration-design .cdesign-image[data-photo-failed] { height: 100%; }
+/* The drawing that heads a section is a small mark, not a block: 72 px whatever the columns say. */
+.celebration-design .cdesign-page[data-page-kind="section"] .cdesign-el[data-block="illustration"] { max-width: 4.5rem; }
+
+/* Focus is never hidden under the dock (WCAG 2.4.11, P22): the page scrolls a focused element clear of the bottom bar on the phone and of the header on the desktop. */
+html:has(.cdesign-dock) { scroll-padding-bottom: 6rem; }
+@media (min-width: 56.25rem) { html:has(.cdesign-dock) { scroll-padding-bottom: 0; scroll-padding-top: 5rem; } }
+/* One row of section links on the phone (scrolls sideways) instead of three, so the cover stays in the first screen. */
+@media (max-width: 56.1875rem) {
+  .celebration-design .celebration-nav { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; scrollbar-width: thin; }
+  .celebration-design .celebration-nav a { white-space: nowrap; flex: 0 0 auto; }
+}
+/* Hover changes the colour too, not only the scale: the fill moves a step towards the text colour (never lowers the ink's contrast). */
+@media (hover: hover) { .celebration-cta:hover { background: color-mix(in srgb, var(--celebration-accent-fill) 86%, var(--celebration-text)); } }
+
+/* F6 · media roles, embeds and the music player. Everything reads the theme variables; nothing animates except a short fade that reduced motion removes. */
+.celebration-media-image { display: block; max-width: 100%; height: auto; border-radius: var(--celebration-radius, 0); }
+.celebration-media-background-image { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -2; border-radius: 0; }
+.celebration-embed { box-sizing: border-box; position: relative; display: grid; gap: .5rem; width: 100%; margin-inline: auto; max-width: min(var(--celebration-max-width, 40rem), 40rem); align-content: center; justify-items: center; text-align: center; background: var(--celebration-surface); border: 1px solid color-mix(in srgb, var(--celebration-text) 18%, transparent); border-radius: var(--celebration-radius, 0); overflow: hidden; padding: 1rem; }
+/* The three cards (video, map, song) are one structure and one height: a 16:9 area with at least 11 rem, the action centred in it. */
+.celebration-embed { min-height: 10rem; }
+/* Air around pictures and cards: the document sets its own margins inline, which win over this. */
+.celebration-design .cdesign-el:is([data-block="image"], [data-block="video"], [data-block="map"], [data-block="music"]) { margin-block: 1rem; }
+/* Once tapped, a video or a map takes the 16:9 of its player. */
+.celebration-embed[data-loaded="true"]:is([data-kind="video"], [data-kind="map"]) { aspect-ratio: 16 / 9; padding: 0; }
+.celebration-embed[data-loaded="true"] { padding: 0; }
+.celebration-embed-frame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.celebration-embed > .celebration-media-image { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }
+.celebration-embed-play, .celebration-audio-button { justify-self: center; max-width: 100%; text-align: start; position: relative; z-index: 1; display: inline-flex; align-items: center; gap: .6rem; min-height: 44px; min-width: 44px; padding: .5rem 1.1rem; border: 2px solid var(--celebration-accent); border-radius: 9999px; background: var(--celebration-surface); color: var(--celebration-text); font: inherit; font-weight: 600; cursor: pointer; transition: background-color .15s ease; }
+.celebration-embed-play:hover, .celebration-audio-button:hover { background: color-mix(in srgb, var(--celebration-accent) 14%, var(--celebration-surface)); }
+.celebration-embed-play:focus-visible, .celebration-audio-button:focus-visible { outline: 3px solid var(--celebration-accent); outline-offset: 3px; }
+.celebration-embed .celebration-note { position: relative; z-index: 1; margin: 0; background: color-mix(in srgb, var(--celebration-surface) 88%, transparent); padding: .15rem .4rem; border-radius: 4px; }
+.celebration-audio-progress { box-sizing: border-box; width: 100%; height: .625rem; appearance: none; border: 1px solid color-mix(in srgb, var(--celebration-text) 60%, var(--celebration-surface)); border-radius: 9999px; overflow: hidden; background: color-mix(in srgb, var(--celebration-text) 18%, var(--celebration-surface)); }
+.celebration-audio-progress::-webkit-progress-bar { background: color-mix(in srgb, var(--celebration-text) 18%, var(--celebration-surface)); }
+.celebration-audio-progress::-webkit-progress-value { background: var(--celebration-accent-fill, var(--celebration-accent)); border-radius: 9999px; }
+.celebration-audio-progress::-moz-progress-bar { background: var(--celebration-accent-fill, var(--celebration-accent)); border-radius: 9999px; }
+@media (prefers-reduced-motion: reduce) { .celebration-embed-play, .celebration-audio-button { transition: none; } }
+
+/* F6 · pictures behind a page or an element of a design document (P3). The veil is the canvas colour at the opacity the palette needs so the text on top reads at AA over any picture;
+   both schemes' values travel as custom properties and the one that applies is chosen like the palette is: by the system, or by the forced scheme. Only opacity and transform ever animate. */
+.celebration-design .cdesign-el[data-bg-media] { overflow: clip; }
+.celebration-media-backdrop { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.celebration-media-backdrop .celebration-media-background-image { position: absolute; inset: 0; width: 100%; height: 100%; z-index: auto; border-radius: 0; }
+/* The ONE definition of the veil. Both values are always set by MediaBackdrop; if one were ever missing the fallback is the contract's maximum (80 %), never a thinner veil. */
+.celebration-media-backdrop .celebration-media-veil { position: absolute; inset: 0; z-index: auto; background: color-mix(in srgb, var(--celebration-canvas) var(--cd-veil-l, 80%), transparent); }
+@media (prefers-color-scheme: dark) { .celebration-design[data-scheme-source="system"] .celebration-media-backdrop .celebration-media-veil { background: color-mix(in srgb, var(--celebration-canvas) var(--cd-veil-d, 80%), transparent); } }
+.celebration-design[data-scheme-source="prop"][data-color-scheme="dark"] .celebration-media-backdrop .celebration-media-veil { background: color-mix(in srgb, var(--celebration-canvas) var(--cd-veil-d, 80%), transparent); }
+.celebration-design .cdesign-el > .celebration-media-backdrop ~ * { position: relative; z-index: 1; }
+.celebration-design .cdesign-el[data-block="video"], .celebration-design .cdesign-el[data-block="music"], .celebration-design .cdesign-el[data-block="map"] { align-self: start; }
+.celebration-embed-status { position: absolute; inset: auto 0 0 0; z-index: 2; margin: 0; padding: .4rem .75rem; text-align: center; background: color-mix(in srgb, var(--celebration-surface) 92%, transparent); color: var(--celebration-text); font-size: .9rem; }
+.celebration-embed[data-phase="failed"] .celebration-embed-play { border-color: var(--celebration-text); }
+/* On a picture the muted ink is the text ink: a veil can make the text pass AA over any photo, but not an ink that is already near 4.5 on the plain canvas. */
+.celebration-design .cdesign-page[data-bg-media], .celebration-design .cdesign-el[data-bg-media] { --celebration-muted: var(--celebration-text); }
+/* Same for the monogram: the veil is sized for the text ink, and the accent over a photo measured 2.57:1 (Gala). */
+.celebration-design :is(.cdesign-page[data-bg-media], .cdesign-el[data-bg-media]) .cdesign-monogram { color: var(--celebration-text); }
+
+/* P22 · the gifts and reply buttons. The dock is above everything (the author's z-index tops out at 100). Inside the page they are a grid item of their own, OUTSIDE every `.cdesign-author`:
+   the author's stylesheet is scoped to that container (see CustomCss), so it cannot match the page, the canvas, `main` or these blocks, nor inherit anything into them. Whatever the
+   author draws inside a container is clipped to it (plus a small margin for shadows) and lives in its own stacking context, below the protected blocks. */
+.celebration .cdesign-dock { z-index: 2000 !important; }
+.celebration-design .cdesign-el.rsvp-protected { position: relative; z-index: 1000; }
+.celebration-design .cdesign-author { position: relative; display: block; min-height: 100%; min-width: 0; isolation: isolate; contain: layout; overflow: clip; overflow-clip-margin: 1.5rem; border-radius: inherit; }
+/* Blocks that are a picture or a shape, not text, fill their cell. */
+.celebration-design .cdesign-el:is([data-block="image"], [data-block="spacer"], [data-block="illustration"], [data-block="ornament"]) .cdesign-author { height: 100%; }
+.celebration-design .cdesign-el[data-block="monogram"][data-round] .cdesign-author { display: grid; place-items: center; }
+
+/* ---------------------------------------------------------------------------------------------------------------------------
+   Design document v2 (F4 c1 · bodas). Two things the documents of the wedding group need and the contract cannot say per element:
+   the editorial cover as a spread, and the numbered acts of the programme. Keyed to `.celebration-design`. */
+.celebration-design .cdesign-cover[data-variant="editorial"] .cdesign-cover-photo { width: 100%; max-height: none; aspect-ratio: 4 / 5; object-fit: cover; }
+/* On the phone the title comes first and the photo under it, so the names are in the first screen whatever the photo weighs. */
+@media (max-width: 56.1875rem) { .celebration-design .cdesign-cover[data-variant="editorial"] .cdesign-cover-photo { order: 1; max-height: 28rem; } }
+@media (min-width: 900px) {
+  .celebration-design .cdesign-cover[data-variant="editorial"][data-has-image="true"] { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); column-gap: clamp(1.5rem, 4vw, 3.5rem); align-items: center; }
+  .celebration-design .cdesign-cover[data-variant="editorial"][data-has-image="true"] .cdesign-cover-photo { grid-column: 1; grid-row: 1; }
+  .celebration-design .cdesign-cover[data-variant="editorial"][data-has-image="true"] .cdesign-cover-copy { grid-column: 2; grid-row: 1; }
+}
+/* The schedule is a sequence: with `display: "list"` each item is an act, in Roman numerals in the accent, and the timeline dot gives way to it. */
+.celebration-design .cdesign-section-body[data-display="list"] .celebration-schedule { counter-reset: act; }
+.celebration-design .cdesign-section-body[data-display="list"] .celebration-schedule li { counter-increment: act; }
+.celebration-design .cdesign-section-body[data-display="list"] .celebration-schedule li::before { content: counter(act, upper-roman); left: 6.75rem; top: .95rem; width: 2.5rem; height: auto; border-radius: 0; background: none; box-shadow: none; text-align: center; font-family: var(--celebration-heading-font); font-weight: 600; font-size: 1rem; line-height: 1.6; color: var(--celebration-accent); }
+.celebration-design .cdesign-section-body[data-display="list"] .celebration-schedule li::after { display: none; }
+
+/* =====================================================================================================================
+   Contract 1.8.0 · fidelity: cover variants, masks, frames, named animations, graded veil. Everything here is decoration over the same content: the gifts and
+   reply buttons (`.rsvp-protected`) and the dock are never masked, framed, animated or covered (P22), and the renderer does not even emit the attributes for them. */
+
+/* Motion tokens: the values of `motion` in @rsvp/design-tokens (a test fails if they drift). Named animations take duration and curve from here, never from a document. */
+.celebration-design { --cd-motion-appear: 700ms; --cd-motion-settle: 1200ms; --cd-motion-sway: 2200ms; --cd-motion-reveal: 1700ms; --cd-ease-out: cubic-bezier(.16, 1, .3, 1); --cd-ease-in-out: cubic-bezier(.77, 0, .18, 1); }
+
+/* Masks: the shape of what the element draws. The author container is the one clipped, so a frame (outside it) keeps its line. */
+.celebration-design .cdesign-el[data-mask="arch"] .cdesign-author { clip-path: inset(0 round 999px 999px 0 0); }
+.celebration-design .cdesign-el[data-mask="circle"] .cdesign-author { clip-path: inset(0 round 50%); }
+.celebration-design .cdesign-el[data-mask="rounded"] .cdesign-author { clip-path: inset(0 round 1.5rem); }
+.celebration-design .cdesign-el[data-mask="chamfer"] .cdesign-author { clip-path: polygon(1.5rem 0, calc(100% - 1.5rem) 0, 100% 1.5rem, 100% calc(100% - 1.5rem), calc(100% - 1.5rem) 100%, 1.5rem 100%, 0 calc(100% - 1.5rem), 0 1.5rem); }
+/* Two arched doors side by side: one polygon, the two shapes joined along the base by a zero-width seam. */
+.celebration-design .cdesign-el[data-mask="deco-doors"] .cdesign-author { clip-path: polygon(3.0% 100.0%, 3.0% 26.0%, 3.8% 19.3%, 6.0% 13.0%, 9.6% 7.6%, 14.2% 3.5%, 19.7% 0.9%, 25.5% 0.0%, 31.3% 0.9%, 36.7% 3.5%, 41.4% 7.6%, 45.0% 13.0%, 47.2% 19.3%, 48.0% 26.0%, 48.0% 100.0%, 52.0% 100.0%, 52.0% 26.0%, 52.8% 19.3%, 55.0% 13.0%, 58.6% 7.6%, 63.2% 3.5%, 68.7% 0.9%, 74.5% 0.0%, 80.3% 0.9%, 85.8% 3.5%, 90.4% 7.6%, 94.0% 13.0%, 96.2% 19.3%, 97.0% 26.0%, 97.0% 100.0%); }
+/* A postage-stamp edge: a serrated outline (teeth 6 px deep, twelve per side). */
+.celebration-design .cdesign-el[data-mask="stamp"] .cdesign-author { clip-path: polygon(0.00% 0, 4.17% 6px, 8.33% 0, 12.50% 6px, 16.67% 0, 20.83% 6px, 25.00% 0, 29.17% 6px, 33.33% 0, 37.50% 6px, 41.67% 0, 45.83% 6px, 50.00% 0, 54.17% 6px, 58.33% 0, 62.50% 6px, 66.67% 0, 70.83% 6px, 75.00% 0, 79.17% 6px, 83.33% 0, 87.50% 6px, 91.67% 0, 95.83% 6px, 100% 0.00%, calc(100% - 6px) 4.17%, 100% 8.33%, calc(100% - 6px) 12.50%, 100% 16.67%, calc(100% - 6px) 20.83%, 100% 25.00%, calc(100% - 6px) 29.17%, 100% 33.33%, calc(100% - 6px) 37.50%, 100% 41.67%, calc(100% - 6px) 45.83%, 100% 50.00%, calc(100% - 6px) 54.17%, 100% 58.33%, calc(100% - 6px) 62.50%, 100% 66.67%, calc(100% - 6px) 70.83%, 100% 75.00%, calc(100% - 6px) 79.17%, 100% 83.33%, calc(100% - 6px) 87.50%, 100% 91.67%, calc(100% - 6px) 95.83%, 100.00% 100%, 95.83% calc(100% - 6px), 91.67% 100%, 87.50% calc(100% - 6px), 83.33% 100%, 79.17% calc(100% - 6px), 75.00% 100%, 70.83% calc(100% - 6px), 66.67% 100%, 62.50% calc(100% - 6px), 58.33% 100%, 54.17% calc(100% - 6px), 50.00% 100%, 45.83% calc(100% - 6px), 41.67% 100%, 37.50% calc(100% - 6px), 33.33% 100%, 29.17% calc(100% - 6px), 25.00% 100%, 20.83% calc(100% - 6px), 16.67% 100%, 12.50% calc(100% - 6px), 8.33% 100%, 4.17% calc(100% - 6px), 0 100.00%, 6px 95.83%, 0 91.67%, 6px 87.50%, 0 83.33%, 6px 79.17%, 0 75.00%, 6px 70.83%, 0 66.67%, 6px 62.50%, 0 58.33%, 6px 54.17%, 0 50.00%, 6px 45.83%, 0 41.67%, 6px 37.50%, 0 33.33%, 6px 29.17%, 0 25.00%, 6px 20.83%, 0 16.67%, 6px 12.50%, 0 8.33%, 6px 4.17%); }
+
+/* Frames: a line drawn around the element, outside it, never taking a click. The colour is the palette role the document names. */
+.celebration-design .cdesign-el[data-frame]::after { content: ""; position: absolute; inset: -.5rem; pointer-events: none; z-index: 0; border: 1px solid var(--cd-frame, var(--celebration-accent)); }
+.celebration-design .cdesign-el[data-frame="double"]::after { inset: -.4rem; outline: 1px solid var(--cd-frame, var(--celebration-accent)); outline-offset: .3rem; }
+.celebration-design .cdesign-el[data-frame="hairline"]::after { inset: -.4rem; }
+/* Art déco: stepped corners, drawn as a ring (outer outline minus inner outline) filled with the frame colour. */
+.celebration-design .cdesign-el[data-frame="deco"]::after { inset: -.6rem; border: 0; background: var(--cd-frame, var(--celebration-accent));
+  clip-path: polygon(evenodd, 14px 0, calc(100% - 14px) 0, 100% 14px, 100% calc(100% - 14px), calc(100% - 14px) 100%, 14px 100%, 0 calc(100% - 14px), 0 14px, 14px 0,
+    15px 1px, 1px 15px, 1px calc(100% - 15px), 15px calc(100% - 1px), calc(100% - 15px) calc(100% - 1px), calc(100% - 1px) calc(100% - 15px), calc(100% - 1px) 15px, calc(100% - 15px) 1px, 15px 1px); }
+
+/* Cover variants. They shape the photo and the block; the template still decides where the block goes. */
+.celebration-design .cdesign-cover:is([data-variant="arch"], [data-variant="hanging"], [data-variant="deco"]) { justify-items: center; text-align: center; }
+.celebration-design .cdesign-cover[data-variant="arch"] .cdesign-cover-photo { width: min(72%, 15rem); aspect-ratio: 3 / 4; height: auto; max-height: none; border-radius: 999px 999px 0 0; border: 1px solid var(--celebration-accent); outline: 1px solid color-mix(in srgb, var(--celebration-accent) 55%, transparent); outline-offset: 6px; }
+.celebration-design .cdesign-cover[data-variant="hanging"] { position: relative; padding-top: 0; }
+.celebration-design .cdesign-cover[data-variant="hanging"] .cdesign-cover-photo { width: min(70%, 15rem); aspect-ratio: 1; height: auto; max-height: none; border-radius: 50%; box-shadow: .5rem .5rem 0 0 color-mix(in srgb, var(--celebration-text) 14%, var(--celebration-canvas)); }
+.celebration-design .cdesign-cover[data-variant="deco"] { position: relative; padding-block: 1.5rem; border-block: 1px solid var(--celebration-accent); }
+.celebration-design .cdesign-cover[data-variant="deco"]::before, .celebration-design .cdesign-cover[data-variant="deco"]::after { content: ""; position: absolute; inset-inline: 0; height: 1px; background: var(--celebration-accent); }
+.celebration-design .cdesign-cover[data-variant="deco"]::before { top: 4px; }
+.celebration-design .cdesign-cover[data-variant="deco"]::after { bottom: 4px; }
+.celebration-design .cdesign-cover[data-variant="deco"] .cdesign-cover-photo { width: min(72%, 16rem); aspect-ratio: 4 / 5; height: auto; max-height: none; clip-path: polygon(1.5rem 0, 100% 0, 100% calc(100% - 1.5rem), calc(100% - 1.5rem) 100%, 0 100%, 0 1.5rem); }
+/* The photo's <picture> takes no box of its own (`display: contents`, see the cover block above), so the image is the grid item and every variant centres it on the block's axis (PL-FE145-V1). */
+/* Wide block, as the prototypes lay it out on desktop (PL-FE145-V2; a container query: the document decides how wide the cover is): arch = window on the left and the names on the right behind a vertical rule; hanging = names on the left and the
+   round photo on the right; deco = date, photo and venue in one row, the title under it. Without a photo each one keeps its centred stack. */
+@container (min-width: 34rem) {
+  .celebration-design .cdesign-cover[data-variant="arch"][data-has-image="true"] { grid-template-columns: auto minmax(0, 1fr); column-gap: clamp(2rem, 5vw, 4.5rem); align-items: center; justify-items: start; text-align: start; }
+  .celebration-design .cdesign-cover[data-variant="arch"][data-has-image="true"] .cdesign-cover-photo { grid-column: 1; grid-row: 1; width: clamp(14rem, 22vw, 18rem); }
+  .celebration-design .cdesign-cover[data-variant="arch"][data-has-image="true"] .cdesign-cover-copy { grid-column: 2; grid-row: 1; justify-items: start; border-inline-start: 1px solid color-mix(in srgb, var(--celebration-accent) 55%, transparent); padding-inline-start: clamp(1.5rem, 3vw, 2.5rem); }
+  .celebration-design .cdesign-cover[data-variant="hanging"][data-has-image="true"] { grid-template-columns: minmax(0, 1fr) auto; column-gap: clamp(2rem, 5vw, 4.5rem); align-items: center; justify-items: start; text-align: start; }
+  .celebration-design .cdesign-cover[data-variant="hanging"][data-has-image="true"] .cdesign-cover-copy { grid-column: 1; grid-row: 1; justify-items: start; }
+  .celebration-design .cdesign-cover[data-variant="hanging"][data-has-image="true"] .cdesign-cover-photo { grid-column: 2; grid-row: 1; width: clamp(15rem, 28vw, 22rem); }
+}
+@container (min-width: 40rem) {
+  .celebration-design .cdesign-cover[data-variant="deco"][data-has-image="true"] { grid-template-columns: minmax(0, 1fr) clamp(12rem, 22vw, 16rem) minmax(0, 1fr); column-gap: clamp(1.25rem, 3vw, 2.5rem); row-gap: 1.25rem; align-items: center; justify-items: center; text-align: center; }
+  .celebration-design .cdesign-cover[data-variant="deco"][data-has-image="true"] .cdesign-cover-copy { display: contents; }
+  .celebration-design .cdesign-cover[data-variant="deco"][data-has-image="true"] .cdesign-cover-photo { grid-column: 2; grid-row: 1; width: 100%; }
+  .celebration-design .cdesign-cover[data-variant="deco"][data-has-image="true"] .celebration-date { grid-column: 1; grid-row: 1; justify-self: end; text-align: end; }
+  .celebration-design .cdesign-cover[data-variant="deco"][data-has-image="true"] .celebration-venue { grid-column: 3; grid-row: 1; justify-self: start; text-align: start; }
+  .celebration-design .cdesign-cover[data-variant="deco"][data-has-image="true"] :is(h1, .celebration-hosts, .celebration-countdown) { grid-column: 1 / -1; }
+}
+/* Poster: the photo fills the block; the text rides on its own strong veil (below), the rest of the photo under the light one. */
+.celebration-design .cdesign-cover[data-variant="poster"][data-has-image="true"] { position: relative; isolation: isolate; align-content: end; justify-items: center; text-align: center; min-height: 24rem; padding: clamp(9rem, 38vw, 14rem) 1.5rem 1.5rem; overflow: clip; }
+.celebration-design .cdesign-cover[data-variant="poster"][data-has-image="true"] .cdesign-cover-photo { position: absolute; inset: 0; width: 100%; height: 100%; max-height: none; z-index: -2; border-radius: 0; }
+.celebration-design .cdesign-cover[data-variant="poster"][data-has-image="true"]::before { content: ""; position: absolute; inset: 0; z-index: -1; background: color-mix(in srgb, var(--celebration-canvas) 20%, transparent); }
+.celebration-design .cdesign-cover[data-variant="poster"] { --celebration-muted: var(--celebration-text); }
+
+/* Graded veil: the picture sits under a light veil (`--cd-veil-*` of the backdrop) and every block of text rides on a panel of the canvas colour at the strong level
+   of the palette (`--cd-tv`, at least .85 and at least what AA needs over the worst picture). The panel is the text box itself, solid at that level; only the blurred rim around it feathers. */
+.celebration-design, .celebration-design .cdesign-page { --cd-tv: var(--cd-tv-l); }
+@media (prefers-color-scheme: dark) { .celebration-design[data-scheme-source="system"], .celebration-design[data-scheme-source="system"] .cdesign-page { --cd-tv: var(--cd-tv-d); } }
+.celebration-design[data-scheme-source="prop"][data-color-scheme="dark"], .celebration-design[data-scheme-source="prop"][data-color-scheme="dark"] .cdesign-page { --cd-tv: var(--cd-tv-d); }
+.celebration-design .cdesign-page[data-veil="graded"] { overflow-x: clip; }
+.celebration-design .cdesign-page[data-veil="graded"] .cdesign-el[data-text]::before, .celebration-design .cdesign-page[data-veil="graded"] :is(.cdesign-page-title, .cdesign-intro)::before, .celebration-design .cdesign-cover[data-variant="poster"][data-has-image="true"] .cdesign-cover-copy::before {
+  content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none; --cd-panel: color-mix(in srgb, var(--celebration-canvas) var(--cd-tv, 85%), transparent);
+  background: var(--cd-panel); box-shadow: 0 0 1.25rem .75rem var(--cd-panel); }
+/* The title and the introduction come BEFORE the picture in the document (heading first, then the page's backdrop and canvas), and the backdrop is positioned: without a layer of their own the
+   picture paints over them. They sit one layer above it (z-index 1, a stacking context of their own, so the panel of the graded veil can go BEHIND the text with -1 and never over it);
+   the canvas is z-index 1 as well and later in the document, so it keeps its place, and the protected buttons (P22) and the dock live above both. */
+.celebration-design .cdesign-page > :is(.cdesign-page-title, .cdesign-intro) { position: relative; z-index: 1; isolation: isolate; }
+.celebration-design .cdesign-page[data-veil="graded"] > :is(.cdesign-page-title, .cdesign-intro)::before { z-index: -1; }
+/* The same layering for the poster's text box: the panel goes BEHIND its own text (a stacking context of the box, the panel at -1), above the picture and the light veil of the cover. */
+.celebration-design .cdesign-cover[data-variant="poster"][data-has-image="true"] .cdesign-cover-copy { position: relative; isolation: isolate; }
+.celebration-design .cdesign-cover[data-variant="poster"][data-has-image="true"] .cdesign-cover-copy::before { z-index: -1; }
+
+/* Named animations (rsvp-motion-design). One time, transform and opacity only (the curtain also trims with clip-path, which never changes layout), off under reduced motion
+   (the final state shows at once, nothing is hidden), never interactive: the panels take no click and sit below the protected blocks, so the gifts and reply buttons stay reachable while they play.
+   They finish in under 2.5 s, well inside the five seconds after which WCAG asks for a pause control. */
+.celebration-design .cdesign-doors { display: none; }
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes cdesign-sway { 0% { transform: rotate(0) } 14% { transform: rotate(7deg) } 32% { transform: rotate(-5deg) } 50% { transform: rotate(3.2deg) } 66% { transform: rotate(-1.8deg) } 82% { transform: rotate(.7deg) } 100% { transform: rotate(0) } }
+  @keyframes cdesign-door-l { from { transform: none; visibility: visible } to { transform: translateX(-102%); visibility: hidden } }
+  @keyframes cdesign-door-r { from { transform: none; visibility: visible } to { transform: translateX(102%); visibility: hidden } }
+  @keyframes cdesign-curtain { from { transform: none; visibility: visible } to { transform: translateX(-102%); visibility: hidden } }
+  @keyframes cdesign-reveal { from { clip-path: inset(0 100% 0 0) } to { clip-path: inset(0 0 0 0) } }
+  .celebration-design .cdesign-el[data-anim="mecerse"] .cdesign-author { transform-origin: 50% 0; animation: cdesign-sway var(--cd-motion-sway) ease-in-out var(--cdesign-delay, 0ms) 1 both; }
+  .celebration-design .cdesign-el[data-anim="revelar-telon"] .cdesign-author { animation: cdesign-reveal var(--cd-motion-reveal) var(--cd-ease-in-out) var(--cdesign-delay, 0ms) 1 both; }
+  .celebration-design .cdesign-page[data-page-anim="aparecer"] > .cdesign-canvas { animation: cdesign-rise var(--cd-motion-appear) var(--cd-ease-out) both; }
+  .celebration-design .cdesign-doors { display: block; position: absolute; inset: 0; z-index: 500; overflow: hidden; pointer-events: none; }
+  .celebration-design .cdesign-door { position: absolute; top: 0; bottom: 0; background: var(--celebration-surface); box-shadow: inset 0 0 0 .7rem var(--celebration-surface), inset 0 0 0 calc(.7rem + 1px) color-mix(in srgb, var(--celebration-accent) 45%, transparent); }
+  .celebration-design .cdesign-doors[data-kind="abrir-puertas"] .cdesign-door { width: 50.5%; }
+  .celebration-design .cdesign-doors[data-kind="abrir-puertas"] .cdesign-door[data-side="l"] { left: 0; border-right: 1.5px solid var(--celebration-accent); animation: cdesign-door-l var(--cd-motion-reveal) var(--cd-ease-in-out) 0ms both; }
+  .celebration-design .cdesign-doors[data-kind="abrir-puertas"] .cdesign-door[data-side="r"] { right: 0; border-left: 1.5px solid var(--celebration-accent); animation: cdesign-door-r var(--cd-motion-reveal) var(--cd-ease-in-out) 0ms both; }
+  .celebration-design .cdesign-doors[data-kind="revelar-telon"] .cdesign-door { left: 0; width: 100%; border-right: 1.5px solid var(--celebration-accent); animation: cdesign-curtain var(--cd-motion-reveal) var(--cd-ease-in-out) 0ms both; }
+  /* The panels end hidden (`visibility: hidden` in the last keyframe, held by `both`): they stay in the tree but paint nothing. No delay: the cover is covered only while they open (PL-FE145-V4). */
+  .celebration-design .cdesign-door { animation-fill-mode: both; }
+}
+/* MAP · a place on the invitation: text first, then «Ver mapa», «Cómo llegar» and «Copiar dirección». The map loads only on request. */
+.celebration-location { display: grid; gap: .5rem; margin-top: .35rem; }
+.celebration-location-actions { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.celebration-venues .celebration-location-actions { justify-content: center; }
+.celebration[data-align="start"] .celebration-venues .celebration-location-actions { justify-content: flex-start; }
+.celebration-location-button { min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; padding: .4rem 1rem; border: 2px solid var(--celebration-accent); border-radius: 9999px; background: var(--celebration-surface); color: var(--celebration-text); font: inherit; font-weight: 600; cursor: pointer; }
+.celebration-location-button:hover { background: color-mix(in srgb, var(--celebration-accent) 14%, var(--celebration-surface)); }
+.celebration-location-button:focus-visible, .celebration-location a:focus-visible { outline: 3px solid var(--celebration-accent); outline-offset: 3px; }
+.celebration-location a { justify-self: auto; display: inline-flex; align-items: center; min-height: 44px; }
+.celebration-location-map { display: grid; gap: .5rem; }
+.celebration-map { width: 100%; height: clamp(14rem, 55vw, 20rem); border: 1px solid color-mix(in srgb, var(--celebration-text) 18%, transparent); border-radius: var(--celebration-radius, 0); overflow: hidden; background: color-mix(in srgb, var(--celebration-muted) 12%, var(--celebration-surface)); isolation: isolate; text-align: start; }
+.celebration-map:focus-visible { outline: 3px solid var(--celebration-accent); outline-offset: 2px; }
+.celebration-map a { min-height: 0; }
+/* Leaflet's own zoom buttons are 30 px: a finger needs 44. */
+.celebration-map .leaflet-bar a { display: block; width: 44px; height: 44px; line-height: 44px; }
+/* The pin is drawn (no image file): a dark teardrop with a light edge, legible on streets and parks in both colour schemes. */
+.celebration-map-pin { background: none; border: 0; }
+.celebration-map-pin span { display: block; width: 28px; height: 28px; margin: 0 0 0 0; border-radius: 50% 50% 50% 0; background: #302c28; border: 3px solid #fffbf4; box-shadow: 0 1px 4px rgb(0 0 0 / .4); transform: rotate(-45deg) translate(6px, -6px); transform-origin: center; position: relative; }
+.celebration-map-pin span::after { content: ""; position: absolute; inset: 6px; border-radius: 50%; background: #fffbf4; }
+.cdesign-map { width: 100%; }
+.celebration-schedule-place { color: var(--celebration-muted); font-size: .95em; }

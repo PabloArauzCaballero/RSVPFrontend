@@ -1,21 +1,23 @@
 import { ApiError } from "@rsvp/api-client";
 import { partnerContactSchema, partnerCoverageSchema, partnerFieldErrors, partnerIdentitySchema, partnerKypSchema, partnerSlug, requiredKypDocuments, missingKypDocuments } from "@rsvp/forms";
-import { KYP_STATUSES, PARTNER_ORIGINS, PARTNER_SORTS, PARTNER_STATUSES, type CiExtension, type KypStatus, type NitMatch, type PartnerDetail, type PartnerFilters, type PartnerOrigin, type PartnerSections, type PartnerSort, type PartnerStatus, type PersonType, type SectionName } from "@rsvp/query-hooks/admin";
+import { KYP_STATUSES, PARTNER_ORIGINS, PARTNER_SORTS, PARTNER_STATUSES, PARTNERS_PAGE_SIZE, type CiExtension, type KypStatus, type NitMatch, type PartnerDetail, type PartnerFilters, type PartnerOrigin, type PartnerSections, type PartnerSort, type PartnerStatus, type PersonType, type SectionName } from "@rsvp/query-hooks/admin";
 
 /** Pure model of the Partners tab: URL ⇄ filters, form ⇄ API sections, and server problems → field errors and steps. */
 
 // ---- Filters in the URL query (shareable, survive a reload).
-export const FILTER_PARAMS = ["q", "status", "kyp", "category", "city", "person", "origin", "plan", "expiring", "from", "to", "listings", "sort", "page", "partner", "view"] as const;
+export const FILTER_PARAMS = ["q", "status", "kyp", "category", "city", "zone", "person", "origin", "plan", "expiring", "from", "to", "listings", "sort", "page", "pageSize", "partner", "view"] as const;
 export type FilterParam = (typeof FILTER_PARAMS)[number];
 export type UrlParams = Readonly<Partial<Record<FilterParam, string | undefined>>>;
 export const KYP_EXPIRING_DAYS = 30;
 export const PERSON_TYPE_VALUES: readonly PersonType[] = ["NATURAL", "UNIPERSONAL", "JURIDICA"];
 export const PLAN_VALUES = ["FREE", "FEATURED", "PREMIUM"] as const;
+export const PARTNER_PAGE_SIZES = [10, PARTNERS_PAGE_SIZE, 50] as const;
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 const oneOf = <T extends string>(values: readonly T[], value: string | undefined): T | undefined => (values as readonly string[]).includes(value ?? "") ? value as T : undefined;
 
 export function filtersFromParams(params: UrlParams): PartnerFilters {
   const page = Number(params.page);
+  const pageSize = PARTNER_PAGE_SIZES.find((size) => String(size) === params.pageSize);
   const day = (value: string | undefined): string | undefined => (value && ISO_DAY.test(value) ? value : undefined);
   const filters: Record<string, unknown> = {
     q: params.q?.trim() || undefined,
@@ -23,6 +25,7 @@ export function filtersFromParams(params: UrlParams): PartnerFilters {
     kypStatus: oneOf<KypStatus>(KYP_STATUSES, params.kyp),
     categoryCode: params.category || undefined,
     cityCode: params.city || undefined,
+    zoneCode: params.zone || undefined,
     personType: oneOf<PersonType>(PERSON_TYPE_VALUES, params.person),
     origin: oneOf<PartnerOrigin>(PARTNER_ORIGINS, params.origin),
     plan: oneOf(PLAN_VALUES, params.plan),
@@ -31,7 +34,8 @@ export function filtersFromParams(params: UrlParams): PartnerFilters {
     createdTo: day(params.to),
     hasPublishedListings: params.listings === "yes" ? true : params.listings === "no" ? false : undefined,
     sort: oneOf<PartnerSort>(PARTNER_SORTS, params.sort),
-    page: Number.isInteger(page) && page > 0 ? page : undefined
+    page: Number.isSafeInteger(page) && page > 0 ? page : undefined,
+    pageSize
   };
   return Object.fromEntries(Object.entries(filters).filter(([, value]) => value !== undefined)) as PartnerFilters;
 }
@@ -40,15 +44,17 @@ export function filtersFromParams(params: UrlParams): PartnerFilters {
 /** `view` keeps the sub-tab («Solicitudes» is `requests`; Partners, the default, is no param). */
 export function paramsFromFilters(filters: PartnerFilters, partner?: string, view?: string): Record<FilterParam, string | undefined> {
   return {
-    q: filters.q || undefined, status: filters.status, kyp: filters.kypStatus, category: filters.categoryCode, city: filters.cityCode, person: filters.personType, origin: filters.origin, plan: filters.plan,
+    q: filters.q || undefined, status: filters.status, kyp: filters.kypStatus, category: filters.categoryCode, city: filters.cityCode, zone: filters.zoneCode, person: filters.personType, origin: filters.origin, plan: filters.plan,
     expiring: filters.kypExpiringWithinDays ? "1" : undefined, from: filters.createdFrom, to: filters.createdTo,
     listings: filters.hasPublishedListings === undefined ? undefined : filters.hasPublishedListings ? "yes" : "no",
-    sort: filters.sort && filters.sort !== "-createdAt" ? filters.sort : undefined, page: filters.page ? String(filters.page) : undefined, partner, view: view === "requests" ? view : undefined
+    sort: filters.sort && filters.sort !== "-createdAt" ? filters.sort : undefined, page: filters.page ? String(filters.page) : undefined,
+    pageSize: filters.pageSize && filters.pageSize !== PARTNERS_PAGE_SIZE ? String(filters.pageSize) : undefined,
+    partner, view: view === "requests" ? view : undefined
   };
 }
 
-/** Filters that narrow the list (sort and page do not count): drives "Limpiar" and the empty-state wording. */
-export const activeFilterCount = (filters: PartnerFilters): number => Object.entries(filters).filter(([key]) => key !== "sort" && key !== "page").length;
+/** Filters that narrow the list drive "Limpiar" and the empty-state wording. */
+export const activeFilterCount = (filters: PartnerFilters): number => Object.keys(filters).filter((key) => key !== "sort" && key !== "page" && key !== "pageSize").length;
 
 // ---- The form. Strings everywhere (inputs), converted to the API shape only when sent.
 export interface PartnerForm {

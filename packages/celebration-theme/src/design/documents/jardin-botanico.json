@@ -1,0 +1,674 @@
+{
+  "key": "jardin-botanico",
+  "name": "Jardín botánico",
+  "description": "Herbario: una hoja de papel con la etiqueta del ejemplar, hojas prensadas en las esquinas que se trazan y un ramo; serif de jardín y verde profundo.",
+  "layout": "classic",
+  "eventTypeTags": [
+    "anniversary",
+    "baptism",
+    "wedding"
+  ],
+  "sectionOrder": [
+    "story",
+    "schedule",
+    "venues",
+    "gallery",
+    "dressCode",
+    "gifts",
+    "faq",
+    "recommendations",
+    "rsvp"
+  ],
+  "theme": {
+    "schemaVersion": 2,
+    "tokens": {
+      "palettes": {
+        "light": {
+          "canvas": "#F4F7F0",
+          "surface": "#FFFFFF",
+          "text": "#1D2A20",
+          "muted": "#51604F",
+          "accent": "#2E5E3F",
+          "accentFill": "#2E5E3F",
+          "onAccent": "#FFFFFF",
+          "line": "#7F9283"
+        },
+        "dark": {
+          "canvas": "#0F1712",
+          "surface": "#17221A",
+          "text": "#E7EEE5",
+          "muted": "#A8B9A6",
+          "accent": "#92C79F",
+          "accentFill": "#7DBA8D",
+          "onAccent": "#0D1A11",
+          "line": "#5C7262"
+        }
+      },
+      "typography": {
+        "heading": {
+          "family": "eb-garamond",
+          "weights": [
+            500,
+            600
+          ]
+        },
+        "body": {
+          "family": "dm-sans",
+          "weights": [
+            400,
+            500,
+            600
+          ]
+        },
+        "scale": {
+          "base": 16,
+          "ratio": 1.25
+        }
+      },
+      "spacing": {
+        "unit": 8,
+        "section": 56,
+        "contentMaxWidth": 1080
+      },
+      "radii": {
+        "sm": 2,
+        "md": 4,
+        "lg": 8
+      },
+      "ornament": "flourish",
+      "illustrationSet": "none"
+    },
+    "pages": [
+      {
+        "id": "page-cover",
+        "kind": "cover",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-esquina",
+                "block": "art-esquina",
+                "x": 0,
+                "y": 0,
+                "w": 1,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "draw",
+                  "delayMs": 0,
+                  "durationMs": 1200
+                }
+              },
+              {
+                "id": "el-ramo",
+                "block": "art-ramo",
+                "x": 1,
+                "y": 0,
+                "w": 2,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "scale",
+                  "delayMs": 500,
+                  "durationMs": 800
+                }
+              },
+              {
+                "id": "el-esquina-d",
+                "block": "art-esquina",
+                "x": 3,
+                "y": 0,
+                "w": 1,
+                "h": 8,
+                "visible": true,
+                "rotation": 90,
+                "animation": {
+                  "entrance": "draw",
+                  "delayMs": 0,
+                  "durationMs": 1200
+                }
+              },
+              {
+                "id": "el-cover",
+                "block": "cover",
+                "x": 0,
+                "y": 8,
+                "w": 4,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 800,
+                  "durationMs": 700
+                },
+                "typography": {
+                  "align": "center"
+                },
+                "border": {
+                  "width": 1,
+                  "style": "solid",
+                  "colour": "line"
+                },
+                "padding": {
+                  "top": 24,
+                  "right": 16,
+                  "bottom": 24,
+                  "left": 16
+                }
+              }
+            ]
+          },
+          "desktop": {
+            "mode": "flow",
+            "columns": 12,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-cover",
+                "block": "cover",
+                "x": 0,
+                "y": 0,
+                "w": 7,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 800,
+                  "durationMs": 700
+                },
+                "typography": {
+                  "align": "start"
+                },
+                "border": {
+                  "width": 1,
+                  "style": "solid",
+                  "colour": "line"
+                },
+                "padding": {
+                  "top": 32,
+                  "right": 32,
+                  "bottom": 32,
+                  "left": 32
+                }
+              },
+              {
+                "id": "el-esquina",
+                "block": "art-esquina",
+                "x": 7,
+                "y": 8,
+                "w": 1,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "draw",
+                  "delayMs": 0,
+                  "durationMs": 1200
+                }
+              },
+              {
+                "id": "el-ramo",
+                "block": "art-ramo",
+                "x": 8,
+                "y": 8,
+                "w": 3,
+                "h": 8,
+                "visible": true,
+                "rotation": -4,
+                "animation": {
+                  "entrance": "scale",
+                  "delayMs": 500,
+                  "durationMs": 800
+                }
+              },
+              {
+                "id": "el-esquina-d",
+                "block": "art-esquina",
+                "x": 11,
+                "y": 8,
+                "w": 1,
+                "h": 8,
+                "visible": true,
+                "rotation": 90,
+                "animation": {
+                  "entrance": "draw",
+                  "delayMs": 0,
+                  "durationMs": 1200
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-story",
+        "kind": "section",
+        "section": "story",
+        "style": "bands",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-story",
+                "block": "story",
+                "x": 0,
+                "y": 0,
+                "w": 8,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-schedule",
+        "kind": "section",
+        "section": "schedule",
+        "style": "bands",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-esquina-sec",
+                "block": "art-esquina-sec",
+                "x": 0,
+                "y": 0,
+                "w": 1,
+                "h": 5,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-schedule",
+                "block": "schedule",
+                "x": 0,
+                "y": 5,
+                "w": 8,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-venues",
+        "kind": "section",
+        "section": "venues",
+        "style": "bands",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-esquina-sec",
+                "block": "art-esquina-sec",
+                "x": 0,
+                "y": 0,
+                "w": 1,
+                "h": 5,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-venues",
+                "block": "venues",
+                "x": 0,
+                "y": 5,
+                "w": 8,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-gallery",
+        "kind": "section",
+        "section": "gallery",
+        "style": "bands",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-esquina-sec",
+                "block": "art-esquina-sec",
+                "x": 0,
+                "y": 0,
+                "w": 1,
+                "h": 5,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-gallery",
+                "block": "gallery",
+                "x": 0,
+                "y": 5,
+                "w": 8,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-dress-code",
+        "kind": "section",
+        "section": "dressCode",
+        "style": "bands",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-esquina-sec",
+                "block": "art-esquina-sec",
+                "x": 0,
+                "y": 0,
+                "w": 1,
+                "h": 5,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-dress-code",
+                "block": "dress-code",
+                "x": 0,
+                "y": 5,
+                "w": 8,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-gifts",
+        "kind": "section",
+        "section": "gifts",
+        "style": "bands",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-esquina-sec",
+                "block": "art-esquina-sec",
+                "x": 0,
+                "y": 0,
+                "w": 1,
+                "h": 5,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-gifts-cta",
+                "block": "gifts-cta",
+                "x": 0,
+                "y": 5,
+                "w": 8,
+                "h": 6,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-faq",
+        "kind": "section",
+        "section": "faq",
+        "style": "bands",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-esquina-sec",
+                "block": "art-esquina-sec",
+                "x": 0,
+                "y": 0,
+                "w": 1,
+                "h": 5,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-faq",
+                "block": "faq",
+                "x": 0,
+                "y": 5,
+                "w": 8,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-recommendations",
+        "kind": "section",
+        "section": "recommendations",
+        "style": "bands",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-esquina-sec",
+                "block": "art-esquina-sec",
+                "x": 0,
+                "y": 0,
+                "w": 1,
+                "h": 5,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-recommendations",
+                "block": "recommendations",
+                "x": 0,
+                "y": 5,
+                "w": 8,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-rsvp",
+        "kind": "section",
+        "section": "rsvp",
+        "style": "bands",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-esquina-sec",
+                "block": "art-esquina-sec",
+                "x": 0,
+                "y": 0,
+                "w": 1,
+                "h": 5,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-rsvp-cta",
+                "block": "rsvp-cta",
+                "x": 0,
+                "y": 5,
+                "w": 8,
+                "h": 6,
+                "visible": true
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "blocks": [
+      {
+        "id": "cover",
+        "type": "cover",
+        "config": {
+          "variant": "classic",
+          "envelope": false
+        }
+      },
+      {
+        "id": "art-esquina",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "laurel-esquina",
+          "tint": "accent",
+          "drawOnEnter": true
+        }
+      },
+      {
+        "id": "art-ramo",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "ramo",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "story",
+        "type": "story",
+        "config": {}
+      },
+      {
+        "id": "art-esquina-sec",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "laurel-esquina",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "schedule",
+        "type": "schedule",
+        "config": {
+          "display": "timeline"
+        }
+      },
+      {
+        "id": "venues",
+        "type": "venues",
+        "config": {
+          "display": "cards",
+          "mapOnTap": true
+        }
+      },
+      {
+        "id": "gallery",
+        "type": "gallery",
+        "config": {
+          "display": "grid"
+        }
+      },
+      {
+        "id": "dress-code",
+        "type": "dressCode",
+        "config": {}
+      },
+      {
+        "id": "gifts-cta",
+        "type": "giftsCta",
+        "required": true,
+        "config": {
+          "style": "solid"
+        }
+      },
+      {
+        "id": "faq",
+        "type": "faq",
+        "config": {}
+      },
+      {
+        "id": "recommendations",
+        "type": "recommendations",
+        "config": {}
+      },
+      {
+        "id": "rsvp-cta",
+        "type": "rsvpCta",
+        "config": {
+          "style": "solid"
+        }
+      }
+    ],
+    "custom": {
+      "html": "",
+      "css": ""
+    }
+  }
+}

@@ -1,5 +1,5 @@
-import { readContent, type GalleryImage, type LocalDateTime, type PublicCelebrationView } from "@rsvp/celebration-theme";
-import { siteUrl } from "./metadata";
+import { readContent, shownVenues, venueLines, type GalleryImage, type LocalDateTime, type PublicCelebrationView } from "@rsvp/celebration-theme";
+import { shareImage, siteUrl } from "./metadata";
 
 /** schema.org structured data. Validated against the schema by tests/seo.test.ts. */
 
@@ -17,7 +17,7 @@ export interface EventJsonLd {
   readonly startDate: string;
   readonly eventStatus: string;
   readonly eventAttendanceMode: string;
-  readonly location: { readonly "@type": "Place"; readonly name: string; readonly address?: string };
+  readonly location: { readonly "@type": "Place"; readonly name: string; readonly address?: string; readonly geo?: { readonly "@type": "GeoCoordinates"; readonly latitude: number; readonly longitude: number } };
   readonly url: string;
   readonly inLanguage: string;
   readonly image?: readonly string[];
@@ -29,8 +29,10 @@ export function eventJsonLd(view: PublicCelebrationView, gallery: readonly Galle
   const content = readContent(view);
   const start = view.localTimes["eventDate"];
   if (!start || !content.title) return null;
-  const venue = content.venues[0];
-  const cover = gallery.find((image) => image.isCover)?.variants.full;
+  // The same venue the page leads with (the main one when the hosts marked its place), with its coordinates when there are any.
+  const venue = shownVenues(content)[0];
+  const address = venue ? venueLines(venue)[0] : undefined;
+  const cover = shareImage(gallery)?.url;
   return {
     "@context": CONTEXT,
     "@type": "Event",
@@ -38,7 +40,7 @@ export function eventJsonLd(view: PublicCelebrationView, gallery: readonly Galle
     startDate: zonedIso(start),
     eventStatus: `${CONTEXT}/EventScheduled`,
     eventAttendanceMode: `${CONTEXT}/OfflineEventAttendanceMode`,
-    location: { "@type": "Place", name: venue?.name ?? content.venueName, ...(venue?.address ? { address: venue.address } : {}) },
+    location: { "@type": "Place", name: venue?.name ?? content.venueName, ...(address ? { address } : {}), ...(venue?.location ? { geo: { "@type": "GeoCoordinates" as const, latitude: venue.location.lat, longitude: venue.location.lng } } : {}) },
     url,
     inLanguage: view.locale,
     ...(cover ? { image: [cover] } : {}),

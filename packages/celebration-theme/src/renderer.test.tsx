@@ -18,6 +18,22 @@ describe("CelebrationRenderer", () => {
     expect(renderWith(template, { colorScheme: "dark" })).toMatchSnapshot("dark");
   });
 
+  it("an SVG cover, which has no raster variants, is still painted on the cover", () => {
+    const drawing = { id: "s", width: null, height: null, isCover: true, variants: { svg: "https://media.test/d.svg" } };
+    render(<CelebrationRenderer theme={themeFromTemplate(TEMPLATES[0], VIEW.enabledSections)} view={VIEW} gallery={[drawing]} t={t} now={NOW} />);
+    expect(document.querySelector("img.celebration-hero-image")?.getAttribute("src")).toBe("https://media.test/d.svg");
+    expect(document.querySelector(".celebration-hero")?.getAttribute("data-has-image")).toBe("true");
+  });
+
+  it("a background, logo or illustration of the design is never drawn as a photo of the v1 gallery or cover", () => {
+    const background = { id: "bg", width: 100, height: 100, isCover: false, purpose: "background", variants: { thumb: "https://media.test/bg-thumb.webp", medium: "https://media.test/bg-medium.webp", full: "https://media.test/bg-full.webp" } };
+    const html = renderWith(TEMPLATES[0], { gallery: [background] });
+    expect(html).not.toContain("media.test/bg-");
+    const withPhotos = renderWith(TEMPLATES[0], { gallery: [background, ...GALLERY] });
+    expect(withPhotos).not.toContain("media.test/bg-");
+    expect(withPhotos).toBe(renderWith(TEMPLATES[0]));
+  });
+
   it("REQ-F09-05 · a brand-new template row changes the site without touching code", () => {
     const before = renderWith(TEMPLATES[0]);
     const inserted: TemplateDocument = { ...TEMPLATES[0], id: "t-new", name: "Nuevo", layout: "festive", theme: { palette: { canvas: "#000000", surface: "#111111", text: "#FAFAFA", accent: "#FFD700", muted: "#AAAAAA" }, typography: { heading: "Georgia, serif", body: "Arial, sans-serif" }, sectionStyle: "cards" }, sectionOrder: ["faq", "story"] };
@@ -112,15 +128,34 @@ describe("P22 · PL-A10 · the gifts button on every invitation", () => {
     expect(giftsPath("ana y luis")).toBe("/c/ana%20y%20luis/regalos");
   });
 
-  it.each(["OPEN", "EMPTY", "CLOSED"] as const)("giftsStatus %s keeps the button and, until rsvp-f1 adds its labels, says «Ver regalos»", (status: GiftsStatus) => {
+  it.each([["OPEN", "celebration.gifts.cta"], ["EMPTY", "celebration.gifts.ctaEmpty"], ["CLOSED", "celebration.gifts.ctaClosed"]] as const)("giftsStatus %s keeps the button on /regalos and says its own label", (status: GiftsStatus, label: string) => {
     const gifts = parse(renderWith(TEMPLATES[2], { giftsStatus: status })).querySelector('a[data-action="gifts"]');
-    expect(gifts?.textContent).toBe("celebration.gifts.cta");
+    expect(gifts?.textContent).toBe(label);
+    expect(gifts?.getAttribute("href")).toBe(giftsPath(VIEW.slug));
+    expect(gifts?.getAttribute("data-gifts-status")).toBe(status);
   });
 
-  it("is on the cover page; a section's own page keeps it in the navigation", () => {
+  it("is always in view (the dock), also on a section's own page, which keeps it in the navigation too", () => {
     const faqPage = parse(renderWith(TEMPLATES[0], { only: "faq" }));
-    expect(faqPage.querySelector('a[data-action="gifts"]')).toBeNull();
+    expect(faqPage.querySelector('.cdesign-dock a[data-action="gifts"]')?.getAttribute("href")).toBe(`${BASE}/regalos`);
+    expect(faqPage.querySelector('section a[data-action="gifts"]')).toBeNull();
     expect(faqPage.querySelector(`.celebration-nav a[href="${BASE}/regalos"]`)).toBeTruthy();
+  });
+});
+
+describe("M4 (revisión de F4 a) · el texto blanco sobre la foto de portada editorial", () => {
+  it("llega a 4.5:1 con la foto más clara posible (blanco puro)", () => {
+    const css = readFileSync(join(__dirname, "../styles.css"), "utf8");
+    const brightness = Number(/data-hero="overlay"\] \.celebration-hero-image \{[^}]*brightness\(([\d.]+)\)/.exec(css)?.[1]);
+    expect(brightness).toBeGreaterThan(0);
+    const level = Math.round(255 * brightness);
+    const hex = `#${level.toString(16).padStart(2, "0").repeat(3)}`;
+    expect(contrastRatio("#FFFFFF", hex)).toBeGreaterThanOrEqual(TEXT_CONTRAST);
+  });
+  it("B2 · los titulares van en tinta y el acento queda para filetes, iconos y botones", () => {
+    const css = readFileSync(join(__dirname, "../styles.css"), "utf8");
+    expect(css).toMatch(/\.celebration h2 \{[^}]*color: var\(--celebration-text\)/);
+    expect(css).not.toMatch(/border-bottom: [4-9]px solid var\(--celebration-accent\)|border-left: [4-9]px solid var\(--celebration-accent\)/);
   });
 });
 
@@ -227,7 +262,8 @@ describe("content helpers", () => {
     expect(sectionForPath("itinerario")).toBe("schedule");
     expect(sectionForPath("admin")).toBeUndefined();
     expect(partnerHref("a b")).toBe("/r/a%20b");
-    expect(navigationHref({ name: "Iglesia", address: "Plaza" })).toBe("https://www.google.com/maps/search/?api=1&query=Iglesia%2C%20Plaza");
+    expect(navigationHref({ location: { lat: -16.5, lng: -68.15, source: "pin" } })).toBe("https://www.openstreetmap.org/directions?route=%3B-16.500000%2C-68.150000");
+    expect(navigationHref({})).toBeUndefined();
     expect(daysUntil(null, NOW)).toBeNull();
     expect(daysUntil("not a date", NOW)).toBeNull();
     expect(daysUntil("2026-10-01T00:00:00Z", NOW)).toBe(0);

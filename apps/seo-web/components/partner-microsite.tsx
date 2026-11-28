@@ -6,9 +6,12 @@ import type { Partner } from "../lib/partner";
 import { CheckMark } from "./brand/check-mark";
 import { OfflineArt } from "./brand/illustrations";
 import { Monogram } from "./brand/monogram";
-import { zoneName } from "@rsvp/query-hooks";
-import { PROVIDER_CATEGORIES } from "../lib/providers";
+import { categoryLabel, FACT_LEAD_KEY, offerKind, zoneName, type OfferCategory } from "@rsvp/query-hooks";
+import { LocationView, locationLabels } from "@rsvp/celebration-theme";
+import { guestApiBase } from "../lib/guest-client";
+import { categoryNamesOf, PROVIDER_CATEGORIES } from "../lib/providers";
 import { Breadcrumbs } from "./provider-directory";
+import { OriginLinks } from "./marketplace/origin-links";
 
 const MINOR_UNIT_DIGITS = 2;
 
@@ -22,8 +25,8 @@ function money(amountMinor: number, currency: string, locale: string): string {
  * B5 · Partner microsite. Order is the order of a decision: who they are and the one action (ask for a quote), what they offer
  * and for how much, where they work, and last the contact buttons after the platform disclaimer (REQ-F25-05).
  */
-export function PartnerMicrosite({ partner, t, locale }: { readonly partner: Partner; readonly t: Translate; readonly locale: string }) {
-  const category = t(`directory.category.${partner.category}`);
+export function PartnerMicrosite({ partner, t, locale, categories = [] }: { readonly partner: Partner; readonly t: Translate; readonly locale: string; /** What the catalogue publishes (`loadCategories`). */ readonly categories?: readonly OfferCategory[] }) {
+  const category = categoryLabel(partner.category, t, categoryNamesOf(categories));
   const base = `/p/${encodeURIComponent(partner.slug)}`;
   const categorySlug = PROVIDER_CATEGORIES.find((entry) => entry.code === partner.category)?.slug;
   const facts = { name: partner.name, category: category.toLocaleLowerCase(locale), city: partner.city };
@@ -32,6 +35,7 @@ export function PartnerMicrosite({ partner, t, locale }: { readonly partner: Par
     ...(partner.imageUrl ? { image: partner.imageUrl } : {}),
     ...(partner.summary ? { description: partner.summary } : {}),
     address: { "@type": "PostalAddress", ...(partner.address ? { streetAddress: partner.address } : {}), addressLocality: partner.city, addressRegion: partner.department, addressCountry: "BO" },
+    ...(partner.point ? { geo: { "@type": "GeoCoordinates", latitude: partner.point.lat, longitude: partner.point.lng } } : {}),
     ...(partner.hours.length ? { openingHours: partner.hours } : {}),
     ...(partner.coverage.length ? { areaServed: partner.coverage.map((zone) => ({ "@type": "City", name: zoneName(zone) })) } : {})
   };
@@ -44,6 +48,7 @@ export function PartnerMicrosite({ partner, t, locale }: { readonly partner: Par
           <div className="partner-hero">
             <div className="partner-hero__media">{partner.imageUrl ? <img src={partner.imageUrl} alt={t("partner.imageAlt", { name: partner.name, category, city: partner.city })} width={960} height={540} decoding="async" fetchPriority="high" /> : <Monogram name={partner.name} />}</div>
             <div className="partner-hero__text">
+              {partner.logoUrl ? <img className="partner-logo" src={partner.logoUrl} alt={t("partner.logoAlt", { name: partner.name })} width={96} height={96} decoding="async" /> : null}
               <h1>{partner.name}</h1>
               <p className="partner-eyebrow">{category} · {partner.city}</p>
               <p className="directory-verified" title={t("partner.verifiedHint")}><CheckMark size={16} />{t("directory.verified")}</p>
@@ -87,19 +92,32 @@ export function PartnerMicrosite({ partner, t, locale }: { readonly partner: Par
         <div className="partner-twin">
           <section aria-labelledby="partner-about" className="partner-section">
             <h2 id="partner-about">{t("partner.about")}</h2>
-            <p>{partner.listings.length ? t("partner.factLead", { ...facts, count: partner.listings.length }) : t("partner.factLeadNone", facts)}</p>
+            <p>{partner.listings.length ? t(FACT_LEAD_KEY[offerKind(partner.listings, categories)], { ...facts, count: partner.listings.length }) : t("partner.factLeadNone", facts)}</p>
             <p>{partner.summary ?? t("partner.noSummary")}</p>
           </section>
 
           <section aria-labelledby="partner-coverage" className="partner-section">
             <h2 id="partner-coverage">{t("partner.coverage")}</h2>
             {partner.coverage.length ? <ul className="directory-links directory-links--cities">{partner.coverage.map((area) => <li key={area}><span>{zoneName(area)}</span></li>)}</ul> : <p>{t("partner.noCoverage", { city: partner.city })}</p>}
-            {partner.address ? <p>{partner.address}</p> : null}
+            {partner.point ? (
+              <div className="partner-location">
+              <LocationView name={partner.name} lines={partner.address ? [partner.address] : []} location={{ lat: partner.point.lat, lng: partner.point.lng, source: "pin" }} labels={locationLabels(t, partner.name)} mapConfigUrl={`${guestApiBase().replace(/\/$/, "")}/providers/geo/map-config`} />
+              </div>
+            ) : partner.address ? <p>{partner.address}</p> : null}
             {partner.hours.length ? <ul className="partner-hours">{partner.hours.map((line) => <li key={line}>{line}</li>)}</ul> : null}
           </section>
         </div>
 
-        <section aria-labelledby="partner-contact" className="partner-section partner-contact">
+        {partner.gallery?.length ? (
+          <section aria-labelledby="partner-gallery" className="partner-section">
+            <h2 id="partner-gallery">{t("partner.gallery")}</h2>
+            <ul className="partner-gallery">
+              {partner.gallery.map((picture) => <li key={picture.url}><img src={picture.url} alt={picture.alt} width={480} height={360} loading="lazy" decoding="async" /></li>)}
+            </ul>
+          </section>
+        ) : null}
+
+        <section aria-labelledby="partner-contact" className="partner-section partner-contact" data-origin-links="">
           <h2 id="partner-contact">{t("partner.contact")}</h2>
           <p className="partner-disclaimer" data-testid="partner-disclaimer"><strong>{t("partner.fineprint")}.</strong> {t("partner.disclaimer", { name: partner.name })}</p>
           {partner.destinations.length ? (
@@ -111,6 +129,7 @@ export function PartnerMicrosite({ partner, t, locale }: { readonly partner: Par
           ) : <p role="status" className="directory-status">{t("partner.noContact")}</p>}
         </section>
       </div>
+      <OriginLinks />
     </main>
   );
 }

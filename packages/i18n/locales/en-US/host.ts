@@ -29,7 +29,17 @@ export const hostEnUS: DeepStrings<typeof hostEsBO> = {
     serverLoad: "The server did not respond as expected. Try again in a few minutes.",
     networkLoad: "Cannot reach the server. Check your internet and try again."
   },
-  location: { linkPlaceholder: "https://maps.app.goo.gl/…", mark: "Mark on the map", change: "Change the point", marked: "Point marked. Your guests will open it with “How to get there”.", link: "Map link", linkHelp: "Optional. It is filled in when you mark the point; you can also paste the link Google Maps gives you when you share the place.", linkHelpNative: "Optional. Paste the link Google Maps gives you when you share the place; your guests will open it with “How to get there”.", linkInvalid: "Paste a Google Maps, Apple Maps, Waze or OpenStreetMap link that starts with https://.", pickerTitle: "Mark the place on the map", search: "Search for a place or address", searchPlaceholder: "Las Palmas Hall, Santa Cruz", searchButton: "Search", results: "Search results", noResults: "We could not find that place. Try the street or area.", searchError: "We could not search right now. Try again or paste a map link.", searching: "Searching for places…", resultsCount_one: "We found one place", resultsCount_other: "We found {{count}} places", attribution: "© OpenStreetMap", locationError: "We could not get your location. Check the browser permission or search for the place by name.", mapLabel: "Map: move it until the pin sits on the place", hint: "Move the map until the pin sits right on the place.", myLocation: "Use my location", use: "Done" },
+  location: {
+    mark: "Mark on the map", change: "Change the point", remove: "Remove the point", marked: "Point marked on the map. Your guests will see the map and “Get directions”.",
+    markedNear: "Point marked near “{{address}}”.", unmarked: "No point on the map: your guests will see only the name and address. You can search for it or mark it on the map.",
+    needsReview: "You changed the venue name. Check that the point is still in the right place.", reference: "Reference (optional)", referenceHelp: "A hint for getting there: “green gate”, “across from the square”.", referencePlaceholder: "Green gate, second floor",
+    privacy: "Anyone with the invitation link will see the exact point. If it is a home, keep just the area or a reference and do not mark the point.",
+    pickerTitle: "Mark the place on the map", search: "Search for a place or address", searchPlaceholder: "Las Palmas Hall, Santa Cruz", searchButton: "Search", searchPrivacy: "The search sends what you type to OpenStreetMap. Do not type personal data.",
+    results: "Search results", noResults: "We could not find that place. Try the street or area, or mark it on the map.", searchError: "We could not search right now. Try again or mark it on the map.",
+    searchBusy: "There are a lot of searches right now. Wait a few seconds and try again.", searchOff: "Search is not available right now. Mark the point on the map or write the place as text.", searching: "Searching for places…",
+    resultsCount_one: "We found one place", resultsCount_other: "We found {{count}} places", attribution: "© OpenStreetMap", locationError: "We could not get your location. Check the browser permission or search for the place by name.",
+    mapLabel: "Map: move it until the pin sits on the place", mapUnavailable: "We could not load the map. You can search for the place by name.", hint: "Move the map until the pin sits right on the place.", myLocation: "Use my location", use: "Done", cancel: "Cancel"
+  },
   limits: {
     requiredMissing: "To save, fill in: {{fields}}.", fieldsTooLong: "Some texts are too long. Shorten them to save.",
     tooLong_one: "Remove {{count}} character: the maximum is {{max}}.",
@@ -70,16 +80,39 @@ export const hostEnUS: DeepStrings<typeof hostEsBO> = {
     hosts: { help: "The roles come from the event type: {{eventType}}." },
     venues: { name: "Venue name", address: "Address", kind: "Type", kinds: { ceremony: "Ceremony", reception: "Reception", other: "Other" }, add: "Add venue", item: "Venue {{n}}" },
     story: { label: "Your story", help: "Separate paragraphs with a blank line." },
-    schedule: { title: "Activity", date: "Date", time: "Time", description: "Details", add: "Add activity", item: "Activity {{n}}", zoneHelp: "Write the event's local time ({{timeZone}})." },
+    schedule: { title: "Activity", date: "Date", time: "Time", description: "Details", add: "Add activity", item: "Activity {{n}}", zoneHelp: "Write the event's local time ({{timeZone}}).", venue: "Venue (optional)", noVenue: "No venue" },
     extra: { dressCode: "Dress code", faq: "FAQ", question: "Question", answer: "Answer", addFaq: "Add question", recommendations: "Recommendations", recommendationName: "Name", recommendationDescription: "Description", recommendationKind: "Type", kinds: { lodging: "Lodging", transport: "Transport", other: "Other" }, listingId: "Partner code (optional)", listingHelp: "If it's a partner, its link goes through our redirector.", addRecommendation: "Add recommendation", item: "Item {{n}}" }
   },
   gallery: {
-    processing: "Preparing {{name}}… It will appear here when it's ready.", rejected: "We couldn't prepare {{name}}. Delete this photo and try uploading another.", refreshFailedTitle: "We couldn't refresh your photos",
-    title: "Your photos", intro: "The first one is the cover. You can change it whenever you like.", help: "JPG, PNG or WebP, up to 10 MB each.",
-    add: "Add photo", uploading: "Uploading {{name}}… {{percent}} %", cover: "Cover", makeCover: "Use as cover", delete: "Delete",
+    processing: "Preparing {{name}}… It will appear here when it's ready.", processingSlow: "{{name}} is taking longer than usual. You can check again or delete it and try another photo.", checkAgain: "Check again", rejected: "We couldn't prepare {{name}}. Delete this photo and try uploading another.", refreshFailedTitle: "We couldn't refresh your photos",
+    title: "Your photos", intro: "The first one is the cover. You can change it whenever you like.", dropHint: "Drag your photos here or use “Add photos”.",
+    add: "Add photos", cover: "Cover", makeCover: "Use as cover", delete: "Delete",
     emptyTitle: "Your story's photos go here", emptyBody: "Upload the first one and it becomes your invitation's cover.", loadFailedTitle: "We couldn't load your photos",
     deleteTitle: "Delete this photo?", deleteBody: "It's removed from your invitation and can't be undone.", deleted: "Photo deleted.", orderSaved: "Order saved.",
-    photo: "Photo {{n}}", invalidType: "That file is not a JPG, PNG or WebP image.", tooLarge: "The image is over 10 MB. Try a lighter one.", failed: "We couldn't upload {{name}}. Try again."
+    photo: "Photo {{n}}"
+  },
+  documentDrop: {
+    zone: "Upload a document", hint: "Drag your document here or choose it. PDF, JPG, PNG or WebP, up to {{max}} MB.", dropNow: "Drop to upload.", dropInvalid: "That file can't be uploaded here.",
+    takePhoto: "Take a photo of the document", notAFile: "That is not a file. If it is an image from another page, save it to your device and upload it from there.", severalFiles: "One document is uploaded at a time: we took the first one.",
+    cameraDenied: "We don't have permission to use the camera. Turn it on in your phone settings or choose the file.", unreadable: "We could not open that file. Choose it again.", openSettings: "Open settings"
+  },
+  media: {
+    title: "Files", quota: "{{assets}} of {{maxAssets}} files · {{used}} of {{max}} used", quotaFull: "You reached the file limit of this invitation. Delete one to upload another.",
+    add: "Add files", addMusic: "Upload music (MP3)", help: "JPG, PNG, WebP, GIF, AVIF, SVG or HEIC, up to {{max}} MB each (SVG: up to {{svgMax}} MB).", helpMusic: "MP3 up to {{max}} MB and {{minutes}} minutes.",
+    queued: "Waiting", uploading: "Uploading {{name}}…", progressLabel: "Progress of {{name}}", quotaLabel: "Space used", processing: "Preparing {{name}}…", done: "Done: {{name}}.", retry: "Retry", remove: "Remove from list", clear: "Clear list",
+    retryNamed: "Retry {{name}}", removeNamed: "Remove from list {{name}}", takePhoto: "Take photo", openSettings: "Open settings",
+    zone: "Upload files", zoneMusic: "Upload music", dropHint: "Drag your files here or choose them.", dropHintMusic: "Drag your MP3 here or choose it.", dropNow: "Drop to upload.", dropInvalid: "That can't be uploaded here.",
+    pickProblems: {
+      libraryDenied: "We don't have permission to see your photos. Turn it on in your phone settings and try again.", cameraDenied: "We don't have permission to use the camera. Turn it on in your phone settings or choose a photo from your library.",
+      unreadable: "We couldn't open those files. Choose them again.", batch: "Up to {{max}} files go at a time. {{left}} stayed out: choose them when these finish.", notAFile: "That isn't a file. If it's a picture from another page, save it to your device and upload it from there."
+    },
+    rightsTitle: "Copyright notice", rights: "I confirm I have the right to use this music in my invitation and I understand it will be removed if we receive a copyright report.", rightsRequired: "Accept the rights notice to upload music.",
+    failures: {
+      type: "{{name}}: this file type cannot be uploaded here.", tooLarge: "{{name}} is too large. Try a lighter version.", quotaAssets: "{{name}}: this invitation has no room for more files.",
+      quotaBytes: "{{name}} does not fit in the space you have left. Delete something or upload a lighter file.", rights: "{{name}}: the rights notice changed. Read and accept it again.", invalid: "{{name}} could not be read as a valid file. Try another one.",
+      tooLong: "{{name}} is too long. Trim it and try again.", rejected: "We could not prepare {{name}}. Remove it and try another one.", forbidden: "You do not have permission to upload files to this invitation.",
+      network: "{{name}}: the connection dropped. Retry when it is back.", server: "{{name}}: something failed on our side. Retry in a moment."
+    }
   },
   translations: {
     title: "Languages", intro: "Write your invitation in each language. Whatever you don't translate shows in the main language.",
@@ -99,12 +132,13 @@ export const hostEnUS: DeepStrings<typeof hostEsBO> = {
   publish: {
     title: "Publish", intro: "Complete what is missing, publish and share the link.", ready: "Your celebration is ready to publish.", readyBody: "Everything needed is complete. Publish whenever you like.", missing: "Before publishing, complete:", pending: "Items left: {{count}}",
     fields: { title: "The celebration name", subtitle: "The welcome line", eventDate: "The event date", venueName: "The location", childName: "The name of the child being baptised", companyName: "The company name", celebrantName: "The name of the celebrant", host: "The name of: {{role}}", other: "The field “{{field}}”" },
+    place: { withPoint: "Your guests will see the map of the place and «How to get there». Anyone with the invitation link sees the exact point: for a home, remove the point and leave only the area or a reference.", withoutPoint: "You have not marked the place on the map yet. Your guests will see only the name and the address, and «How to get there» will search that address in OpenStreetMap. Mark the point so they arrive without doubt.", mark: "Mark the place" },
     goTo: "Complete", publish: "Publish celebration", publishConfirm: "Your invitation will be visible to anyone with the link. Publish now?",
     done: { title: "Your invitation is published", body: "Share the link and tomorrow you will know who is coming." },
     unpublish: "Unpublish", unpublishConfirm: "The site stops showing until you publish it again. The link stays the same.", reasonLabel: "Reason (optional)",
     archive: "Archive", archiveConfirm: "Archiving is final: the celebration can no longer be published or edited.", more: "More options",
     status: { DRAFT: "Draft: only you can see it.", PUBLISHED: "Published: anyone with the link can see it.", ARCHIVED: "Archived." },
-    live: { PUBLISHING: "Publishing… Your invitation will be visible in a few seconds. We will tell you here when it is ready to share.", UNPUBLISHING: "Taking your invitation down… It may stay visible for a few seconds.", slow: "This is taking longer than usual. You can leave this screen; if nothing changes in a few minutes, contact us.", unknown: "We could not check whether your invitation is visible yet. Try again before sharing the link." },
+    live: { PUBLISHING: "Publishing… Your invitation will be visible in a few seconds. We will tell you here when it is ready to share.", UNPUBLISHING: "Taking your invitation down… It may stay visible for a few seconds.", HIDDEN: "A moderation decision hides your invitation: your guests cannot see it.", slow: "This is taking longer than usual. You can leave this screen; if nothing changes in a few minutes, contact us.", unknown: "We could not check whether your invitation is visible yet. Try again before sharing the link." },
     searchIndexing: { label: "Show in search engines", on: "Google and other search engines may show your invitation, and it is listed in the sitemap.", off: "Only people with the link see it: we ask search engines not to show it." },
     share: "Share the link", link: "Public link", copy: "Copy link", copied: "Link copied.", whatsappPreview: "How it looks on WhatsApp"
   },

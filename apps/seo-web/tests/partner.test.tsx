@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { addressText } from "../lib/partner";
+import { addressPoint, addressText } from "../lib/partner";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createApiClient, type ApiClient } from "@rsvp/api-client";
 import { createTranslator } from "@rsvp/i18n/server";
@@ -42,6 +42,22 @@ describe("F25 · partner microsite /p/{slug}", () => {
     expect(document.body.textContent).toContain("Desde");
   });
 
+  it("imagenes por archivo · the logo and the gallery the provider uploaded show on its page, with the alt text it wrote; none of them without a microsite", () => {
+    const base = partnerFromListings("hotel-andino", [card({ logoUrl: "https://media.test/logo/card.webp" })]);
+    if (!base) throw new Error("expected partner");
+    expect(base.logoUrl).toBe("https://media.test/logo/card.webp");
+    const withGallery = { ...base, gallery: [{ url: "https://media.test/a/card.webp", alt: "Salón principal" }, { url: "https://media.test/b/card.webp", alt: "" }] };
+    const document = dom(renderToStaticMarkup(<PartnerMicrosite partner={withGallery} t={t} locale="es-BO" />));
+    expect(document.querySelector("img.partner-logo")?.getAttribute("src")).toBe("https://media.test/logo/card.webp");
+    expect(document.querySelector("img.partner-logo")?.getAttribute("alt")).toBe("Logo de Hotel Andino");
+    const pictures = [...document.querySelectorAll(".partner-gallery img")];
+    expect(pictures.map((img) => img.getAttribute("src"))).toEqual(["https://media.test/a/card.webp", "https://media.test/b/card.webp"]);
+    expect(pictures[0]?.getAttribute("alt")).toBe("Salón principal");
+    const plain = dom(renderToStaticMarkup(<PartnerMicrosite partner={{ ...base, logoUrl: undefined as never }} t={t} locale="es-BO" />));
+    expect(plain.querySelector(".partner-gallery")).toBeNull();
+    expect(plain.querySelector("img.partner-logo")).toBeNull();
+  });
+
   it("REQ-F25-05 · the platform disclaimer comes before the contact buttons, and every contact goes through /r/", async () => {
     const partner = partnerFromListings("hotel-andino", [card()]);
     if (!partner) throw new Error("expected partner");
@@ -57,6 +73,18 @@ describe("F25 · partner microsite /p/{slug}", () => {
       "/r/7d1c1a34-5d4c-4a39-9a2e-0f4f2d3d7b11?destination=EMAIL&surface=PUBLIC_SITE"
     ]);
     expect([...document.querySelectorAll("a")].filter((a) => /^(https?:|tel:|mailto:|wa\.me)/.test(a.getAttribute("href") ?? ""))).toEqual([]);
+  });
+
+  it("a product category is named and its listings are counted as products, never a raw key", () => {
+    const partner = partnerFromListings("hotel-andino", [card({ category: "TABLEWARE" }), card({ category: "TABLEWARE", listingId: "7d1c1a34-5d4c-4a39-9a2e-0f4f2d3d7b12" })]);
+    if (!partner) throw new Error("expected partner");
+    const published = [{ code: "TABLEWARE", name: "Vajilla y cristalería", listingType: "PRODUCT" as const }];
+    const text = dom(renderToStaticMarkup(<PartnerMicrosite partner={partner} t={t} locale="es-BO" categories={published} />)).body.textContent ?? "";
+    expect(text).toContain("proveedor de vajilla y cristalería en La Paz, verificado por DOne. Publica 2 productos.");
+    // Catalogue categories unreachable: still named (static translation) and counted without guessing the type.
+    const offline = renderToStaticMarkup(<PartnerMicrosite partner={partner} t={t} locale="es-BO" />);
+    expect(offline).toContain("Publica 2 ofertas.");
+    expect(offline + text).not.toContain("directory.category");
   });
 
   it("empty state: a partner without description, coverage, services or contacts still renders honest text", () => {
@@ -131,5 +159,27 @@ describe("address shapes from the catalogue", () => {
     expect(addressText({ city: "La Paz", line: "Av. Arce 2000", latitude: -16.5, longitude: -68.1, reference: "frente a la plaza" })).toBe("Av. Arce 2000, frente a la plaza");
     expect(addressText({ city: "La Paz" })).toBeUndefined();
     expect(addressText(undefined)).toBeUndefined();
+  });
+});
+
+describe("the partner's marked point (MAP)", () => {
+  it("only valid coordinates of the address object become a point", () => {
+    expect(addressPoint({ line: "Av. Arce 2000", latitude: -16.5, longitude: -68.1 })).toEqual({ lat: -16.5, lng: -68.1 });
+    for (const bad of ["Calle 1", null, { latitude: -16.5 }, { latitude: "x", longitude: 1 }, { latitude: 95, longitude: 0 }, { latitude: 0, longitude: 181 }]) expect(addressPoint(bad)).toBeUndefined();
+  });
+
+  it("the public profile shows the map actions and GeoCoordinates only when the partner marked the point; otherwise only the written address", () => {
+    const marked = partnerFromListings("hotel-andino", [card({ address: { line: "Av. Arce 2000", latitude: -16.5, longitude: -68.1 } } as never)]);
+    if (!marked) throw new Error("expected partner");
+    const document = dom(renderToStaticMarkup(<PartnerMicrosite partner={marked} t={t} locale="es-BO" />));
+    expect(document.body.textContent).toContain("Av. Arce 2000");
+    expect(document.body.textContent).toContain("Ver mapa");
+    expect(document.querySelector('a[href^="https://www.openstreetmap.org/directions"]')).not.toBeNull();
+    expect(JSON.parse(document.querySelector('script[type="application/ld+json"]')!.textContent!)["geo"]).toEqual({ "@type": "GeoCoordinates", latitude: -16.5, longitude: -68.1 });
+    expect(document.documentElement.innerHTML).not.toContain("google.com");
+    const plain = partnerFromListings("hotel-andino", [card({ address: "Calle Comercio 123" } as never)]);
+    const text = dom(renderToStaticMarkup(<PartnerMicrosite partner={plain!} t={t} locale="es-BO" />));
+    expect(text.body.textContent).toContain("Calle Comercio 123");
+    expect(text.body.textContent).not.toContain("Ver mapa");
   });
 });

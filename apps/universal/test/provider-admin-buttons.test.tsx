@@ -83,6 +83,9 @@ describe("pure rules", () => {
     expect(merged.hours?.weekly).toHaveLength(2);
     expect(merged.address).toEqual({ line: "Calle 2", city: "la-paz", latitude: -16.5, longitude: -68.1 });
     expect(mergeMicrosite({ hours: { weekly: [] } }, loaded).hours?.weekly).toEqual([]);
+    // MAP: a point marked on the map replaces the coordinates, and `null` (the owner took the pin off) removes them, keeping the city
+    expect(mergeMicrosite({ address: { line: "Calle 2" } }, loaded, { lat: -17.8, lng: -63.2 }).address).toEqual({ line: "Calle 2", city: "la-paz", latitude: -17.8, longitude: -63.2 });
+    expect(mergeMicrosite({ address: { line: "Calle 2" } }, loaded, null).address).toEqual({ line: "Calle 2", city: "la-paz" });
   });
 });
 
@@ -230,7 +233,7 @@ describe("provider · leads pagination", () => {
     fireEvent.click(screen.getByTestId("leads-more"));
     await waitFor(() => expect(screen.getByTestId("leads-shown").textContent).toBe("Mostrando 60 de 60"));
     expect(screen.queryByTestId("leads-more")).toBeNull();
-    expect(paths.filter((path) => path.includes("/leads"))).toEqual([`GET /providers/${PID}/leads?limit=50&offset=0`, `GET /providers/${PID}/leads?limit=50&offset=50`]);
+    expect(paths.filter((path) => path.includes("/leads"))).toEqual([`GET /providers/${PID}/leads?limit=50&offset=0&locale=es-BO`, `GET /providers/${PID}/leads?limit=50&offset=50&locale=es-BO`]);
   });
   it("an empty list says so and a 429 tells how long to wait and can be retried", async () => {
     await withProvider();
@@ -424,5 +427,27 @@ describe("provider · microsite moderation (A20)", () => {
     await screen.findByTestId("microsite-desc-es");
     expect(screen.queryByTestId("microsite-moderation-rejected")).toBeNull();
     expect(screen.queryByTestId("microsite-moderation-held")).toBeNull();
+  });
+});
+
+describe("provider · microsite location (MAP)", () => {
+  const withPin = { providerId: PID, version: 3, descriptions: { "es-BO": "Hola" }, gallery: [], hours: { weekly: [] }, social: {}, address: { line: "Calle 1", city: "la-paz", latitude: -16.5, longitude: -68.1 } };
+  it("the address can carry a point: it is shown as marked, kept on save, warned when the address text changes, and removable; no link is ever asked for", async () => {
+    await withProvider();
+    const { client, calls } = fakeClient(portal({ [`GET /providers/${PID}/microsite`]: () => withPin, [`PUT /providers/${PID}/microsite`]: () => ({ ...withPin, version: 4 }) }));
+    renderApp(<MicrositeScreen />, client, HOST);
+    await screen.findByTestId("microsite-address");
+    expect(screen.getByText(/Punto marcado\. Tus clientes verán el mapa/)).toBeTruthy();
+    expect(screen.queryByText(/Enlace/)).toBeNull();
+    type("Dirección", "Calle 2");
+    expect(screen.getByText(/Cambiaste la dirección/)).toBeTruthy();
+    fireEvent.click(screen.getByTestId("microsite-pin-remove"));
+    expect(screen.getByText(/Sin punto en el mapa/)).toBeTruthy();
+    fireEvent.click(screen.getByTestId("microsite-save"));
+    await waitFor(() => expect(calls.some((call) => call.method === "PUT")).toBe(true));
+    expect((calls.find((call) => call.method === "PUT")?.body as { input?: { address?: unknown }; address?: unknown })).toBeTruthy();
+    const body = JSON.stringify(calls.find((call) => call.method === "PUT")?.body);
+    expect(body).toContain("Calle 2");
+    expect(body).not.toContain("latitude");
   });
 });

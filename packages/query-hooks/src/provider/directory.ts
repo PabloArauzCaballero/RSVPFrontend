@@ -1,3 +1,4 @@
+import type { ProviderCatalogComponents } from "@rsvp/contracts";
 import type { ApiClient } from "@rsvp/api-client";
 
 /**
@@ -35,14 +36,36 @@ export const PROVIDER_CITIES = [
 export type ProviderCity = (typeof PROVIDER_CITIES)[number];
 
 /**
- * The label of a listing's category. Categories are reference data the admin can extend (e.g. PASTRY), so the static
- * translation may not know a code yet: then the name the catalogue publishes for it, and only then the code itself.
+ * The label of a listing's category. Categories are reference data the admin can extend, so the name the catalogue
+ * publishes (GET /providers/categories) wins; then the static translation (catalogue unreachable or category retired);
+ * and last the code written as words. Never a translation key nor a bare code.
  * `translate` returns the key when it has no text for it (i18next's behaviour).
  */
 export function categoryLabel(code: string, translate: (key: string) => string, published: Readonly<Record<string, string>> = {}): string {
+  // The catalogue answers the code as the name of a category with no translation: that is not a name.
+  const name = published[code];
+  if (name && name !== code) return name;
+  // "" is how the verification queue says "no listing yet".
+  if (!code) return "";
   const key = `directory.category.${code}`;
   const own = translate(key);
-  return own && own !== key ? own : published[code] ?? code;
+  if (own && own !== key) return own;
+  const words = code.replace(/[_-]+/g, " ").trim().toLowerCase();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+export type OfferKind = "SERVICE" | "PRODUCT" | "OFFER";
+export const FACT_LEAD_KEY: Readonly<Record<OfferKind, string>> = { SERVICE: "partner.factLeadService", PRODUCT: "partner.factLeadProduct", OFFER: "partner.factLeadOffer" };
+
+/**
+ * What a provider's listings are, to name them when counting. The public card carries no listing type, but its category
+ * does (`listingType` of GET /providers/categories, and the catalogue rejects a listing of the other type). All of one
+ * type is named by it; a mix, a category open to both (null) or one that could not be read is the neutral "OFFER".
+ */
+export function offerKind(listings: readonly { readonly category: string }[], categories: readonly { readonly code: string; readonly listingType?: string | null }[]): OfferKind {
+  const kinds = new Set(listings.map((listing) => categories.find((category) => category.code === listing.category)?.listingType ?? "OFFER"));
+  const [only] = kinds;
+  return kinds.size === 1 && (only === "SERVICE" || only === "PRODUCT") ? only : "OFFER";
 }
 
 export const categoryBySlug = (slug: string): ProviderCategory | undefined => PROVIDER_CATEGORIES.find((category) => category.slug === slug);
@@ -60,12 +83,16 @@ export interface DirectoryCard {
   readonly summary?: string;
   readonly priceFrom?: { readonly amountMinor: number; readonly currency: string };
   readonly imageUrl?: string;
+  /** Provider Catalog 3.14.0: the provider's logo (published microsite), uploaded as a file. */
+  readonly logoUrl?: string;
   /** Destinations enabled for the listing (WHATSAPP, PHONE, EMAIL, INSTAGRAM, OFFICIAL_SITE, LANDING, PRODUCT_PAGE); each is reached through /r/{listingId}. */
   readonly destinations?: readonly string[];
   /** Cities or areas the provider serves (F25 coverage zone). */
   readonly coverage?: readonly string[];
-  readonly address?: string;
-  readonly hours?: readonly string[];
+  /** A line of text or, as the catalogue really sends it, an object `{ line, city, reference, latitude, longitude }` (see `addressText`, `addressPoint`). */
+  readonly address?: string | { readonly line?: string; readonly city?: string; readonly reference?: string; readonly latitude?: number; readonly longitude?: number };
+  /** The business hours as the catalogue sends them (contract `BusinessHours`: `{ weekly: [{ weekdays, opens, closes }], note? }`); read with `hoursLines`. Older mocks sent a list of lines, which `hoursLines` also accepts. */
+  readonly hours?: ProviderCatalogComponents["schemas"]["BusinessHours"] | readonly string[];
   /** Present in the Provider Catalog 2.0.0 card: who fulfils, coverage zones, transport cost and lead time (F25-04). */
   readonly fulfillment?: { readonly responsible: string; readonly coverageZones: readonly string[]; readonly transportCostMinor?: number; readonly leadTimeDays: number; readonly conditions: string; readonly disclaimer: string };
   /** Not in the public card today; resolved through the listing when absent (apps/seo-web/lib/catalog.ts). */

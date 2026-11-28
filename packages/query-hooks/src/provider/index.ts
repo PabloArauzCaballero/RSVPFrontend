@@ -1,7 +1,7 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ApiClient } from "@rsvp/api-client";
 import { providerService } from "./api.js";
-import type { UpdateProviderInput, ProviderDiscoveryQuery, DocumentInput, MicrositeInput, Availability, BookingRequestInput, BookingStatus, CreateListingInput, LeadConfig, QuoteInput, RegisterProviderInput } from "./types.js";
+import type { UpdateProviderInput, DocumentInput, MicrositeInput, Availability, BookingRequestInput, BookingStatus, CreateListingInput, LeadConfig, QuoteInput, RegisterProviderInput } from "./types.js";
 export * from "./types.js";
 export { BOOKINGS_PAGE_SIZE, providerService } from "./api.js";
 import { cachePolicy, retryTransient } from "../policy.js";
@@ -9,6 +9,7 @@ import { providerSearchPath, type DirectoryQuery } from "./directory.js";
 import { queryKeys } from "../keys.js";
 import { invalidation } from "../invalidation.js";
 import { providerApi } from "../domains.js";
+import type { LeadFilters } from "./lead-report.js";
 
 const refetchAll = (queryClient: ReturnType<typeof useQueryClient>, keys: readonly (readonly unknown[])[]) => Promise.all(keys.map((queryKey) => queryClient.invalidateQueries({ queryKey })));
 
@@ -43,8 +44,8 @@ export function useRequestBooking<TResponse, TInput>(client: ApiClient, provider
 const P = (providerId: string, ...rest: readonly unknown[]) => ["providers", providerId, ...rest] as const;
 const live = { staleTime: 15_000, gcTime: 5 * 60_000 } as const;
 
-export function useListingSearch(client: ApiClient, q: string) {
-  return useQuery({ queryKey: ["providers", "listing-search", q] as const, queryFn: () => providerService(client).searchListings(q), staleTime: 30_000, enabled: q.trim().length >= 2 || q === "" });
+export function useListingSearch(client: ApiClient, q: string, locale = "es-BO") {
+  return useQuery({ queryKey: ["providers", "listing-search", q, locale] as const, queryFn: () => providerService(client).searchListings(q, locale), staleTime: 30_000, enabled: q.trim().length >= 2 || q === "" });
 }
 
 /** Public catalog metadata, shared by gift cards and cached across the list and detail page. Never sends the guest credential. */
@@ -75,6 +76,10 @@ export function usePublicListing(client: ApiClient, listingId: string | undefine
   return { ...listing, data: { ...summary, destinationTypes } };
 }
 
+/** M23 · product categories (and the ones shared by both offer types), named in `locale`. */
+export function useProductCategories(client: ApiClient, locale: string) {
+  return useQuery({ queryKey: ["providers", "product-categories", locale] as const, queryFn: () => providerService(client).productCategories(locale), ...cachePolicy.provider });
+}
 export function useOfferCategories(client: ApiClient, locale: string) {
   return useQuery({ queryKey: ["providers", "offer-categories", locale] as const, queryFn: () => providerService(client).categories(locale), ...cachePolicy.provider });
 }
@@ -119,10 +124,12 @@ export function useLeads(client: ApiClient, providerId: string | undefined) {
 }
 export const LEADS_PAGE_SIZE = 50;
 /** Leads in pages of 50 (`limit`/`offset`, the server allows up to 200); `total` tells whether there is another page. */
-export function useInfiniteLeads(client: ApiClient, providerId: string | undefined) {
+export function useInfiniteLeads(client: ApiClient, providerId: string | undefined, filters: LeadFilters = {}) {
   return useInfiniteQuery({
-    queryKey: P(providerId ?? "", "leads", "pages"), initialPageParam: 0, ...live, enabled: Boolean(providerId),
-    queryFn: ({ pageParam }) => providerService(client).leads(providerId ?? "", LEADS_PAGE_SIZE, pageParam),
+    queryKey: P(providerId ?? "", "leads", "pages", filters.month ?? "", filters.listingId ?? "", filters.destination ?? "", filters.locale ?? ""), initialPageParam: 0, ...live, enabled: Boolean(providerId),
+    /** A filter change keeps the previous list on screen until the new one arrives, so the filters never lose focus behind a skeleton. */
+    placeholderData: keepPreviousData,
+    queryFn: ({ pageParam }) => providerService(client).leads(providerId ?? "", LEADS_PAGE_SIZE, pageParam, filters),
     getNextPageParam: (last, pages) => { const loaded = pages.reduce((sum, page) => sum + page.items.length, 0); return last.items.length === LEADS_PAGE_SIZE && (last.total === undefined || loaded < last.total) ? loaded : undefined; }
   });
 }
@@ -204,12 +211,8 @@ export function useUploadDocument(client: ApiClient, providerId: string) {
   });
 }
 
-/** REQ-F23-05 · public discovery of verified providers from the host panel. */
-export function useProviderDiscovery(client: ApiClient, query: ProviderDiscoveryQuery, locale = "es-BO") {
-  return useQuery({ queryKey: ["providers", "discover", locale, query] as const, queryFn: () => providerService(client).discover(query, locale), staleTime: 30_000, placeholderData: (previous) => previous });
-}
-
 export * from "./directory.js";
+export * from "./marketplace.js";
 export * from "./partner.js";
 
 /** GET /providers for the directory (search, category and city pages), public; keyed by the exact query path. */
@@ -218,3 +221,9 @@ export function useDirectorySearch<TPage>(client: ApiClient, query: DirectoryQue
   return useQuery({ queryKey: ["providers", "directory", path] as const, queryFn: ({ signal }) => client.request<TPage>(path, { auth: false, signal }), staleTime: 60_000, retry: retryTransient, enabled });
 }
 export * from "./partner-requests.js";
+export * from "./product-sheet.js";
+export * from "./lead-report.js";
+export * from "./recommendations.js";
+export * from "./product-sheet-hooks.js";
+export * from "./provider-media.js";
+export * from "./provider-media-hooks.js";

@@ -1,0 +1,769 @@
+{
+  "key": "clasico-marfil",
+  "name": "Clásico marfil",
+  "description": "Tarjeta de papel algodón con ventana en arco y anillos: serif de contraste suave para ceremonias tradicionales.",
+  "layout": "classic",
+  "eventTypeTags": [
+    "anniversary",
+    "wedding"
+  ],
+  "sectionOrder": [
+    "story",
+    "schedule",
+    "venues",
+    "gallery",
+    "dressCode",
+    "gifts",
+    "faq",
+    "recommendations",
+    "rsvp"
+  ],
+  "theme": {
+    "schemaVersion": 2,
+    "tokens": {
+      "palettes": {
+        "light": {
+          "canvas": "#FBF7F0",
+          "surface": "#FFFEFA",
+          "text": "#2B2622",
+          "muted": "#665C52",
+          "accent": "#7A5230",
+          "accentFill": "#7A5230",
+          "onAccent": "#FFFDF8",
+          "line": "#8C7F6E"
+        },
+        "dark": {
+          "canvas": "#16110D",
+          "surface": "#201912",
+          "text": "#EFE5D6",
+          "muted": "#B3A592",
+          "accent": "#DDAE7E",
+          "accentFill": "#C9966A",
+          "onAccent": "#1A120B",
+          "line": "#85755F"
+        }
+      },
+      "typography": {
+        "heading": {
+          "family": "cormorant-garamond",
+          "weights": [
+            500,
+            600
+          ]
+        },
+        "body": {
+          "family": "source-sans-3",
+          "weights": [
+            400,
+            500,
+            600
+          ]
+        },
+        "scale": {
+          "base": 16,
+          "ratio": 1.25
+        }
+      },
+      "spacing": {
+        "unit": 8,
+        "section": 56,
+        "contentMaxWidth": 1080
+      },
+      "radii": {
+        "sm": 0,
+        "md": 0,
+        "lg": 0
+      },
+      "ornament": "flourish",
+      "illustrationSet": "none"
+    },
+    "pages": [
+      {
+        "id": "page-cover",
+        "kind": "cover",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-anillos",
+                "block": "art-anillos",
+                "x": 1,
+                "y": 0,
+                "w": 2,
+                "h": 12,
+                "visible": true,
+                "animation": {
+                  "entrance": "scale",
+                  "delayMs": 200,
+                  "durationMs": 800
+                }
+              },
+              {
+                "id": "el-cover",
+                "block": "cover",
+                "x": 0,
+                "y": 12,
+                "w": 4,
+                "h": 18,
+                "visible": true,
+                "animation": {
+                  "entrance": "rise",
+                  "delayMs": 450,
+                  "durationMs": 800
+                }
+              },
+              {
+                "id": "el-filete",
+                "block": "art-filete",
+                "x": 0,
+                "y": 30,
+                "w": 4,
+                "h": 3,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 900,
+                  "durationMs": 600
+                }
+              },
+              {
+                "id": "el-monogram",
+                "block": "monogram",
+                "x": 1,
+                "y": 33,
+                "w": 2,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "scale",
+                  "delayMs": 1100,
+                  "durationMs": 600
+                },
+                "typography": {
+                  "role": "heading",
+                  "size": 28,
+                  "align": "center",
+                  "colour": "text"
+                },
+                "radius": 999,
+                "padding": {
+                  "top": 16,
+                  "right": 16,
+                  "bottom": 16,
+                  "left": 16
+                },
+                "border": {
+                  "width": 1,
+                  "style": "solid",
+                  "colour": "accent"
+                },
+                "frame": {
+                  "style": "double",
+                  "colour": "accent"
+                }
+              }
+            ]
+          },
+          "desktop": {
+            "mode": "flow",
+            "columns": 12,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-anillos",
+                "block": "art-anillos",
+                "x": 0,
+                "y": 0,
+                "w": 4,
+                "h": 28,
+                "visible": true,
+                "animation": {
+                  "entrance": "scale",
+                  "delayMs": 200,
+                  "durationMs": 800
+                }
+              },
+              {
+                "id": "el-cover",
+                "block": "cover",
+                "x": 4,
+                "y": 3,
+                "w": 8,
+                "h": 20,
+                "visible": true,
+                "animation": {
+                  "entrance": "rise",
+                  "delayMs": 450,
+                  "durationMs": 800
+                },
+                "typography": {
+                  "align": "start"
+                },
+                "padding": {
+                  "top": 0,
+                  "right": 0,
+                  "bottom": 0,
+                  "left": 16
+                }
+              },
+              {
+                "id": "el-filete",
+                "block": "art-filete",
+                "x": 4,
+                "y": 23,
+                "w": 8,
+                "h": 3,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 900,
+                  "durationMs": 600
+                },
+                "padding": {
+                  "top": 0,
+                  "right": 0,
+                  "bottom": 0,
+                  "left": 16
+                }
+              },
+              {
+                "id": "el-monogram",
+                "block": "monogram",
+                "x": 7,
+                "y": 26,
+                "w": 2,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "scale",
+                  "delayMs": 1100,
+                  "durationMs": 600
+                },
+                "typography": {
+                  "role": "heading",
+                  "size": 28,
+                  "align": "center",
+                  "colour": "text"
+                },
+                "radius": 999,
+                "padding": {
+                  "top": 16,
+                  "right": 16,
+                  "bottom": 16,
+                  "left": 16
+                },
+                "border": {
+                  "width": 1,
+                  "style": "solid",
+                  "colour": "accent"
+                },
+                "frame": {
+                  "style": "double",
+                  "colour": "accent"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-story",
+        "kind": "section",
+        "section": "story",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-story",
+                "block": "story",
+                "x": 0,
+                "y": 0,
+                "w": 4,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-schedule",
+        "kind": "section",
+        "section": "schedule",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-reloj",
+                "block": "art-reloj",
+                "x": 0,
+                "y": 0,
+                "w": 1,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-schedule",
+                "block": "schedule",
+                "x": 0,
+                "y": 8,
+                "w": 4,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-venues",
+        "kind": "section",
+        "section": "venues",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-mapa-pin",
+                "block": "art-mapa-pin",
+                "x": 0,
+                "y": 0,
+                "w": 1,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-venues",
+                "block": "venues",
+                "x": 0,
+                "y": 8,
+                "w": 4,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-gallery",
+        "kind": "section",
+        "section": "gallery",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-camara",
+                "block": "art-camara",
+                "x": 0,
+                "y": 0,
+                "w": 1,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-gallery",
+                "block": "gallery",
+                "x": 0,
+                "y": 8,
+                "w": 4,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-dress-code",
+        "kind": "section",
+        "section": "dressCode",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-percha",
+                "block": "art-percha",
+                "x": 0,
+                "y": 0,
+                "w": 1,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-dress-code",
+                "block": "dress-code",
+                "x": 0,
+                "y": 8,
+                "w": 4,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-gifts",
+        "kind": "section",
+        "section": "gifts",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-regalo",
+                "block": "art-regalo",
+                "x": 0,
+                "y": 0,
+                "w": 1,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-gifts-cta",
+                "block": "gifts-cta",
+                "x": 0,
+                "y": 8,
+                "w": 4,
+                "h": 6,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-faq",
+        "kind": "section",
+        "section": "faq",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-pregunta",
+                "block": "art-pregunta",
+                "x": 0,
+                "y": 0,
+                "w": 1,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-faq",
+                "block": "faq",
+                "x": 0,
+                "y": 8,
+                "w": 4,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-recommendations",
+        "kind": "section",
+        "section": "recommendations",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-auto",
+                "block": "art-auto",
+                "x": 0,
+                "y": 0,
+                "w": 1,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-recommendations",
+                "block": "recommendations",
+                "x": 0,
+                "y": 8,
+                "w": 4,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-rsvp",
+        "kind": "section",
+        "section": "rsvp",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-sobre",
+                "block": "art-sobre",
+                "x": 0,
+                "y": 0,
+                "w": 1,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-rsvp-cta",
+                "block": "rsvp-cta",
+                "x": 0,
+                "y": 8,
+                "w": 4,
+                "h": 6,
+                "visible": true
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "blocks": [
+      {
+        "id": "cover",
+        "type": "cover",
+        "config": {
+          "variant": "arch",
+          "envelope": false
+        }
+      },
+      {
+        "id": "art-anillos",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "anillos",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "art-filete",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "anillos-dobles",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "monogram",
+        "type": "monogram",
+        "config": {}
+      },
+      {
+        "id": "story",
+        "type": "story",
+        "config": {}
+      },
+      {
+        "id": "art-reloj",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "reloj",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "schedule",
+        "type": "schedule",
+        "config": {
+          "display": "timeline"
+        }
+      },
+      {
+        "id": "art-mapa-pin",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "mapa-pin",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "venues",
+        "type": "venues",
+        "config": {
+          "display": "cards",
+          "mapOnTap": true
+        }
+      },
+      {
+        "id": "art-camara",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "camara",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "gallery",
+        "type": "gallery",
+        "config": {
+          "display": "grid"
+        }
+      },
+      {
+        "id": "art-percha",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "percha",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "dress-code",
+        "type": "dressCode",
+        "config": {}
+      },
+      {
+        "id": "art-regalo",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "regalo",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "gifts-cta",
+        "type": "giftsCta",
+        "required": true,
+        "config": {
+          "style": "solid"
+        }
+      },
+      {
+        "id": "art-pregunta",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "pregunta",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "faq",
+        "type": "faq",
+        "config": {}
+      },
+      {
+        "id": "art-auto",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "auto",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "recommendations",
+        "type": "recommendations",
+        "config": {}
+      },
+      {
+        "id": "art-sobre",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "sobre",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "rsvp-cta",
+        "type": "rsvpCta",
+        "config": {
+          "style": "solid"
+        }
+      }
+    ],
+    "custom": {
+      "html": "",
+      "css": ""
+    }
+  }
+}
