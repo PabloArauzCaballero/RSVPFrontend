@@ -3,7 +3,7 @@ import { Photo } from "../photo.js";
 import type { Translate } from "../types.js";
 import { isAllowedEmbedUrl, type Embed } from "./embed.js";
 import { AudioPlayerView, EmbedFacadeView, type AudioLabels, type EmbedLabels } from "./interactive.js";
-import { clampScrim, clampVeil, hasImage, imageSources, type PublicMedia } from "./variants.js";
+import { clampVeil, hasImage, imageSources, type PublicMedia } from "./variants.js";
 
 /** Components of F6 for the public invitation and for the editor to import. Web only: the native app shows the web invitation (P10).
  *  This file runs on the server: what needs the browser (the facade's tap, the player) lives in `interactive.tsx`, a client module that receives text already
