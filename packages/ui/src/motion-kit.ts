@@ -5,5 +5,5 @@ export { Stagger, type StaggerProps } from './stagger';
 export { PressFeedback, type PressFeedbackProps } from './press-feedback';
 export { Skeleton, SkeletonRow, SkeletonList, type SkeletonProps, type SkeletonRowProps, type SkeletonListProps } from './skeleton';
 export { StepTransition, type StepDirection, type StepTransitionProps } from './step-transition';
-export { ScreenTransition, resetScreenHistory, type ScreenTransitionProps } from './screen-transition';
+export { ScreenTransition, moveScreenFocus, resetScreenHistory, screenFocusWasLost, type ScreenTransitionProps } from './screen-transition';
 export { CountUp, type CountUpProps } from './count-up';

@@ -3,10 +3,14 @@ import type { partnerEsBO } from "../es-BO/partner.js";
 
 /** Partner microsite (F25) and outbound redirector (F27). */
 export const partnerEnUS: DeepStrings<typeof partnerEsBO> = {
-  meta: { title: "{{name}} · {{category}} in {{city}}", description: "{{name}}: verified {{category}} in {{city}}. See their services and coverage area, and contact them directly." },
+  meta: { title: "{{name}} · {{category}} in {{city}}", description: "{{name}}: verified {{category}} in {{city}}. See what they offer and their coverage area, and contact them directly." },
   about: "About the vendor",
-  factLead_one: "{{name}} is a {{category}} vendor in {{city}}, verified by DOne. It lists {{count}} service.",
-  factLead_other: "{{name}} is a {{category}} vendor in {{city}}, verified by DOne. It lists {{count}} services.",
+  factLeadService_one: "{{name}} is a {{category}} vendor in {{city}}, verified by DOne. It lists {{count}} service.",
+  factLeadService_other: "{{name}} is a {{category}} vendor in {{city}}, verified by DOne. It lists {{count}} services.",
+  factLeadProduct_one: "{{name}} is a {{category}} vendor in {{city}}, verified by DOne. It lists {{count}} product.",
+  factLeadProduct_other: "{{name}} is a {{category}} vendor in {{city}}, verified by DOne. It lists {{count}} products.",
+  factLeadOffer_one: "{{name}} is a {{category}} vendor in {{city}}, verified by DOne. It lists {{count}} offer.",
+  factLeadOffer_other: "{{name}} is a {{category}} vendor in {{city}}, verified by DOne. It lists {{count}} offers.",
   factLeadNone: "{{name}} is a {{category}} vendor in {{city}}, verified by DOne.",
   imageAlt: "{{name}}, {{category}} in {{city}}",
   noSummary: "This vendor has not added a description yet.",
@@ -15,7 +19,7 @@ export const partnerEnUS: DeepStrings<typeof partnerEsBO> = {
   services: "What they offer",
   catalogLink: "See the full catalog",
   verifiedHint: "Passed DOne’s verification",
-  noServices: "This vendor has not published services yet. Message them to ask what they offer.",
+  noServices: "This vendor has not published anything yet. Message them to ask what they offer.",
   contact: "Talk to the vendor directly",
   fineprint: "Before you hire",
   disclaimer: "DOne connects you with {{name}} but does not provide or guarantee the service. The vendor alone is responsible for their offer, prices, coverage, travel costs and lead times: agree on them with the vendor before you book.",

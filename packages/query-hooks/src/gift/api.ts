@@ -61,7 +61,9 @@ export function giftApi(client: ApiClient) {
     settings: (celebrationId: string) => client.request<GiftSettings>(`${BASE}/${celebrationId}/gift-settings`),
     updateSettings: (celebrationId: string, body: UpdateGiftSettingsInput) => client.request<GiftSettings, UpdateGiftSettingsInput>(`${BASE}/${celebrationId}/gift-settings`, { method: "PUT", body }),
     approveExternal: (celebrationId: string, giftItemId: string) => client.request<GiftItem>(`${BASE}/${celebrationId}/items/${giftItemId}/approve`, { method: "POST" }),
-    rejectExternal: (celebrationId: string, giftItemId: string) => client.request<GiftItem>(`${BASE}/${celebrationId}/items/${giftItemId}/reject`, { method: "POST" })
+    rejectExternal: (celebrationId: string, giftItemId: string) => client.request<GiftItem>(`${BASE}/${celebrationId}/items/${giftItemId}/reject`, { method: "POST" }),
+    /** Gift List 1.20.0 · removeGiftItem: the host takes an UNAVAILABLE gift off the list. 204 (also when it already was not there). */
+    remove: (celebrationId: string, giftItemId: string) => client.request<void>(`${BASE}/${celebrationId}/items/${giftItemId}`, { method: "DELETE" })
   } as const;
 }
 

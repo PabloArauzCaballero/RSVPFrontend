@@ -19,7 +19,7 @@ export type SaveOutcome = "downloaded" | "shared" | "failed";
 /** Web: a Blob download. UTF-8 BOM so Excel reads accents correctly. */
 export async function saveTextFile(name: string, text: string): Promise<SaveOutcome> {
   try {
-    const url = URL.createObjectURL(new Blob(["﻿", text], { type: "text/csv;charset=utf-8" }));
+    const url = URL.createObjectURL(new Blob(["\uFEFF", text], { type: "text/csv;charset=utf-8" }));
     const link = document.createElement("a");
     link.href = url; link.download = name;
     document.body.appendChild(link); link.click(); link.remove();

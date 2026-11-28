@@ -9,4 +9,5 @@ export { ModerationScreen, VerificationScreen } from "./queues";
 export { ReportsScreen } from "./reports";
 export { TemplatesAdminScreen } from "./templates";
 export { EventTypesScreen } from "./event-types";
+export { ProductsScreen } from "./products/products-screen";
 export { PartnersScreen } from "./partners/partners-screen";

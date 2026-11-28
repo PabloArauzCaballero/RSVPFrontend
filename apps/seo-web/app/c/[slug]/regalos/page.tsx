@@ -22,5 +22,5 @@ export default async function GiftsPage({ params, searchParams }: Props) {
   const { slug } = await params;
   const data = await loadGiftPage(slug);
   if (data.state === "not-found") notFound();
-  return <GiftExperience slug={slug} celebrationId={data.celebration.celebrationId} celebrationTitle={data.celebration.title} locale={locale} />;
+  return <GiftExperience slug={slug} celebrationId={data.celebration.celebrationId} celebrationTitle={data.celebration.title} locale={locale} {...(data.celebration.eventType ? { eventType: data.celebration.eventType } : {})} />;
 }

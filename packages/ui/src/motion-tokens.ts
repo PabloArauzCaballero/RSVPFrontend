@@ -33,6 +33,8 @@ export const MOTION = {
   screenMs: 360,
   sectionMs: 220,
   screenDistance: 6,
+  /** A loading skeleton appears only when the wait outlasts this; a faster load never flashes it (cached chunks, cached queries). */
+  loadingDelayMs: 150,
   /** Lists: 70 ms between rows, at most 8 rows animate (560 ms of delay in total); the rest appear in place. */
   staggerMs: 70,
   staggerMax: 8,

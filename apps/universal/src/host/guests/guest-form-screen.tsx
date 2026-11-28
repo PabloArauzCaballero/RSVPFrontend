@@ -97,7 +97,7 @@ function Form({ celebrationId, onNavigate, groupId }: { readonly celebrationId: 
         <FailureNotice error={register.error} onRetry={submit} />
         {saved ? <SuccessNote message={t("guests.form.saved", { name: saved.name })} {...(saved.first ? {} : { detail: t("guests.form.savedDetail") })} /> : null}
       </View>
-      <StickyActions>
+      <StickyActions label={t("common.actions")}>
         <ActionButton label={register.isPending || checking ? t("guests.form.saving") : t("guests.form.save")} busy={register.isPending || checking} onPress={submit} testID="save-guest" />
         <TextAction label={t("guests.form.back")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.guests, celebrationId))} />
       </StickyActions>

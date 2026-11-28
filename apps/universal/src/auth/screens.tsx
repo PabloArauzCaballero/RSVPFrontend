@@ -175,7 +175,7 @@ export function RegisterScreen({ onNavigate, returnTo = null }: AuthScreenProps)
           <Checkbox label={t("auth.marketingOptIn")} value={draft.marketingOptIn} onChange={set("marketingOptIn")} state={busy ? "disabled" : "default"} />
         </AuthSection>
         {compact ? (
-          <StickyActions bleed={0} summary={<FailureBanner submit={submitState} />}>{submitButton}</StickyActions>
+          <StickyActions label={t("common.actions")} bleed={0} summary={<FailureBanner submit={submitState} />}>{submitButton}</StickyActions>
         ) : (
           <View style={{ gap: spacing[5] }}>
             {submitButton}

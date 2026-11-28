@@ -1,0 +1,404 @@
+{
+ "axe": [
+  {
+   "name": "portal-leads",
+   "w": 360,
+   "scheme": "light",
+   "locale": "es-BO",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "portal-metricas",
+   "w": 360,
+   "scheme": "light",
+   "locale": "es-BO",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "portal-preview",
+   "w": 360,
+   "scheme": "light",
+   "locale": "es-BO",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "admin-metricas",
+   "w": 360,
+   "scheme": "light",
+   "locale": "es-BO",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "portal-leads",
+   "w": 768,
+   "scheme": "light",
+   "locale": "es-BO",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "portal-metricas",
+   "w": 768,
+   "scheme": "light",
+   "locale": "es-BO",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "portal-preview",
+   "w": 768,
+   "scheme": "light",
+   "locale": "es-BO",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "admin-metricas",
+   "w": 768,
+   "scheme": "light",
+   "locale": "es-BO",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "portal-leads",
+   "w": 1280,
+   "scheme": "light",
+   "locale": "es-BO",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "portal-metricas",
+   "w": 1280,
+   "scheme": "light",
+   "locale": "es-BO",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "portal-preview",
+   "w": 1280,
+   "scheme": "light",
+   "locale": "es-BO",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "admin-metricas",
+   "w": 1280,
+   "scheme": "light",
+   "locale": "es-BO",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "portal-leads",
+   "w": 360,
+   "scheme": "light",
+   "locale": "en-US",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "portal-metricas",
+   "w": 360,
+   "scheme": "light",
+   "locale": "en-US",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "portal-preview",
+   "w": 360,
+   "scheme": "light",
+   "locale": "en-US",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "admin-metricas",
+   "w": 360,
+   "scheme": "light",
+   "locale": "en-US",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "portal-leads",
+   "w": 1280,
+   "scheme": "light",
+   "locale": "en-US",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "portal-metricas",
+   "w": 1280,
+   "scheme": "light",
+   "locale": "en-US",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "portal-preview",
+   "w": 1280,
+   "scheme": "light",
+   "locale": "en-US",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "admin-metricas",
+   "w": 1280,
+   "scheme": "light",
+   "locale": "en-US",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "portal-leads",
+   "w": 360,
+   "scheme": "dark",
+   "locale": "es-BO",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "portal-metricas",
+   "w": 360,
+   "scheme": "dark",
+   "locale": "es-BO",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "portal-preview",
+   "w": 360,
+   "scheme": "dark",
+   "locale": "es-BO",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "admin-metricas",
+   "w": 360,
+   "scheme": "dark",
+   "locale": "es-BO",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "portal-leads",
+   "w": 768,
+   "scheme": "dark",
+   "locale": "es-BO",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "portal-metricas",
+   "w": 768,
+   "scheme": "dark",
+   "locale": "es-BO",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "portal-preview",
+   "w": 768,
+   "scheme": "dark",
+   "locale": "es-BO",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "admin-metricas",
+   "w": 768,
+   "scheme": "dark",
+   "locale": "es-BO",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "portal-leads",
+   "w": 1280,
+   "scheme": "dark",
+   "locale": "es-BO",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "portal-metricas",
+   "w": 1280,
+   "scheme": "dark",
+   "locale": "es-BO",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "portal-preview",
+   "w": 1280,
+   "scheme": "dark",
+   "locale": "es-BO",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "admin-metricas",
+   "w": 1280,
+   "scheme": "dark",
+   "locale": "es-BO",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "portal-leads",
+   "w": 360,
+   "scheme": "dark",
+   "locale": "en-US",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "portal-metricas",
+   "w": 360,
+   "scheme": "dark",
+   "locale": "en-US",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "portal-preview",
+   "w": 360,
+   "scheme": "dark",
+   "locale": "en-US",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "admin-metricas",
+   "w": 360,
+   "scheme": "dark",
+   "locale": "en-US",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "portal-leads",
+   "w": 1280,
+   "scheme": "dark",
+   "locale": "en-US",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "portal-metricas",
+   "w": 1280,
+   "scheme": "dark",
+   "locale": "en-US",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "portal-preview",
+   "w": 1280,
+   "scheme": "dark",
+   "locale": "en-US",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  },
+  {
+   "name": "admin-metricas",
+   "w": 1280,
+   "scheme": "dark",
+   "locale": "en-US",
+   "overflow": 0,
+   "rawKeys": false,
+   "serious": [],
+   "all": []
+  }
+ ]
+}

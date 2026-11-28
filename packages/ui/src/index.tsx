@@ -5,6 +5,7 @@ import { avatars, chips, radius, spacing, typography } from '@rsvp/design-tokens
 import { fonts } from './fonts';
 import { useTheme } from './theme';
 import { ButtonAlignContext, pressVisual } from './press-visual';
+import { ActionDockContext } from './action-dock-shared';
 import { Enter } from './enter';
 import { NavIcon } from './nav-icon';
 import { useReducedMotion, MOTION } from './motion';
@@ -22,6 +23,7 @@ export * from './identity';
 export { fonts } from './fonts';
 export { EmptyState, PageIntro, SuccessNote, Celebrate, type EmptyStateProps } from './personality';
 export { StickyActions, type StickyActionsProps } from './sticky-actions';
+export { ActionDock } from './action-dock';
 export { OverflowMenu, type OverflowMenuItem, type OverflowMenuProps } from './overflow-menu';
 export { FilterSelect, FILTER_SELECT_THRESHOLD, type FilterOption, type FilterSelectProps } from './filter-select';
 export { ButtonAlignContext, pressVisual } from './press-visual';
@@ -203,14 +205,14 @@ export function Sheet({ visible, onClose, title, children, state = 'default' }: 
   const { styles, strings } = useTheme();
   return (
     <NativeModal visible={visible} transparent animationType={overlayAnimation('slide')} onRequestClose={onClose}>
-      <Pressable accessibilityLabel={strings.close} style={styles.overlay} onPress={onClose}>
+      <ActionDockContext.Provider value={null}><Pressable accessibilityLabel={strings.close} style={styles.overlay} onPress={onClose}>
         <OverlayEnter from="down">
           <Pressable accessibilityViewIsModal style={styles.sheet} onPress={(event) => event.stopPropagation()}>
             <Text accessibilityRole="header" style={styles.title}>{title}</Text><StateHint state={state} />{state === 'default' && children}
             <Button variant="secondary" onPress={onClose}>{strings.close}</Button>
           </Pressable>
         </OverlayEnter>
-      </Pressable>
+      </Pressable></ActionDockContext.Provider>
     </NativeModal>
   );
 }
@@ -219,10 +221,10 @@ export function Modal({ visible, onClose, title, children, state = 'default' }: 
   const { styles, strings } = useTheme();
   return (
     <NativeModal visible={visible} transparent animationType={overlayAnimation('fade')} onRequestClose={onClose}>
-      <View style={styles.overlay}><OverlayEnter from="none"><View accessibilityViewIsModal style={styles.modal}>
+      <ActionDockContext.Provider value={null}><View style={styles.overlay}><OverlayEnter from="none"><View accessibilityViewIsModal style={styles.modal}>
         <Text accessibilityRole="header" style={styles.title}>{title}</Text><StateHint state={state} />{state === 'default' && children}
         <Button variant="secondary" onPress={onClose}>{strings.close}</Button>
-      </View></OverlayEnter></View>
+      </View></OverlayEnter></View></ActionDockContext.Provider>
     </NativeModal>
   );
 }

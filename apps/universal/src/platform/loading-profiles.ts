@@ -51,6 +51,7 @@ const ADMIN_LOADING = {
   verification: { kind: "list", title: "admin.verification.title" },
   moderation: { kind: "list", title: "admin.moderation.title" },
   reports: { kind: "list", title: "moderation.admin.title" },
+  products: { kind: "list", title: "admin.products.title" },
   users: { kind: "people", title: "admin.users.title" },
   organizations: { kind: "form", title: "admin.organizations.title" },
   partners: { kind: "list", title: "admin.partners.title" },
