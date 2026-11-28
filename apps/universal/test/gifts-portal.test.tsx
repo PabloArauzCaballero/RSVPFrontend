@@ -88,14 +88,12 @@ describe("R1 · M-6 · a gift that can no longer be given (UNAVAILABLE)", () => 
     // R7: an unavailable gift offers two controls, the one that opens its replacements and (Gift 1.20.0) the one that takes it off the list; approve, reject and release are never offered.
     expect(within(screen.getByTestId("gift-Musica")).queryAllByRole("button").map((button) => button.getAttribute("data-testid"))).toEqual(["replacements-toggle-Musica", "remove-gift-Musica"]);
   });
-  it("the mark follows availability; a server that still wrote UNAVAILABLE in status is read too (R7 isGiftUnavailable), and the gift goes to the unavailable section", async () => {
+  it("the mark follows availability, not status: a legacy status UNAVAILABLE no longer marks anything", async () => {
     const { client } = fakeClient(handlers({ "GET /gifts/celebrations/c-1/items": () => ({ items: [gift("Vieja", { status: "UNAVAILABLE" })], partnerPriorityEnabled: true }) }));
     renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);
     await screen.findByTestId("gift-Vieja");
-    expect(within(screen.getByTestId("gift-unavailable-section")).getByTestId("gift-Vieja")).toBeTruthy();
-    expect(screen.getByTestId("gift-status-Vieja").textContent).toBe("No disponible");
+    expect(screen.queryByTestId("gift-unavailable")).toBeNull();
   });
-
   it("when every gift is unavailable the list shows the zero total and the section, not the empty state", async () => {
     const { client } = fakeClient(handlers({ "GET /gifts/celebrations/c-1/items": () => ({ items: [gift("Musica", { availability: "UNAVAILABLE" })], partnerPriorityEnabled: true }) }));
     renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);
@@ -128,20 +126,17 @@ describe("R1 · M-6 · a gift that can no longer be given (UNAVAILABLE)", () => 
     expect(screen.getByTestId("gift-unavailable-Musica").textContent).toMatch(/Your guests no longer see it/);
     expect(screen.getByTestId("gift-unavailable").textContent).toBe("Unavailable (1)");
   });
-  // Contract (gift-list 1.14.0): a guest list never carries an UNAVAILABLE gift. If a server sent one, R7 shows a quiet card marked «No disponible»
-  // with no reserve or purchase control, so the guest can never act on it. Hide-or-quiet-card is an open R1/R7 product decision (see the PR chain).
-  it("a guest can take no action on it, even if a response carried it", async () => {
+  it("the guest never sees it, even if a response carried it", async () => {
     const { client } = fakeClient(handlers({
       "GET /celebrations/public/ana-luis": () => ({ celebrationId: "c-1", slug: "ana-luis", content: { title: "Ana y Luis" } }),
       "GET /gifts/celebrations/c-1/items": () => WITH_UNAVAILABLE
     }));
     renderApp(<GuestGiftsScreen slug="ana-luis" token={"T".repeat(43)} onNavigate={navigate} />, client);
     await screen.findByTestId("reserve-Torta");
-    expect(screen.queryByTestId("reserve-Musica")).toBeNull();
-    expect(within(screen.getByTestId("gift-Musica")).queryAllByRole("button")).toEqual([]);
+    expect(screen.queryByText("Musica")).toBeNull();
+    expect(screen.queryByText("No disponible")).toBeNull();
     expect(screen.queryByText(/No disponibles/)).toBeNull();
   });
-
 });
 
 describe("REQ-F23-01 · pending reservations inbox", () => {

@@ -21,7 +21,6 @@ export const giftsEnUS: DeepStrings<typeof giftsEsBO> = {
     title: "Gifts", intro: "Reserve a gift in one tap and nobody else will give the same one.", rule: "Each person can hold a limited number of reserved gifts at a time.", backToRsvp: "Back to my answer", loading: "Opening the list…",
     groupPartner: "From our partners", groupOther: "Ideas from your hosts",
     status: { AVAILABLE: "Available", PENDING_REVIEW: "Waiting for approval", COMMITTED: "Reserved" },
-    unavailable: { note: "The provider no longer offers this", chip: "Unavailable" },
     /** R5 · guest card: quantity by units, coordinated contribution, current price and «did you buy it?». */
     units: { left_one: "{{count}} of {{total}} still needed", left_other: "{{count}} of {{total}} still needed", choose: "How many do you want to give", less: "Fewer units", more: "More units", value_one: "{{count}} unit", value_other: "{{count}} units", help: "{{left}} left. Reserve only the ones you will give.", mine_one: "You reserved {{count}} unit", mine_other: "You reserved {{count}} units" },
     group: {

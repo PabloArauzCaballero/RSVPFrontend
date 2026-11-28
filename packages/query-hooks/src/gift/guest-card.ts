@@ -11,8 +11,6 @@ import { isGiftUnavailable, type GiftItem, type GiftReservation, type Money, typ
  *           buttons; the rest see who buys it and how many chip in, and can join or leave.
  */
 export interface GuestGiftState {
-  /** R7: the provider no longer offers it. The card is muted, says so and has no reserve, store or WhatsApp button (a reservation the guest already holds stays visible so it can be cancelled). */
-  readonly unavailable: boolean;
   /** Units the host wants, and how many are still free. */
   readonly quantity: number;
   readonly unitsLeft: number;
@@ -55,6 +53,7 @@ export function guestGiftState(item: GiftItem, held?: Pick<GiftReservation, "rol
   const group = item.groupGiftEnabled === true;
   const role = item.viewer?.role ?? held?.role ?? (held ? "SOLE" : null);
   const hasCoordinator = group && ((item.participants ?? 0) > 0 || role === "COORDINATOR");
+  // M41: the server never sends a guest an UNAVAILABLE gift and the lists drop it (`guestVisible`); this only keeps a stray one from being actionable.
   const unavailable = isGiftUnavailable(item);
   const open = HOLDS.has(item.status) && !unavailable;
   const canReserve = role === null && open && (group || (item.status === "AVAILABLE" && unitsLeft > 0));
@@ -62,7 +61,7 @@ export function guestGiftState(item: GiftItem, held?: Pick<GiftReservation, "rol
   const heldUnits = Math.max(0, Math.trunc(item.viewer?.units ?? held?.units ?? 0));
   const name = typeof item.coordinatorName === "string" && item.coordinatorName.trim() ? item.coordinatorName.trim() : null;
   return {
-    unavailable, quantity, unitsLeft, showUnits: quantity > 1, group, role, heldUnits, canReserve,
+    quantity, unitsLeft, showUnits: quantity > 1, group, role, heldUnits, canReserve,
     chooseUnits: !group && canReserve && unitsLeft > 1,
     showProviderButtons, hasCoordinator,
     coordinator: group && hasCoordinator && role !== "COORDINATOR" ? { name } : null,

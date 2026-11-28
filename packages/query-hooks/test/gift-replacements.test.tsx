@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { ApiError, createApiClient, toApiError } from "@rsvp/api-client";
 import {
-  createBatchKeys, createBodyKeys, GIFT_UNAVAILABLE_REASONS, arrangeGifts, guestGiftState, isGiftUnavailable, replacementsFailure, replacementsPath, replacementsRetryable, swapEntry, swapFailureCode,
+  createBatchKeys, createBodyKeys, GIFT_UNAVAILABLE_REASONS, arrangeGifts, guestGiftState, guestVisible, isGiftUnavailable, replacementsFailure, replacementsPath, replacementsRetryable, swapEntry, swapFailureCode,
   unavailableReasonOf, useGiftReplacements, type GiftItem
 } from "../src/index.js";
 
@@ -19,8 +19,9 @@ describe("R7 · isGiftUnavailable and the reason", () => {
     expect(isGiftUnavailable(item({ availability: "AVAILABLE" }))).toBe(false);
     expect(isGiftUnavailable(item())).toBe(false);
     expect(isGiftUnavailable(item({ status: "COMMITTED" }))).toBe(false);
-    // A server that still wrote it in `status` is read too.
-    expect(isGiftUnavailable(item({ status: "UNAVAILABLE" }))).toBe(true);
+    // R1: the contract's `status` never says UNAVAILABLE, so a legacy value there marks nothing (the cast is the point: it is not a contract status).
+    const legacy = { ...item(), status: "UNAVAILABLE" as GiftItem["status"] };
+    expect(isGiftUnavailable(legacy)).toBe(false);
   });
   it("knows the nine reasons of the contract and ignores one it does not know", () => {
     expect(GIFT_UNAVAILABLE_REASONS).toHaveLength(9);
@@ -31,23 +32,23 @@ describe("R7 · isGiftUnavailable and the reason", () => {
   });
 });
 
-describe("R7 · the guest's card of an unavailable gift", () => {
-  it("offers nothing: no reserve, no units, no provider buttons, even with units left", () => {
-    const state = guestGiftState(item({ availability: "UNAVAILABLE", quantity: 12, unitsLeft: 8 }));
-    expect(state).toMatchObject({ unavailable: true, canReserve: false, chooseUnits: false, showProviderButtons: false });
+describe("M41 · the guest never meets an unavailable gift", () => {
+  it("guestVisible and arrangeGifts drop it whatever the filters, and keep the other gifts in order", () => {
+    const gifts = [item({ id: "a" }), item({ id: "b", availability: "UNAVAILABLE" }), item({ id: "c", status: "COMMITTED", availability: "UNAVAILABLE" }), item({ id: "d", source: "EXTERNAL" })];
+    expect(guestVisible(gifts).map((g) => g.id)).toEqual(["a", "d"]);
+    for (const onlyAvailable of [true, false]) {
+      const { partner, other } = arrangeGifts(gifts, { source: "all", onlyAvailable });
+      expect([...partner, ...other].map((g) => g.id)).toEqual(["a", "d"]);
+    }
+    expect(arrangeGifts(gifts, { source: "partner", onlyAvailable: false }).partner.map((g) => g.id)).toEqual(["a"]);
   });
-  it("a group gift is unavailable for its coordinator too: no buttons", () => {
-    const state = guestGiftState(item({ availability: "UNAVAILABLE", groupGiftEnabled: true, participants: 1, viewer: { reservationId: "r", role: "COORDINATOR", status: "PENDING_REVIEW", units: 1 } }));
-    expect(state).toMatchObject({ unavailable: true, role: "COORDINATOR", showProviderButtons: false, canReserve: false });
+  it("a stray one that reached the card offers nothing: no reserve, no units, no provider buttons, not even for the coordinator", () => {
+    expect(guestGiftState(item({ availability: "UNAVAILABLE", quantity: 12, unitsLeft: 8 }))).toMatchObject({ canReserve: false, chooseUnits: false, showProviderButtons: false });
+    expect(guestGiftState(item({ availability: "UNAVAILABLE", groupGiftEnabled: true, participants: 1, viewer: { reservationId: "r", role: "COORDINATOR", status: "PENDING_REVIEW", units: 1 } }))).toMatchObject({ role: "COORDINATOR", showProviderButtons: false, canReserve: false });
   });
   it("when the gift is AVAILABLE again it is the normal card", () => {
-    expect(guestGiftState(item({ availability: "AVAILABLE" }))).toMatchObject({ unavailable: false, canReserve: true, showProviderButtons: true });
-    expect(guestGiftState(item())).toMatchObject({ unavailable: false, canReserve: true, showProviderButtons: true });
-  });
-  it("«Solo disponibles» leaves an unavailable gift out; without the filter it stays on the list", () => {
-    const gifts = [item({ id: "a" }), item({ id: "b", availability: "UNAVAILABLE" })];
-    expect(arrangeGifts(gifts, { source: "all", onlyAvailable: true }).partner.map((g) => g.id)).toEqual(["a"]);
-    expect(arrangeGifts(gifts, { source: "all", onlyAvailable: false }).partner.map((g) => g.id)).toEqual(["a", "b"]);
+    expect(guestGiftState(item({ availability: "AVAILABLE" }))).toMatchObject({ canReserve: true, showProviderButtons: true });
+    expect(guestGiftState(item())).toMatchObject({ canReserve: true, showProviderButtons: true });
   });
 });
 

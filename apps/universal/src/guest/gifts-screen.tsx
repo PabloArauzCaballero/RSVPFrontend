@@ -5,7 +5,7 @@ import type { PublicCelebrationView } from "@rsvp/celebration-theme/model";
 import { spacing } from "@rsvp/design-tokens";
 import { formatMinor } from "@rsvp/i18n";
 import { Checkbox, Chip, EmptyState, Illustration, Skeleton, Stagger, SuccessNote, useColors } from "@rsvp/ui";
-import { activeReservationsByItem, arrangeGifts, buttonQuantity, clampUnits, effectivePrice, giftContactDestinations, guestGiftState, insufficientUnitsLeft, giftListBlocker, isGiftTaken, isReservationNotActive, isReserveRetryable, maxPriceMinor, MESSAGE_MAX, NAME_MAX, newIdempotencyKey, reserveFailureKind, reserveFailureMessage, reserveFieldErrors, useCancelGiftReservation, useCelebrationBySlug, leadContextOf, useGiftList, useMyGiftReservations, usePublicListing, useReserveGiftItem, type GiftItem, type GiftReservation, type GiftSourceFilter, type ListingSummary } from "@rsvp/query-hooks";
+import { activeReservationsByItem, arrangeGifts, buttonQuantity, clampUnits, effectivePrice, giftContactDestinations, guestGiftState, insufficientUnitsLeft, giftListBlocker, guestVisible, isGiftTaken, isReservationNotActive, isReserveRetryable, maxPriceMinor, MESSAGE_MAX, NAME_MAX, newIdempotencyKey, reserveFailureKind, reserveFailureMessage, reserveFieldErrors, useCancelGiftReservation, useCelebrationBySlug, leadContextOf, useGiftList, useMyGiftReservations, usePublicListing, useReserveGiftItem, type GiftItem, type GiftReservation, type GiftSourceFilter, type ListingSummary } from "@rsvp/query-hooks";
 import { GuestFrame, type GuestFrameProps } from "./frame";
 import { LinkState, OfflineState } from "./link-states";
 import { ActionButton, ChoiceGroup, ConfirmDialog, Field, Notice, useStyles } from "../host/ui";
@@ -117,7 +117,8 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
     AccessibilityInfo.announceForAccessibility(`${t("gifts.guest.closed.title")}. ${t("gifts.guest.closed.body")}`);
   }, [listClosed, target, t]);
 
-  const all = useMemo(() => list.data?.items ?? [], [list.data]);
+  // M41: whatever the server sent, the guest only works with what a guest may see: a stray UNAVAILABLE gift is neither listed, nor titled, nor opened by its link.
+  const all = useMemo(() => guestVisible(list.data?.items ?? []), [list.data]);
   const scoped = onlyItemId ? all.filter((item) => item.id === onlyItemId) : all;
   const maxMinor = maxPriceMinor(maxPrice);
   const { partner, other } = arrangeGifts(scoped, { ...(maxMinor !== undefined ? { maxMinor } : {}), source, onlyAvailable });
@@ -285,7 +286,7 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
     const quantity = buttonQuantity(state, chosen);
     const note = promptNote?.itemId === item.id ? promptNote.key : null;
     return (
-      <View key={item.id} testID={`gift-${item.id}`} style={{ gap: spacing[2], paddingVertical: spacing[4], borderBottomWidth: 1, borderBottomColor: palette.border, ...(state.unavailable ? { backgroundColor: palette.surfaceMuted, paddingHorizontal: spacing[3] } : {}) }}>
+      <View key={item.id} testID={`gift-${item.id}`} style={{ gap: spacing[2], paddingVertical: spacing[4], borderBottomWidth: 1, borderBottomColor: palette.border }}>
         <GiftPhoto item={item} url={listing?.imageUrl} />
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", gap: spacing[3] }}>
           {onlyItemId ? <Text accessibilityRole="header" aria-level={3} style={[styles.subtitle, { flex: 1 }]}>{item.title}</Text> : (
@@ -296,12 +297,7 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
           <Text testID={`gift-price-${item.id}`} style={[styles.body, { fontWeight: "600", fontVariant: ["tabular-nums"] }]}>{formatMinor(price.amountMinor, price.currency, locale)}</Text>
         </View>
         {item.description ? <Text style={styles.muted}>{item.description}</Text> : null}
-        {state.unavailable ? (
-          <View testID={`gift-unavailable-${item.id}`} style={{ gap: spacing[2], alignItems: "flex-start" }}>
-            <Chip tone="no">{t("gifts.guest.unavailable.chip")}</Chip>
-            <Text style={[styles.body, { color: palette.textMuted, fontWeight: "600" }]} testID={`gift-unavailable-note-${item.id}`}>{t("gifts.guest.unavailable.note")}</Text>
-          </View>
-        ) : <UnitsAndGroup id={item.id} state={state} />}
+        <UnitsAndGroup id={item.id} state={state} />
         {item.status !== "AVAILABLE" && !state.group ? <Chip tone={item.status === "PENDING_REVIEW" ? "wait" : "yes"}>{t(`gifts.guest.status.${item.status}`)}</Chip> : null}
         {item.reservedByName && !state.group ? <Text style={styles.muted} testID={`gift-by-${item.id}`}>{t("gifts.guest.reservedBy", { name: item.reservedByName })}</Text> : null}
         {held || state.role ? (
@@ -325,7 +321,7 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
             )}
           </View>
         ) : null}
-        {asked && !opened && !state.unavailable ? <PurchasePromptCard id={item.id} title={item.title} units={asked.units} reminder={asked.phase === "reminder"} onAnswer={(answer) => answerPrompt(item, answer)} claimAnnouncement={() => prompt.claimAnnouncement(item.id)} /> : null}
+        {asked && !opened ? <PurchasePromptCard id={item.id} title={item.title} units={asked.units} reminder={asked.phase === "reminder"} onAnswer={(answer) => answerPrompt(item, answer)} claimAnnouncement={() => prompt.claimAnnouncement(item.id)} /> : null}
         {note ? <Text accessibilityLiveRegion="polite" role="status" style={styles.muted} testID={`gift-prompt-note-${item.id}`}>{t(note)}</Text> : null}
         {opened ? form(item) : (
           <View style={{ gap: spacing[3] }}>

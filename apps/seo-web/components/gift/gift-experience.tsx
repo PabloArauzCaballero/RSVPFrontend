@@ -4,7 +4,7 @@ import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'rea
 import { ApiError, type ApiClient } from '@rsvp/api-client';
 import { createTranslator, formatMinor, type AppLocale } from '@rsvp/i18n/server';
 import {
-  activeReservationsByItem, arrangeGifts, buttonQuantity, clampUnits, effectivePrice, giftContactDestinations, giftListBlocker, guestGiftState, insufficientUnitsLeft, isGiftTaken, isReservationNotActive, isReserveRetryable, maxPriceMinor, MESSAGE_MAX, NAME_MAX, newIdempotencyKey,
+  activeReservationsByItem, arrangeGifts, buttonQuantity, clampUnits, effectivePrice, giftContactDestinations, giftListBlocker, guestGiftState, guestVisible, insufficientUnitsLeft, isGiftTaken, isReservationNotActive, isReserveRetryable, maxPriceMinor, MESSAGE_MAX, NAME_MAX, newIdempotencyKey,
   reserveFailureKind, reserveFailureMessage, reserveFieldErrors, useCancelGiftReservation, leadContextOf, useGiftList, useMyGiftReservations, usePublicListing, usePurchasePrompt, useReserveGiftItem,
   type GiftFilters, type GiftItem, type GiftItemList, type GiftReservation, type GiftSourceFilter, type ListingSummary
 } from '@rsvp/query-hooks';
@@ -121,7 +121,8 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
   const listClosed = list.data?.closed === true;
   useEffect(() => { if (listClosed) { setTarget(null); setFieldErrors({}); } }, [listClosed]);
 
-  const all = list.data?.items ?? [];
+  // M41: whatever the server sent, the guest only works with what a guest may see: a stray UNAVAILABLE gift is neither listed, nor titled, nor opened by its link.
+  const all = guestVisible(list.data?.items ?? []);
   const scoped = onlyItemId ? all.filter((item) => item.id === onlyItemId) : all;
   const maxMinor = maxPriceMinor(maxPrice);
   const { partner, other } = arrange(scoped, { ...(maxMinor !== undefined ? { maxMinor } : {}), source, onlyAvailable });
@@ -281,19 +282,14 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
     const quantity = buttonQuantity(state, chosen);
     const note = promptNote?.itemId === item.id ? promptNote.key : null;
     return (
-      <li key={item.id} className={state.unavailable ? 'gift-row gift-row--unavailable' : 'gift-row'} data-gift-id={item.id} data-source={item.source} {...(state.unavailable ? { 'data-availability': 'UNAVAILABLE' } : {})}>
+      <li key={item.id} className="gift-row" data-gift-id={item.id} data-source={item.source}>
         <GiftPhoto item={item} url={listing?.imageUrl} t={t} />
         <div className="gift-row__head">
           <h3 className="gift-row__title">{onlyItemId ? item.title : <a href={`/c/${encodeURIComponent(slug)}/regalos/${encodeURIComponent(item.id)}?lang=${locale}`} aria-label={t('gifts.card.open', { title: item.title })}>{item.title}</a>}</h3>
           <p className="gift-row__price" data-testid={`gift-price-${item.id}`}>{formatMinor(price.amountMinor, price.currency, locale)}</p>
         </div>
         {item.description ? <p className="rsvp-hint">{item.description}</p> : null}
-        {state.unavailable ? (
-          <div className="gift-unavailable" data-testid={`gift-unavailable-${item.id}`}>
-            <p className="guest-chip" data-tone="no">{t('gifts.guest.unavailable.chip')}</p>
-            <p className="gift-unavailable__note" data-testid={`gift-unavailable-note-${item.id}`}>{t('gifts.guest.unavailable.note')}</p>
-          </div>
-        ) : <UnitsAndGroup id={item.id} state={state} t={t} />}
+        <UnitsAndGroup id={item.id} state={state} t={t} />
         {item.status !== 'AVAILABLE' && !state.group ? <p className="guest-chip" data-tone={item.status === 'PENDING_REVIEW' ? 'wait' : 'yes'}>{t(`gifts.guest.status.${item.status}`)}</p> : null}
         {item.reservedByName && !state.group ? <p className="rsvp-hint" data-testid="reserved-by">{t('gifts.guest.reservedBy', { name: item.reservedByName })}</p> : null}
         {held || state.role ? (
@@ -317,7 +313,7 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
             )}
           </div>
         ) : null}
-        {asked && !opened && !state.unavailable ? <PurchasePromptCard id={item.id} title={item.title} units={asked.units} reminder={asked.phase === 'reminder'} t={t} onAnswer={(answer) => answerPrompt(item, answer)} claimAnnouncement={() => prompt.claimAnnouncement(item.id)} /> : null}
+        {asked && !opened ? <PurchasePromptCard id={item.id} title={item.title} units={asked.units} reminder={asked.phase === 'reminder'} t={t} onAnswer={(answer) => answerPrompt(item, answer)} claimAnnouncement={() => prompt.claimAnnouncement(item.id)} /> : null}
         {note ? <FocusNote tone="info" testId={`gift-prompt-note-${item.id}`}><p>{t(note)}</p></FocusNote> : null}
         {opened ? form(item) : (
           <>

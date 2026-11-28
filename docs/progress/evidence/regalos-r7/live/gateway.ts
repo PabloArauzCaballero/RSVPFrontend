@@ -9,7 +9,6 @@ const mock = createContractMock({ now: () => new Date("2026-11-27T15:00:00.000Z"
 seedDemo(mock);
 const world = () => JSON.parse(readFileSync("/var/tmp/r7-live/world.json", "utf8"));
 let blackout: "" | "network" | "503" = "";
-let inject = false; // SIMULATED payload: the real gift-list never sends an UNAVAILABLE gift to a guest; this marks the first one so the guest card can be seen and scanned.
 const log: string[] = [];
 const server = createServer((request, response) => {
   const origin = request.headers.origin ?? "*";
@@ -17,7 +16,6 @@ const server = createServer((request, response) => {
   if (request.method === "OPTIONS") { response.writeHead(204, cors).end(); return; }
   const url = new URL(request.url ?? "/", "http://x");
   if (url.pathname === "/__r7/blackout") { blackout = (url.searchParams.get("mode") ?? "") as typeof blackout; response.writeHead(204, cors).end(); return; }
-  if (url.pathname === "/__r7/inject") { inject = url.searchParams.get("on") === "1"; response.writeHead(204, cors).end(); return; }
   if (url.pathname === "/__r7/log") { response.writeHead(200, { ...cors, "content-type": "application/json" }).end(JSON.stringify(log)); return; }
   if (url.pathname === "/identity/auth/refresh" || url.pathname === "/identity/auth/login") {
     // Session of the walkthrough: a host whose token carries the claims the app reads. Gift List never sees it: `/gifts/*` swaps in a real signed JWT.
@@ -37,10 +35,7 @@ const server = createServer((request, response) => {
       for (const [k, v] of Object.entries(request.headers)) if (typeof v === "string" && !["host", "origin", "referer", "connection", "content-length"].includes(k)) headers[k] = v;
       if ((headers["authorization"] ?? "").includes("eyJhbGciOiJub25l")) headers["authorization"] = `Bearer ${w.hostToken}`;
       const upstream = await fetch(w.base + url.pathname.slice("/gifts".length) + url.search, { method: request.method, headers, ...(text ? { body: text } : {}) });
-      let body = await upstream.text();
-      if (inject && request.method === "GET" && url.pathname.endsWith("/items") && !(request.headers["authorization"] ?? "").includes("eyJhbGciOiJub25l") && upstream.status === 200) {
-        const parsed = JSON.parse(body); if (parsed.items?.[0]) parsed.items[0] = { ...parsed.items[0], availability: "UNAVAILABLE" }; body = JSON.stringify(parsed);
-      }
+      const body = await upstream.text();
       const out: Record<string, string> = { ...cors };
       upstream.headers.forEach((v, k) => { if (!["content-length", "transfer-encoding", "connection", "content-encoding"].includes(k)) out[k] = v; });
       response.writeHead(upstream.status, out).end(body);

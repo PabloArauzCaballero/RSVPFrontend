@@ -19,7 +19,6 @@ export const giftsEsBO = {
     title: "Regalos", intro: "Reserva un regalo en un toque y nadie más regalará lo mismo.", rule: "Cada persona puede tener un máximo de regalos reservados a la vez.", backToRsvp: "Volver a mi respuesta", loading: "Abriendo la lista…",
     groupPartner: "De nuestros aliados", groupOther: "Ideas de quienes te invitan",
     status: { AVAILABLE: "Disponible", PENDING_REVIEW: "Esperando aprobación", COMMITTED: "Reservado" },
-    unavailable: { note: "El proveedor ya no lo ofrece", chip: "No disponible" },
     /** R5 · tarjeta del invitado: cantidad por unidades, aporte coordinado, precio vigente y «¿lo compraste?». */
     units: { left_one: "Falta {{count}} de {{total}}", left_other: "Faltan {{count}} de {{total}}", choose: "Cuántos quieres regalar", less: "Menos unidades", more: "Más unidades", value_one: "{{count}} unidad", value_other: "{{count}} unidades", help: "Quedan {{left}}. Reservas solo las que vas a regalar.", mine_one: "Reservaste {{count}} unidad", mine_other: "Reservaste {{count}} unidades" },
     group: {
