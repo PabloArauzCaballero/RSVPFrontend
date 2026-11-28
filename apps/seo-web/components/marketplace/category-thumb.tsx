@@ -7,7 +7,10 @@ import { isMarketplaceThumb, marketplaceThumbSrc, marketplaceThumbSrcSet } from 
  */
 export function CategoryThumb({ slug, name, eager = false }: { readonly slug: string; readonly name: string; readonly eager?: boolean }) {
   if (!isMarketplaceThumb(slug)) return <span className="mkt-thumb mkt-thumb--generic" aria-hidden="true">{Array.from(name.trim())[0]?.toLocaleUpperCase() ?? ""}</span>;
-  const loading = eager ? "eager" : "lazy";
+  // Both colour schemes are lazy on purpose: the browser does not fetch a lazy image that is display:none, so only the variant of the active scheme downloads
+  // (an eager hidden image would download twice). `eager` is kept for the signature and only raises fetch priority of the visible ones.
+  const loading = "lazy";
+  void eager;
   return (
     <span className="mkt-thumb" aria-hidden="true">
       <img className="mkt-thumb__img mkt-thumb__img--light" src={marketplaceThumbSrc(slug, "light", 88)} srcSet={marketplaceThumbSrcSet(slug, "light")} width={72} height={72} alt="" loading={loading} decoding="async" />

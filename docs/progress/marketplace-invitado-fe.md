@@ -12,9 +12,11 @@ Rama `feat/req-proveedores-evento-fe`, base `chore/deploy-contabo-coolify` en `b
 - **App**: `decideNavigation` deja `/c/{slug}/proveedores` dentro de la vista web (P10: una sola implementación); `/p/...` y `/r/...` siguen saliendo al navegador del sistema.
 - **Textos** es-BO y en-US en `directory.guestMarketplace.*`. **DESIGN.md**: excepción provisional E1 a E7 para las miniaturas (pendiente de Pablo).
 
+Nota de rendimiento: las dos variantes (claro y oscuro) de cada miniatura son `loading="lazy"`; el navegador no descarga una imagen perezosa con `display:none`, así que baja solo la del esquema activo. No medido en la red.
+
 ## Interruptor y orden de despliegue
 
-`GUEST_MARKETPLACE` es una variable de entorno del contenedor de seo-web, **apagada por defecto**: con ella apagada la ruta es 404 y no hay entradas (Coolify: crear la variable en TEST con valor `on` solo cuando el backend con `provider-catalog 3.8.0+` esté desplegado; sin él la página muestra el estado de error). Orden: backend (migraciones, categorías) → web con la variable apagada → web con la variable encendida en TEST → regla `allow` de la app (ya incluida, se despliega con la app: una app instalada sigue abriendo la ruta en el navegador externo hasta actualizarse, aceptable).
+`GUEST_MARKETPLACE` (declarada en `docker-compose.coolify.yml`, valor por defecto `off`; ver también `docs/runbooks/releases.md`) es una variable de entorno del contenedor de seo-web, **apagada por defecto**: con ella apagada la ruta es 404 y no hay entradas (Coolify: crear la variable en TEST con valor `on` solo cuando el backend con `provider-catalog 3.8.0+` esté desplegado; sin él la página muestra el estado de error). Orden: backend (migraciones, categorías) → web con la variable apagada → web con la variable encendida en TEST → regla `allow` de la app (ya incluida, se despliega con la app: una app instalada sigue abriendo la ruta en el navegador externo hasta actualizarse, aceptable).
 No encender en producción antes de: M34 (clave de cobro IP+UA, R6b), el consumidor de borrado de celebración en marcha, proveedores reales con ofertas publicadas y la decisión de Pablo sobre las miniaturas y sobre el aviso legal («DOne verifica…», texto por validar).
 
 ## Pruebas (2026-11-28, UTC)
