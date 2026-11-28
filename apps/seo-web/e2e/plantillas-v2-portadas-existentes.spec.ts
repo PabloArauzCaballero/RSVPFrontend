@@ -10,6 +10,10 @@ import { expect, test, type Page } from "@playwright/test";
 const EXISTING = ["arena-terracota", "baby-shower", "bodas-de-oro", "bodas-de-plata", "cielo-bautizo", "corporativo-grafito", "corporativo", "cumpleanos-adulto", "despedida", "editorial-granate",
   "editorial-oliva", "editorial", "festivo", "fiesta-lila", "fiesta-patronal", "fiesta-tematica", "fin-de-ano", "gala", "graduacion", "inauguracion", "jardin-botanico", "marfil", "menta-infantil",
   "minimalista", "otros-evento", "pedida-de-mano", "pinata", "primera-comunion", "reencuentro", "rosa-antiguo"] as const;
+// FE #145 (contract 1.8.0, fidelity) redraws the cover of the three prototyped templates on purpose (Gala `deco` variant and frames, Marfil and Piñata move on the desktop canvas to give the cover
+// block width: PL-FE145-V2). Their geometry is therefore NOT compared with the official branch; it is asserted by plantillas-v2-fidelidad.spec.ts (positions at 1280, axis, variant). They still
+// get the structural checks below: the extra-template rule (`data-align`) must not reach them. The other 27 templates keep the geometry of the official branch.
+const REDRAWN_BY_FE145: ReadonlySet<string> = new Set(["gala", "marfil", "pinata"]);
 const WIDTHS = [360, 1280] as const;
 const TOLERANCE = 1; // px: sub-pixel rounding; a 4 px row gap or a 41 px photo shift does not hide in it
 const RECORD = process.env.COVER_GEOMETRY_RECORD;
@@ -50,6 +54,11 @@ for (const name of EXISTING) {
         const want = expected[key];
         expect(want, "base measure present").toBeDefined();
         if (!want) return;
+        if (REDRAWN_BY_FE145.has(name)) {
+          expect(got.aligned, "data-align on the cover").toBe(false);
+          expect(got.photo === null, "photo present").toBe(want.photo === null);
+          return;
+        }
         for (const side of ["x", "y", "width", "height"] as const) {
           expect(Math.abs(got.h1[side] - want.h1[side]), `h1 ${side}: ${got.h1[side]} vs base ${want.h1[side]}`).toBeLessThanOrEqual(TOLERANCE);
           if (got.photo && want.photo) expect(Math.abs(got.photo[side] - want.photo[side]), `photo ${side}: ${got.photo[side]} vs base ${want.photo[side]}`).toBeLessThanOrEqual(TOLERANCE);
