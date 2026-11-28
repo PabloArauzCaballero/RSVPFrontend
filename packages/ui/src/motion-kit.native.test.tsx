@@ -43,6 +43,76 @@ describe('native motion', () => {
     expect((screen.getByTestId('e') as HTMLElement).style.opacity).toBe('1');
   });
 
+  describe('MV-B1: the content never stays at opacity 0 when the native driver does not deliver', () => {
+    /** A native driver that accepts the animation and never moves or reports anything (the failure seen on the phone). */
+    async function loadStuck(reduced: boolean) {
+      vi.useFakeTimers();
+      vi.resetModules();
+      const rn = await import('react-native');
+      const stuck = () => ({ start: () => undefined, stop: () => undefined, reset: () => undefined });
+      vi.doMock('react-native', () => ({
+        ...rn,
+        Animated: { ...rn.Animated, timing: stuck },
+        AccessibilityInfo: { ...rn.AccessibilityInfo, isReduceMotionEnabled: () => Promise.resolve(reduced), addEventListener: () => ({ remove: () => undefined }), announceForAccessibility: vi.fn(), setAccessibilityFocus: vi.fn() }
+      }));
+      await import('./motion.native');
+      await act(async () => { await Promise.resolve(); });
+    }
+    afterEach(() => { vi.useRealTimers(); });
+
+    it('Enter reaches opacity 1 on the JS clock even if the driver never starts', async () => {
+      await loadStuck(false);
+      const { Enter, ENTER_SETTLE_MARGIN_MS } = await import('./enter.native');
+      const { MOTION } = await import('./motion');
+      const onDone = vi.fn();
+      render(<Enter testID="e" onDone={onDone}>hola</Enter>);
+      expect((screen.getByTestId('e') as HTMLElement).style.opacity).toBe('0');
+      await act(async () => { vi.advanceTimersByTime(MOTION.enterMs + ENTER_SETTLE_MARGIN_MS + 1); });
+      expect((screen.getByTestId('e') as HTMLElement).style.opacity).toBe('1');
+      expect(onDone).toHaveBeenCalledTimes(1);
+    });
+
+    it('step 3 of a StepTransition is visible after 1 to 2 to 3 with a stuck driver, and the first step never was hidden', async () => {
+      await loadStuck(false);
+      const { StepTransition } = await import('./step-transition.native');
+      const { Enter, ENTER_SETTLE_MARGIN_MS } = await import('./enter.native');
+      const { MOTION } = await import('./motion');
+      const view = (step: number) => (
+        <>
+          <Enter testID="preview">vista</Enter>
+          <StepTransition step={step}><Enter testID={`body-${step}`}>{`paso ${step}`}</Enter></StepTransition>
+        </>
+      );
+      const { rerender } = render(view(1));
+      rerender(view(2));
+      await act(async () => { vi.advanceTimersByTime(MOTION.stepMs + ENTER_SETTLE_MARGIN_MS + 1); });
+      rerender(view(3));
+      expect(screen.getByText('paso 3')).toBeTruthy();
+      await act(async () => { vi.advanceTimersByTime(MOTION.stepMs + MOTION.enterMs + ENTER_SETTLE_MARGIN_MS + 1); });
+      const outer = (screen.getByText('paso 3').parentElement as HTMLElement);
+      expect(outer.style.opacity).toBe('1');
+      expect((screen.getByTestId('preview') as HTMLElement).style.opacity).toBe('1');
+    });
+
+    it('an unmounted Enter does not settle afterwards (no state update after unmount)', async () => {
+      await loadStuck(false);
+      const { Enter, ENTER_SETTLE_MARGIN_MS } = await import('./enter.native');
+      const onDone = vi.fn();
+      const { unmount } = render(<Enter onDone={onDone}>x</Enter>);
+      unmount();
+      await act(async () => { vi.advanceTimersByTime(5000 + ENTER_SETTLE_MARGIN_MS); });
+      expect(onDone).not.toHaveBeenCalled();
+    });
+
+    it('an exit (play false) is not forced back to visible', async () => {
+      await loadStuck(false);
+      const { Enter, ENTER_SETTLE_MARGIN_MS } = await import('./enter.native');
+      render(<Enter testID="e" play={false}>x</Enter>);
+      await act(async () => { vi.advanceTimersByTime(5000 + ENTER_SETTLE_MARGIN_MS); });
+      expect((screen.getByTestId('e') as HTMLElement).style.opacity).toBe('0');
+    });
+  });
+
   it('PressFeedback keeps the 44 point target and the button role', async () => {
     await load(false);
     const { PressFeedback } = await import('./press-feedback.native');
