@@ -9,6 +9,7 @@ import { Monogram } from "./brand/monogram";
 import { zoneName } from "@rsvp/query-hooks";
 import { PROVIDER_CATEGORIES } from "../lib/providers";
 import { Breadcrumbs } from "./provider-directory";
+import { OriginLinks } from "./marketplace/origin-links";
 
 const MINOR_UNIT_DIGITS = 2;
 
@@ -99,7 +100,7 @@ export function PartnerMicrosite({ partner, t, locale }: { readonly partner: Par
           </section>
         </div>
 
-        <section aria-labelledby="partner-contact" className="partner-section partner-contact">
+        <section aria-labelledby="partner-contact" className="partner-section partner-contact" data-origin-links="">
           <h2 id="partner-contact">{t("partner.contact")}</h2>
           <p className="partner-disclaimer" data-testid="partner-disclaimer"><strong>{t("partner.fineprint")}.</strong> {t("partner.disclaimer", { name: partner.name })}</p>
           {partner.destinations.length ? (
@@ -111,6 +112,7 @@ export function PartnerMicrosite({ partner, t, locale }: { readonly partner: Par
           ) : <p role="status" className="directory-status">{t("partner.noContact")}</p>}
         </section>
       </div>
+      <OriginLinks />
     </main>
   );
 }

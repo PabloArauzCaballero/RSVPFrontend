@@ -28,7 +28,11 @@ import { AnswerSummary, Celebrate, ClosedView, Countdown, DeadlineLine, Declined
  * connection returns.
  */
 
-interface Props { readonly slug: string; readonly token?: string; readonly locale: AppLocale; readonly siteOrigin: string; readonly client?: ApiClient }
+interface Props {
+  readonly slug: string; readonly token?: string; readonly locale: AppLocale; readonly siteOrigin: string; readonly client?: ApiClient;
+  /** `/c/{slug}/proveedores` when the deployment offers the guest marketplace (never carries the token); absent = no entry. */
+  readonly providersHref?: string;
+}
 type Saved = 'first' | 'edit' | null;
 
 /**
@@ -64,7 +68,7 @@ const coverFor = (view: PublicCelebrationView, locale: AppLocale, t: Translate):
   guestCover(view, { locale, t, formatDate: (iso) => formatCelebrationDate(iso, { locale, timeZone: view.timeZone }, { dateStyle: 'full' }) });
 
 /** `fromStored`: the token is the one this tab saved, not the one in the route; if it no longer works the visit falls to the registration, as if there were none. */
-function Flow({ slug, token, fromStored = false, locale, siteOrigin, client: injected }: Props & { readonly fromStored?: boolean }): ReactNode {
+function Flow({ slug, token, fromStored = false, locale, siteOrigin, client: injected, providersHref }: Props & { readonly fromStored?: boolean }): ReactNode {
   const t = useMemo(() => createTranslator(locale), [locale]);
   const client = useMemo(() => injected ?? createGuestClient(), [injected]);
   const celebration = useCelebrationBySlug<PublicCelebrationView>(client, slug);
@@ -143,6 +147,7 @@ function Flow({ slug, token, fromStored = false, locale, siteOrigin, client: inj
       )}
       {saved === 'edit' ? <p className="rsvp-notice rsvp-notice--success" role="status">{t('rsvp.invite.savedNote')}</p> : null}
       {!editing ? giftsLink : null}
+      {!editing && providersHref ? <ProvidersEntry href={providersHref} locale={locale} t={t} /> : null}
       <div className="guest-intro">
         <AnswerSummary state={state} locale={locale} t={t} />
         {saved === 'first' ? null : <DeadlineLine state={state} locale={locale} t={t} />}
@@ -150,6 +155,16 @@ function Flow({ slug, token, fromStored = false, locale, siteOrigin, client: inj
       </div>
       {editing ? form : <div className="rsvp-actions"><button type="button" className="rsvp-button rsvp-button--secondary" onClick={() => { setSaved(null); setEditing(true); }} data-testid="rsvp-edit">{t('rsvp.invite.edit')}</button></div>}
     </GuestSheet>
+  );
+}
+
+/** After answering: a quiet second line, below the gifts, to the vendors tab. Not a button: it must never compete with the answer or the gifts. */
+function ProvidersEntry({ href, locale, t }: { href: string; locale: AppLocale; t: Translate }): ReactNode {
+  return (
+    <aside className="celebration-providers" data-testid="providers-entry">
+      <p>{t('directory.guestMarketplace.entryBody')}</p>
+      <a href={`${href}?lang=${locale}`} data-link-kind="internal">{t('directory.guestMarketplace.entry')}</a>
+    </aside>
   );
 }
 

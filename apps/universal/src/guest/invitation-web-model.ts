@@ -35,6 +35,8 @@ export function decideNavigation(raw: string, context: { readonly origin: string
   const path = url.pathname.replace(/\/+$/, "");
   if (path === `${own}/regalos` || path.startsWith(`${own}/regalos/`)) return { kind: "app", path: `${own}/regalos` };
   if (path === `${own}/rsvp`) return { kind: "app", path: `${own}/rsvp` };
+  // «Proveedores para tu evento» is the public site's own tab (P10: one implementation). It stays in the web view; the partner pages it links to (/p/...) open in the browser.
+  if (path === `${own}/proveedores`) return { kind: "allow" };
   if (path === own || Object.values(SECTION_PATHS).some((segment) => segment !== undefined && path === `${own}/${segment}`)) return { kind: "allow" };
   // The site's own assets (fonts, images, scripts) are not pages; any other page of the site opens in the browser.
   if (path.startsWith("/_next/") || path.startsWith("/media/")) return { kind: "allow" };
