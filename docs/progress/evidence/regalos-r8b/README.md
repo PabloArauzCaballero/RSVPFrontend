@@ -153,7 +153,7 @@ No son de este PR: m-4 (confirmar «Mostrar» con un diálogo, o dejar con desha
 | `@rsvp/contracts` / `@rsvp/api-client` / `@rsvp/query-hooks` / `@rsvp/i18n` test | 6 / 19 / 308 / 18, todo en verde |
 | `@rsvp/universal` test (`vitest run`) | 75 archivos; 1016 pruebas. En la primera corrida completa fallaron 2 pruebas ajenas a esta pantalla (`guest-gifts-mirror`, `portal-preview-links`) por tiempo; los dos archivos pasan en aislamiento (34/34, dos veces seguidas) y `portal-preview-links` también pasa sin mis cambios. No se tocó ese código |
 | `yarn workspace @rsvp/universal build` | OK (`expo export` web) |
-| gitleaks sobre `origin/dev..HEAD` | ver el resultado pegado en el PR (corrido tras el commit) |
+| gitleaks v8 sobre `origin/dev..HEAD` (290 commits) | 1 hallazgo `generic-api-key`: un valor de prueba (`credential=` de un fixture) en `apps/universal/test/invitation-preview.test.tsx:161`, commit `e8104eea`, ajeno a R8b y de una rama anterior de la cadena; los archivos de esta ronda no tienen hallazgos |
 
 ### Recorrido en Chrome real contra BE `ab4aaa99`: 9/9 PASS
 
