@@ -303,6 +303,33 @@ describe("crossing the desktop width", () => {
   });
 });
 
+describe("crossing 768 and 960 px with an action, a status line and tabs", () => {
+  afterEach(() => setWidth(1024));
+
+  // The primary action moves between the header (768 px up) and the sticky bar, and the header between the page and the band (960 px up):
+  // none of that may remount the content, or what the person typed would be lost on a rotation or a window resize.
+  it.each([{ name: "inside the persistent frame", framed: true }, { name: "a screen that draws its own frame", framed: false }])("$name: what was typed survives every crossing", ({ framed }) => {
+    resetScreenArrivals();
+    setWidth(1280);
+    const mounts = vi.fn();
+    function Typed(): ReactNode { useEffect(() => { mounts(); }, []); const [text, setText] = useState(""); return <input aria-label="buscar" value={text} onChange={(event) => setText(event.target.value)} />; }
+    const guests = nav.find((item) => item.key === "guests")!.tabs!;
+    const page = <Screen title="Invitados" nav={nav} current={guests[0]!.key} onNavigate={() => undefined} actions={<button type="button">Guardar</button>} status={<span>Sin guardar</span>}><Typed /></Screen>;
+    renderApp(framed ? <PersistentShell>{page}</PersistentShell> : page, fakeClient({}).client);
+    const input = screen.getByLabelText("buscar") as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "Ana" } });
+    input.focus();
+    for (const width of [959, 960, 767, 768, 390, 767, 768, 1280, 400, 1280]) {
+      setWidth(width);
+      expect(screen.getByLabelText("buscar")).toBe(input);
+      expect(input.value).toBe("Ana");
+      expect(document.activeElement).toBe(input);
+      expect(screen.getAllByRole("button", { name: /Guardar/ }).length).toBeGreaterThan(0);
+    }
+    expect(mounts).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("the header moves when the width crosses 960 px", () => {
   beforeEach(() => resetScreenArrivals());
   afterEach(() => setWidth(1024));

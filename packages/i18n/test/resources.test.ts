@@ -93,3 +93,16 @@ describe("es-BO addresses the reader with tuteo, never voseo", () => {
     for (const sample of ["vuelve a tu respuesta", "confirma que asistirás", "elige un regalo", "podrás cambiarlo", "está aquí", "después"]) expect(VOSEO.test(sample)).toBe(false);
   });
 });
+
+describe("portal.errors.state · the titles of a whole section that failed", () => {
+  // `PortalErrorState` composes `portal.errors.state.<kind>` at run time, so the type system cannot see a missing key: it would show the raw key.
+  it.each(["es-BO", "en-US"] as const)("%s: every title the portal can ask for resolves to text, never to the key", (locale) => {
+    const t = createTranslator(locale);
+    for (const kind of ["network", "server", "storage", "unavailable"]) {
+      const key = `portal.errors.state.${kind}`;
+      const text = t(key as never);
+      expect(text, `${locale} ${key}`).not.toBe(key);
+      expect(text.trim().length, `${locale} ${key}`).toBeGreaterThan(0);
+    }
+  });
+});
