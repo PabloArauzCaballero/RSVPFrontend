@@ -318,7 +318,7 @@ describe("R7 · host list: take the unavailable gift off the list (Gift 1.20.0, 
     const { client } = fakeClient(handlers({}));
     renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);
     const button = await screen.findByTestId("remove-gift-dead");
-    expect(button.getAttribute("aria-label") ?? button.getAttribute("accessibilityLabel")).toBe("Quitar de la lista: «Vajilla dorada»");
+    expect(button.getAttribute("aria-label") ?? button.getAttribute("accessibilityLabel")).toBe("Quitar «Vajilla dorada» de la lista");
   });
 });
 

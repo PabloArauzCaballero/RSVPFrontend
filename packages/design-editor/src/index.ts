@@ -8,3 +8,4 @@ export * from "./custom/html.js";
 export * from "./custom/css.js";
 export * from "./custom/ops.js";
 export * from "./model/canvas.js";
+export * from "./model/fidelity.js";

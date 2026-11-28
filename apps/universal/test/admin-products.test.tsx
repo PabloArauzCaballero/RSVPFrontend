@@ -112,10 +112,6 @@ describe("R8b · inbox", () => {
     const recent = screen.getByRole("tab", { name: /Recientes/ });
     const hidden = screen.getByRole("tab", { name: /Ocultos/ });
     const panel = screen.getByRole("tabpanel");
-    // WCAG 2.5.3 (axe `label-content-name-mismatch`): a tab with its own aria-label can drop part of the visible text (count included); the name comes from the content.
-    expect(recent.hasAttribute("aria-label")).toBe(false);
-    expect(hidden.hasAttribute("aria-label")).toBe(false);
-    expect(recent.textContent).toMatch(/Recientes\s*\d+/);
     expect(recent.getAttribute("aria-controls")).toBe(panel.id);
     expect(panel.getAttribute("aria-labelledby")).toBe(recent.id);
     expect(recent.getAttribute("tabindex")).toBe("0");

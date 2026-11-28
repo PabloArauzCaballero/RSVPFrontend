@@ -2,7 +2,7 @@
 export const adminEsBO = {
   title: "Administración de la plataforma",
   denied: "Acceso denegado: esta área es solo para administradores de la plataforma.",
-  nav: { label: "Módulos de administración", dashboard: "Resumen", templates: "Plantillas", eventTypes: "Tipos de evento", categories: "Categorías", geography: "Geografía", verification: "Verificación", moderation: "Moderación", products: "Productos", users: "Usuarios", organizations: "Organizaciones", partners: "Partners", metrics: "Métricas", operations: "Operación" },
+  nav: { label: "Módulos de administración", dashboard: "Resumen", templates: "Plantillas", eventTypes: "Tipos de evento", categories: "Categorías", geography: "Geografía", reports: "Denuncias", verification: "Verificación", moderation: "Moderación", products: "Productos", users: "Usuarios", organizations: "Organizaciones", partners: "Partners", metrics: "Métricas", operations: "Operación" },
   dest: { review: "Revisión", catalog: "Catálogo", people: "Personas", operation: "Operación" },
   unavailable: "Este módulo usa la API de {{service}}, que todavía no está disponible. Cuando se publique, verás aquí sus datos.",
   sample: { title: "Ana y Luis", story: "Nos conocimos en La Paz y hoy celebramos con quienes queremos.", venue: "Hacienda El Prado", dressCode: "Formal", question: "¿Hay estacionamiento?", answer: "Sí, en el mismo lugar.", ceremony: "Ceremonia", party: "Fiesta" },
@@ -50,7 +50,7 @@ export const adminEsBO = {
   },
   products: {
     title: "Productos", intro: "Lo que los proveedores publicaron hace poco y lo que ya está oculto. Si un producto incumple las reglas, ocúltalo: deja de recomendarse y de aceptarse como regalo, y su dueño ve el motivo.",
-    views: { label: "Vista de productos", RECENT: "Recientes", HIDDEN: "Ocultos" },
+    views: { label: "Vista de productos", RECENT: "Recientes", HIDDEN: "Ocultos" }, tabCount: "{{label}}: {{count}}",
     filters: { label: "Filtros de productos", days: "Publicados en los últimos", daysOption_one: "{{count}} día", daysOption_other: "{{count}} días", category: "Categoría", all: "Todas", featured: "Destacado", allFeatured: "Todos", featuredOn: "Destacados", featuredOff: "Sin destacar", completeness: "Ficha", provider: "Proveedor", providerHelp: "Pega el identificador (UUID) del proveedor. Déjalo vacío para ver todos.", providerInvalid: "Usa un identificador válido, por ejemplo 3f2b8c1e-5a47-4d0e-9b6a-1c2d3e4f5a6b.", apply: "Filtrar", clear: "Quitar filtros" },
     completeness: { COMPLETE: "Ficha completa", INCOMPLETE: "Ficha incompleta", HIDDEN_BY_ADMIN: "Oculto" },
     empty: { RECENT: "No hay productos publicados en los últimos {{days}} días con estos filtros.", HIDDEN: "No hay productos ocultos con estos filtros." },

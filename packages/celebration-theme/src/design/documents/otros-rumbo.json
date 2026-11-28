@@ -1,0 +1,624 @@
+{
+  "key": "otros-rumbo",
+  "name": "Otros eventos · Rumbo",
+  "description": "La bitácora: una brújula grande abre la portada, el recorrido va primero y un azul petróleo marca un solo punto del mapa.",
+  "layout": "minimal",
+  "eventTypeTags": [
+    "other"
+  ],
+  "sectionOrder": [
+    "schedule",
+    "venues",
+    "story",
+    "gallery",
+    "gifts",
+    "faq",
+    "recommendations",
+    "rsvp"
+  ],
+  "theme": {
+    "schemaVersion": 2,
+    "tokens": {
+      "palettes": {
+        "light": {
+          "canvas": "#EDF4F6",
+          "surface": "#FFFFFF",
+          "text": "#0E2128",
+          "muted": "#44606A",
+          "accent": "#0B5F7A",
+          "accentFill": "#0B5F7A",
+          "onAccent": "#FFFFFF",
+          "line": "#6F8F9A"
+        },
+        "dark": {
+          "canvas": "#08141A",
+          "surface": "#0F1F26",
+          "text": "#E1EFF3",
+          "muted": "#A2BCC5",
+          "accent": "#6CC3DC",
+          "accentFill": "#4FB1CD",
+          "onAccent": "#042029",
+          "line": "#587985"
+        }
+      },
+      "typography": {
+        "heading": {
+          "family": "fraunces",
+          "weights": [
+            600,
+            700
+          ]
+        },
+        "body": {
+          "family": "jost",
+          "weights": [
+            400,
+            500,
+            600
+          ]
+        },
+        "scale": {
+          "base": 16,
+          "ratio": 1.25
+        }
+      },
+      "spacing": {
+        "unit": 8,
+        "section": 56,
+        "contentMaxWidth": 1000
+      },
+      "radii": {
+        "sm": 2,
+        "md": 6,
+        "lg": 12
+      },
+      "ornament": "rule",
+      "illustrationSet": "none"
+    },
+    "pages": [
+      {
+        "id": "page-cover",
+        "kind": "cover",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-cover",
+                "block": "cover",
+                "x": 0,
+                "y": 0,
+                "w": 4,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "rise",
+                  "delayMs": 200,
+                  "durationMs": 800
+                },
+                "typography": {
+                  "align": "start",
+                  "role": "heading",
+                  "size": 48,
+                  "lineHeight": 1.06
+                },
+                "background": {
+                  "kind": "colour",
+                  "role": "surface"
+                },
+                "border": {
+                  "width": 1,
+                  "style": "solid",
+                  "colour": "line"
+                },
+                "padding": {
+                  "top": 16,
+                  "right": 16,
+                  "bottom": 16,
+                  "left": 16
+                }
+              },
+              {
+                "id": "el-brujula",
+                "block": "art-brujula",
+                "x": 0,
+                "y": 8,
+                "w": 3,
+                "h": 8,
+                "visible": true,
+                "rotation": -8,
+                "animation": {
+                  "entrance": "scale",
+                  "delayMs": 800,
+                  "durationMs": 900
+                },
+                "padding": {
+                  "top": 0,
+                  "right": 56,
+                  "bottom": 0,
+                  "left": 56
+                }
+              },
+              {
+                "id": "el-pin",
+                "block": "art-pin",
+                "x": 3,
+                "y": 8,
+                "w": 1,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 1200,
+                  "durationMs": 600
+                }
+              },
+              {
+                "id": "el-regla",
+                "block": "art-regla",
+                "x": 0,
+                "y": 16,
+                "w": 4,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "draw",
+                  "delayMs": 1400,
+                  "durationMs": 1000
+                }
+              }
+            ]
+          },
+          "desktop": {
+            "mode": "flow",
+            "columns": 12,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-brujula",
+                "block": "art-brujula",
+                "x": 0,
+                "y": 0,
+                "w": 6,
+                "h": 64,
+                "visible": true,
+                "rotation": -8,
+                "animation": {
+                  "entrance": "scale",
+                  "delayMs": 200,
+                  "durationMs": 900
+                },
+                "padding": {
+                  "top": 24,
+                  "right": 24,
+                  "bottom": 0,
+                  "left": 24
+                }
+              },
+              {
+                "id": "el-cover",
+                "block": "cover",
+                "x": 6,
+                "y": 0,
+                "w": 6,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "rise",
+                  "delayMs": 700,
+                  "durationMs": 800
+                },
+                "typography": {
+                  "align": "start",
+                  "role": "heading",
+                  "size": 72,
+                  "lineHeight": 1.04
+                },
+                "padding": {
+                  "top": 40,
+                  "right": 40,
+                  "bottom": 40,
+                  "left": 40
+                },
+                "background": {
+                  "kind": "colour",
+                  "role": "surface"
+                },
+                "border": {
+                  "width": 1,
+                  "style": "solid",
+                  "colour": "line"
+                }
+              },
+              {
+                "id": "el-pin",
+                "block": "art-pin",
+                "x": 0,
+                "y": 64,
+                "w": 1,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 1200,
+                  "durationMs": 600
+                }
+              },
+              {
+                "id": "el-regla",
+                "block": "art-regla",
+                "x": 1,
+                "y": 64,
+                "w": 11,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "draw",
+                  "delayMs": 1400,
+                  "durationMs": 1000
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-schedule",
+        "kind": "section",
+        "section": "schedule",
+        "style": "bands",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-reloj",
+                "block": "art-reloj",
+                "x": 0,
+                "y": 0,
+                "w": 1,
+                "h": 5,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-schedule",
+                "block": "schedule",
+                "x": 0,
+                "y": 5,
+                "w": 8,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-venues",
+        "kind": "section",
+        "section": "venues",
+        "style": "bands",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-mapa-pin",
+                "block": "art-mapa-pin",
+                "x": 0,
+                "y": 0,
+                "w": 1,
+                "h": 5,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-venues",
+                "block": "venues",
+                "x": 0,
+                "y": 5,
+                "w": 8,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-story",
+        "kind": "section",
+        "section": "story",
+        "style": "bands",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-story",
+                "block": "story",
+                "x": 0,
+                "y": 0,
+                "w": 8,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-gallery",
+        "kind": "section",
+        "section": "gallery",
+        "style": "bands",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-gallery",
+                "block": "gallery",
+                "x": 0,
+                "y": 0,
+                "w": 8,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-gifts",
+        "kind": "section",
+        "section": "gifts",
+        "style": "bands",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-gifts-cta",
+                "block": "gifts-cta",
+                "x": 0,
+                "y": 0,
+                "w": 8,
+                "h": 6,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-faq",
+        "kind": "section",
+        "section": "faq",
+        "style": "bands",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-faq",
+                "block": "faq",
+                "x": 0,
+                "y": 0,
+                "w": 8,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-recommendations",
+        "kind": "section",
+        "section": "recommendations",
+        "style": "bands",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-recommendations",
+                "block": "recommendations",
+                "x": 0,
+                "y": 0,
+                "w": 8,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-rsvp",
+        "kind": "section",
+        "section": "rsvp",
+        "style": "bands",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-sobre",
+                "block": "art-sobre",
+                "x": 0,
+                "y": 0,
+                "w": 1,
+                "h": 5,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-rsvp-cta",
+                "block": "rsvp-cta",
+                "x": 0,
+                "y": 5,
+                "w": 8,
+                "h": 6,
+                "visible": true
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "blocks": [
+      {
+        "id": "cover",
+        "type": "cover",
+        "config": {
+          "variant": "minimal",
+          "envelope": false
+        }
+      },
+      {
+        "id": "art-brujula",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "brujula",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "art-pin",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "mapa-pin",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "art-regla",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "filete",
+          "tint": "accent",
+          "drawOnEnter": true
+        }
+      },
+      {
+        "id": "art-reloj",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "reloj",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "schedule",
+        "type": "schedule",
+        "config": {
+          "display": "list"
+        }
+      },
+      {
+        "id": "art-mapa-pin",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "mapa-pin",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "venues",
+        "type": "venues",
+        "config": {
+          "display": "cards",
+          "mapOnTap": true
+        }
+      },
+      {
+        "id": "story",
+        "type": "story",
+        "config": {}
+      },
+      {
+        "id": "gallery",
+        "type": "gallery",
+        "config": {
+          "display": "grid"
+        }
+      },
+      {
+        "id": "gifts-cta",
+        "type": "giftsCta",
+        "required": true,
+        "config": {
+          "style": "solid"
+        }
+      },
+      {
+        "id": "faq",
+        "type": "faq",
+        "config": {}
+      },
+      {
+        "id": "recommendations",
+        "type": "recommendations",
+        "config": {}
+      },
+      {
+        "id": "art-sobre",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "sobre",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "rsvp-cta",
+        "type": "rsvpCta",
+        "config": {
+          "style": "solid"
+        }
+      }
+    ],
+    "custom": {
+      "html": "",
+      "css": ""
+    }
+  }
+}

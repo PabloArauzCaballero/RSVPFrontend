@@ -487,6 +487,25 @@ describe("lead metrics grouped by category", () => {
   });
 });
 
+describe("lead metrics, detail by day", () => {
+  it("names every figure of a day in the person's language: CTR is a translated percentage, and a key the screen has no name for is not shown", async () => {
+    await withProvider();
+    const { client } = fakeClient(providerHandlers({ [`GET /providers/${PID}/metrics`]: () => ({ providerId: PID, from: "a", to: "b", totals: { impressions: 8, clicks: 1, validLeads: 0, invalidLeads: 0, ctr: 0.125 }, groups: [{ day: "2026-11-27", impressions: 8, clicks: 1, ctr: 0.125 }, { day: "2026-11-28", impressions: 0, clicks: 0, ctr: 0, internalFlag: 7 }, { day: "2026-11-29", impressions: 0, ctr: null }] }) }));
+    renderApp(<MetricsScreen />, client, HOST);
+    await screen.findByTestId("metric-totals");
+    const rows = await screen.findAllByTestId("metric-row");
+    expect(rows).toHaveLength(3);
+    for (const row of rows) {
+      expect(row.textContent).toContain("Toques por cada vista");
+      expect(row.textContent).not.toMatch(/\bctr\b/i);
+      expect(row.textContent).not.toContain("internalFlag");
+    }
+    expect(rows[0]!.textContent).toMatch(/Toques por cada vista: 12[,.]5\s?%/);
+    expect(rows[1]!.textContent).toMatch(/Toques por cada vista: 0\s?%/);
+    expect(rows[2]!.textContent).not.toContain("null");
+  });
+});
+
 describe("REQ-F28 · availability and date requests", () => {
   it("validates the schedule, saves it and confirms or rejects requests (409 refreshes)", async () => {
     await withProvider();

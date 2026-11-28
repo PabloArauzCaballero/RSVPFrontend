@@ -5,7 +5,7 @@ import type { adminEsBO } from "../es-BO/admin.js";
 export const adminEnUS: DeepStrings<typeof adminEsBO> = {
   title: "Platform administration",
   denied: "Access denied: this area is for platform administrators only.",
-  nav: { label: "Administration modules", dashboard: "Overview", templates: "Templates", eventTypes: "Event types", categories: "Categories", geography: "Geography", verification: "Verification", moderation: "Moderation", products: "Products", users: "Users", organizations: "Organizations", partners: "Partners", metrics: "Metrics", operations: "Operations" },
+  nav: { label: "Administration modules", dashboard: "Overview", templates: "Templates", eventTypes: "Event types", categories: "Categories", geography: "Geography", reports: "Reports", verification: "Verification", moderation: "Moderation", products: "Products", users: "Users", organizations: "Organizations", partners: "Partners", metrics: "Metrics", operations: "Operations" },
   dest: { review: "Review", catalog: "Catalog", people: "People", operation: "Operations" },
   unavailable: "This module uses the {{service}} API, which is not available yet. Its data will show here once it is published.",
   sample: { title: "Ana & Luis", story: "We met in La Paz and today we celebrate with the people we love.", venue: "Hacienda El Prado", dressCode: "Formal", question: "Is there parking?", answer: "Yes, at the venue.", ceremony: "Ceremony", party: "Party" },
@@ -53,7 +53,7 @@ export const adminEnUS: DeepStrings<typeof adminEsBO> = {
   },
   products: {
     title: "Products", intro: "What providers published recently and what is already hidden. If a product breaks the rules, hide it: it stops being recommended and accepted as a gift, and its owner sees the reason.",
-    views: { label: "Product view", RECENT: "Recent", HIDDEN: "Hidden" },
+    views: { label: "Product view", RECENT: "Recent", HIDDEN: "Hidden" }, tabCount: "{{label}}: {{count}}",
     filters: { label: "Product filters", days: "Published in the last", daysOption_one: "{{count}} day", daysOption_other: "{{count}} days", category: "Category", all: "All", featured: "Featured", allFeatured: "All", featuredOn: "Featured", featuredOff: "Not featured", completeness: "Sheet", provider: "Provider", providerHelp: "Paste the provider's identifier (UUID). Leave it empty to see everyone.", providerInvalid: "Use a valid identifier, for example 3f2b8c1e-5a47-4d0e-9b6a-1c2d3e4f5a6b.", apply: "Filter", clear: "Clear filters" },
     completeness: { COMPLETE: "Complete sheet", INCOMPLETE: "Incomplete sheet", HIDDEN_BY_ADMIN: "Hidden" },
     empty: { RECENT: "No products were published in the last {{days}} days with these filters.", HIDDEN: "There are no hidden products with these filters." },

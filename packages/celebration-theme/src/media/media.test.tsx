@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { AudioPlayer, EmbedFacade, MediaBackdrop, MediaImage, embedFromConfig, FRAME_HOSTS, frameSrcDirective, isAllowedEmbedUrl, mapEmbed, spotifyEmbed, vimeoEmbed, youtubeEmbed, youtubeFromLink, imageSources, clampScrim, type PublicMedia } from "../index.js";
+import { AudioPlayer, EmbedFacade, MediaBackdrop, MediaImage, embedFromConfig, FRAME_HOSTS, frameSrcDirective, isAllowedEmbedUrl, mapEmbed, spotifyEmbed, vimeoEmbed, youtubeEmbed, youtubeFromLink, imageSources, clampScrim, clampVeil, type PublicMedia } from "../index.js";
 import { BLACK, WHITE, contrastRatio, mix, requiredScrim } from "../design/colour.js";
 
 afterEach(cleanup);
@@ -186,12 +186,16 @@ describe("MediaImage and MediaBackground", () => {
     expect(renderToStaticMarkup(<MediaImage media={SONG} alt="" />)).toBe("");
   });
 
-  it("the veil is never a fixed default: MediaBackdrop takes the opacity per scheme the palette needs, clamped to the contract's 0.8", () => {
+  it("the veil is never a fixed default: MediaBackdrop takes the opacity per scheme the palette needs, clamped to the strongest veil the renderer paints (MAX_TEXT_VEIL = .85, the graded veil of contract 1.8.0: above the 0.8 a document may ask for, never above the contract)", () => {
     const html = renderToStaticMarkup(<MediaBackdrop media={PHOTO} light={0.35} dark={5} />);
     expect(html).toContain("--cd-veil-l:35%");
-    expect(html).toContain("--cd-veil-d:80%");
+    expect(html).toContain("--cd-veil-d:85%");
+    expect(renderToStaticMarkup(<MediaBackdrop media={PHOTO} light={0.85} dark={0.85} />)).toContain("--cd-veil-l:85%");
     expect(html).toContain('aria-hidden="true"');
     expect(renderToStaticMarkup(<MediaBackdrop media={SONG} light={0.4} dark={0.4} />)).toBe("");
+    expect(clampVeil(0.95)).toBe(0.85);
+    expect(clampVeil(Number.POSITIVE_INFINITY)).toBe(0);
+    expect(clampScrim(0.95)).toBe(0.8);
     expect(clampScrim(-1)).toBe(0);
     expect(clampScrim(Number.NaN)).toBe(0);
   });

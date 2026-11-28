@@ -1,5 +1,6 @@
 import { design } from "@rsvp/celebration-theme";
 import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
+import { COVER_VARIANTS, coverVariantOf, coverVeilOf, PAGE_ANIMATIONS, pageAnimationOf, setCoverVariant, setCoverVeil, setPageAnimation, setVideoPoster, videoPosterOf, type AnimationName, type CoverVariant } from "../model/fidelity.js";
 import { giftsBlock, giftsPlacement } from "../model/guards.js";
 import { applyPaddingPreset, applySpacingPreset, applyTemplateDocument, coverDrawingOf, coverPhotoOf, editableTexts, hiddenElements, PADDING_PRESETS, setBlockText, setCoverDrawing, setCoverPhoto, setFontFamily, setPaletteColour, setSectionOrder, setSectionVisible, sharedPadding, SPACING_PRESETS, spacingPresetOf, switchableSections, textLimit, type PaddingPreset, type SpacingPreset, type TextField } from "../model/ops.js";
 import { useEditor } from "./editor-context.js";
@@ -94,6 +95,70 @@ function TextRow({ entry }: { readonly entry: TextField }) {
   );
 }
 
+/** Cover style, the entrance of each page, the veil over the cover photo and the cover photo of each video (contract v2 of fidelity). */
+function LookSection({ media, mediaLoad, retryMedia }: { readonly media: MediaSource | undefined; readonly mediaLoad: Load<MediaChoice>; readonly retryMedia: () => void }) {
+  const { document, dispatch, t, now } = useEditor();
+  const variant = coverVariantOf(document);
+  const veil = coverVeilOf(document);
+  const videos = document.blocks.filter((block) => block.type === "video");
+  const pageName = (page: design.DesignPage): string => (page.kind === "cover" ? t("designEditor.outline.cover") : t(`celebration.sections.${page.section ?? ""}`));
+  const hintId = useId();
+  const veilId = useId();
+  return (
+    <section aria-label={t(key("look.title"))}>
+      <h2>{t(key("look.title"))}</h2>
+      {variant !== null ? (
+        <label className="de-field">
+          <span>{t(key("look.variant"))}</span>
+          <select value={variant} onChange={(event) => dispatch({ type: "edit", op: setCoverVariant(event.target.value as CoverVariant), at: now() })}>
+            {COVER_VARIANTS.map((name) => <option key={name} value={name}>{t(key(`look.variants.${name}`))}</option>)}
+          </select>
+        </label>
+      ) : null}
+      {document.pages.map((page) => (
+        <label key={page.id} className="de-field">
+          <span>{t(key("look.animation"), { page: pageName(page) })}</span>
+          <select value={pageAnimationOf(page) ?? ""} aria-describedby={hintId} onChange={(event) => dispatch({ type: "edit", op: setPageAnimation(page.id, event.target.value === "" ? null : (event.target.value as AnimationName)), at: now() })}>
+            <option value="">{t(key("look.animations.none"))}</option>
+            {PAGE_ANIMATIONS.map((name) => <option key={name} value={name}>{t(key(`look.animations.${name}`))}</option>)}
+          </select>
+        </label>
+      ))}
+      <p id={hintId} className="de-hint">{t(key("look.animationHint"))}</p>
+      {veil !== null ? (
+        <>
+          <label className="de-field de-field--check">
+            <input type="checkbox" checked={veil === "graded"} aria-describedby={veilId} onChange={(event) => dispatch({ type: "edit", op: setCoverVeil(event.target.checked ? "graded" : "even"), at: now() })} />
+            <span>{t(key("look.veil"))}: {t(key("look.veilGraded"))}</span>
+          </label>
+          <p id={veilId} className="de-hint">{t(key("look.veilHint"))}</p>
+        </>
+      ) : <p className="de-hint" data-testid="veil-needs-photo">{t(key("look.veilNeedsPhoto"))}</p>}
+      {videos.map((block) => <VideoPoster key={block.id} blockId={block.id} media={media} mediaLoad={mediaLoad} retryMedia={retryMedia} />)}
+    </section>
+  );
+}
+
+function VideoPoster({ blockId, media, mediaLoad, retryMedia }: { readonly blockId: string; readonly media: MediaSource | undefined; readonly mediaLoad: Load<MediaChoice>; readonly retryMedia: () => void }) {
+  const { document, dispatch, t, now } = useEditor();
+  const id = useId();
+  const poster = videoPosterOf(document, blockId);
+  if (!media) return <p className="de-hint" data-testid="poster-unavailable">{t(key("look.posterUnavailable"))}</p>;
+  if (mediaLoad.state !== "ready") return <ListStatus load={mediaLoad} retry={retryMedia} loading={t(key("photos.loading"))} failed={t(key("photos.failed"))} retryLabel={t(key("retry"))} />;
+  const known = mediaLoad.items.some((item) => item.id === poster);
+  return (
+    <div className="de-field">
+      <label htmlFor={id}>{t(key("look.poster"))}</label>
+      <select id={id} value={poster ?? ""} aria-describedby={`${id}-hint`} onChange={(event) => dispatch({ type: "edit", op: setVideoPoster(blockId, event.target.value === "" ? null : event.target.value), at: now() })}>
+        <option value="">{t(key("look.posterProvider"))}</option>
+        {poster !== null && !known ? <option value={poster}>{t(key("look.posterMissing"))}</option> : null}
+        {mediaLoad.items.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+      </select>
+      <p id={`${id}-hint`} className="de-hint">{t(key("look.posterHint"))}</p>
+    </div>
+  );
+}
+
 /** The Basic level: pick a template, texts, photos, drawings, colours, fonts from the catalogue, spacing and padding presets, sections on and off (gifts always on). */
 export function BasicPanel({ templates, drawings, media }: { readonly templates?: TemplateSource; readonly drawings?: DrawingSource; readonly media?: MediaSource }) {
   const { document, dispatch, t, now } = useEditor();
@@ -179,6 +244,8 @@ export function BasicPanel({ templates, drawings, media }: { readonly templates?
         ) : <p className="de-hint" data-testid="photos-unavailable">{t(key("photos.unavailable"))}</p>}
         <p className="de-hint">{t(key("photos.gallery"))}</p>
       </section>
+
+      <LookSection media={media} mediaLoad={mediaLoad} retryMedia={retryMedia} />
 
       <section aria-label={t(key("drawings.title"))}>
         <h2>{t(key("drawings.title"))}</h2>

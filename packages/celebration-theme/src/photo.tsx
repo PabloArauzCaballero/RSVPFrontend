@@ -22,7 +22,9 @@ export function Photo(props: ImgHTMLAttributes<HTMLImageElement> & { readonly al
     if (image && image.complete && image.naturalWidth === 0 && image.currentSrc !== "") setFailed(true);
   }, [src]);
   if (failed) {
-    const drawing = drawingById("camara");
+    // A picture behind the page or an element is decoration (no name): when it is gone (deleted, hidden by moderation: 404) the page keeps its own ground, not a camera drawn behind the text.
+    const decorativeBackground = !alt && /background-image/.test(className ?? "");
+    const drawing = decorativeBackground ? undefined : drawingById("camara");
     const ratio = typeof width === "number" && typeof height === "number" && width > 0 && height > 0 ? `${width} / ${height}` : undefined;
     return (
       <span className={className} data-photo-failed="" role={alt ? "img" : undefined} aria-label={alt || undefined} aria-hidden={alt ? undefined : true} style={ratio ? { aspectRatio: ratio } : undefined}>

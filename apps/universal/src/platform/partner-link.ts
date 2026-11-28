@@ -32,9 +32,8 @@ export type PartnerLinkContext =
  * Same rule as `PartnerLink` in ui-web; it takes a listing id, so a direct partner URL cannot be built here.
  *
  * With `ctx` the URL is a bearer (whoever holds it clicks for free in the member's name): it is handed to `Linking.openURL` and never shown, copied
- * or shared. `surface: "PREVIEW"` depends on the backend: on provider-catalog 3.8.0 (BE b44a5cb3) a PREVIEW click without a token was recorded as an invalid
- * lead with reason `PREVIEW`; since R6b (BE #166, in the official branch, `lead-policy.ts`) `surface=PREVIEW` without a portal `ctx` is ignored and counts as a normal
- * visitor, and only a `ctx` issued by the portal or by moderation for that listing makes it an invalid `PREVIEW` lead (seen in the real walkthrough).
+ * or shared. `surface: "PREVIEW"`: per provider-catalog 3.8.0 the click is recorded as an invalid (non-billable) lead with reason `PREVIEW`, with or
+ * without `ctx`; restricting it to the portal's signed `ctx` is not in this contract (BE R6b, #166).
  */
 export function partnerRedirectUrl(listingId: string, options: { readonly destination?: string; readonly surface: string; /** es-BO or en-US: picks the language of the provider's template. */ readonly locale?: string } & PartnerLinkContext): string {
   if (!LISTING_ID.test(listingId)) throw new Error("partnerRedirectUrl needs a listing id (UUID), never a partner URL");

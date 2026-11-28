@@ -1,6 +1,8 @@
 # Ronda 2 de recorridos de regalos: consolidación y clave de error del portal
 
-Rama `fix/regalos-recorridos-ronda2` sobre `chore/deploy-contabo-coolify` @68af6eb6.
+Rama `fix/regalos-recorridos-ronda2` sobre `chore/deploy-contabo-coolify` @1045ff8a.
+
+Alcance: solo lo que ningún PR abierto cubre. La a11y WCAG 2.5.3 de regalos, el `referrer` de `/r/` y el comentario PREVIEW se quitaron de esta rama porque #147 y #152 (de otra sesión) los contienen; #149 choca en el asistente.
 
 ## Hallazgos
 
@@ -9,7 +11,7 @@ Rama `fix/regalos-recorridos-ronda2` sobre `chore/deploy-contabo-coolify` @68af6
 | Remonte de la pantalla al cruzar el ancho en `apps/universal/src/host/shell.tsx` | **No reproducible en el código actual.** `ShellChrome` ya mantiene un solo árbol (la ranura de contenido es siempre el segundo hijo) y `Screen` conserva los mismos nodos entre 768 y 960 px (arreglado por #153/#158). No hay defecto que corregir. | Se añade una prueba de regresión más exigente (acción, línea de estado y pestañas, cruces 959/960/767/768) que pasa antes y después. No se inventó un cambio de código. |
 | Clave inexistente `portal.errors.state.unavailable` (`apps/universal/src/provider/errors.tsx:45`) | **Defecto real.** El objeto `state` (network, unavailable, storage, server) estaba anidado por error en `portal.services.new.errors` y no en `portal.errors`; `PortalErrorState` mostraba la clave cruda como título en 503/500/red/almacenamiento, en es-BO y en-US. Nadie leía la ubicación antigua. | `state` se mueve a `portal.errors` en ambos catálogos. Pruebas que fallaban antes: `packages/i18n/test/resources.test.ts` (2) y `apps/universal/test/portal-error-state.test.tsx` (2). Pasan después. |
 
-PR existente que cubriera la rama: ninguno (revisados todos, estado `all`; #147/#149/#152 no se tocan).
+PR que cubran estos dos puntos: ninguno. Los demás cambios de la rama original están en #147 y #152.
 
 ## Verificación observada
 

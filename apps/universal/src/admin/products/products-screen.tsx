@@ -52,7 +52,7 @@ function Tabs({ view, counts, onChange }: { readonly view: ModerationView; reado
     const count = counts ? (key === "RECENT" ? counts.recent : counts.hidden) : undefined;
     const label = t(`admin.products.views.${key}`);
     return (
-      <PressFeedback key={key} nativeID={`products-tab-${key.toLowerCase()}-id`} accessibilityRole="tab" aria-selected={selected} aria-controls={PANEL_ID} tabIndex={selected ? 0 : -1} onPress={() => onChange(key)} style={[styles.choice, selected && styles.choiceSelected, { flexDirection: "row", alignItems: "center", gap: spacing[2] }]} testID={`products-tab-${key.toLowerCase()}`}>
+      <PressFeedback key={key} nativeID={`products-tab-${key.toLowerCase()}-id`} accessibilityRole="tab" aria-selected={selected} aria-controls={PANEL_ID} tabIndex={selected ? 0 : -1} accessibilityLabel={count === undefined ? label : t("admin.products.tabCount", { label, count })} onPress={() => onChange(key)} style={[styles.choice, selected && styles.choiceSelected, { flexDirection: "row", alignItems: "center", gap: spacing[2] }]} testID={`products-tab-${key.toLowerCase()}`}>
         <Text style={[styles.body, selected && { fontWeight: "600" }]}>{label}</Text>
         {count !== undefined ? <Text style={[styles.muted, { fontVariant: ["tabular-nums"] }]} testID={`products-count-${key.toLowerCase()}`}>{String(count)}</Text> : null}
       </PressFeedback>
@@ -165,7 +165,7 @@ function ProductsScreenContent({ onNavigate }: { readonly onNavigate: (href: str
   const showOnce = useSingleMutation(show);
   const featureOnce = useSingleMutation(feature);
   const items = useMemo(() => inbox.data?.pages.flatMap((page) => page.items) ?? [], [inbox.data]);
-  // The tab counters belong to the whole inbox, not to the filter being loaded: keep the last known ones while the next read is pending (no jump). The tab has no `aria-label`: its name is its own text («Recientes 12»), so the visible label is always part of the accessible name (WCAG 2.5.3).
+  // The tab counters belong to the whole inbox, not to the filter being loaded: keep the last known ones while the next read is pending (no jump, no changing accessible name).
   const fresh = moderationCounts(inbox.data?.pages);
   const [known, setKnown] = useState(fresh);
   if (fresh && (known?.recent !== fresh.recent || known.hidden !== fresh.hidden)) setKnown(fresh);
