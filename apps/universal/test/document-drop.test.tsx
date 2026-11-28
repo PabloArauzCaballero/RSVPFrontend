@@ -63,6 +63,15 @@ describe("provider documents: drag and drop", () => {
     expect(calls.some((call) => call.method === "POST")).toBe(false);
   });
 
+  it("says why an iPhone HEIC photo is not accepted and how to send it, instead of the generic type error", async () => {
+    const { client, calls } = fakeClient(portal());
+    renderApp(<DocumentsScreen />, client, HOST);
+    drop(await screen.findByTestId("document-drop"), [file("ci.heic", "")]);
+    fireEvent.click(await screen.findByTestId("document-upload"));
+    expect(await screen.findByText(/Las fotos HEIC del iPhone no se aceptan aquí/)).toBeTruthy();
+    expect(calls.some((call) => call.method === "POST")).toBe(false);
+  });
+
   it("explains that a picture dragged from another page is not a file, and says it takes one document at a time", async () => {
     const { client } = fakeClient(portal());
     renderApp(<DocumentsScreen />, client, HOST);

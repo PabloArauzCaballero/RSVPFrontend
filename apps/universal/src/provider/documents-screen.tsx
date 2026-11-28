@@ -20,9 +20,17 @@ export function documentKindLabel(t: (key: string, values?: Readonly<Record<stri
   return (DOCUMENT_KINDS as readonly string[]).includes(kind) ? t(`portal.documents.kinds.${kind}`) : t("portal.documents.kindUnknown", { kind });
 }
 
-/** Validates the chosen file before any request: type and size follow the contract (`DocumentInput`). Returns an i18n key or null. */
-export function documentProblem(file: Pick<PickedImage, "type" | "size"> | null): "portal.documents.none" | "portal.documents.badType" | "portal.documents.tooBig" | null {
+const HEIC = /\.(heic|heif)$/i;
+
+/**
+ * Validates the chosen file before any request: type and size follow the contract (`DocumentInput`). Returns an i18n key or null.
+ * HEIC (the iPhone photo format) is refused with its own message instead of the generic one: the verification store takes PDF, JPG,
+ * PNG and WebP only, and a browser cannot turn HEIC into JPG here without shipping a converter, so the person is told how to send it
+ * (documented choice, not a silent failure).
+ */
+export function documentProblem(file: (Pick<PickedImage, "type" | "size"> & { readonly name?: string }) | null): "portal.documents.none" | "portal.documents.badType" | "portal.documents.heic" | "portal.documents.tooBig" | null {
   if (!file) return "portal.documents.none";
+  if (/^image\/(heic|heif)$/i.test(file.type) || (file.name !== undefined && HEIC.test(file.name))) return "portal.documents.heic";
   if (!DOCUMENT_TYPES.includes(file.type as DocumentContentType)) return "portal.documents.badType";
   if (file.size < 1 || file.size > MAX_DOCUMENT_BYTES) return "portal.documents.tooBig";
   return null;
