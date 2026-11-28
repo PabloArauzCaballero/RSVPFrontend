@@ -170,12 +170,11 @@ describe("R4 · the whole flow: ideas, one product per idea, summary, one idempo
     expect(screen.getByTestId("choose-torta").getAttribute("aria-checked")).toBe("false");
     expect(screen.getByTestId("choose-tres-leches").getAttribute("aria-checked")).toBe("true");
     click("choose-vajilla");
-    // The sold-out version is listed and cannot be chosen; the first version in stock is preselected; above Bs 1 000 the switch is suggested on.
+    // The sold-out version is listed and cannot be chosen; the first version in stock is preselected.
     expect(screen.getByTestId("variant-v-oro").getAttribute("aria-checked")).toBe("true");
     expect(screen.getByTestId("variant-v-plata").getAttribute("aria-disabled")).toBe("true");
-    expect(screen.getByTestId("group-DINNERWARE_SET").getAttribute("aria-checked")).toBe("true");
-    expect(screen.getByTestId("group-CAKE").getAttribute("aria-checked")).toBe("false");
-    // Quantity is behind a build flag that is off by default.
+    // Quantity and «entre varios» are behind a build flag that is off by default (until R5 a reservation takes the whole gift): neither is shown, even above Bs 1 000.
+    expect(screen.queryByTestId("group-DINNERWARE_SET")).toBeNull();
     expect(screen.queryByTestId("quantity-CAKE")).toBeNull();
     await next(/Revisa tu lista/);
     expect(screen.getByTestId("line-CAKE").textContent).toContain("Torta o repostería: Producto tres-leches");
@@ -190,7 +189,7 @@ describe("R4 · the whole flow: ideas, one product per idea, summary, one idempo
     expect(call?.headers.get("idempotency-key")).toMatch(/\S{8,}/);
     expect(call?.body).toEqual({ items: [
       { productListingId: "tres-leches", giftIdeaCode: "CAKE", quantity: 1, groupGiftEnabled: false },
-      { productListingId: "vajilla", giftIdeaCode: "DINNERWARE_SET", variantCode: "v-oro", quantity: 1, groupGiftEnabled: true }
+      { productListingId: "vajilla", giftIdeaCode: "DINNERWARE_SET", variantCode: "v-oro", quantity: 1, groupGiftEnabled: false }
     ] });
     fireEvent.click(screen.getByTestId("wizard-see-list"));
     expect(navigate).toHaveBeenCalledWith("/regalos?c=c-1");
@@ -212,6 +211,10 @@ describe("R4 · the whole flow: ideas, one product per idea, summary, one idempo
     await next(/Elige un producto por idea/);
     click("choose-torta");
     expect(screen.getByTestId("quantity-CAKE").textContent).toBe("1");
+    // A reader hears the product, never the internal idea code.
+    expect(screen.getByTestId("quantity-more-CAKE").getAttribute("aria-label")).toBe("Más · Producto torta");
+    expect(screen.getByTestId("quantity-less-CAKE").getAttribute("aria-label")).toBe("Menos · Producto torta");
+    expect(screen.getByRole("group", { name: "Opciones de Producto torta" }).contains(screen.getByTestId("group-CAKE"))).toBe(true);
     expect(screen.getByTestId("group-CAKE").getAttribute("aria-checked")).toBe("false");
     for (let index = 0; index < 6; index++) click("quantity-more-CAKE");
     expect(screen.getByTestId("quantity-CAKE").textContent).toBe("7");
@@ -710,8 +713,11 @@ describe("R4 · step 3 · balance and delivery notes", () => {
     const notes = screen.getByTestId("wizard-notes") as HTMLTextAreaElement;
     expect(screen.getByTestId("wizard-notes-counter").textContent).toBe("0 de 200 caracteres");
     expect(screen.getByText(/No escribas la dirección exacta/)).toBeTruthy();
-    // PF-1: the notes are public in the gift view and go into the WhatsApp message to the provider; the help says who reads them.
-    expect(screen.getByText(/Lo verán tus invitados y el proveedor al que le escriban/)).toBeTruthy();
+    // PF-1: the help promises only what exists today: nobody reads the notes yet, so it says «cuando esté disponible» and never names the provider's message.
+    expect(screen.getByText(/Las verán tus invitados cuando esta función esté disponible/)).toBeTruthy();
+    expect(screen.queryByText(/proveedor al que le escriban/)).toBeNull();
+    // The platform notice of the old catalog flow is kept before sending.
+    expect(screen.getByTestId("wizard-disclaimer").textContent).toMatch(/no vende ni garantiza el producto/);
     expect(screen.queryByText(/Quienes eligen comprar/)).toBeNull();
     fireEvent.change(notes, { target: { value: "x".repeat(201) } });
     expect(screen.getByText("Quita 1 carácter: el máximo es 200.")).toBeTruthy();
@@ -823,6 +829,67 @@ describe("R4 · step 3 · balance and delivery notes", () => {
   });
 });
 
+describe("R4 · review fixes", () => {
+  it("a gift the catalog no longer offers (status kept, availability UNAVAILABLE) is free again: the idea can be ticked and it does not enter the balance", async () => {
+    await open({ [`GET ${ITEMS}`]: () => ({ ...EMPTY_LIST, items: [gift("g1", { giftIdeaCode: "CAKE", availability: "UNAVAILABLE" })] }) });
+    await waitFor(() => expect(screen.getByTestId("idea-CAKE").getAttribute("aria-disabled")).not.toBe("true"));
+    expect(screen.queryByTestId("idea-listed-CAKE")).toBeNull();
+    click("idea-CAKE");
+    await next(/Elige un producto por idea/);
+    click("choose-torta");
+    await next(/Revisa tu lista/);
+    // Only the new gift counts: the unavailable one (Bs 100, also in the first range) would make it 2.
+    expect(screen.getByTestId("balance-b1").getAttribute("aria-label")).toMatch(/: 1 regalo$/);
+  });
+
+  it("a gift that is still offered does block its idea and counts in the balance", async () => {
+    await open({ [`GET ${ITEMS}`]: () => ({ ...EMPTY_LIST, items: [gift("g1", { giftIdeaCode: "CAKE", availability: "AVAILABLE" })] }) });
+    await waitFor(() => expect(screen.getByTestId("idea-listed-CAKE")).toBeTruthy());
+    expect(screen.getByTestId("idea-CAKE").getAttribute("aria-disabled")).toBe("true");
+  });
+
+  it("the total and the balance use the listing price that Gift stores, not the price of the chosen version", async () => {
+    const dear = idea("DINNERWARE_SET", "Juego de vajilla", [product("vajilla", { price: { amountMinor: 30_000, currency: "BOB" }, variants: [{ id: "v-oro", label: "Dorado", price: { amountMinor: 150_000, currency: "BOB" }, stock: "AVAILABLE" }] })]);
+    await open({ [RECS]: () => ({ ...RECOMMENDATIONS, items: [CAKE, dear] }) });
+    click("idea-DINNERWARE_SET");
+    await next(/Elige un producto por idea/);
+    click("choose-vajilla");
+    // The chip still tells the version's own price.
+    expect(screen.getByTestId("variant-v-oro").getAttribute("aria-label")).toMatch(/Dorado · Bs\s?1[.,\s]?500/);
+    await next(/Revisa tu lista/);
+    expect(screen.getByTestId("wizard-total").textContent).toMatch(/Bs\s?300\b/);
+    expect(screen.getByTestId("balance-b2").getAttribute("aria-label")).toMatch(/: 1 regalo$/);
+    expect(screen.getByTestId("balance-b4").getAttribute("aria-label")).toMatch(/: 0 regalos$/);
+  });
+
+  it("when the backend answers every idea (scope ALL_IDEAS) the headline does not claim a recommendation for the celebration", async () => {
+    await open({ [RECS]: () => ({ ...RECOMMENDATIONS, scope: "ALL_IDEAS" }) });
+    expect(screen.getByTestId("wizard-headline").textContent).toBe("Ideas de regalo");
+  });
+
+  it("the currency note is shown from the first step when the celebration is not in bolivianos", async () => {
+    const made = fakeClient(handlers({ ...baseHandlers({ ...CELEBRATION, currency: "USD" }) }));
+    renderApp(<AddGiftScreen celebrationId="c-1" initial="catalog" onNavigate={navigate} />, made.client);
+    await screen.findByTestId("idea-CAKE");
+    expect(screen.getByText("Los precios de los proveedores están en bolivianos (Bs).")).toBeTruthy();
+  });
+
+  it("in English the same screen keeps the neutral headline and the delivery help that promises nothing yet", async () => {
+    const made = fakeClient(handlers({ [RECS]: () => ({ ...RECOMMENDATIONS, scope: "ALL_IDEAS" }) }));
+    renderApp(<AddGiftScreen celebrationId="c-1" initial="catalog" onNavigate={navigate} />, made.client, undefined, "en-US");
+    await screen.findByTestId("idea-CAKE");
+    expect(screen.getByTestId("wizard-headline").textContent).toBe("Gift ideas");
+    click("idea-CAKE");
+    click("wizard-next");
+    await screen.findByTestId("choose-torta");
+    click("choose-torta");
+    click("wizard-next");
+    await screen.findByTestId("wizard-notes");
+    expect(screen.getByText(/Your guests will see them when this feature is available/)).toBeTruthy();
+    expect(screen.getByTestId("wizard-disclaimer").textContent).toMatch(/does not sell or guarantee the product/);
+  });
+});
+
 describe("R4 · the host list shows what the assistant adds", () => {
   it("quantity, the coordinated-gift switch and the delivery notes", async () => {
     const { client } = fakeClient(handlers({ [`GET ${ITEMS}`]: () => ({ items: [gift("Vajilla", { quantity: 4, groupGiftEnabled: true })], partnerPriorityEnabled: false, nextCursor: null, deliveryNotes: "Portón verde" }) }));
@@ -841,10 +908,16 @@ describe("R4 · accessibility and language", () => {
     click("idea-DINNERWARE_SET");
     await next(/Elige un producto por idea/);
     expect(document.activeElement).toBe(screen.getByTestId("wizard-step-title"));
-    expect(screen.getByRole("radiogroup", { name: "Productos para Juego de vajilla" })).toBeTruthy();
+    const products = screen.getByRole("radiogroup", { name: "Productos para Juego de vajilla" });
     click("choose-vajilla");
-    expect(screen.getByRole("radiogroup", { name: /Versión/ })).toBeTruthy();
-    expect(screen.getByRole("switch", { name: "Se puede regalar entre varios" })).toBeTruthy();
+    const versions = screen.getByRole("radiogroup", { name: /Versión/ });
+    // A radiogroup holds only its radios: the versions are not inside the products' group and the options have their own named group.
+    expect(products.contains(versions)).toBe(false);
+    expect(within(products).queryAllByRole("radiogroup")).toHaveLength(0);
+    expect(within(products).queryAllByRole("switch")).toHaveLength(0);
+    expect(within(products).getAllByRole("radio")).toHaveLength(2);
+    expect(screen.getByRole("group", { name: "Opciones de Producto vajilla" }).contains(versions)).toBe(true);
+    expect(screen.queryByRole("switch")).toBeNull();
     expect(screen.getByRole("radio", { name: /Producto vajilla, Bs/ }).getAttribute("aria-checked")).toBe("true");
     click("wizard-back");
     await screen.findByTestId("idea-CAKE");
