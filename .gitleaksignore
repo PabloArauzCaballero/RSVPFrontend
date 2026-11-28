@@ -2,8 +2,9 @@
 # No se puede reescribir el historial (sin force-push), así que se ignoran solo estos dos hallazgos por huella exacta.
 ca4e81b0516bd57ebfbbdf278c5627f436033b44:apps/seo-web/tests/gifts.test.tsx:generic-api-key:357
 ca4e81b0516bd57ebfbbdf278c5627f436033b44:apps/seo-web/tests/redirect.test.ts:generic-api-key:126
-# R5 FE (FE #152): el nombre de la clave local PURCHASE_STORE_KEY ("rsvp.gift.purchase.v1") parece una api key al detector. Es una clave de almacenamiento local, no un secreto.
-# El historial no se reescribe (sin force-push): se ignoran solo estas 4 huellas exactas.
+# R5 FE (FE #152): la constante de la clave local de almacenamiento se llamaba PURCHASE_STORE_KEY y el detector la tomaba por una api key. Ya se renombró
+# (PURCHASE_STORAGE_SLOT) y el código actual no dispara la regla. Estas 4 huellas solo cubren esos commits que YA están en el historial de la rama
+# (no se reescribe: sin force-push); si el merge a dev es squash dejan de hacer falta y deben borrarse.
 1ce153ad5a514bf2654bc8494a1a2f3d4758772a:packages/query-hooks/src/gift/purchase-attempts.ts:generic-api-key:8
 82ee0f6133e88fe7174eeca825f2fa8e2f3c280c:apps/seo-web/tests/gifts-r5.test.tsx:generic-api-key:318
 82ee0f6133e88fe7174eeca825f2fa8e2f3c280c:apps/seo-web/tests/gifts-r5.test.tsx:generic-api-key:319

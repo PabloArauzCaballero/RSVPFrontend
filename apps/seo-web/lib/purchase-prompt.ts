@@ -1,4 +1,4 @@
-import { PURCHASE_STORE_KEY, type PurchasePromptEnv } from '@rsvp/query-hooks';
+import { PURCHASE_STORAGE_SLOT, type PurchasePromptEnv } from '@rsvp/query-hooks';
 
 /**
  * R5 · «¿Compraste …?» on the public site. The attempts live in this browser's localStorage (never sent anywhere, PF-1) and every access is guarded:
@@ -13,8 +13,8 @@ function storage(): Storage | null {
 
 export const browserPurchaseEnv: PurchasePromptEnv = {
   store: {
-    read: () => { try { return storage()?.getItem(PURCHASE_STORE_KEY) ?? null; } catch { return null; } },
-    write: (value) => { try { storage()?.setItem(PURCHASE_STORE_KEY, value); } catch { /* blocked or full: the card just will not come back */ } }
+    read: () => { try { return storage()?.getItem(PURCHASE_STORAGE_SLOT) ?? null; } catch { return null; } },
+    write: (value) => { try { storage()?.setItem(PURCHASE_STORAGE_SLOT, value); } catch { /* blocked or full: the card just will not come back */ } }
   },
   onReturn: (listener) => {
     if (typeof document === 'undefined') return () => undefined;

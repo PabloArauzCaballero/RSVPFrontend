@@ -27,6 +27,8 @@ export interface GuestGiftState {
   readonly chooseUnits: boolean;
   /** Both provider buttons (store and WhatsApp) are for this viewer: whoever may reserve a plain gift, whoever already holds one (reserve, then buy: D-3), and the coordinator of a group. Never a contributor, never a plain gift taken by others. */
   readonly showProviderButtons: boolean;
+  /** The host closed the list: nobody starts a reservation and the provider buttons go only to whoever already holds one. */
+  readonly closed: boolean;
   /** Group gift: somebody already coordinates it. */
   readonly hasCoordinator: boolean;
   /** Group gift, seen by someone who is not its coordinator: who buys it (null name = the coordinator did not choose to show it). */
@@ -45,8 +47,13 @@ export function effectivePrice(item: Pick<GiftItem, "price" | "currentPrice">): 
   return current && Number.isFinite(current.amountMinor) && current.amountMinor > 0 ? current : item.price;
 }
 
-/** `held`: the guest's own reservation of this gift from `my-reservations`, for a server that does not send `viewer` on the list. */
-export function guestGiftState(item: GiftItem, held?: Pick<GiftReservation, "role" | "units"> | undefined): GuestGiftState {
+/**
+ * `held`: the guest's own reservation of this gift from `my-reservations`, for a server that does not send `viewer` on the list.
+ * `listClosed`: the host closed the list (REG-01). It is part of the state, not a patch in each screen: a closed list offers no new reservation,
+ * no unit chooser and no provider buttons to someone who holds nothing (the purchase could not be recorded afterwards), and keeps the buttons of whoever already reserved.
+ */
+export function guestGiftState(item: GiftItem, held?: Pick<GiftReservation, "role" | "units"> | undefined, options: { readonly listClosed?: boolean } = {}): GuestGiftState {
+  const closed = options.listClosed === true;
   const quantity = Math.max(1, item.quantity ?? 1);
   // An older server sends no unit counts: an AVAILABLE gift has all its units free, any other has none.
   const unitsLeft = Math.max(0, Math.min(quantity, item.unitsLeft ?? (item.status === "AVAILABLE" ? quantity : 0)));
@@ -54,14 +61,14 @@ export function guestGiftState(item: GiftItem, held?: Pick<GiftReservation, "rol
   const role = item.viewer?.role ?? held?.role ?? (held ? "SOLE" : null);
   const hasCoordinator = group && ((item.participants ?? 0) > 0 || role === "COORDINATOR");
   const open = HOLDS.has(item.status);
-  const canReserve = role === null && open && (group || (item.status === "AVAILABLE" && unitsLeft > 0));
-  const showProviderButtons = group ? role === "COORDINATOR" : role === "SOLE" || (role === null && item.status === "AVAILABLE" && unitsLeft > 0);
+  const canReserve = !closed && role === null && open && (group || (item.status === "AVAILABLE" && unitsLeft > 0));
+  const showProviderButtons = group ? role === "COORDINATOR" : role === "SOLE" || (!closed && role === null && item.status === "AVAILABLE" && unitsLeft > 0);
   const heldUnits = Math.max(0, Math.trunc(item.viewer?.units ?? held?.units ?? 0));
   const name = typeof item.coordinatorName === "string" && item.coordinatorName.trim() ? item.coordinatorName.trim() : null;
   return {
     quantity, unitsLeft, showUnits: quantity > 1, group, role, heldUnits, canReserve,
     chooseUnits: !group && canReserve && unitsLeft > 1,
-    showProviderButtons, hasCoordinator,
+    showProviderButtons, closed, hasCoordinator,
     coordinator: group && hasCoordinator && role !== "COORDINATOR" ? { name } : null,
     contributors: group ? Math.max(0, item.contributors ?? 0) : 0,
     contributorNames: group && role === "COORDINATOR" ? (item.contributorNames ?? []).filter((n) => typeof n === "string" && n.trim() !== "") : []

@@ -164,3 +164,11 @@
 - **Solo `background` pierde el foco; `inactive` no.** iOS reporta `inactive` con la app todavía visible (Face ID, selector de imágenes o documentos, centro de notificaciones, llamada entrante). Contarlo como pérdida releería todas las consultas vencidas al volver de un selector sin que la app haya salido. El regreso de `background` pasa por `inactive` y luego `active`, y `focusManager` notifica solo ante un cambio, así que hay una sola relectura.
 - **`ctx` fuera del `href` y reintento 422 descartado.** El `href` de `PartnerLink` no lleva `ctx` (es un portador); se agrega al navegar. El redirector no reintenta ante 422 `INVALID_LEAD_CONTEXT`: en BE v2 ese código lo comparten `sessionId`, `surface`, `celebrationId`, `guestId`, `country`, `city` y `referrer`, y la única causa ligada al `ctx` es la longitud mayor de 512 (`server.ts` `GET /r/:lid`), que ya se filtra antes de llamar. La página de error quita `ctx` de la URL visible.
 - **Estado `HIDDEN` silencioso, deliberado.** `publish-checklist.tsx` ya no muestra «Publicando…» para una página `HIDDEN`, pero no muestra ningún texto en su lugar. El copy y la UI de moderación los decide Pablo; hasta entonces no se inventa texto.
+
+
+## R5 FE (PR #152): lista cerrada y botones del proveedor · 2026-11-28
+
+- **Pregunta para Pablo (sin respuesta):** con la lista cerrada, ¿el invitado que no tiene reserva debe seguir viendo «Ver en la tienda» y «Pedir por WhatsApp»? No hay decisión escrita.
+- **Comportamiento seguro implementado mientras tanto:** se ocultan a quien no tiene reserva (y también el selector de unidades y «Reservar»); quien ya sostiene una reserva conserva los botones y puede cancelar. Motivo: abrir el proveedor genera un lead facturable y después la compra no se puede registrar, así que el anfitrión no se entera y el regalo se puede repetir.
+- **Textos propuestos, no aprobados:** `gifts.guest.prompt.bodyClosed`, `ack`, `ackFor` y `yesClosed` (es-BO y en-US) son redacción propuesta por la revisión; Pablo puede cambiarlos.
+

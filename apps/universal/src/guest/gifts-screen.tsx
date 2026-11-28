@@ -130,8 +130,8 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
 
   // One Idempotency-Key per (gift, units, name choice): the same body replays, another body is another request (a key reused with other units is a 422).
   const keyFor = (slot: string): string => { let key = keys.current.get(slot); if (!key) { key = newIdempotencyKey(); keys.current.set(slot, key); } return key; };
-  const unitsOf = (item: GiftItem): number => clampUnits(units[item.id] ?? 1, guestGiftState(item, mine.get(item.id)).unitsLeft);
-  const open = (item: GiftItem): void => { setOutcome(null); setPromptNote(null); reserve.reset(); setFieldErrors({}); setShowName(false); setTarget(item); };
+  const unitsOf = (item: GiftItem): number => clampUnits(units[item.id] ?? 1, guestGiftState(item, mine.get(item.id), { listClosed }).unitsLeft);
+  const open = (item: GiftItem): void => { if (listClosed) return; setOutcome(null); setPromptNote(null); reserve.reset(); setFieldErrors({}); setShowName(false); setTarget(item); };
   const askCancel = (item: GiftItem, reservation: GiftReservation): void => { setCancelled(null); cancel.reset(); setCancelTarget({ item, reservation }); };
   const confirmCancel = (): void => {
     if (!cancelTarget || cancel.isPending) return;
@@ -150,7 +150,7 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
     if (invalid.name || invalid.message) return;
     inFlight.current = true;
     const item = target;
-    const state = guestGiftState(item, mine.get(item.id));
+    const state = guestGiftState(item, mine.get(item.id), { listClosed });
     // A group gift decides the units on the server (coordinator: the whole quantity; contributor: none), so only a plain gift sends them.
     const taken = state.group ? undefined : unitsOf(item);
     const consent = showName && name.trim() !== "";
@@ -172,9 +172,11 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
   /** The answer to «¿Compraste …?»: Sí reserves (the usual form, with the units the guest meant), the others close the card. */
   const answerPrompt = (item: GiftItem, answer: "yes" | "later" | "no"): void => {
     const attempt = prompt.answer(item.id, answer);
-    const state = guestGiftState(item, mine.get(item.id));
+    const state = guestGiftState(item, mine.get(item.id), { listClosed });
+    // A closed list takes no reservation: whatever the guest answered, say the purchase was not recorded (never a dead end).
+    if (listClosed && state.role === null) { setPromptNote({ itemId: item.id, key: "gifts.guest.prompt.yesClosed" }); return; }
     if (answer === "later") { setPromptNote({ itemId: item.id, key: "gifts.guest.prompt.laterDone" }); return; }
-    if (answer === "no") { setPromptNote({ itemId: item.id, key: "gifts.guest.prompt.closed" }); return; }
+    if (answer === "no") { setPromptNote({ itemId: item.id, key: "gifts.guest.prompt.dismissed" }); return; }
     if (state.role !== null) { setPromptNote({ itemId: item.id, key: "gifts.guest.prompt.yesCoordinator" }); return; }
     if (!state.canReserve) { setOutcome({ kind: "taken", item }); return; }
     if (attempt) setUnits((current) => ({ ...current, [item.id]: clampUnits(attempt.units, state.unitsLeft) }));
@@ -245,7 +247,7 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
   );
 
   const form = (item: GiftItem): ReactNode => {
-    const state = guestGiftState(item, mine.get(item.id));
+    const state = guestGiftState(item, mine.get(item.id), { listClosed });
     return (
     <View style={{ gap: spacing[4], paddingTop: spacing[2] }}>
       <Text accessibilityRole="header" aria-level={3} style={styles.label}>{t("gifts.guest.form.title", { title: item.title })}</Text>
@@ -275,7 +277,7 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
   const row = (item: GiftItem, listing: ListingSummary | undefined): ReactNode => {
     const listingId = item.productListingId;
     const held = mine.get(item.id);
-    const state = guestGiftState(item, held);
+    const state = guestGiftState(item, held, { listClosed });
     const contact = giftContactDestinations(listing?.destinationTypes);
     const viaOther = !listingId && item.externalUrl && isSafeHttps(item.externalUrl) ? item.externalUrl : null;
     const opened = !listClosed && target?.id === item.id;
@@ -320,7 +322,7 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
             )}
           </View>
         ) : null}
-        {asked && !opened ? <PurchasePromptCard id={item.id} title={item.title} units={asked.units} reminder={asked.phase === "reminder"} onAnswer={(answer) => answerPrompt(item, answer)} claimAnnouncement={() => prompt.claimAnnouncement(item.id)} /> : null}
+        {asked && !opened ? <PurchasePromptCard id={item.id} title={item.title} units={asked.units} reminder={asked.phase === "reminder"} closed={listClosed && state.role === null} onAnswer={(answer) => answerPrompt(item, answer)} claimAnnouncement={() => prompt.claimAnnouncement(item.id)} /> : null}
         {note ? <Text accessibilityLiveRegion="polite" role="status" style={styles.muted} testID={`gift-prompt-note-${item.id}`}>{t(note)}</Text> : null}
         {opened ? form(item) : (
           <View style={{ gap: spacing[3] }}>

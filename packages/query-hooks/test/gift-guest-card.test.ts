@@ -74,6 +74,26 @@ describe("R5 · guestGiftState: what the guest's card says and offers", () => {
   });
 });
 
+describe("R5 B1/M1 · a closed list in the card state", () => {
+  const plain = (over: Partial<GiftItem> = {}): GiftItem => ({ ...item(), quantity: 12, unitsLeft: 8, ...over });
+
+  it("holding nothing: nothing to reserve, no unit chooser and no provider buttons", () => {
+    const state = guestGiftState(plain(), undefined, { listClosed: true });
+    expect(state).toMatchObject({ closed: true, role: null, canReserve: false, chooseUnits: false, showProviderButtons: false });
+    expect(guestGiftState(plain(), undefined)).toMatchObject({ closed: false, canReserve: true, chooseUnits: true, showProviderButtons: true });
+  });
+
+  it("a group gift is the same: nobody joins, and a coordinator-less viewer gets no buttons", () => {
+    expect(guestGiftState(plain({ groupGiftEnabled: true }), undefined, { listClosed: true })).toMatchObject({ canReserve: false, showProviderButtons: false });
+  });
+
+  it("holding a reservation keeps the provider buttons (a sole buyer and a group coordinator), never a contributor", () => {
+    expect(guestGiftState(plain(), { role: "SOLE", units: 2 }, { listClosed: true })).toMatchObject({ canReserve: false, chooseUnits: false, showProviderButtons: true });
+    expect(guestGiftState(plain({ groupGiftEnabled: true }), { role: "COORDINATOR", units: 12 }, { listClosed: true })).toMatchObject({ showProviderButtons: true });
+    expect(guestGiftState(plain({ groupGiftEnabled: true }), { role: "CONTRIBUTOR", units: 0 }, { listClosed: true })).toMatchObject({ showProviderButtons: false });
+  });
+});
+
 describe("R5 · price, units and the quantity the buttons carry", () => {
   it("shows the provider's current price when Gift could read it, otherwise the stored one", () => {
     expect(effectivePrice(item({ currentPrice: { amountMinor: 52000, currency: "BOB" } }))).toEqual({ amountMinor: 52000, currency: "BOB" });

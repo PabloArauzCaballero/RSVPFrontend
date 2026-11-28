@@ -1,6 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { answerAttempt, MAX_ATTEMPTS, ATTEMPT_TTL_MS, PURCHASE_STORE_KEY, readAttempts, recordAttempt, takeDue, usePurchasePrompt, type PurchasePromptEnv, type PurchaseStore } from "../src/index.js";
+import { answerAttempt, MAX_ATTEMPTS, ATTEMPT_TTL_MS, PURCHASE_STORAGE_SLOT, readAttempts, recordAttempt, takeDue, usePurchasePrompt, type PurchasePromptEnv, type PurchaseStore } from "../src/index.js";
 
 const memoryStore = (initial: string | null = null): PurchaseStore & { value: string | null } => {
   const store = { value: initial, read: () => store.value, write: (next: string) => { store.value = next; } };
@@ -49,7 +49,7 @@ describe("R5 · «¿Compraste?»: local attempts", () => {
     expect(readAttempts(memoryStore("not json"), T0)).toEqual({});
     expect(readAttempts(memoryStore("[1,2]"), T0)).toEqual({});
     expect(readAttempts(memoryStore(JSON.stringify({ g1: { giftItemId: "other", destination: "WHATSAPP", units: 1, at: T0, phase: "away" } })), T0)).toEqual({});
-    expect(PURCHASE_STORE_KEY).toBe("rsvp.gift.purchase.v1");
+    expect(PURCHASE_STORAGE_SLOT).toBe("rsvp.gift.purchase.v1");
   });
 
   it("a storage that throws never breaks the list: reads give nothing and writes are swallowed", () => {

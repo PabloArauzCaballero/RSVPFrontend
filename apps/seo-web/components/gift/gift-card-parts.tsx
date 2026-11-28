@@ -19,7 +19,7 @@ export function UnitsStepper({ id, value, max, title, t, onChange }: { readonly 
         <output className="gift-stepper__value" aria-live="polite" aria-label={t('gifts.guest.units.value', { count: value })} data-testid={`${id}-value`}>{value}</output>
         <button type="button" className="gift-stepper__button" aria-label={`${t('gifts.guest.units.more')} · ${title}`} disabled={value >= max} onClick={() => onChange(value + 1)} data-testid={`${id}-more`}><span aria-hidden="true" className="gift-stepper__sign gift-stepper__sign--plus" /></button>
       </div>
-      <p className="rsvp-hint">{t('gifts.guest.units.help', { left: max })}</p>
+      <p className="rsvp-hint">{t('gifts.guest.units.help', { count: max })}</p>
     </div>
   );
 }
@@ -40,19 +40,25 @@ export function UnitsAndGroup({ id, state, t }: { readonly id: string; readonly 
 }
 
 /** The card that appears when the guest comes back from the provider. It is a labelled group, so a screen reader announces the question with its options. */
-export function PurchasePromptCard({ id, title, units, reminder, t, onAnswer, claimAnnouncement }: { readonly id: string; readonly title: string; readonly units: number; readonly reminder: boolean; readonly t: T; readonly onAnswer: (answer: PurchaseAnswer) => void; readonly claimAnnouncement: () => boolean }): ReactNode {
+export function PurchasePromptCard({ id, title, units, reminder, closed, t, onAnswer, claimAnnouncement }: { readonly id: string; readonly title: string; readonly units: number; readonly reminder: boolean; /** The list is closed and the guest holds nothing: the purchase cannot be recorded, so the only action is to acknowledge. */ readonly closed: boolean; readonly t: T; readonly onAnswer: (answer: PurchaseAnswer) => void; readonly claimAnnouncement: () => boolean }): ReactNode {
   // The question appears when the guest comes back: it takes focus ONCE per attempt (not each time the row remounts, e.g. when a filter changes: WCAG 3.2.2) so a screen reader says it.
   const ref = useRef<HTMLElement>(null);
   useEffect(() => { if (claimAnnouncement()) ref.current?.focus({ preventScroll: false }); }, [claimAnnouncement]);
   return (
     <section ref={ref} tabIndex={-1} className="gift-note gift-note--info gift-prompt" aria-labelledby={`gift-prompt-${id}-title`} data-testid={`gift-prompt-${id}`}>
       <h3 id={`gift-prompt-${id}-title`}>{units > 1 ? t('gifts.guest.prompt.titleUnits', { units, title }) : t('gifts.guest.prompt.title', { title })}</h3>
-      <p className="rsvp-hint">{t('gifts.guest.prompt.body')}</p>
-      {reminder ? <p className="rsvp-hint">{t('gifts.guest.prompt.reminder')}</p> : null}
+      <p className="rsvp-hint">{t(closed ? 'gifts.guest.prompt.bodyClosed' : 'gifts.guest.prompt.body')}</p>
+      {reminder && !closed ? <p className="rsvp-hint">{t('gifts.guest.prompt.reminder')}</p> : null}
       <div className="gift-actions">
-        <button type="button" className="rsvp-button" aria-label={t('gifts.guest.prompt.yesFor', { title })} onClick={() => onAnswer('yes')} data-testid={`prompt-yes-${id}`}>{t('gifts.guest.prompt.yes')}</button>
-        <button type="button" className="rsvp-button rsvp-button--secondary" aria-label={t('gifts.guest.prompt.laterFor', { title })} onClick={() => onAnswer('later')} data-testid={`prompt-later-${id}`}>{t('gifts.guest.prompt.later')}</button>
-        <button type="button" className="rsvp-button rsvp-button--secondary" aria-label={t('gifts.guest.prompt.noFor', { title })} onClick={() => onAnswer('no')} data-testid={`prompt-no-${id}`}>{t('gifts.guest.prompt.no')}</button>
+        {closed ? (
+          <button type="button" className="rsvp-button" aria-label={t('gifts.guest.prompt.ackFor', { title })} onClick={() => onAnswer('no')} data-testid={`prompt-ack-${id}`}>{t('gifts.guest.prompt.ack')}</button>
+        ) : (
+          <>
+            <button type="button" className="rsvp-button" aria-label={t('gifts.guest.prompt.yesFor', { title })} onClick={() => onAnswer('yes')} data-testid={`prompt-yes-${id}`}>{t('gifts.guest.prompt.yes')}</button>
+            <button type="button" className="rsvp-button rsvp-button--secondary" aria-label={t('gifts.guest.prompt.laterFor', { title })} onClick={() => onAnswer('later')} data-testid={`prompt-later-${id}`}>{t('gifts.guest.prompt.later')}</button>
+            <button type="button" className="rsvp-button rsvp-button--secondary" aria-label={t('gifts.guest.prompt.noFor', { title })} onClick={() => onAnswer('no')} data-testid={`prompt-no-${id}`}>{t('gifts.guest.prompt.no')}</button>
+          </>
+        )}
       </div>
     </section>
   );
