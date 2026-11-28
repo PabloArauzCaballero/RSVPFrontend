@@ -7,6 +7,7 @@ import { GuestGiftsScreen } from "../src/guest/gifts-screen";
 import { giftRoute } from "../src/guest/gift-route";
 import { clearGiftCredential, readGiftCredential, saveGiftCredential } from "../src/guest/gift-credential";
 import { GUEST, HttpFailure, fakeClient, renderApp, type Handler } from "./support";
+import { resetSecureStore } from "./stubs/expo-secure-store";
 
 /** The shared fake credential of the contract mock (a 43-character base64url string, as the backend issues). */
 const TOKEN = MOCK_VALID_TOKEN;
@@ -34,7 +35,8 @@ function show(props: { readonly token?: string; readonly onlyItemId?: string } =
   return { calls, onNavigate };
 }
 
-beforeEach(() => { clearGiftCredential("ana-luis"); });
+// R5: a tap on a provider button leaves a «¿Compraste?» attempt in the secure store; it must not reach the next test.
+beforeEach(() => { clearGiftCredential("ana-luis"); resetSecureStore(); });
 
 describe("Espejo web · A14 the gift list at /c/{slug}/regalos in the app", () => {
   it("one segment tells a gift id (detail) from a personal-link credential", () => {
@@ -81,13 +83,37 @@ describe("Espejo web · A14 the gift list at /c/{slug}/regalos in the app", () =
     const launch = vi.spyOn(Linking, "openURL").mockResolvedValue(undefined);
     try {
       show({ token: TOKEN }, { [`GET /listings/${LISTING}`]: () => ({ id: LISTING, destinationTypes: ["WHATSAPP"] }) });
-      fireEvent.click(await screen.findByRole("button", { name: "Consultar por WhatsApp" }));
+      fireEvent.click(await screen.findByRole("button", { name: "Pedir por WhatsApp" }));
       expect(screen.queryByTestId(`partner-${TORTA}`)).toBeNull();
       expect(screen.getByTestId(`reserve-${TORTA}`)).toBeTruthy();
       expect(launch.mock.calls).toHaveLength(1);
       const target = new URL(launch.mock.calls[0]![0]);
       expect(target.pathname).toBe(`/r/${LISTING}`);
-      expect(Object.fromEntries(target.searchParams)).toEqual({ destination: "WHATSAPP", surface: "GIFT_LIST", celebrationId: "c-1" });
+      expect(Object.fromEntries(target.searchParams)).toEqual({ destination: "WHATSAPP", surface: "GIFT_LIST", celebrationId: "c-1", celebrationSlug: "ana-luis", giftItemId: TORTA, quantity: "1", locale: "es-BO" });
+    } finally {
+      launch.mockRestore();
+    }
+  });
+
+  it("R6a: a list read that carries leadContext sends it as ctx on the redirector link (without it, the link keeps the exact query asserted above)", async () => {
+    const launch = vi.spyOn(Linking, "openURL").mockResolvedValue(undefined);
+    try {
+      const withCtx = (leadContext: string | null) => ({ "GET /gifts/celebrations/c-1/items": () => ({ items: ITEMS, partnerPriorityEnabled: true, leadContext }), [`GET /listings/${LISTING}`]: () => ({ id: LISTING, destinationTypes: ["WHATSAPP"] }) });
+      show({ token: TOKEN }, withCtx("lead-context-de-prueba"));
+      fireEvent.click(await screen.findByRole("button", { name: "Pedir por WhatsApp" }));
+      expect(new URL(launch.mock.calls[0]![0]).searchParams.get("ctx")).toBe("lead-context-de-prueba");
+    } finally {
+      launch.mockRestore();
+    }
+  });
+
+  it("R6a: the guest's read goes with the link credential and Gift answers leadContext null, so the link carries no ctx", async () => {
+    const launch = vi.spyOn(Linking, "openURL").mockResolvedValue(undefined);
+    try {
+      const { calls } = show({ token: TOKEN }, { "GET /gifts/celebrations/c-1/items": () => ({ items: ITEMS, partnerPriorityEnabled: true, leadContext: null }), [`GET /listings/${LISTING}`]: () => ({ id: LISTING, destinationTypes: ["WHATSAPP"] }) });
+      fireEvent.click(await screen.findByRole("button", { name: "Pedir por WhatsApp" }));
+      expect(calls.find((call) => call.path === "/gifts/celebrations/c-1/items")?.headers.get("authorization")).toBe(`Bearer ${TOKEN}`);
+      expect(new URL(launch.mock.calls[0]![0]).searchParams.has("ctx")).toBe(false);
     } finally {
       launch.mockRestore();
     }

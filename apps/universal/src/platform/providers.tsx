@@ -8,6 +8,7 @@ import { createI18n, resolveLocale, supportedLocales, type AppLocale, type Trans
 import { UiProvider, stringsFor } from "@rsvp/ui";
 import { AuthProvider, StaticAuthProvider, useAuth } from "../auth/auth-context";
 import { SignOutProvider } from "../auth/sign-out";
+import { useAppStateFocus } from "./app-focus";
 import { PushLifecycle } from "../push/lifecycle";
 import { deviceLanguages } from "./device-languages";
 import { readLocalePreference, writeLocalePreference } from "./preferences";
@@ -96,6 +97,7 @@ const QUERY_DEFAULTS = { queries: { retry: 1 } } as const;
  */
 function SessionQueryProvider({ queryClient, children }: PropsWithChildren<{ readonly queryClient?: QueryClient }>): ReactNode {
   const userId = useAuth().claims.userId;
+  useAppStateFocus();
   const [cache] = useState(() => createSessionQueryCache({ client: queryClient, defaults: QUERY_DEFAULTS, userId }));
   cache.switchUser(userId);
   return <QueryClientProvider client={cache.client}>{children}</QueryClientProvider>;

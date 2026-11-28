@@ -7,7 +7,12 @@ export const directoryEsBO = {
   citiesHeading: "O busca por ciudad",
   category: {
     VENUE: "Salones de eventos", CATERING: "Catering", PHOTOGRAPHY: "Fotografía", MUSIC: "Música", DECORATION: "Decoración", MAKEUP: "Maquillaje",
-    TRANSPORT: "Transporte", INVITATIONS: "Invitaciones", WEDDING_PLANNER: "Wedding planners", ACCOMMODATION: "Hospedaje", HONEYMOON: "Luna de miel"
+    TRANSPORT: "Transporte", INVITATIONS: "Invitaciones", WEDDING_PLANNER: "Wedding planners", ACCOMMODATION: "Hospedaje", HONEYMOON: "Luna de miel",
+    PASTRY: "Pastelería", KITCHENWARE: "Utensilios de cocina", CLOTHING: "Ropa y accesorios", TABLEWARE: "Vajilla y cristalería", SMALL_APPLIANCES: "Electrodomésticos",
+    HOME_DECOR: "Decoración del hogar", BED_BATH: "Blancos: cama y baño", FURNITURE: "Muebles", FLOWERS: "Flores y arreglos", GIFT_BASKETS: "Desayunos y canastas sorpresa",
+    WINES_GOURMET: "Vinos y gourmet", JEWELRY: "Joyería y relojes", BEAUTY: "Belleza y cuidado personal", BABY: "Bebé y maternidad", TOYS: "Juguetes y didácticos",
+    RELIGIOUS: "Artículos religiosos", ELECTRONICS: "Tecnología", BOOKS_STATIONERY: "Libros y papelería", SPORTS_OUTDOOR: "Deporte y aire libre", PERSONALIZED: "Personalizados y corporativos",
+    GIFT_CARDS: "Tarjetas de regalo"
   },
   categoryTitle: "{{category}} en Bolivia",
   categoryDescription: "Compara {{category}} verificados para tu boda, quinceaños o evento, y pide cotización sin compromiso.",

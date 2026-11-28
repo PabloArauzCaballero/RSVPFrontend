@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ApiClient } from "@rsvp/api-client";
 import { providerService } from "./api.js";
 import type { UpdateProviderInput, DocumentInput, MicrositeInput, Availability, BookingRequestInput, BookingStatus, CreateListingInput, LeadConfig, QuoteInput, RegisterProviderInput } from "./types.js";
@@ -9,6 +9,7 @@ import { providerSearchPath, type DirectoryQuery } from "./directory.js";
 import { queryKeys } from "../keys.js";
 import { invalidation } from "../invalidation.js";
 import { providerApi } from "../domains.js";
+import type { LeadFilters } from "./lead-report.js";
 
 const refetchAll = (queryClient: ReturnType<typeof useQueryClient>, keys: readonly (readonly unknown[])[]) => Promise.all(keys.map((queryKey) => queryClient.invalidateQueries({ queryKey })));
 
@@ -123,10 +124,12 @@ export function useLeads(client: ApiClient, providerId: string | undefined) {
 }
 export const LEADS_PAGE_SIZE = 50;
 /** Leads in pages of 50 (`limit`/`offset`, the server allows up to 200); `total` tells whether there is another page. */
-export function useInfiniteLeads(client: ApiClient, providerId: string | undefined) {
+export function useInfiniteLeads(client: ApiClient, providerId: string | undefined, filters: LeadFilters = {}) {
   return useInfiniteQuery({
-    queryKey: P(providerId ?? "", "leads", "pages"), initialPageParam: 0, ...live, enabled: Boolean(providerId),
-    queryFn: ({ pageParam }) => providerService(client).leads(providerId ?? "", LEADS_PAGE_SIZE, pageParam),
+    queryKey: P(providerId ?? "", "leads", "pages", filters.month ?? "", filters.listingId ?? "", filters.destination ?? "", filters.locale ?? ""), initialPageParam: 0, ...live, enabled: Boolean(providerId),
+    /** A filter change keeps the previous list on screen until the new one arrives, so the filters never lose focus behind a skeleton. */
+    placeholderData: keepPreviousData,
+    queryFn: ({ pageParam }) => providerService(client).leads(providerId ?? "", LEADS_PAGE_SIZE, pageParam, filters),
     getNextPageParam: (last, pages) => { const loaded = pages.reduce((sum, page) => sum + page.items.length, 0); return last.items.length === LEADS_PAGE_SIZE && (last.total === undefined || loaded < last.total) ? loaded : undefined; }
   });
 }
@@ -219,4 +222,6 @@ export function useDirectorySearch<TPage>(client: ApiClient, query: DirectoryQue
 }
 export * from "./partner-requests.js";
 export * from "./product-sheet.js";
+export * from "./lead-report.js";
+export * from "./recommendations.js";
 export * from "./product-sheet-hooks.js";

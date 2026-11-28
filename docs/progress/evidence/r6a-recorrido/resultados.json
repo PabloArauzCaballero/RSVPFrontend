@@ -1,0 +1,232 @@
+{
+  "fecha": "2026-11-27T03:09:00.250Z",
+  "navegador": "Chromium 158.0.8127.36",
+  "ttlCtxSegundos": 60,
+  "vistaInvitado": {
+    "status": 401
+  },
+  "resultados": [
+    {
+      "caso": 5,
+      "nombre": "el href del DOM de la página de regalos no contiene ctx (el miembro tiene ctx en la lectura)",
+      "ok": true,
+      "observado": {
+        "enlaces": [
+          "/r/<producto>?destination=OFFICIAL_SITE&surface=GIFT_LIST&celebrationId=<celebracion>"
+        ],
+        "htmlContieneCtx": false
+      }
+    },
+    {
+      "caso": 1,
+      "nombre": "clic real del anfitrión (con ctx) en /r/{productoId}: redirige 302 al destino y el lead queda inválido HOST_OR_PLANNER, no cobrable",
+      "ok": true,
+      "observado": {
+        "status": 302,
+        "ctxEnLaPeticionDelNavegador": true,
+        "ctxEnLocation": false,
+        "navegoAlDestino": [
+          "https://tienda-recorrido.example/p99"
+        ],
+        "lead": {
+          "valid": false,
+          "billable": false,
+          "invalidReason": "HOST_OR_PLANNER",
+          "surface": "GIFT_LIST"
+        }
+      }
+    },
+    {
+      "caso": 5,
+      "nombre": "la cabecera Location del 302 y la URL del destino no llevan ctx",
+      "ok": true,
+      "observado": {
+        "location": "https://tienda-recorrido.example/p99?utm_source=rsvp&utm_medium=referral&correlationId=<id>"
+      }
+    },
+    {
+      "caso": "5-href",
+      "nombre": "el href del enlace no cambió tras el clic (nunca llevó ctx)",
+      "ok": true,
+      "observado": {
+        "href": "/r/<producto>?destination=OFFICIAL_SITE&surface=GIFT_LIST&celebrationId=<celebracion>"
+      }
+    },
+    {
+      "caso": 1,
+      "nombre": "ctx real de miembro en un servicio (navegación directa a /r): 302, lead HOST_OR_PLANNER",
+      "ok": true,
+      "observado": {
+        "status": 302,
+        "cacheControl": "no-store",
+        "destinoNoAlcanzable": "page.goto: net::ERR_TUNNEL_CONNECTION_FAILED",
+        "lead": {
+          "valid": false,
+          "billable": false,
+          "invalidReason": "HOST_OR_PLANNER",
+          "surface": "GIFT_LIST"
+        }
+      }
+    },
+    {
+      "caso": "control",
+      "nombre": "sin ctx, superficie GIFT_LIST: 302 y lead válido y cobrable (línea base)",
+      "ok": true,
+      "observado": {
+        "status": 302,
+        "lead": {
+          "valid": true,
+          "billable": true,
+          "invalidReason": null,
+          "surface": "GIFT_LIST"
+        }
+      }
+    },
+    {
+      "caso": 2,
+      "nombre": "ctx falso (firmado con otra clave): redirige igual y el lead se evalúa como visitante normal (válido)",
+      "ok": true,
+      "observado": {
+        "status": 302,
+        "lead": {
+          "valid": true,
+          "billable": true,
+          "invalidReason": null,
+          "surface": "GIFT_LIST"
+        }
+      }
+    },
+    {
+      "caso": 2,
+      "nombre": "ctx alterado (firma modificada): redirige igual y el lead se evalúa como visitante normal (válido)",
+      "ok": true,
+      "observado": {
+        "status": 302,
+        "lead": {
+          "valid": true,
+          "billable": true,
+          "invalidReason": null,
+          "surface": "GIFT_LIST"
+        }
+      }
+    },
+    {
+      "caso": 3,
+      "nombre": "surface=PREVIEW sin token: redirige y se evalúa como un clic normal (válido, cobrable), como dicen los comentarios del FE (M-2)",
+      "ok": false,
+      "nota": "DIVERGENCIA CONOCIDA, no un fallo del backend. Esta salida es de la ejecución original (BE d3b4b50e) y la expectativa de entonces era errónea: el contrato provider-catalog 3.8.0 registra PREVIEW como lead inválido con motivo PREVIEW, que es lo observado. Los comentarios del FE y la expectativa de recorrido-real.mjs se corrigieron después; este caso no se volvió a ejecutar porque el entorno actual no tiene Docker. Restringir PREVIEW al ctx del portal llega con BE R6b (#166).",
+      "observado": {
+        "status": 302,
+        "lead": {
+          "valid": false,
+          "billable": false,
+          "invalidReason": "PREVIEW",
+          "surface": "PREVIEW"
+        }
+      }
+    },
+    {
+      "caso": 4,
+      "nombre": "ctx de 520 caracteres: el FE lo descarta y redirige; el lead se evalúa normal (válido)",
+      "ok": true,
+      "observado": {
+        "fe": {
+          "status": 302,
+          "lead": {
+            "valid": true,
+            "billable": true,
+            "invalidReason": null,
+            "surface": "GIFT_LIST"
+          }
+        },
+        "contraste": "la misma petición directa al backend (sin el filtro del FE) responde 422 INVALID_LEAD_CONTEXT"
+      }
+    },
+    {
+      "caso": 4,
+      "nombre": "ctx de exactamente 512 caracteres (frontera, no verificable): redirige y el lead es normal",
+      "ok": true,
+      "observado": {
+        "status": 302,
+        "lead": {
+          "valid": true,
+          "billable": true,
+          "invalidReason": null,
+          "surface": "GIFT_LIST"
+        }
+      }
+    },
+    {
+      "caso": 5,
+      "nombre": "página de error 404 (listing inexistente): estado 404, sin ctx en la URL visible ni en el HTML",
+      "ok": true,
+      "observado": {
+        "status": 404,
+        "urlTrasCarga": "http://localhost:3100/r/<uuid>?surface=GIFT_LIST&celebrationId=<celebracion>",
+        "cacheControl": "no-store"
+      }
+    },
+    {
+      "caso": 5,
+      "nombre": "página de error 400 (celebrationId inválido, backend 422): estado 400, sin ctx en la URL visible ni en el HTML",
+      "ok": true,
+      "observado": {
+        "status": 400,
+        "urlTrasCarga": "http://localhost:3100/r/<uuid>?surface=GIFT_LIST&celebrationId=no-es-uuid",
+        "cacheControl": "no-store"
+      }
+    },
+    {
+      "caso": 2,
+      "nombre": "ctx real vencido (emitido hace 126 s, TTL 60 s): redirige igual y el lead se evalúa normal (válido)",
+      "ok": true,
+      "observado": {
+        "status": 302,
+        "lead": {
+          "valid": true,
+          "billable": true,
+          "invalidReason": null,
+          "surface": "GIFT_LIST"
+        }
+      }
+    },
+    {
+      "caso": 6,
+      "nombre": "los logs de los servicios (docker logs) y del sitio no muestran el ctx, contraseñas ni tokens de acceso",
+      "ok": true,
+      "observado": "sin coincidencias"
+    },
+    {
+      "caso": "6-pii",
+      "nombre": "sin correos ni nombres de prueba en los logs durante el recorrido de /r (se excluyen los detalles de clave duplicada de Postgres, ver info)",
+      "ok": true,
+      "observado": {
+        "coincidencias": "ninguna",
+        "infoClaveDuplicadaPostgres": {
+          "walk6a-postgres-1": 8
+        }
+      }
+    },
+    {
+      "caso": "6-fuentes",
+      "nombre": "contenedores revisados",
+      "ok": true,
+      "observado": [
+        "walk6a-identity-service-1",
+        "walk6a-guest-rsvp-service-1",
+        "walk6a-provider-catalog-service-1",
+        "walk6a-provider-marketplace-workers-1",
+        "walk6a-gift-list-service-1",
+        "walk6a-gift-list-workers-1",
+        "walk6a-provider-migrate-1",
+        "walk6a-gift-migrate-1",
+        "walk6a-celebration-site-service-1",
+        "walk6a-postgres-1",
+        "walk6a-redis-1",
+        "walk6a-rabbitmq-1",
+        "walk6a-kong-1",
+        "seo-web (next start)"
+      ]
+    }
+  ]
+}

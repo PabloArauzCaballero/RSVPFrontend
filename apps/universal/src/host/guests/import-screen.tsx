@@ -82,7 +82,7 @@ function ImportBody({ celebrationId, onNavigate }: { readonly celebrationId: str
         </View>
       )}
       {run.data ? null : (
-        <StickyActions>
+        <StickyActions label={t("common.actions")}>
           <ActionButton label={run.isPending ? t("guests.import.running") : t("guests.import.run")} busy={run.isPending} onPress={submit} testID="run-import" />
           <TextAction label={t("guests.form.back")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.guests, celebrationId))} />
         </StickyActions>

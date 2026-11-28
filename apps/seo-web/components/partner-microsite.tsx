@@ -6,8 +6,8 @@ import type { Partner } from "../lib/partner";
 import { CheckMark } from "./brand/check-mark";
 import { OfflineArt } from "./brand/illustrations";
 import { Monogram } from "./brand/monogram";
-import { zoneName } from "@rsvp/query-hooks";
-import { PROVIDER_CATEGORIES } from "../lib/providers";
+import { categoryLabel, FACT_LEAD_KEY, offerKind, zoneName, type OfferCategory } from "@rsvp/query-hooks";
+import { categoryNamesOf, PROVIDER_CATEGORIES } from "../lib/providers";
 import { Breadcrumbs } from "./provider-directory";
 import { OriginLinks } from "./marketplace/origin-links";
 
@@ -23,8 +23,8 @@ function money(amountMinor: number, currency: string, locale: string): string {
  * B5 · Partner microsite. Order is the order of a decision: who they are and the one action (ask for a quote), what they offer
  * and for how much, where they work, and last the contact buttons after the platform disclaimer (REQ-F25-05).
  */
-export function PartnerMicrosite({ partner, t, locale }: { readonly partner: Partner; readonly t: Translate; readonly locale: string }) {
-  const category = t(`directory.category.${partner.category}`);
+export function PartnerMicrosite({ partner, t, locale, categories = [] }: { readonly partner: Partner; readonly t: Translate; readonly locale: string; /** What the catalogue publishes (`loadCategories`). */ readonly categories?: readonly OfferCategory[] }) {
+  const category = categoryLabel(partner.category, t, categoryNamesOf(categories));
   const base = `/p/${encodeURIComponent(partner.slug)}`;
   const categorySlug = PROVIDER_CATEGORIES.find((entry) => entry.code === partner.category)?.slug;
   const facts = { name: partner.name, category: category.toLocaleLowerCase(locale), city: partner.city };
@@ -88,7 +88,7 @@ export function PartnerMicrosite({ partner, t, locale }: { readonly partner: Par
         <div className="partner-twin">
           <section aria-labelledby="partner-about" className="partner-section">
             <h2 id="partner-about">{t("partner.about")}</h2>
-            <p>{partner.listings.length ? t("partner.factLead", { ...facts, count: partner.listings.length }) : t("partner.factLeadNone", facts)}</p>
+            <p>{partner.listings.length ? t(FACT_LEAD_KEY[offerKind(partner.listings, categories)], { ...facts, count: partner.listings.length }) : t("partner.factLeadNone", facts)}</p>
             <p>{partner.summary ?? t("partner.noSummary")}</p>
           </section>
 

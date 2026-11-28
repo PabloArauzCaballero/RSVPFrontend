@@ -62,7 +62,7 @@ export function providerService(client: ApiClient) {
     categories: (locale: string) => client.request<{ items: readonly OfferCategory[] }>(`/providers/categories${qs({ locale })}`, { auth: false }),
     createListing: (providerId: string, body: CreateListingInput, locale: string) => client.request<OwnListing, CreateListingInput>(`${base(providerId)}/listings${qs({ locale })}`, { method: "POST", body }),
     publishListing: (providerId: string, listingId: string, locale: string) => client.request<OwnListing>(`${base(providerId)}/listings/${listingId}/publish${qs({ locale })}`, { method: "POST" }),
-    leads: (providerId: string, limit = 50, offset = 0) => client.request<{ items: readonly Lead[]; total?: number }>(`${base(providerId)}/leads${qs({ limit, offset })}`),
+    leads: (providerId: string, limit = 50, offset = 0, filters: { readonly month?: string; readonly listingId?: string; readonly destination?: string; readonly locale?: string } = {}) => client.request<{ items: readonly Lead[]; total?: number }>(`${base(providerId)}/leads${qs({ limit, offset, month: filters.month, listingId: filters.listingId, destination: filters.destination, locale: filters.locale })}`),
     metrics: (providerId: string, from: string, to: string, groupBy?: string) => client.request<Metrics>(`${base(providerId)}/metrics${qs({ from, to, groupBy })}`),
     availability: (providerId: string) => client.request<Availability>(`${base(providerId)}/availability`),
     setAvailability: (providerId: string, body: Omit<Availability, "timeZone" | "providerId" | "version">) => client.request<Availability, typeof body>(`${base(providerId)}/availability`, { method: "PUT", body }),
