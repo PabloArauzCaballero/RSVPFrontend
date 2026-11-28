@@ -1,8 +1,10 @@
 import type { ReactNode } from "react";
-import { GIFTS_CTA_KEYS, navigationHref, partnerHref, shownVenues, type CelebrationContent, type GalleryImage, type GiftsStatus } from "../content.js";
+import { GIFTS_CTA_KEYS, partnerHref, shownVenues, venueLines, type CelebrationContent, type GalleryImage, type GiftsStatus } from "../content.js";
 import { formatTime, zoneLabel } from "../format.js";
 import { ActionIcon } from "../icon.js";
 import type { SectionId, Translate } from "../types.js";
+import { LocationView } from "../map/location-view.js";
+import { locationLabels } from "../map/labels.js";
 import { GalleryView } from "./gallery-view.js";
 
 /** What every section receives. Sections never fetch and never hold copy of their own. */
@@ -26,6 +28,8 @@ export interface SectionProps {
   readonly giftsHref: string;
   /** What the gift list holds; until the public view says it, OPEN. Only the button's label depends on it. */
   readonly giftsStatus?: GiftsStatus;
+  /** Backend `GET /providers/geo/map-config`, so the tile server can change without publishing; absent: OpenStreetMap's own. */
+  readonly mapConfigUrl?: string;
 }
 
 type Section = (props: SectionProps) => ReactNode;
@@ -36,13 +40,14 @@ function Story({ content }: SectionProps): ReactNode {
 
 function Schedule({ content, timeZone, locale, t }: SectionProps): ReactNode {
   const first = content.schedule[0];
+  const placeOf = (key: string | undefined): string | undefined => (key ? shownVenues(content).find((venue) => venue.key === key)?.name : undefined);
   return (
     <>
       <ol className="celebration-schedule">
         {content.schedule.map((item) => (
           <li key={item.id}>
             <time dateTime={item.startsAt}>{formatTime(item.startsAt, timeZone, locale)}</time>
-            <div><strong>{item.title}</strong>{item.description ? <p>{item.description}</p> : null}</div>
+            <div><strong>{item.title}</strong>{item.description ? <p>{item.description}</p> : null}{placeOf(item.venueKey) ? <p className="celebration-schedule-place">{t("celebration.schedule.at", { place: placeOf(item.venueKey) as string })}</p> : null}</div>
           </li>
         ))}
       </ol>
@@ -51,7 +56,7 @@ function Schedule({ content, timeZone, locale, t }: SectionProps): ReactNode {
   );
 }
 
-function Venues({ content, t }: SectionProps): ReactNode {
+function Venues({ content, t, mapConfigUrl }: SectionProps): ReactNode {
   const venues = shownVenues(content);
   return (
     <ul className="celebration-venues">
@@ -59,8 +64,7 @@ function Venues({ content, t }: SectionProps): ReactNode {
         <li key={venue.key}>
           <p className="celebration-eyebrow">{t(`celebration.venues.kind.${venue.kind}`)}</p>
           <strong>{venue.name}</strong>
-          {venue.address ? <p>{venue.address}</p> : null}
-          <a href={navigationHref(venue)} target="_blank" rel="noopener noreferrer" data-link-kind="navigation">{t("celebration.venues.howToGetThere")}</a>
+          <LocationView name={venue.name} lines={venueLines(venue)} location={venue.location} labels={locationLabels(t, venue.name)} mapConfigUrl={mapConfigUrl} />
         </li>
       ))}
     </ul>

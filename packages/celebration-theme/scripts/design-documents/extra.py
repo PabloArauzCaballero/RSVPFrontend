@@ -29,8 +29,8 @@ rumbo = dict(
                   el("el-brujula", "art-brujula", 0, 1, 3, 8, rotation=-8, animation=anim("scale", 800, 900), padding=box(0, 56)),
                   el("el-pin", "art-pin", 3, 1, 1, 8, animation=anim("fade", 1200, 600)),
                   el("el-regla", "art-regla", 0, 2, 4, 2, animation=anim("draw", 1400, 1000))],
-    # En el teléfono los nombres van primero (PL-130-M2: con foto, el titular termina sobre el dock); en escritorio la brújula es el dibujo héroe y ancla la portada (PL-FE143-V4).
-    cover_desktop=[el("el-brujula", "art-brujula", 0, 0, 6, 18, rotation=-8, animation=anim("scale", 200, 900), hero=64, padding=box(24, 24, 0, 24)),
+    # En el teléfono los nombres van primero (PL-130-M2: con foto, el titular termina sobre el dock); en escritorio la brújula es el dibujo héroe y ancla la portada (PL-FE143-V4). Sin `hero=`: una fila `hero` de 44 o 64 abarca más filas de las que crece el titular y deja un hueco de 300 a 450 px bajo la portada (PL-FE-V2-HUECOS); el dibujo ya se dimensiona por su ancho (6 de 12 columnas) y la fila crece con el titular.
+    cover_desktop=[el("el-brujula", "art-brujula", 0, 0, 6, 18, rotation=-8, animation=anim("scale", 200, 900), padding=box(24, 24, 0, 24)),
                    el("el-cover", "cover", 6, 0, 6, 18, animation=anim("rise", 700, 800), typography=dict(align="start", role="heading", size=72, lineHeight=1.04), padding=box(40), **LOG),
                    el("el-pin", "art-pin", 0, 1, 1, 8, animation=anim("fade", 1200, 600)),
                    el("el-regla", "art-regla", 1, 1, 11, 2, animation=anim("draw", 1400, 1000))],
@@ -51,7 +51,7 @@ mesa = dict(
                   el("el-copas", "art-copas", 1, 32, 2, 8, animation=anim("scale", 1400, 600), padding=box(0, 24))],
     cover_desktop=[el("el-cover", "cover", 2, 0, 8, 18, animation=anim("fade", 200, 800), typography=dict(align="center", role="heading", size=72, lineHeight=1.08), padding=box(40), **CLOTH),
                    el("el-copas", "art-copas", 10, 0, 2, 8, animation=anim("scale", 1400, 600)),
-                   el("el-mesa", "art-mesa", 0, 18, 12, 12, animation=anim("rise", 700, 900), padding=box(0, 160))],
+                   el("el-mesa", "art-mesa", 4, 18, 4, 12, animation=anim("rise", 700, 900), padding=box(0))],
     header=lambda s: drawing_head(s, 3, 2, 5) if s in ("venues", "dressCode", "rsvp") else None, sec_el=dict(typography=dict(align="center")))
 
 # ---- Despedida · 1 · Disco · la pista --------------------------------------------------------------------------------------------
@@ -69,7 +69,7 @@ disco = dict(
                   el("el-vinilo", "art-vinilo", 2, 1, 2, 8, rotation=10, animation=anim("scale", 1000, 800), padding=box(0, 16)),
                   el("el-popper", "art-popper", 2, 2, 2, 8, animation=anim("fade", 1500, 600))],
     cover_desktop=[el("el-cover", "cover", 0, 0, 7, 22, animation=anim("rise", 900, 800), typography=dict(align="center", role="heading", size=80, lineHeight=1.0, weight=700), padding=box(32), **STAGE),
-                   el("el-bola", "art-bola", 7, 0, 5, 22, animation=anim("fade", 200, 800), hero=44, padding=box(0, 24)),
+                   el("el-bola", "art-bola", 7, 0, 5, 22, animation=anim("fade", 200, 800), padding=box(0, 24)),
                    el("el-vinilo", "art-vinilo", 3, 1, 3, 12, rotation=10, animation=anim("scale", 500, 800)),
                    el("el-popper", "art-popper", 6, 1, 3, 10, animation=anim("fade", 1500, 600))],
     header=lambda s: drawing_head(s, 0, 1, 5) if s in ("schedule", "dressCode", "gifts", "rsvp") else None)
@@ -105,7 +105,7 @@ solitario = dict(
     cover_blocks=[art("art-solitario", "solitario"), art("art-botella", "botella")],
     cover_mobile=[el("el-cover", "cover", 0, 0, 4, 18, animation=anim("fade", 200, 900), typography=dict(align="center", role="heading", size=40, lineHeight=1.12, weight=400), padding=box(8, 24)),
                   el("el-solitario", "art-solitario", 1, 1, 2, 12, animation=anim("scale", 900, 1000), padding=box(0, 32))],
-    cover_desktop=[el("el-solitario", "art-solitario", 0, 0, 6, 20, animation=anim("scale", 200, 1000), hero=64, padding=box(24, 24, 0, 24)),
+    cover_desktop=[el("el-solitario", "art-solitario", 0, 0, 6, 20, animation=anim("scale", 200, 1000), padding=box(24, 24, 0, 24)),
                    el("el-cover", "cover", 6, 0, 6, 20, animation=anim("fade", 900, 900), typography=dict(align="start", role="heading", size=72, lineHeight=1.08, weight=400), padding=box(24, 0)),
                    el("el-botella", "art-botella", 8, 1, 2, 8, animation=anim("fade", 1500, 600))],
     header=lambda s: None, sec_el=dict(typography=dict(align="center")))

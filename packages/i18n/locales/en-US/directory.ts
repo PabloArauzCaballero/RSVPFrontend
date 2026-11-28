@@ -51,5 +51,19 @@ export const directoryEnUS: DeepStrings<typeof directoryEsBO> = {
   partnerCta: { title: "Do you run an events business?", body: "List your services on DOne. Tell us about your business and the team will contact you.", link: "Apply to become a partner" },
   trust: "“Verified” means the vendor has passed DOne’s verification. DOne does not provide or guarantee the service: you agree price, coverage and timing with the vendor.",
   notFound: { title: "This directory page does not exist", body: "The category or the city in the link may be misspelled. From the directory you can search by both." },
-  breadcrumb: { label: "Breadcrumb", home: "Home", directory: "Vendors" }
+  breadcrumb: { label: "Breadcrumb", home: "Home", directory: "Vendors" },
+  guestMarketplace: {
+    entry: "Vendors for your event", entryBody: "Venues, catering, photo and more, verified by DOne.", entryCta: "See vendors",
+    title: "Vendors for your event", metaTitle: "Vendors for your event · {{name}}", metaDescription: "Verified vendors to organize your own celebration.",
+    lead: "For your own celebration, whatever you need.",
+    trust: "DOne verifies vendors; it does not provide the service. A vendor may pay DOne for your contact.",
+    back: "Back to the invitation", categoriesLabel: "Vendor categories", all: "All", cityLabel: "City", allBolivia: "All of Bolivia", apply: "Show vendors",
+    resultCount_one: "{{count}} vendor", resultCount_other: "{{count}} vendors", resultsLabel: "Vendors",
+    sponsored: "Featured", verified: "Verified", viewProvider: "View vendor", priceFrom: "From {{price}}", offerOf: "{{offer}} · {{category}}",
+    previous: "Previous", next: "Next", pagination: "Vendor pages", pageOf: "Page {{page}} of {{pages}}",
+    empty: { title: "No vendors here yet", body: "Try another category or city.", seeAll: "See all of Bolivia", clear: "Clear filters" },
+    emptyCatalog: { title: "We are gathering vendors", body: "Come back soon: we will show you verified options for your event." },
+    error: { title: "We could not load the vendors", body: "Check your connection and try again.", retry: "Try again" },
+    notFound: { title: "This page is not available" }
+  }
 };

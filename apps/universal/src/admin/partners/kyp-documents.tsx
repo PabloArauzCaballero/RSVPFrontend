@@ -6,6 +6,7 @@ import { useDeleteIntakeDocument, useUploadIntakeDocument, useUploadPartnerDocum
 import { useApiClient, useT } from "../../platform/providers";
 import { pickDocument, type PickedImage } from "../../platform/pick-document";
 import { ActionButton, useStyles } from "../../host/ui";
+import { DocumentDrop } from "../../host/media/document-drop";
 import { documentProblem } from "../../provider/documents-screen";
 import { AdminErrorNotice } from "../shared";
 import { useFieldError, type Errors } from "./partner-steps";
@@ -50,7 +51,10 @@ function KypDocumentList({ required, documents, upload, uploading, uploadError, 
   const choose = async (kind: string): Promise<void> => {
     setProblem(null); setFailed(null);
     const file = await pickDocument();
-    if (!file) return;
+    if (file) send(kind, file);
+  };
+  const send = (kind: string, file: PickedImage): void => {
+    setProblem(null); setFailed(null);
     const issue = documentProblem(file);
     if (issue) { setProblem({ kind, key: issue }); return; }
     upload({ input: { kind: kind as KypDocumentKind, fileName: file.name.replace(/[\\/]/g, "_").slice(0, 160), contentType: file.type as KypDocumentInput["contentType"], sizeBytes: file.size }, put: putFile(file) }, { onError: () => setFailed(kind), onSuccess: () => setFailed(null) });
@@ -78,7 +82,9 @@ function KypDocumentList({ required, documents, upload, uploading, uploadError, 
               </View>
             ))}
             {message ? <Text role="alert" style={[styles.muted, { color: palette.danger }]}>{message}</Text> : null}
-            <ActionButton icon="upload" variant="secondary" label={t(accepted ? "admin.partners.documents.replace" : "admin.partners.documents.choose")} busy={busy} disabled={uploading !== null && !busy} onPress={() => { void choose(kind); }} testID={`kyp-doc-upload-${kind}`} />
+            <DocumentDrop onPick={(file) => send(kind, file)} disabled={uploading !== null} testID={`kyp-doc-drop-${kind}`}>
+              <ActionButton icon="upload" variant="secondary" label={t(accepted ? "admin.partners.documents.replace" : "admin.partners.documents.choose")} busy={busy} disabled={uploading !== null && !busy} onPress={() => { void choose(kind); }} testID={`kyp-doc-upload-${kind}`} />
+            </DocumentDrop>
           </View>
         );
       })}

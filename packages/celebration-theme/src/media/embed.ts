@@ -2,11 +2,11 @@
  *  it carries a provider and an id, or a link that is parsed here and rebuilt on a fixed host. Anything off the list
  *  yields `null` and the block simply does not render. The server checks the same list when the host saves the link
  *  (POST /media/embeds/resolve); this is the second lock, and the CSP `frame-src` of seo-web is the third. */
-export type EmbedProvider = "youtube" | "vimeo" | "spotify" | "google_maps";
-export type EmbedKind = "video" | "audio" | "map";
+export type EmbedProvider = "youtube" | "vimeo" | "spotify";
+export type EmbedKind = "video" | "audio";
 
 /** The only hosts an iframe of the invitation may load. `apps/seo-web/next.config.js` repeats this list in `frame-src`; a test keeps them equal. */
-export const FRAME_HOSTS = ["www.youtube-nocookie.com", "player.vimeo.com", "open.spotify.com", "www.google.com"] as const;
+export const FRAME_HOSTS = ["www.youtube-nocookie.com", "player.vimeo.com", "open.spotify.com"] as const;
 
 export interface Embed {
   readonly provider: EmbedProvider;
@@ -18,20 +18,18 @@ export interface Embed {
   readonly allow: string;
 }
 
-const LABELS: Readonly<Record<EmbedProvider, string>> = { youtube: "YouTube", vimeo: "Vimeo", spotify: "Spotify", google_maps: "Google Maps" };
-const KINDS: Readonly<Record<EmbedProvider, EmbedKind>> = { youtube: "video", vimeo: "video", spotify: "audio", google_maps: "map" };
+const LABELS: Readonly<Record<EmbedProvider, string>> = { youtube: "YouTube", vimeo: "Vimeo", spotify: "Spotify" };
+const KINDS: Readonly<Record<EmbedProvider, EmbedKind>> = { youtube: "video", vimeo: "video", spotify: "audio" };
 const SANDBOX = "allow-scripts allow-same-origin allow-presentation";
 const ALLOW: Readonly<Record<EmbedProvider, string>> = {
-  youtube: "encrypted-media; picture-in-picture; fullscreen", vimeo: "picture-in-picture; fullscreen", spotify: "encrypted-media", google_maps: ""
+  youtube: "encrypted-media; picture-in-picture; fullscreen", vimeo: "picture-in-picture; fullscreen", spotify: "encrypted-media"
 };
 
 const YOUTUBE_ID = /^[A-Za-z0-9_-]{11}$/;
 const VIMEO_ID = /^\d{5,12}$/;
 const SPOTIFY_REF = /^(track|album|playlist|episode|show|artist)\/[A-Za-z0-9]{10,64}$/;
 const SPOTIFY_PATH = /^\/(?:intl-[a-z]{2}(?:-[a-z]{2})?\/)?(track|album|playlist|episode|show|artist)\/([A-Za-z0-9]{10,64})\/?$/;
-const PLACE = /^[^<>"'`\\{}|^]{1,200}$/u;
 /** Control characters, space and anything past ASCII: none belongs in a link the guest's browser will follow. */
-const hasControl = (text: string): boolean => [...text].some((char) => (char.codePointAt(0) ?? 0) < 0x20);
 const hasUnsafeCharacter = (text: string): boolean => [...text].some((char) => (char.codePointAt(0) ?? 0) <= 0x20 || (char.codePointAt(0) ?? 0) >= 0x7f);
 const YOUTUBE_HOSTS = new Set(["youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com", "youtube-nocookie.com", "www.youtube-nocookie.com", "youtu.be"]);
 const MAX_LINK = 300;
@@ -89,19 +87,12 @@ export function spotifyEmbed(linkOrRef: string): Embed | null {
   return ref ? make("spotify", `https://open.spotify.com/embed/${ref}`) : null;
 }
 
-/** The map of a venue: `query` is its name and address, or "lat,lng". Loaded only when the guest taps. */
-export function mapEmbed(query: string): Embed | null {
-  const place = query.trim();
-  return !hasControl(place) && PLACE.test(place) ? make("google_maps", `https://www.google.com/maps?q=${encodeURIComponent(place)}&output=embed`) : null;
-}
-
 /** Block config of the design document → embed. Any shape it does not know is `null`. */
-export function embedFromConfig(type: "video" | "music" | "map", config: Readonly<Record<string, unknown>>, venueQuery?: string): Embed | null {
+export function embedFromConfig(type: "video" | "music", config: Readonly<Record<string, unknown>>): Embed | null {
   const text = (key: string): string => (typeof config[key] === "string" ? (config[key] as string) : "");
   let embed: Embed | null = null;
   if (type === "video") embed = config["provider"] === "youtube" ? youtubeEmbed(text("videoId")) : config["provider"] === "vimeo" ? vimeoEmbed(text("videoId")) : null;
-  else if (type === "music") embed = config["source"] === "youtube" ? youtubeFromLink(text("ref")) : config["source"] === "spotify" ? spotifyEmbed(text("ref")) : null;
-  else embed = venueQuery ? mapEmbed(venueQuery) : null;
+  else embed = config["source"] === "youtube" ? youtubeFromLink(text("ref")) : config["source"] === "spotify" ? spotifyEmbed(text("ref")) : null;
   return embed && isAllowedEmbedUrl(embed.url) ? embed : null;
 }
 

@@ -1,7 +1,7 @@
 import { Fragment, type CSSProperties, type ReactNode } from "react";
 import { artPalette, artVariables } from "../art/palette.js";
 import { drawingById, InvitationArt, ornamentSetById, OrnamentCorner, OrnamentFrame, OrnamentSeparator } from "../art/index.js";
-import { daysUntil, giftsPath, hasSectionContent, isMusicHidden, partnerHref, readContent, SECTION_PATHS, sectionTitleKey, type CelebrationContent, type GalleryImage, type PublicCelebrationView } from "../content.js";
+import { daysUntil, giftsPath, hasSectionContent, isMusicHidden, isPhotoImage, partnerHref, readContent, SECTION_PATHS, sectionTitleKey, shownVenues, venueLines, type CelebrationContent, type GalleryImage, type PublicCelebrationView } from "../content.js";
 import { Dock } from "../dock.js";
 import { Flourish } from "../flourish.js";
 import { formatDate } from "../format.js";
@@ -9,7 +9,9 @@ import type { CelebrationRendererProps } from "../renderer.js";
 import { SectionNav } from "../section-nav.js";
 import { GiftsAction, RsvpAction, SECTIONS } from "../sections/index.js";
 import { AudioPlayer, EmbedFacade, MediaBackdrop, MediaImage } from "../media/components.js";
-import { embedFromConfig, mapEmbed } from "../media/embed.js";
+import { embedFromConfig } from "../media/embed.js";
+import { LocationView } from "../map/location-view.js";
+import { locationLabels } from "../map/labels.js";
 import { clampScrim, hasImage, type PublicMedia } from "../media/variants.js";
 import { layoutOf, themeVariables } from "../theme.js";
 import type { CelebrationTheme, SectionId, Translate } from "../types.js";
@@ -58,8 +60,6 @@ const ROLE_VAR: Readonly<Record<PaletteRole, string>> = {
 const role = (value: PaletteRole | undefined): string | undefined => (value && Object.hasOwn(ROLE_VAR, value) ? ROLE_VAR[value] : undefined);
 const FONT_VAR = { heading: "var(--celebration-heading-font)", body: "var(--celebration-body-font)", monogram: "var(--celebration-monogram-font)" } as const;
 const BIG_TEXT = 40;
-const PHOTO_PURPOSES: readonly (string | undefined)[] = [undefined, "gallery", "cover"];
-const isPhoto = (item: GalleryImage): boolean => PHOTO_PURPOSES.includes(item.purpose);
 /** A public file as the media components read it. */
 const asMedia = (item: GalleryImage): PublicMedia => ({ id: item.id, width: item.width, height: item.height, variants: item.variants });
 const COVER_SIZES = "(min-width: 56.25rem) 40rem, 100vw";
@@ -182,7 +182,7 @@ function BlockBody({ block, element, context }: { readonly block: DesignBlock; r
   const draw = element.animation?.entrance === "draw" || settings["drawOnEnter"] === true;
   const sectionProps = {
     content, gallery, timeZone: view.timeZone, locale: view.locale, t, rsvpHref: props.rsvpHref, rsvpHelpHref: props.rsvpHelpHref, rsvpAdaptive: props.rsvpAdaptive,
-    giftsHref: context.giftsHref, giftsStatus: props.giftsStatus
+    giftsHref: context.giftsHref, giftsStatus: props.giftsStatus, ...(props.mapConfigUrl ? { mapConfigUrl: props.mapConfigUrl } : {})
   };
   switch (block.type) {
     case "cover": return <CoverBlock block={block} context={context} centred={element.typography?.align === "center" && PHOTO_ON_TEXT_AXIS.has(context.theme.id)} />;
@@ -238,9 +238,11 @@ function BlockBody({ block, element, context }: { readonly block: DesignBlock; r
       return <EmbedFacade embed={embedFromConfig("music", settings)} title={content.title} t={t} />;
     }
     case "map": {
-      const venue = content.venues[Number(settings["venueIndex"])];
-      const query = venue ? [venue.name, venue.address].filter(Boolean).join(", ") : "";
-      return venue ? <EmbedFacade embed={mapEmbed(query)} title={venue.name} t={t} /> : null;
+      // The block points at a venue of the list by position; without one it shows the main venue. Always the host's own point on OpenStreetMap, never a search elsewhere.
+      const chosen = content.venues[Number(settings["venueIndex"])];
+      const shown = shownVenues(content);
+      const venue = (chosen && shown.find((item) => item.key === chosen.key)) || shown[0];
+      return venue?.name ? <div className="cdesign-map"><LocationView name={venue.name} lines={venueLines(venue)} location={venue.location} labels={locationLabels(t, venue.name)} mapConfigUrl={props.mapConfigUrl} /></div> : null;
     }
     // Blocks the renderer does not draw yet (wedding party, free HTML) are left out, never half-drawn.
     default: return null;
@@ -413,7 +415,7 @@ function PageBlock({ page, context, only }: { readonly page: DesignPage; readonl
 export function DesignRenderer(props: DesignRendererProps): ReactNode {
   const { theme, view, design, t } = props;
   const media = props.gallery ?? [];
-  const gallery = media.filter(isPhoto);
+  const gallery = media.filter(isPhotoImage);
   const content = readContent(view);
   const layout = layoutOf(theme);
   const scheme = props.colorScheme;

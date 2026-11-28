@@ -180,9 +180,9 @@ export interface MediaAsset {
   readonly durationMs?: number | null;
   readonly rightsNoticeVersion?: string | null;
   readonly rightsAcknowledgedAt?: string | null;
-  readonly variants: Readonly<Partial<Record<MediaVariantName, string>>>;
-  /** F7: moderation hides this file (the page, the gallery section or the file itself). `variants` is empty while true. */
+  /** Template/Media 1.5.0: hidden by moderation. The listing still returns it, without variant URLs, so the host can delete it. */
   readonly hidden?: boolean;
+  readonly variants: Readonly<Partial<Record<MediaVariantName, string>>>;
 }
 
 /** GET /celebrations/{id}/assets: the files and, since 1.4.0 of the contract, what the celebration has used of its quota. */

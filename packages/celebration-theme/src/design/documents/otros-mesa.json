@@ -222,9 +222,9 @@
               {
                 "id": "el-mesa",
                 "block": "art-mesa",
-                "x": 0,
+                "x": 4,
                 "y": 8,
-                "w": 12,
+                "w": 4,
                 "h": 8,
                 "visible": true,
                 "animation": {
@@ -234,9 +234,9 @@
                 },
                 "padding": {
                   "top": 0,
-                  "right": 160,
+                  "right": 0,
                   "bottom": 0,
-                  "left": 160
+                  "left": 0
                 }
               }
             ]

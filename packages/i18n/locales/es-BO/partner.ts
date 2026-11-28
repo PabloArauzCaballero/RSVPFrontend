@@ -9,6 +9,8 @@ export const partnerEsBO = {
   factLeadOffer_one: "{{name}} es un proveedor de {{category}} en {{city}}, verificado por DOne. Publica {{count}} oferta.",
   factLeadOffer_other: "{{name}} es un proveedor de {{category}} en {{city}}, verificado por DOne. Publica {{count}} ofertas.",
   factLeadNone: "{{name}} es un proveedor de {{category}} en {{city}}, verificado por DOne.",
+  logoAlt: "Logo de {{name}}",
+  gallery: "Fotos",
   imageAlt: "{{name}}, {{category}} en {{city}}",
   noSummary: "Este proveedor todavía no ha agregado una descripción.",
   coverage: "Zona de cobertura",

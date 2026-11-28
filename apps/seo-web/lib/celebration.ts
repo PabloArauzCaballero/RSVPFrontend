@@ -1,4 +1,4 @@
-import type { GalleryImage, PublicCelebrationView, TemplateDocument } from "@rsvp/celebration-theme";
+import { FALLBACK_TEMPLATE, type GalleryImage, type PublicCelebrationView, type TemplateDocument } from "@rsvp/celebration-theme";
 import type { ApiClient } from "@rsvp/api-client";
 import { orNull, publicClient } from "./api";
 
@@ -21,11 +21,23 @@ export interface PublicSlug {
 export async function loadPublicPage(slug: string, language: string, client: ApiClient = publicClient()): Promise<PublicPage | null> {
   const view = await orNull(client.request<PublicCelebrationView>(`/celebrations/public/${encodeURIComponent(slug)}`, { auth: false, headers: language ? { "accept-language": language } : {} }));
   if (!view) return null;
-  const [template, gallery] = await Promise.all([
+  const [template, gallery, published] = await Promise.all([
     view.templateId ? optional(client.request<TemplateDocument>(`/media/templates/${view.templateId}`, { auth: false })) : Promise.resolve(null),
-    optional(client.request<{ readonly items: readonly GalleryImage[] }>(`/media/public/celebrations/${view.celebrationId}/assets`, { auth: false }))
+    optional(client.request<{ readonly items: readonly GalleryImage[] }>(`/media/public/celebrations/${view.celebrationId}/assets`, { auth: false })),
+    optional(client.request<{ readonly document?: unknown }>(`/media/public/celebrations/${view.celebrationId}/design`, { auth: false }))
   ]);
-  return { view, template, gallery: gallery?.items ?? [] };
+  return { view, template: withPublishedDesign(template, published?.document), gallery: gallery?.items ?? [] };
+}
+
+/**
+ * What the host published in the editor (its design document) replaces the template's own look; the template (or the neutral fallback when there is none)
+ * stays the carrier of the rest (id, name). A celebration without a published design, a service that does not have the endpoint yet (404), or a body that
+ * is not a design document v2 all leave the template exactly as it was: the page never gets worse for lack of a design.
+ */
+function withPublishedDesign(template: TemplateDocument | null, document: unknown): TemplateDocument | null {
+  if (typeof document !== "object" || document === null || (document as { readonly schemaVersion?: unknown }).schemaVersion !== 2) return template;
+  // A celebration with no template (none chosen, or the media service could not give it) still draws what its host published.
+  return { ...(template ?? FALLBACK_TEMPLATE), theme: document as TemplateDocument["theme"] };
 }
 
 /**

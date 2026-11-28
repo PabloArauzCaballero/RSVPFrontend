@@ -3,6 +3,7 @@
 import { useEffect, useState, type MouseEvent } from "react";
 import { CelebrationRenderer, fontStylesheet, parsePreviewMessage, parsePreviewPayload, PREVIEW_BRIDGE, PREVIEW_READY, type PreviewPayload } from "@rsvp/celebration-theme";
 import { createTranslator } from "@rsvp/i18n/server";
+import { guestApiBase } from "../lib/guest-client";
 import { uiLocale } from "../lib/locale";
 
 declare global {
@@ -47,7 +48,7 @@ export function PreviewReceiver({ origins }: { readonly origins: readonly string
   return (
     <div onClick={stop} data-testid="preview-render">
       {fonts ? <link rel="stylesheet" href={fonts} precedence="default" /> : null}
-      <CelebrationRenderer theme={theme} view={view} gallery={gallery} t={t} basePath={`/c/${view.slug}`} />
+      <CelebrationRenderer theme={theme} view={view} gallery={gallery} t={t} basePath={`/c/${view.slug}`} mapConfigUrl={`${guestApiBase().replace(/\/$/, "")}/providers/geo/map-config`} />
     </div>
   );
 }

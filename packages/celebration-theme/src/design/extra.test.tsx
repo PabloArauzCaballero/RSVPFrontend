@@ -249,3 +249,17 @@ describe("the six extra templates as documents v2", () => {
     }
   });
 });
+
+describe("PL-FE-V2-HUECOS · the desktop cover leaves no tall empty rows and no giant drawing", () => {
+  // A drawing that asks for more grid rows than the cover text grows leaves a gap of (rows - 8) * 8 px under the cover; a drawing as wide as the page fills the first screen.
+  it.each(NAMES)("%s: no desktop cover element spans more than 8 rows, and no drawing is wider than 6 of 12 columns", (name) => {
+    const cover = design(name).pages.find((page) => page.kind === "cover");
+    const desktop = cover?.canvases.desktop;
+    expect(desktop, "desktop canvas").toBeTruthy();
+    for (const element of desktop?.elements ?? []) {
+      expect(element.h, `${element.id} rows`).toBeLessThanOrEqual(8);
+      // The thin rules (el-regla, el-filete) are wide on purpose; only the drawings are limited.
+      if (element.block.startsWith("art-") && !/regla|filete/.test(element.id)) expect(element.w, `${element.id} columns`).toBeLessThanOrEqual(6);
+    }
+  });
+});

@@ -1,5 +1,5 @@
 import { design } from "@rsvp/celebration-theme";
-import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { COVER_VARIANTS, coverVariantOf, coverVeilOf, PAGE_ANIMATIONS, pageAnimationOf, setCoverVariant, setCoverVeil, setPageAnimation, setVideoPoster, videoPosterOf, type AnimationName, type CoverVariant } from "../model/fidelity.js";
 import { giftsBlock, giftsPlacement } from "../model/guards.js";
 import { applyPaddingPreset, applySpacingPreset, applyTemplateDocument, coverDrawingOf, coverPhotoOf, editableTexts, hiddenElements, PADDING_PRESETS, setBlockText, setCoverDrawing, setCoverPhoto, setFontFamily, setPaletteColour, setSectionOrder, setSectionVisible, sharedPadding, SPACING_PRESETS, spacingPresetOf, switchableSections, textLimit, type PaddingPreset, type SpacingPreset, type TextField } from "../model/ops.js";
@@ -13,8 +13,23 @@ export interface TemplateSource { readonly list: () => Promise<readonly Template
 export interface DrawingChoice { readonly id: string; readonly name: string }
 export interface DrawingSource { readonly list: () => Promise<readonly DrawingChoice[]> }
 /** A photo of the host's media store (F6), by media id. Without a source the editor says so instead of pretending to upload. */
-export interface MediaChoice { readonly id: string; readonly name: string }
-export interface MediaSource { readonly list: () => Promise<readonly MediaChoice[]> }
+export interface MediaChoice { readonly id: string; readonly name: string; /** Small version of the picture, to choose by looking and not by file name. */ readonly thumbUrl?: string }
+export interface MediaUploaderProps {
+  /** What the file is for, so the app files it right (`block` for an image block, `background` for a page background). */
+  readonly purpose?: "background" | "block" | "section" | "element" | "monogram" | "music";
+  /** Called once per file the server accepted and finished processing, so the editor can offer it and use it as the cover. */
+  readonly onUploaded: (choice: MediaChoice) => void;
+}
+export interface MediaSource {
+  readonly list: () => Promise<readonly MediaChoice[]>;
+  /** The music files already uploaded (an MP3 the host owns), to use as the invitation's music; without it the editor offers no uploaded music. */
+  readonly listAudio?: () => Promise<readonly MediaChoice[]>;
+  /**
+   * The screen's own upload surface (drag and drop, file dialog, camera, progress and errors per file). The editor is plain DOM and
+   * knows nothing about the upload queue or the API, so the app injects it; without it the host can only pick what is already uploaded.
+   */
+  readonly renderUploader?: (props: MediaUploaderProps) => ReactNode;
+}
 
 const COLOUR_ROLES = ["accent", "canvas", "text", "surface", "muted"] as const;
 const HEADING_CATEGORIES: readonly design.FontCategory[] = ["serif", "script"];
@@ -22,7 +37,7 @@ const HEADING_CATEGORIES: readonly design.FontCategory[] = ["serif", "script"];
 type Load<T> = { readonly state: "idle" | "loading" | "error" } | { readonly state: "ready"; readonly items: readonly T[] };
 
 /** Loads a list from an optional source: loading, error (with retry) and ready are three distinct states, never a silent absence. */
-function useList<T>(source: { readonly list: () => Promise<readonly T[]> } | undefined): readonly [Load<T>, () => void] {
+export function useList<T>(source: { readonly list: () => Promise<readonly T[]> } | undefined): readonly [Load<T>, () => void] {
   const [load, setLoad] = useState<Load<T>>({ state: source ? "loading" : "idle" });
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
@@ -35,7 +50,7 @@ function useList<T>(source: { readonly list: () => Promise<readonly T[]> } | und
   return [load, useCallback(() => setAttempt((count) => count + 1), [])];
 }
 
-function ListStatus({ load, retry, loading, failed, retryLabel }: { readonly load: Load<unknown>; readonly retry: () => void; readonly loading: string; readonly failed: string; readonly retryLabel: string }) {
+export function ListStatus({ load, retry, loading, failed, retryLabel }: { readonly load: Load<unknown>; readonly retry: () => void; readonly loading: string; readonly failed: string; readonly retryLabel: string }) {
   if (load.state === "loading") return <p className="de-hint" role="status" aria-busy="true">{loading}</p>;
   if (load.state === "error") return <div className="de-inline-error" role="alert"><p>{failed}</p><button type="button" className="de-btn" onClick={retry}>{retryLabel}</button></div>;
   return null;
@@ -165,6 +180,7 @@ export function BasicPanel({ templates, drawings, media }: { readonly templates?
   const [templateLoad, retryTemplates] = useList(templates);
   const [drawingLoad, retryDrawings] = useList(drawings);
   const [mediaLoad, retryMedia] = useList(media);
+  const [justUploaded, setJustUploaded] = useState<string | null>(null);
   /** What the host hid by hand inside a section, kept while the section is off so switching it on again respects it (m2). */
   const hiddenByHand = useRef(new Map<string, ReadonlySet<string>>());
 
@@ -226,6 +242,13 @@ export function BasicPanel({ templates, drawings, media }: { readonly templates?
         {media ? (
           <>
             <ListStatus load={mediaLoad} retry={retryMedia} loading={t(key("photos.loading"))} failed={t(key("photos.failed"))} retryLabel={t(key("retry"))} />
+            {media.renderUploader ? (
+              <div className="de-upload" data-testid="photos-uploader">
+                <h3>{t(key("photos.upload"))}</h3>
+                {media.renderUploader({ onUploaded: (choice) => { setJustUploaded(choice.name); retryMedia(); dispatch({ type: "edit", op: setCoverPhoto(choice.id), at: now() }); } })}
+                <p className="de-hint" role="status">{justUploaded ? t(key("photos.uploaded"), { name: justUploaded }) : ""}</p>
+              </div>
+            ) : null}
             {mediaLoad.state === "ready" ? (
               mediaLoad.items.length === 0 ? <p className="de-hint">{t(key("photos.empty"))}</p> : (
                 <>

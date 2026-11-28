@@ -1,7 +1,7 @@
 import type { ApiClient } from "@rsvp/api-client";
 import { publicClient } from "./api";
 import { resolveProviderId } from "./catalog";
-import { partnerFromListings, type Partner, type PartnerLookup } from "@rsvp/query-hooks";
+import { partnerFromListings, withMicrositePictures, type Partner, type PartnerLookup } from "@rsvp/query-hooks";
 import { searchProviders, type ProviderCard } from "./providers";
 
 /**
@@ -13,7 +13,7 @@ import { searchProviders, type ProviderCard } from "./providers";
 const MAX_SLUG_PAGES = 20;
 
 // The partner model (built from the directory cards) is shared with the app's microsite.
-export { PARTNER_CONTACT_ORDER, addressText, partnerFromListings, type Partner, type PartnerLookup } from "@rsvp/query-hooks";
+export { PARTNER_CONTACT_ORDER, addressPoint, addressText, partnerFromListings, type Partner, type PartnerLookup } from "@rsvp/query-hooks";
 
 export async function loadPartner(slug: string, client: ApiClient = publicClient()): Promise<PartnerLookup> {
   // Provider Catalog 2.0.0 ignores `?slug=` (it returns the whole directory), so the partner's cards are collected
@@ -42,7 +42,9 @@ async function withBusinessName(partner: Partner, client: ApiClient): Promise<Pa
     const providerId = await resolveProviderId(partner);
     if (!providerId) return partner;
     const profile = await client.request<{ readonly name?: string }>(`/providers/${providerId}`, { auth: false });
-    return { ...partner, providerId, ...(profile.name ? { name: profile.name } : {}) };
+    const named = { ...partner, providerId, ...(profile.name ? { name: profile.name } : {}) };
+    // The logo and the photos the provider uploaded for its page (a microsite that cannot be read leaves the page without them).
+    return await withMicrositePictures(client, named, providerId);
   } catch {
     return partner;
   }

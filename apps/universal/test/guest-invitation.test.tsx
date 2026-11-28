@@ -172,6 +172,8 @@ describe("P10 · what the page may open (pure decision)", () => {
   const context = { origin: SITE, slug: SLUG };
   it.each([
     [`${SITE}/c/${SLUG}`, "allow"], [`${SITE}/c/${SLUG}/historia?lang=en-US`, "allow"], [`${SITE}/_next/static/chunk.js`, "allow"], ["about:blank", "allow"],
+    [`${SITE}/c/${SLUG}/proveedores`, "allow"], [`${SITE}/c/${SLUG}/proveedores?categoria=catering&ciudad=la-paz&lang=es-BO`, "allow"], [`${SITE}/c/otra-boda/proveedores`, "external"],
+    [`${SITE}/p/hotel-andino`, "external"], [`${SITE}/r/7d1c1a34-5d4c-4a39-9a2e-0f4f2d3d7b11?destination=WHATSAPP`, "external"], [`${SITE}/c/${SLUG}/proveedores/otra`, "external"],
     [`${SITE}/c/${SLUG}/regalos/abc`, "app"], [`${SITE}/c/${SLUG}/rsvp`, "app"],
     [`${SITE}/c/otra-boda`, "external"], [`${SITE}/proveedores`, "external"], ["https://evil.test/c/ana-y-luis", "external"], ["mailto:ana@example.com", "external"], ["tel:+59171234567", "external"],
     ["javascript:alert(1)", "block"], ["file:///etc/passwd", "block"], ["intent://x#Intent;end", "block"], ["no es una url", "block"]

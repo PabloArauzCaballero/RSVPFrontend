@@ -63,9 +63,9 @@ export interface EmbedFacadeProps {
   readonly onLoad?: () => void;
 }
 
-const FACADE_SHORT: Readonly<Record<Embed["kind"], string>> = { video: "celebration.media.openVideo", audio: "celebration.media.openMusic", map: "celebration.media.openMap" };
+const FACADE_SHORT: Readonly<Record<Embed["kind"], string>> = { video: "celebration.media.openVideo", audio: "celebration.media.openMusic" };
 
-const FACADE_LABEL: Readonly<Record<Embed["kind"], string>> = { video: "celebration.media.playVideo", audio: "celebration.media.playMusic", map: "celebration.media.showMap" };
+const FACADE_LABEL: Readonly<Record<Embed["kind"], string>> = { video: "celebration.media.playVideo", audio: "celebration.media.playMusic" };
 
 /** Click-to-load facade. Nothing from the provider is requested until the guest taps: no iframe, no script, no cookie, no IP. Then the iframe
  *  loads sandboxed, lazy, with a strict referrer policy and on a privacy-enhanced host. An embed off the allowlist renders nothing. */

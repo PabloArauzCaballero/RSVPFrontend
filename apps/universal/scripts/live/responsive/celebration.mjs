@@ -166,9 +166,11 @@ if (process.env.FLOWS !== "0") for (const width of WIDTHS) {
     const search = tid("field-venue-search");
     const bounds = await search.boundingBox();
     assert(bounds && bounds.x >= 0 && bounds.x + bounds.width <= width + 1, "The venue search button fits in the viewport");
-    await page.route("https://nominatim.openstreetmap.org/**", (route) => route.fulfill({
+    // The search is the backend's (`GET /providers/geo/search`, MAP-03). Until that service is deployed in the target environment the
+    // answer is stubbed here; the point saved afterwards is the real thing under test.
+    await page.route("**/providers/geo/search**", (route) => route.fulfill({
       headers: { "access-control-allow-origin": "*" },
-      json: [{ place_id: 1, name: "Floresta", display_name: "Floresta, Santa Cruz", lat: "-17.8", lon: "-63.2" }]
+      json: { attribution: "© OpenStreetMap contributors", items: [{ id: "node/1", name: "Floresta", label: "Floresta, Santa Cruz", lat: -17.8, lng: -63.2, osmType: "node", osmId: 1 }] }
     }), { times: 1 });
     await tid("field-venue-name").fill("Floresta");
     await search.click();
@@ -179,7 +181,8 @@ if (process.env.FLOWS !== "0") for (const width of WIDTHS) {
     const saved = await get(c.id);
     assert.equal(saved.content.title, title);
     assert.equal(saved.content.venueName, "Floresta");
-    assert.equal(new URL(saved.content.venueMapUrl).searchParams.get("query"), "-17.8,-63.2");
+    assert.deepEqual([saved.content.locations.main.lat, saved.content.locations.main.lng, saved.content.locations.main.source], [-17.8, -63.2, "search"]);
+    assert.equal(new URL(saved.content.venueMapUrl).searchParams.get("mlat"), "-17.800000");
     return `GET content.title=${saved.content.title} v${saved.version}`;
   });
   await flow("valid-publish-unpublish", async () => {

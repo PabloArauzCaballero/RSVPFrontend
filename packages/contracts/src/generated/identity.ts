@@ -226,7 +226,42 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** @description With `registrationProof` (2.3.0) the account is born verified and the proof is spent with it. Without it: legacy behavior (verification link; 409 for an existing address) until IDENTITY_REGISTER_REQUIRES_EMAIL_PROOF=true, then 422 on `registrationProof` for every address. 422 also for an invalid, used, expired or foreign proof, creating nothing; 409 when the address gained an account after the proof was issued (the proof stays valid). */
         post: operations["registerUser"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/registration/email-code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Public. First step of sign-up (MV-D3). For a well-formed address always 202 with no body. An address without an account gets an e-mail with a 6-digit code valid 10 minutes (a newer request replaces it); an address that has an account gets an e-mail saying so, with a link to sign in (no address in the link). A second request within 60 seconds, or beyond 5 per hour or 10 per day for that address, sends nothing and still answers the same 202. `Accept-Language` picks the e-mail language (en-US or es-BO). Kong limits it per IP to 10 per minute and 100 per hour. */
+        post: operations["requestRegistrationEmailCode"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/registration/email-code/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Public. Second step of sign-up (MV-D3). A correct code is consumed and answers a single-use `proof` for POST /auth/register. Every attempt counts: the fifth wrong one ends the challenge and even the right code then answers 422 (ask for a new code). Of two concurrent attempts with the right code only one gets the proof. */
+        post: operations["verifyRegistrationEmailCode"];
         delete?: never;
         options?: never;
         head?: never;
@@ -809,6 +844,8 @@ export interface components {
             password: string;
             /** @description Optional (since 2.1.0). E.164 (for example +59170000000). Spaces, dots, dashes and parentheses are removed before the check. Personal data (encrypted at rest). */
             phone?: string;
+            /** @description Optional (since 2.3.0), required once the operator turns on IDENTITY_REGISTER_REQUIRES_EMAIL_PROOF. The `proof` of POST /auth/registration/email-code/verify for this same e-mail: the account is then created with its e-mail verified and no verification link. Single use; spent in the same transaction as the account. */
+            registrationProof?: string;
             /**
              * @description ADMIN is never self-service.
              * @default HOST
@@ -826,13 +863,29 @@ export interface components {
         Registration: components["schemas"]["Session"] & {
             /** Format: email */
             email: string;
-            /** @description Since 1.3.0. Always false right after sign-up: a verification e-mail is on its way. */
+            /** @description Since 1.3.0. False right after a sign-up without `registrationProof` (a verification e-mail is on its way); true since 2.3.0 when the sign-up carried the proof of the e-mail. */
             emailVerified?: boolean;
             /** Format: uuid */
             id: string;
             /** @description Since 2.1.0: the profile as stored (defaults filled in). */
             profile?: components["schemas"]["UserProfile"];
             roles: ("HOST" | "PLANNER" | "PROVIDER")[];
+        };
+        RegistrationEmailCodeRequest: {
+            /** Format: email */
+            email: string;
+        };
+        RegistrationEmailCodeVerifyRequest: {
+            /** @description The 6-digit code from the e-mail. */
+            code: string;
+            /** Format: email */
+            email: string;
+        };
+        RegistrationProof: {
+            /** @description Seconds the proof stays valid (1800 by default). */
+            expiresIn: number;
+            /** @description Opaque, single use, bound to the verified address. Send it as `registrationProof` in POST /auth/register. Never put it in a URL or a log. */
+            proof: string;
         };
         ServiceTokenResponse: {
             /** @description RS256 JWT. Claims: iss, sub (client id), client_id, aud, scope, roles [SERVICE], iat, exp, jti. */
@@ -1355,6 +1408,87 @@ export interface operations {
             };
             409: components["responses"]["Conflict"];
             422: components["responses"]["Validation"];
+        };
+    };
+    requestRegistrationEmailCode: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Language of the account e-mail: en-US when it starts with `en`, es-BO otherwise. */
+                "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegistrationEmailCodeRequest"];
+            };
+        };
+        responses: {
+            /** @description Accepted. This response (status, headers and empty body) is identical for an address with and without an account, and when a send limit applies. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            422: components["responses"]["Validation"];
+            /** @description Kong's per-IP limit of the credential endpoints (10 per minute, 100 per hour), shared with login, register and password recovery. Identity itself never answers 429 here: the per-address limits (60 s gap, 5 per hour, 10 per day) are silent and keep the 202. */
+            429: {
+                headers: {
+                    /** @description Seconds until the client may try again. */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    verifyRegistrationEmailCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegistrationEmailCodeVerifyRequest"];
+            };
+        };
+        responses: {
+            /** @description The code is right. Not cacheable. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegistrationProof"];
+                };
+            };
+            /** @description One identical problem on `code` for a wrong, expired, exhausted or never requested code and for an address that has an account; on `email` for a malformed address. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Kong's per-IP limit of the credential endpoints (10 per minute, 100 per hour), shared with login, register and password recovery. Identity itself counts attempts per address inside the 422 (5 per code) and never answers 429 here. */
+            429: {
+                headers: {
+                    /** @description Seconds until the client may try again. */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     identityHealth: {

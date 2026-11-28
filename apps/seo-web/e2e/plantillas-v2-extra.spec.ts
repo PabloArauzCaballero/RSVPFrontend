@@ -207,3 +207,29 @@ test("the entrance of every cover plays once and, with reduced motion, nothing i
     expect(still, name).toBe(true);
   }
 });
+
+// PL-FE-V2-HUECOS · the nine documents of the extra round (Otros, Despedida, Pedida) at 360 and 1280, measured in the DOM: no vertical stretch of the cover canvas is empty
+// for more than 120 px (a hero drawing spanning more grid rows than the title grows left 300 to 450 px) and no drawing is taller than 600 px (Mesa larga drew one of 968 px; a hero drawing of 350 to 490 px is by design).
+const NINE = ["otros-evento", "otros-rumbo", "otros-mesa", "despedida", "despedida-disco", "despedida-esmoquin", "pedida-de-mano", "pedida-rosa", "pedida-solitario"] as const;
+for (const name of NINE) {
+  for (const width of [360, 1280] as const) {
+    test(`${name} ${width}px: the cover has no empty stretch and no giant drawing`, async ({ page }) => {
+      await open(page, `fixture-v2-${name}`, width, "light");
+      const m = await page.evaluate(() => {
+        const canvas = document.querySelector(".cdesign-canvas") as HTMLElement;
+        const box = canvas.getBoundingClientRect();
+        const items = [...canvas.querySelectorAll(":scope > .cdesign-el")].map((node) => ({ node, rect: node.getBoundingClientRect() })).filter((item) => item.rect.width > 0 && item.rect.height > 0);
+        const height = Math.ceil(box.height);
+        const covered = new Array<boolean>(height).fill(false);
+        for (const { rect } of items) for (let y = Math.max(0, Math.floor(rect.top - box.top)); y < Math.min(height, Math.ceil(rect.bottom - box.top)); y++) covered[y] = true;
+        let longest = 0;
+        let run = 0;
+        for (const filled of covered) { run = filled ? 0 : run + 1; longest = Math.max(longest, run); }
+        const drawings = items.filter((item) => (item.node as HTMLElement).dataset["block"] === "illustration").map((item) => item.rect.height);
+        return { height, longest, tallest: Math.max(0, ...drawings) };
+      });
+      expect(m.longest, "longest empty vertical stretch of the cover canvas").toBeLessThanOrEqual(120);
+      expect(m.tallest, "tallest drawing").toBeLessThanOrEqual(600);
+    });
+  }
+}

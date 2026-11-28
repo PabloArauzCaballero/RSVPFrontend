@@ -1,4 +1,5 @@
 const path = require('node:path');
+const { previewParentOrigins } = require('./lib/preview-origins.config.cjs');
 
 /**
  * A6 · Security headers for every page. CSP starts report-only: violations appear in the browser console without
@@ -10,7 +11,7 @@ const path = require('node:path');
  * Privacy-enhanced hosts only
  * (youtube-nocookie, Vimeo with dnt). Nothing else may be framed, and `frame-ancestors 'none'` still forbids framing this site.
  */
-const frameHosts = ['www.youtube-nocookie.com', 'player.vimeo.com', 'open.spotify.com', 'www.google.com'];
+const frameHosts = ['www.youtube-nocookie.com', 'player.vimeo.com', 'open.spotify.com'];
 const frameSrc = `frame-src ${frameHosts.map((host) => `https://${host}`).join(' ')}`;
 
 const securityHeaders = [
@@ -49,7 +50,9 @@ const nextConfig = {
     // Order matters: for the same key the later rule wins, so credential paths keep `no-referrer`.
     // P10 · `/vista-previa` is the one page the app may frame: it leaves the global rule (X-Frame-Options: DENY would block it) and
     // answers its own: only the app's origin may embed it, and it is never cached or indexed.
-    const appOrigin = (() => { try { return new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:8100').origin; } catch { return "'none'"; } })();
+    // The app's origin plus the explicit extra origins (NEXT_PUBLIC_PREVIEW_EXTRA_ORIGINS, no wildcards): same function as the postMessage allowlist.
+    const parentOrigins = previewParentOrigins();
+    const appOrigin = parentOrigins.length > 0 ? parentOrigins.join(' ') : "'none'";
     const previewHeaders = [
       // Neither X-Frame-Options nor the report-only CSP (its `frame-ancestors 'none'` would contradict the real one).
       ...securityHeaders.filter((header) => header.key !== 'X-Frame-Options' && header.key !== 'Content-Security-Policy-Report-Only'),
@@ -58,7 +61,18 @@ const nextConfig = {
       { key: 'Referrer-Policy', value: 'no-referrer' },
       { key: 'X-Robots-Tag', value: 'noindex, nofollow' }
     ];
-    return [{ source: '/((?!vista-previa$).*)', headers: securityHeaders }, { source: '/vista-previa', headers: previewHeaders }, { source: '/c/:slug/rsvp/:path*', headers: privateHeaders }, { source: '/c/:slug/rsvp', headers: privateHeaders }, { source: '/rsvp/:path*', headers: privateHeaders }];
+    // MAP · `/mapa/incrustado` is the second (and last) page that may be framed: the app's map views load it in an iframe (web) or a web
+    // view (native). It holds no form and no action (a map and a pin), so framing it by the site itself and by the app's origin gives no
+    // clickjacking surface. X-Frame-Options cannot name a second origin, so it is dropped and `frame-ancestors` says who may frame it.
+    // Every other path keeps DENY / frame-ancestors 'none'.
+    const mapHeaders = [
+      ...previewHeaders.filter((header) => header.key !== 'Content-Security-Policy' && header.key !== 'Cache-Control' && header.key !== 'Referrer-Policy'),
+      { key: 'Content-Security-Policy', value: `frame-ancestors 'self' ${appOrigin === "'none'" ? '' : appOrigin}`.trim() },
+      { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' }
+    ];
+    // The tab's art is versioned by folder (/marketplace/v1): the files never change, so they are cached for a year.
+    const immutable = [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }];
+    return [{ source: '/marketplace/v1/:file', headers: immutable }, { source: '/((?!vista-previa$|mapa/incrustado$).*)', headers: securityHeaders }, { source: '/vista-previa', headers: previewHeaders }, { source: '/mapa/incrustado', headers: mapHeaders }, { source: '/c/:slug/rsvp/:path*', headers: privateHeaders }, { source: '/c/:slug/proveedores', headers: privateHeaders }, { source: '/c/:slug/rsvp', headers: privateHeaders }, { source: '/rsvp/:path*', headers: privateHeaders }];
   },
   webpack: (config) => {
     // Workspace packages use NodeNext-style "./x.js" imports that point to .ts sources.

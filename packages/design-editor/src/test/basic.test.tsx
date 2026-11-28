@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { createTranslator } from "@rsvp/i18n";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { patchElement, applyPaddingPreset, applySpacingPreset, applyTemplateDocument, coverDrawingOf, coverPhotoOf, editableTexts, hiddenElements, setBlockConfig, setBlockText, setCoverDrawing, setCoverPhoto, setSectionOrder, setSectionVisible, sharedPadding, spacingPresetOf } from "../model/ops.js";
@@ -241,6 +241,30 @@ describe("Cover drawing and photo", () => {
     expect(screen.getByTestId("photos-unavailable").textContent).toMatch(/Todavía no está disponible/);
     expect(screen.queryByLabelText("Foto de portada")).toBeNull();
     expect(screen.queryByLabelText("Dibujo de la portada")).toBeNull();
+  });
+
+  it("offers the app's upload surface and makes the uploaded photo the cover without a URL field anywhere", async () => {
+    let finished: ((choice: { id: string; name: string }) => void) | undefined;
+    const list = vi.fn(async () => [{ id: "m-1", name: "Foto 1" }]);
+    const media: MediaSource = { list, renderUploader: ({ onUploaded }) => { finished = onUploaded; return <button type="button">Elegir archivo</button>; } };
+    open(fixture(), undefined, { media });
+    expect(await screen.findByRole("button", { name: "Elegir archivo" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Subir una foto" })).toBeTruthy();
+    expect(screen.queryByRole("textbox", { name: /url|enlace|dirección/i })).toBeNull();
+    expect(list).toHaveBeenCalledTimes(1);
+    act(() => finished?.({ id: "m-2", name: "boda.jpg" }));
+    await waitFor(() => expect(screen.getByText("Listo: «boda.jpg» ya es la foto de portada.")).toBeTruthy());
+    expect(list).toHaveBeenCalledTimes(2);
+    expect(screen.getByRole("button", { name: "Deshacer" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Deshacer" }));
+    expect((screen.getByLabelText("Foto de portada") as HTMLSelectElement).value).toBe("");
+  });
+
+  it("keeps the uploader when the host has no photos yet, so the first photo can be uploaded from an empty list", async () => {
+    const media: MediaSource = { list: async () => [], renderUploader: () => <button type="button">Elegir archivo</button> };
+    open(fixture(), undefined, { media });
+    expect(await screen.findByText("Todavía no tienes fotos subidas.")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Elegir archivo" })).toBeTruthy();
   });
 
   it("sets and removes the cover photo by media id", async () => {

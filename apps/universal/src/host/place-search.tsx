@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "expo-router";
 import { Text, View, useWindowDimensions, type TextInput } from "react-native";
 import type { MapPlace } from "@rsvp/api-client";
-import { usePlaceSearch } from "@rsvp/query-hooks";
+import { placeSearchFailure, usePlaceSearch } from "@rsvp/query-hooks";
 import { radius, spacing } from "@rsvp/design-tokens";
 import { NavIcon, PressFeedback, useColors } from "@rsvp/ui";
-import { useLocale, useT } from "../platform/providers";
+import { useApiClient, useLocale, useT } from "../platform/providers";
 import { ActionButton, Field, useStyles } from "./ui";
 
 interface PlaceSearchProps {
@@ -34,7 +34,10 @@ export function PlaceSearch({ label, value, onChange, onPick, onFirstResult, err
   const [submitted, setSubmitted] = useState("");
   const wanted = value.trim();
   const query = submitted === wanted ? submitted : "";
-  const { data: places, isFetching, isError, refetch } = usePlaceSearch(query, locale);
+  const client = useApiClient();
+  const { data: found, isFetching, isError, error: searchError, refetch } = usePlaceSearch(client, query, locale);
+  const places = found?.places;
+  const failure = isError ? placeSearchFailure(searchError) : null;
 
   useEffect(() => {
     const first = places?.[0];
@@ -69,7 +72,8 @@ export function PlaceSearch({ label, value, onChange, onPick, onFirstResult, err
         onSubmit={search} testID={testID} {...(placeholder ? { placeholder } : {})} {...(error ? { error } : {})}
         trailing={<ActionButton variant="secondary" icon="search" label={t("host.location.searchButton")} disabled={!wanted || isFetching} onPress={search} testID={buttonTestID} />} />
       {query && isFetching ? <Text role="status" style={styles.muted}>{t("host.location.searching")}</Text> : null}
-      {query && isError ? <Text role="alert" style={styles.muted}>{t("host.location.searchError")}</Text> : null}
+      {query && failure ? <Text role="alert" style={styles.muted}>{t(failure === "busy" ? "host.location.searchBusy" : failure === "off" ? "host.location.searchOff" : "host.location.searchError")}</Text> : null}
+      {!query ? <Text style={styles.muted}>{t("host.location.searchPrivacy")}</Text> : null}
       {query && !isFetching && places?.length === 0 ? <Text role="status" style={styles.muted}>{t("host.location.noResults")}</Text> : null}
       {query && places?.length ? (
         <View style={{ gap: spacing[1] }}>

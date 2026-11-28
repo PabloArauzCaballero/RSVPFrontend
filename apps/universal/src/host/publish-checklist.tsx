@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Image, Platform, Share, Text, View } from "react-native";
 import { isGalleryAsset, isPublicPageInTransition, missingFieldsOf, useEditCelebration, useMediaAssets, usePublicationAction, usePublicPageStatus, usePublishCheck, type Celebration, type TranslatedEventType } from "@rsvp/query-hooks";
 import type { Translate } from "@rsvp/i18n";
-import { formatDate } from "@rsvp/celebration-theme/model";
+import { MAIN_LOCATION, formatDate, pointOf, readLocations, resolveLocation } from "@rsvp/celebration-theme/model";
 import { useApiClient, useT } from "../platform/providers";
 import { CelebrationScreen, useScreenHeader, type ScreenProps } from "./gate";
 import { asText } from "./content-draft";
@@ -74,6 +74,10 @@ function Checklist({ celebration, eventType, onNavigate, refetch }: { readonly c
   // The card previews the shared link: the cover or, when it has no raster variant (SVG), the first gallery photo that has one.
   const photos = (media.data?.items ?? []).filter(isGalleryAsset);
   const cover = [...photos.filter((asset) => asset.isCover), ...photos].map((asset) => asset.variants.medium ?? asset.variants.full).find(Boolean);
+
+  // Non-blocking notice (D3): the point is optional. With one, say who sees it; without one, say what the guests get instead.
+  const venueName = asText(celebration.content["venueName"]);
+  const marked = venueName ? resolveLocation({ saved: readLocations(celebration.content["locations"])[MAIN_LOCATION], name: venueName, legacy: pointOf(asText(celebration.content["venueMapUrl"])) }) !== null : null;
 
   const reasonExcess = overLimit(reason, LIMITS.reason);
   const run = (kind: Exclude<Dialog, null>): void => {
@@ -162,6 +166,12 @@ function Checklist({ celebration, eventType, onNavigate, refetch }: { readonly c
               </View>
             </View>
           ) : null}
+        </View>
+      ) : null}
+      {draft && marked !== null ? (
+        <View testID="publish-place-notice" style={{ gap: spacing[2], maxWidth: 720 }}>
+          <Notice kind="info">{t(marked ? "host.publish.place.withPoint" : "host.publish.place.withoutPoint")}</Notice>
+          {marked ? null : <ActionButton icon="pin" variant="secondary" label={t("host.publish.place.mark")} onPress={() => onNavigate(withCelebration(editorPath("general"), celebration.id))} testID="publish-place-mark" />}
         </View>
       ) : null}
       <CelebrationErrorNotice error={fromError.length ? null : action.error} onReload={() => { void check.refetch(); refetch(); }} />

@@ -10,8 +10,8 @@ const leaflet = vi.hoisted(() => {
 });
 vi.mock("leaflet", () => ({ map: leaflet.map, tileLayer: leaflet.tileLayer }));
 
-const openPicker = async (): Promise<readonly [string, Record<string, unknown>]> => {
-  renderApp(<MapPicker initial={{ lat: -17.78, lng: -63.18 }} query="" onPick={vi.fn()} onClose={vi.fn()} />, fakeClient({}).client);
+const openPicker = async (handlers: Parameters<typeof fakeClient>[0] = {}): Promise<readonly [string, Record<string, unknown>]> => {
+  renderApp(<MapPicker initial={{ lat: -17.78, lng: -63.18 }} query="" onPick={vi.fn()} onClose={vi.fn()} />, fakeClient(handlers).client);
   await screen.findByTestId("map-canvas");
   await waitFor(() => expect(leaflet.tileLayer).toHaveBeenCalledTimes(1));
   const [call] = leaflet.tileLayer.mock.calls;
@@ -35,6 +35,20 @@ describe("teselas del selector de ubicación", () => {
     const [url, options] = await openPicker();
     expect(url).toBe("https://tiles.example.com/{z}/{x}/{y}.png");
     expect(options.referrerPolicy).toBe("strict-origin-when-cross-origin");
+  });
+
+  it("el servidor de teselas y la atribución los dicta el backend en tiempo de ejecución (map-config), sin publicar la app", async () => {
+    const [url, options] = await openPicker({ "GET /providers/geo/map-config": () => ({ tileUrl: "https://tiles.example.org/{z}/{x}/{y}.png", attribution: "© Otro <b>proveedor</b>", maxZoom: 18, searchEnabled: true }) });
+    expect(url).toBe("https://tiles.example.org/{z}/{x}/{y}.png");
+    expect(options.referrerPolicy).toBe("strict-origin-when-cross-origin");
+    expect(String(options.attribution)).toContain("Otro &#60;b&#62;proveedor&#60;/b&#62;");
+    expect(String(options.attribution)).not.toContain("<b>");
+    expect(options.maxZoom).toBe(18);
+  });
+
+  it("una configuración del backend inservible (http, sin {z}/{x}/{y}) deja el servidor de OpenStreetMap", async () => {
+    const [url] = await openPicker({ "GET /providers/geo/map-config": () => ({ tileUrl: "http://evil.example/x.png", attribution: "x", maxZoom: 18, searchEnabled: true }) });
+    expect(url).toBe(OSM_TILE_URL);
   });
 
   it("acepta la ranura {s} de subdominios", () => {
