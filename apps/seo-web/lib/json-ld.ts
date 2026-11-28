@@ -1,5 +1,5 @@
 import { readContent, type GalleryImage, type LocalDateTime, type PublicCelebrationView } from "@rsvp/celebration-theme";
-import { siteUrl } from "./metadata";
+import { shareImage, siteUrl } from "./metadata";
 
 /** schema.org structured data. Validated against the schema by tests/seo.test.ts. */
 
@@ -30,7 +30,7 @@ export function eventJsonLd(view: PublicCelebrationView, gallery: readonly Galle
   const start = view.localTimes["eventDate"];
   if (!start || !content.title) return null;
   const venue = content.venues[0];
-  const cover = gallery.find((image) => image.isCover)?.variants.full;
+  const cover = shareImage(gallery)?.url;
   return {
     "@context": CONTEXT,
     "@type": "Event",

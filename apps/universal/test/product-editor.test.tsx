@@ -1,5 +1,6 @@
-import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, createEvent, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { Linking, Platform } from "react-native";
+import { toApiError } from "@rsvp/api-client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NewProductScreen, ProductEditorScreen } from "../src/provider/product-editor/product-editor-screen";
 import { ServicesScreen } from "../src/provider/services-screen";
@@ -16,6 +17,10 @@ vi.mock("../src/platform/pick-image", async () => {
   const { ImagePermissionError } = await import("../src/platform/image-permission-error");
   return { pickImage: async () => { if (picked.denied) throw new ImagePermissionError(); return picked.next; } };
 });
+
+/** The web build of drag and drop and of the dropped files (vitest would otherwise load the iOS/Android files). */
+vi.mock("../src/platform/file-drop", () => import("../src/platform/file-drop.web"));
+vi.mock("../src/platform/pick-media", () => import("../src/platform/pick-media.web"));
 
 /** R2 · the product sheet of the provider portal: steps, missing list, photos, publishing and the catalog's refusals. */
 const PID = "4f0f2d3d-0000-4000-8000-0000000000bb";
@@ -391,6 +396,141 @@ describe("eb9818d · price cap and hidden products", () => {
     expect((await screen.findByTestId(`listing-completeness-${LID}`)).textContent).toBe("Oculto");
     fireEvent.click(within(screen.getByTestId(`listing-${LID}`)).getByRole("button", { name: /Más opciones/ }));
     expect((await screen.findByRole("menuitem", { name: "Duplicar" })).getAttribute("aria-disabled")).toBe("true");
+  });
+});
+
+describe("photos by drag and drop", () => {
+  /** A drag of any kind with the DataTransfer a browser would send; returns what the zone answered. */
+  const drag = (kind: "dragEnter" | "dragOver" | "drop", target: Element | Window, files: readonly File[], types: readonly string[] = ["Files"]) => {
+    const dataTransfer = { files, types, items: files.map((file) => ({ type: file.type })), dropEffect: "unset" };
+    const event = createEvent[kind](target as Element);
+    Object.defineProperty(event, "dataTransfer", { value: dataTransfer });
+    fireEvent(target as Element, event);
+    return { prevented: event.defaultPrevented, effect: dataTransfer.dropEffect };
+  };
+  const png = (name: string, content = "data"): File => new File([content], name, { type: "image/png" });
+  const uploadsOf = (calls: readonly { method: string; path: string; body: unknown }[]) => calls.filter((call) => call.path.endsWith("/photos/uploads"));
+
+  it("while an upload is pending, nothing dropped resets it or starts another, and the zone does not offer the drop", async () => {
+    setSearchParams({ lid: LID, paso: "fotos" });
+    let fail: (error: unknown) => void = () => {};
+    const pending = new Promise((_resolve, reject) => { fail = reject; });
+    const { client, calls } = fakeClient(handlers({ [`POST /providers/${PID}/listings/${LID}/photos/uploads`]: () => pending }));
+    renderApp(<ProductEditorScreen listingId={LID} />, client, HOST);
+    const zone = await screen.findByTestId("photo-dropzone");
+    drag("drop", zone, [png("uno.png")]);
+    await waitFor(() => expect(screen.getByTestId("photo-add").getAttribute("aria-disabled")).toBe("true"));
+    const stage = screen.getByTestId("photo-stage").textContent;
+    expect(stage).toBeTruthy();
+    expect(drag("dragEnter", zone, [png("dos.png")]).prevented).toBe(true);
+    expect(drag("dragOver", zone, [png("dos.png")])).toEqual({ prevented: true, effect: "none" });
+    expect(screen.queryByText("Suelta para subir.")).toBeNull();
+    expect(drag("drop", zone, [], ["text/uri-list"]).prevented).toBe(true);
+    expect(drag("drop", zone, [png("dos.png")]).prevented).toBe(true);
+    // The mutation tells its state on the next tick: give a wrong reset the chance to show.
+    await new Promise((resolve) => { setTimeout(resolve, 20); });
+    expect(screen.getByTestId("photo-add").getAttribute("aria-disabled")).toBe("true");
+    expect(screen.getByTestId("photo-stage").textContent).toBe(stage);
+    expect(screen.queryByText(/Eso no es un archivo/)).toBeNull();
+    expect(uploadsOf(calls)).toHaveLength(1);
+    // The upload in flight still reports its own failure.
+    fail(toApiError(409, "test", { title: "Failure", status: 409, code: "MEDIA_QUOTA_EXCEEDED" }));
+    expect(await screen.findByTestId("sheet-error")).toBeTruthy();
+    expect(screen.getByTestId("photo-stage").textContent).toBe("");
+  });
+
+  it("a full version does not invite a drop: no copy cursor, nothing uploaded and the browser does not open the file", async () => {
+    setSearchParams({ lid: LID, paso: "fotos" });
+    const sheet = { ...SHEET, variants: [{ id: "v-gold", label: "Dorado", priceMinor: 35000, stock: "AVAILABLE", isDefault: true }], photos: ["a", "b", "c"].map((id) => photo(`ph-${id}`, "READY", { variantId: "v-gold" })) };
+    const { client, calls } = fakeClient(handlers({ [`GET /providers/${PID}/listings/${LID}`]: () => sheet }));
+    renderApp(<ProductEditorScreen listingId={LID} />, client, HOST);
+    const select = await screen.findByTestId("photo-variant");
+    expect(screen.getByText(/Arrastra una foto aquí/)).toBeTruthy();
+    fireEvent.change(select, { target: { value: "v-gold" } });
+    const zone = screen.getByTestId("photo-dropzone");
+    expect(screen.queryByText(/Arrastra una foto aquí/)).toBeNull();
+    expect(zone.hasAttribute("aria-describedby")).toBe(false);
+    drag("dragEnter", zone, [png("uno.png")]);
+    expect(screen.queryByText("Suelta para subir.")).toBeNull();
+    expect(drag("dragOver", zone, [png("uno.png")])).toEqual({ prevented: true, effect: "none" });
+    expect(drag("drop", zone, [png("uno.png")]).prevented).toBe(true);
+    expect(drag("drop", zone, [], ["text/uri-list"]).prevented).toBe(true);
+    expect(screen.queryByText(/Eso no es un archivo/)).toBeNull();
+    expect(uploadsOf(calls)).toHaveLength(0);
+  });
+
+  it("several files dropped at once upload only the first", async () => {
+    setSearchParams({ lid: LID, paso: "fotos" });
+    const { client, calls } = fakeClient(handlers({ [`POST /providers/${PID}/listings/${LID}/photos/uploads`]: () => new HttpFailure(409, { code: "MEDIA_QUOTA_EXCEEDED" }) }));
+    renderApp(<ProductEditorScreen listingId={LID} />, client, HOST);
+    const zone = await screen.findByTestId("photo-dropzone");
+    expect(drag("dragOver", zone, [png("uno.png")])).toEqual({ prevented: true, effect: "copy" });
+    drag("drop", zone, [png("uno.png", "uno"), png("dos.png", "segunda")]);
+    await screen.findByTestId("sheet-error");
+    expect(uploadsOf(calls).map((call) => call.body)).toEqual([{ contentType: "image/png", bytes: 3 }]);
+  });
+
+  it("leaving the step removes the zone's listeners, on itself and on the page", async () => {
+    setSearchParams({ lid: LID, paso: "fotos" });
+    const { client, calls } = fakeClient(handlers());
+    const view = renderApp(<ProductEditorScreen listingId={LID} />, client, HOST);
+    const zone = await screen.findByTestId("photo-dropzone");
+    expect(drag("dragOver", window, [png("uno.png")]).prevented).toBe(true);
+    view.unmount();
+    for (const target of [window, zone]) {
+      expect(drag("dragOver", target, [png("uno.png")]).prevented).toBe(false);
+      expect(drag("drop", target, [png("uno.png")]).prevented).toBe(false);
+    }
+    expect(uploadsOf(calls)).toHaveLength(0);
+  });
+
+  it("with a touch pointer there is no hint, and the zone does not point at a missing description", async () => {
+    vi.stubGlobal("matchMedia", (query: string) => ({ matches: query === "(pointer: coarse)", media: query, addEventListener: () => {}, removeEventListener: () => {}, addListener: () => {}, removeListener: () => {} }));
+    setSearchParams({ lid: LID, paso: "fotos" });
+    const { client } = fakeClient(handlers());
+    renderApp(<ProductEditorScreen listingId={LID} />, client, HOST);
+    const zone = await screen.findByTestId("photo-dropzone");
+    expect(screen.queryByText(/Arrastra una foto aquí/)).toBeNull();
+    expect(zone.hasAttribute("aria-describedby")).toBe(false);
+  });
+
+  /** jsdom has no DataTransfer: the event carries the shape a browser sends. */
+  const drop = (files: readonly File[], types: readonly string[] = ["Files"]): void => {
+    const target = screen.getByTestId("photo-dropzone");
+    const event = createEvent.drop(target);
+    Object.defineProperty(event, "dataTransfer", { value: { files, types, items: files.map((file) => ({ type: file.type })), dropEffect: "" } });
+    fireEvent(target, event);
+  };
+
+  it("a dropped file is registered as an upload; a refused type or a picture from another page never reaches the server", async () => {
+    setSearchParams({ lid: LID, paso: "fotos" });
+    const { client, calls } = fakeClient(handlers({ [`POST /providers/${PID}/listings/${LID}/photos/uploads`]: () => { throw new HttpFailure(500, "BOOM"); } }));
+    renderApp(<ProductEditorScreen listingId={LID} />, client, HOST);
+    await screen.findByTestId("photo-dropzone");
+    drop([], ["text/uri-list"]);
+    expect(await screen.findByText(/Eso no es un archivo/)).toBeTruthy();
+    drop([new File(["x"], "foto.heic", { type: "" })]);
+    expect((await screen.findByTestId("sheet-error")).textContent).toMatch(/Solo JPG, PNG o WebP/);
+    expect(screen.queryByText(/Eso no es un archivo/)).toBeNull();
+    expect(calls.some((call) => call.path.endsWith("/photos/uploads"))).toBe(false);
+    drop([new File(["data"], "copas.png", { type: "image/png" })]);
+    await waitFor(() => expect(calls.find((call) => call.path.endsWith("/photos/uploads"))?.body).toEqual({ contentType: "image/png", bytes: 4 }));
+  });
+
+  it("with 5 photos nothing is uploaded, and a file dropped on the zone or anywhere on the page is not opened by the browser", async () => {
+    setSearchParams({ lid: LID, paso: "fotos" });
+    const sheet = { ...SHEET, photos: ["1", "2", "3", "4", "5"].map((id) => photo(`ph-${id}`, "READY")) };
+    const { client, calls } = fakeClient(handlers({ [`GET /providers/${PID}/listings/${LID}`]: () => sheet }));
+    renderApp(<ProductEditorScreen listingId={LID} />, client, HOST);
+    await screen.findByTestId("photo-limit");
+    expect(screen.queryByTestId("photo-add")).toBeNull();
+    for (const target of [screen.getByTestId("photo-dropzone"), document.body]) {
+      const event = createEvent.drop(target);
+      Object.defineProperty(event, "dataTransfer", { value: { files: [new File(["data"], "copas.png", { type: "image/png" })], types: ["Files"], items: [{ type: "image/png" }], dropEffect: "" } });
+      fireEvent(target, event);
+      expect(event.defaultPrevented).toBe(true);
+    }
+    expect(calls.some((call) => call.path.endsWith("/photos/uploads"))).toBe(false);
   });
 });
 

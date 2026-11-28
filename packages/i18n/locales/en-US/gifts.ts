@@ -2,11 +2,11 @@ import type { DeepStrings } from "../types.js";
 import type { giftsEsBO } from "../es-BO/gifts.js";
 /** Public gift list (F22) and host gift management (F23). */
 export const giftsEnUS: DeepStrings<typeof giftsEsBO> = {
-  meta: { title: "Gifts · {{name}}", description: "Choose a gift for {{name}}. Products from our partners come first." },
+  meta: { title: "Gifts · {{name}}", description: "Gift list for {{name}}. Products from our partners come first." },
   back: "Back to the celebration",
   filters: { label: "Filter gifts", maxPrice: "Maximum price", source: "Source", sourceAll: "All", sourcePartner: "From our partners", sourceOther: "Other stores", onlyAvailable: "Available only", clear: "Clear filters", count_one: "{{count}} gift", count_other: "{{count}} gifts" },
   card: { photo: "Photo of {{title}}", open: "See details of {{title}}", viaWhatsApp: "Ask on WhatsApp", viaOther: "See at the store" },
-  detail: { title: "{{title}} · Gifts", back: "Back to the list", notFound: "This gift is no longer on the list.", notFoundBody: "The hosts may have removed it. The full list is still open to you.", partnerNote: "A DOne partner offers this product. Opening the link takes you out of DOne." },
+  detail: { title: "{{title}} · Gifts", back: "Back to the list", notFound: "This gift is no longer on the list.", notFoundBody: "The hosts may have removed it. The full list is still open to you.", notFoundBodyClosed: "The hosts may have removed it. You can go back to the list to see the others.", partnerNote: "A DOne partner offers this product. Opening the link takes you out of DOne." },
   outcome: { cancelledTitle: "Reservation cancelled", cancelledBody: "This reservation was cancelled when your attendance changed. If you are attending again, confirm your response and choose an available gift." },
   error: {
     attendanceBody: "To reserve a gift, return to your response and confirm that you are attending.",
@@ -35,8 +35,10 @@ export const giftsEnUS: DeepStrings<typeof giftsEsBO> = {
       offlineTitle: "No connection right now", offlineBody: "Check your internet and try again.", retry: "Try again",
       notFoundTitle: "We could not find this celebration", notFoundBody: "The link may be incomplete, or it may not be published yet."
     },
+    /** R8a (REG-01) · list closed by hand: say so and offer no reservation. */
+    closed: { title: "The gift list is closed", body: "Your hosts closed it: gifts can no longer be reserved.", keepsMine: "What you already reserved stays reserved. You can still cancel it." },
     /** D-3 · the guest cancels their own reservation (app). */
-    mine: { label: "Your reservation", pendingLabel: "Your reservation, waiting for approval", cancel: "Cancel my reservation", cancelFor: "Cancel my reservation of {{title}}", confirmTitle: "Cancel your reservation?", confirmBody: "\"{{title}}\" becomes available to the other guests again. If you change your mind, you can reserve it again while it is still free.", confirm: "Yes, cancel the reservation", keep: "No, keep it", cancelling: "Cancelling…", done: "You cancelled your reservation of \"{{title}}\". The gift is back on the list.", notActive: "This reservation was no longer active. We refreshed the list.", error: "We could not cancel the reservation. Try again: it will not be cancelled twice.", expired: "Your link no longer works. Ask whoever invited you for a new one.", offline: "No connection right now. Your reservation is unchanged; try again when you are back online.", released: "Your hosts released \"{{title}}\". You can choose another gift." },
+    mine: { label: "Your reservation", pendingLabel: "Your reservation, waiting for approval", cancel: "Cancel my reservation", cancelFor: "Cancel my reservation of {{title}}", confirmTitle: "Cancel your reservation?", confirmBody: "\"{{title}}\" becomes available to the other guests again. If you change your mind, you can reserve it again while it is still free.", confirm: "Yes, cancel the reservation", keep: "No, keep it", confirmBodyClosed: "The list is closed: if you cancel your reservation of \"{{title}}\", you will not be able to reserve it again while it stays closed.", cancelling: "Cancelling…", done: "You cancelled your reservation of \"{{title}}\". The gift is back on the list.", notActive: "This reservation was no longer active. We refreshed the list.", error: "We could not cancel the reservation. Try again: it will not be cancelled twice.", expired: "Your link no longer works. Ask whoever invited you for a new one.", offline: "No connection right now. Your reservation is unchanged; try again when you are back online.", released: "Your hosts released \"{{title}}\". You can choose another gift." },
     reserveError: {
       closed: "The list is closed: gifts can no longer be reserved.",
       limit: "You reached the most gifts one person can reserve. If your hosts reject one of your reservations, you can pick another.",
