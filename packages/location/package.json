@@ -1,0 +1,21 @@
+{
+  "name": "@rsvp/location",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@rsvp/celebration-theme": "workspace:*",
+    "@rsvp/config-ts": "workspace:*",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.2"
+  }
+}
