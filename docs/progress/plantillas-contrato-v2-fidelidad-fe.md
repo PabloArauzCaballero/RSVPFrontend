@@ -55,6 +55,9 @@ Resultados sobre el SHA de esta ronda (Linux, Node 22, Chrome `/usr/bin/google-c
 - Resultados: `yarn typecheck` 19/19; `yarn lint:code` 0; vitest celebration-theme 3356/3356, design-editor 483, seo-web 224, universal 853, query-hooks 210, ui 333, auth 89 (1 saltado heredado), forms 65, design-tokens 92; Chrome real sobre fixture, `--trace off`: fidelidad 78, extra 217, portadas-existentes 120, sobrio 171, f6 medios+libre 40, f6 ataques 414, bodas/fiestas/infantil-ritos/portada 626, todos pasan.
 - NO probado: backend real, gateway/Kong, RabbitMQ, MinIO, Docker, iOS/Android, Safari/Firefox, lector de pantalla, gitleaks (sin binario), `test:visual` macOS. El BE a493b985 se leyó de un clon local en evolución, no de un merge fijo.
 
+## Re-vendorización con el SHA real de BE #164 (28-11)
+BE #164 se reescribió con push normal: `a493b985` pasa a `beb60d52` (la rama contiene a las anteriores). `generate --ref beb60d52` (git objects del clon local) cambia solo `ref` y `refName` de `backend.lock.json`: los 8 OpenAPI son idénticos por SHA-256 (comprobado contra `git show beb60d52:...` de cada spec) y `check:generated` sale 0. `check:source` NO se ejecutó (sin deploy key).
+
 ## Tope del velo (PL-155-R1, revisión independiente 28-11)
 - Observación: `clampVeil` y `gradedVeil` admitían 0,95 pero el contrato 1.8.0 fija el velo de un documento en 0..0,8 (`DesignMediaBackground.scrim`) y el velo pintado tras el texto en 0,85 (`x-rsvp-veil.gradedBehindText`).
 - Hallazgo con evidencia: el lector (`read.ts`) ya descartaba un `scrim` > 0,8 y `clampScrim` lo topa en 0,8, y `requiredScrim` nunca pasa de 0,8; el 0,95 era margen muerto: ningún documento podía pintarlo, pero un llamador futuro sí habría podido.

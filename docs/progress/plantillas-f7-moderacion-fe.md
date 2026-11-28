@@ -120,3 +120,6 @@ Mutación N1 (se vuelve al componente anterior): fallan las 3 pruebas nuevas de 
 - `yarn typecheck` 19/19; `yarn lint:code` 0; vitest: celebration-theme 3365, universal 889, query-hooks 235, seo-web 244, design-editor 483, ui 333, auth 89 (1 saltado heredado), forms 65, design-tokens 92, api-client 17, ui-web 15, contracts 6, telemetry 8 (turbo, concurrencia 2, 33/33 tareas).
 - Chrome real (chromium 1243), `--trace off`: seo-web denuncia 23; universal HOST 2 y ADMIN 13 (con `EXPO_OFFLINE=1`, mock de contratos); seo-web sobre la fusión: f6 medios+libre 40, fidelidad 78, portadas-existentes 120, extra 217, sobrio 171, f6 ataques 414.
 - NO probado: backend real, gateway/Kong (`Retry-After` entre orígenes), RabbitMQ, MinIO, Docker, iOS/Android, Safari/Firefox, lector de pantalla, gitleaks (sin binario). `CONTENT_RESTORED` y `Retry-After` en Kong siguen siendo requisitos del BE.
+
+## Re-vendorización con el SHA real de BE #167 (28-11)
+BE #167 se reescribió con push normal: `f5076715` pasa a `a76b53e3` (y #164 a `beb60d52`, ya en #145). `generate --ref a76b53e3` (git objects del clon local) cambia solo `ref` y `refName` de `backend.lock.json`: los 8 OpenAPI son idénticos por SHA-256 (comprobado contra `git show a76b53e3:...`), celebration 1.8.0 y template-media 1.9.1 sin cambio; `check:generated` sale 0. `check:source` NO se ejecutó (sin deploy key).
