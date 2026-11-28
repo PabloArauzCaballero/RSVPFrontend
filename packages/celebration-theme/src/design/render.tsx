@@ -7,7 +7,7 @@ import { Flourish } from "../flourish.js";
 import { formatDate } from "../format.js";
 import type { CelebrationRendererProps } from "../renderer.js";
 import { SectionNav } from "../section-nav.js";
-import { GiftsAction, RsvpAction, SECTIONS } from "../sections/index.js";
+import { ActionsBlock, GiftsAction, RsvpAction, SECTIONS } from "../sections/index.js";
 import { AudioPlayer, EmbedFacade, MediaBackdrop, MediaImage } from "../media/components.js";
 import { embedFromConfig, mapEmbed } from "../media/embed.js";
 import { clampScrim, hasImage, type PublicMedia } from "../media/variants.js";
@@ -45,6 +45,10 @@ interface Context {
   readonly media: readonly GalleryImage[];
   /** Veil opacity each scheme needs over any picture so the text on it reads at AA. */
   readonly veil: { readonly light: number; readonly dark: number };
+  /** The reply's one actions block is on the page (not a section's own page). */
+  readonly merged: boolean;
+  /** The gifts page stays, without its buttons, because it has content of its own. */
+  readonly giftsApart: boolean;
   readonly cover?: GalleryImage;
   readonly t: Translate;
   readonly giftsHref: string;
@@ -316,13 +320,29 @@ function Doors({ kind }: { readonly kind: "abrir-puertas" | "revelar-telon" }): 
   return <span className="cdesign-doors" data-kind={kind} aria-hidden="true"><span className="cdesign-door" data-side="l" />{kind === "abrir-puertas" ? <span className="cdesign-door" data-side="r" /> : null}</span>;
 }
 
+/** The reply page carries the one actions block (decision 8): the document's own gifts and reply buttons are replaced by it, so they never appear twice or apart. */
+const isActionsBlock = (page: DesignPage): boolean => page.kind === "section" && page.section === "rsvp";
+const isButton = (type: string | undefined): boolean => type === "giftsCta" || type === "rsvpCta";
+
+/** The gifts page keeps whatever is its own (its illustration, texts, background): its two action buttons, gifts or reply, are the block's (PL-139-01, PL-139-R2-04). */
+function hasOwnContent(page: DesignPage, design: DesignDocumentV2): boolean {
+  const types = new Map(design.blocks.map((block) => [block.id, block.type]));
+  const elements = [...page.canvases.mobile.elements, ...(page.canvases.desktop?.elements ?? [])];
+  return Boolean(page.background) || elements.some((item) => item.visible && !isButton(types.get(item.block)));
+}
+
 function Canvas({ page, context }: { readonly page: DesignPage; readonly context: Context }): ReactNode {
   const { mobile, desktop } = page.canvases;
   const byId = (canvas: DesignCanvas | undefined): Map<string, DesignElement> => new Map((canvas?.elements ?? []).filter((item) => item.visible).map((item) => [item.id, item]));
-  const phone = byId(mobile);
-  const wide = byId(desktop);
-  const ids = [...new Set([...phone.keys(), ...wide.keys()])];
   const blocks = new Map(context.design.blocks.map((block) => [block.id, block]));
+  // The block has both buttons: the reply page loses its own, and so does the gifts page when the block is on the page. On the gifts section's own page there is no block, so its buttons stay.
+  const dropped = isActionsBlock(page) || (context.merged && page.section === "gifts") ? isButton : undefined;
+  const without = (map: Map<string, DesignElement>): Map<string, DesignElement> => (dropped ? new Map([...map].filter(([, item]) => !dropped(blocks.get(item.block)?.type))) : map);
+  const phone = without(byId(mobile));
+  const wide = without(byId(desktop));
+  const ids = [...new Set([...phone.keys(), ...wide.keys()])];
+  // A canvas whose only element was a button that moved into the block has nothing left to draw: no empty box (PL-139-07).
+  if (dropped && ids.length === 0) return null;
   const vars = { "--cd-cols-m": mobile.columns, "--cd-row-m": `${mobile.rowHeight}px`, "--cd-cols-d": desktop?.columns ?? mobile.columns, "--cd-row-d": `${(desktop ?? mobile).rowHeight}px` } as CSSProperties;
   return (
     <div className="cdesign-canvas" data-mode={mobile.mode} data-desktop={desktop ? "" : undefined} style={vars}>
@@ -403,9 +423,11 @@ function PageBlock({ page, context, only }: { readonly page: DesignPage; readonl
   const headingId = `section-${section}`;
   return (
     <section id={section} className="cdesign-page" data-page-kind="section" data-section={section} data-page={page.id} {...shared} aria-labelledby={headingId} style={{ ...backgroundStyle(page.background), ...veil.style }}>
-      <h2 id={headingId} className={only ? "celebration-visually-hidden" : "cdesign-page-title"}>{t(sectionTitleKey(section))}</h2>
-      {section === "gifts" || section === "rsvp" ? <div className="cdesign-intro"><p>{t(`celebration.${section}.${section === "gifts" ? "intro" : "body"}`)}</p></div> : null}
+      <h2 id={headingId} className={only ? "celebration-visually-hidden" : "cdesign-page-title"}>{t(section === "rsvp" ? "celebration.actions.title" : sectionTitleKey(section))}</h2>
+      {section === "gifts" ? <div className="cdesign-intro"><p>{t("celebration.gifts.intro")}</p></div> : null}
+      {section === "rsvp" ? <div className="cdesign-intro"><p>{t("celebration.rsvp.body")}</p>{context.giftsApart ? null : <p>{t("celebration.gifts.intro")}</p>}</div> : null}
       {inner}
+      {section === "rsvp" ? <div className="cdesign-actions"><ActionsBlock t={t} giftsHref={context.giftsHref} giftsStatus={context.props.giftsStatus} rsvpHref={context.props.rsvpHref} rsvpHelpHref={context.props.rsvpHelpHref} rsvpAdaptive={context.props.rsvpAdaptive} /></div> : null}
     </section>
   );
 }
@@ -420,7 +442,6 @@ export function DesignRenderer(props: DesignRendererProps): ReactNode {
   const palette = designPalette(design, scheme ?? "light");
   const cover = gallery.find((image) => image.isCover);
   const veil = { light: requiredScrim(designPalette(design, "light")), dark: requiredScrim(designPalette(design, "dark")) };
-  const context: Context = { props, design, theme, view, content, gallery, media, veil, ...(cover ? { cover } : {}), t, giftsHref: giftsPath(view.slug), now: props.now ?? new Date() };
   const available = theme.sections.filter((section) => hasSectionContent(section, content, gallery));
   const monogram = design.tokens.typography.monogram;
   // Following the system, the colours live in `SystemColours` rules; a forced scheme sets them inline.
@@ -433,7 +454,12 @@ export function DesignRenderer(props: DesignRendererProps): ReactNode {
     ...(scheme ? artVariables(artPalette(palette)) : {})
   } as CSSProperties;
   const placed = design.pages.filter((page) => page.kind === "cover" || (page.section && available.includes(page.section as SectionId)));
-  const pages = props.only ? placed.filter((page) => page.kind === "section" && page.section === props.only) : placed;
+  // Decision 8: the button of the gifts page lives in the reply page's one block. The page itself stays when it has anything of its own (PL-139-01); without it, there is nothing to keep and it folds into the block.
+  const merged = !props.only && placed.some((page) => isActionsBlock(page));
+  const giftsPage = placed.find((page) => page.kind === "section" && page.section === "gifts");
+  const giftsApart = merged && giftsPage !== undefined && hasOwnContent(giftsPage, design);
+  const context: Context = { props, design, theme, view, content, gallery, media, veil, ...(cover ? { cover } : {}), t, giftsHref: giftsPath(view.slug), now: props.now ?? new Date(), merged, giftsApart };
+  const pages = props.only ? placed.filter((page) => page.kind === "section" && page.section === props.only) : placed.filter((page) => !(merged && page === giftsPage && !giftsApart));
   return (
     <article className="celebration celebration-design" data-design="2" data-layout={theme.layout} data-color-scheme={scheme ?? "light"} data-scheme-source={scheme ? "prop" : "system"}
       data-section-style={theme.sectionStyle} data-divider={layout.divider} data-images={layout.imageTreatment} data-heading-face={SCRIPT_TITLE_FACTS_IN_BODY.has(theme.id) && familyById(design.tokens.typography.heading.family)?.category === "script" ? "script" : undefined} lang={view.locale} style={style}>

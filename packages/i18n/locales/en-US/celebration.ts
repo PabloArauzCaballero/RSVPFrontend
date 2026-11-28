@@ -6,6 +6,7 @@ export const celebrationEnUS: DeepStrings<typeof celebrationEsBO> = {
   sections: { story: "Our story", schedule: "Schedule", venues: "Venues", gallery: "Gallery", dressCode: "Dress code", faq: "FAQ", recommendations: "Recommendations", gifts: "Gifts", rsvp: "RSVP" },
   hero: { countdown_one: "{{count}} day to go", countdown_other: "{{count}} days to go", today: "It's today" },
   dock: { label: "Invitation actions" },
+  actions: { title: "Reply and choose a gift", label: "Reply and gifts" },
   nav: { label: "Celebration sections", home: "Home" },
   schedule: { zoneNote: "Times are in the event's local time ({{zone}})." },
   venues: { howToGetThere: "Get directions", kind: { ceremony: "Ceremony", reception: "Reception", other: "Venue" } },

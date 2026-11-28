@@ -26,6 +26,11 @@ export interface SectionProps {
   readonly giftsHref: string;
   /** What the gift list holds; until the public view says it, OPEN. Only the button's label depends on it. */
   readonly giftsStatus?: GiftsStatus;
+  /**
+   * The gifts SECTION stays on the page with what is its own (its drawing, its intro) but without the button, which lives in the reply's
+   * one block (PL-139-01). Off: the gifts section is not on the page, or it is the gifts page itself, and the button is where it was.
+   */
+  readonly giftsApart?: boolean;
 }
 
 type Section = (props: SectionProps) => ReactNode;
@@ -136,11 +141,26 @@ export function RsvpAction({ t, rsvpHref, rsvpHelpHref, rsvpAdaptive, label, var
   return <>{action}{help}</>;
 }
 
+/**
+ * FE #114 follow-up, decision 8: the reply and the gifts button are ONE block, both primary and of the same weight, side by side
+ * from 768 px and stacked on the phone. It is the renderer's chrome (`rsvp-protected`), not an element of a canvas: no document can
+ * hide, cover or move one of the two apart from the other. The gifts link is always `giftsHref` and never carries the guest's link.
+ */
+export function ActionsBlock(props: Pick<SectionProps, "t" | "rsvpHref" | "rsvpHelpHref" | "rsvpAdaptive" | "giftsHref" | "giftsStatus">): ReactNode {
+  return (
+    <div className="celebration-actions rsvp-protected" role="group" aria-label={props.t("celebration.actions.label")} data-actions-block="">
+      <RsvpAction {...props} />
+      <GiftsAction {...props} />
+    </div>
+  );
+}
+
 function Rsvp(props: SectionProps): ReactNode {
   return (
     <>
       <p>{props.t("celebration.rsvp.body")}</p>
-      <RsvpAction {...props} />
+      {props.giftsApart ? null : <p>{props.t("celebration.gifts.intro")}</p>}
+      <ActionsBlock {...props} />
     </>
   );
 }
@@ -161,7 +181,7 @@ function Gifts(props: SectionProps): ReactNode {
   return (
     <>
       <p>{props.t("celebration.gifts.intro")}</p>
-      <GiftsAction {...props} />
+      {props.giftsApart ? null : <GiftsAction {...props} />}
     </>
   );
 }
