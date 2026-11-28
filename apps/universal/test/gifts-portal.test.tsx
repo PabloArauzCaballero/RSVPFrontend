@@ -475,6 +475,18 @@ describe("REQ-F28-06 · lead metrics", () => {
   });
 });
 
+describe("lead metrics grouped by category", () => {
+  it("titles each {key} group with the catalogue's category name, never the code", async () => {
+    await withProvider();
+    const { client } = fakeClient(providerHandlers({ [`GET /providers/${PID}/metrics`]: () => ({ providerId: PID, from: "a", to: "b", totals: { impressions: 5, clicks: 0, validLeads: 0, invalidLeads: 0, ctr: 0 }, groups: [{ key: "PASTRY", impressions: 5 }] }) }));
+    renderApp(<MetricsScreen />, client, HOST);
+    await screen.findByTestId("metric-totals");
+    fireEvent.click(screen.getByRole("radio", { name: "Categoría" }));
+    await waitFor(() => expect(screen.getByTestId("metric-row").textContent).toContain("Pastelería"));
+    expect(screen.getByTestId("metric-row").textContent).not.toContain("PASTRY");
+  });
+});
+
 describe("REQ-F28 · availability and date requests", () => {
   it("validates the schedule, saves it and confirms or rejects requests (409 refreshes)", async () => {
     await withProvider();
