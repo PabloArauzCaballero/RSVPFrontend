@@ -4,7 +4,7 @@ import { providerApi } from "../domains.js";
 import { PhotoTimeoutError, PhotoUploadError, isSettledPhoto, type PollOptions } from "./product-sheet.js";
 
 /**
- * Imagenes por archivo (provider-catalog 3.13.0): the photos of the provider itself, the gallery of its microsite (up to 12) and its
+ * Imagenes por archivo (provider-catalog 3.14.0): the photos of the provider itself, the gallery of its microsite (up to 12) and its
  * logo, uploaded from the device with the same three steps and worker as an offer's photos. Types come from the generated contract.
  */
 type Schemas = ProviderCatalogComponents["schemas"];
