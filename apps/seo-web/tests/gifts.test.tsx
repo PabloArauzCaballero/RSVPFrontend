@@ -323,7 +323,7 @@ describe("REQ-F22-05 · the two successful outcomes follow the celebration mode"
     renderList();fireEvent.click(await screen.findByRole("button", { name: /Reservar Torta/ }));
     fireEvent.change(screen.getByLabelText("Tu nombre (opcional)"), { target: { value: "Nombre QA" } });
     fireEvent.click(screen.getByRole("button", { name: "Confirmar reserva" }));
-    expect((await screen.findByRole("alert")).textContent).toContain("confirmá que asistirás");
+    expect((await screen.findByRole("alert")).textContent).toContain("confirma que asistirás");
     expect((screen.getByLabelText("Tu nombre (opcional)") as HTMLInputElement).value).toBe("Nombre QA");
     const form = screen.getByRole("form", { name: "Reservar «Torta»" });
     expect(within(form).getByRole("link", { name: "Volver a mi respuesta" }).getAttribute("href")).toContain("/c/ana-luis/rsvp/");
