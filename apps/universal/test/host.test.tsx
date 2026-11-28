@@ -165,23 +165,40 @@ describe("C2–C5 · picker and onboarding", () => {
     expect(calls.some((call) => call.method === "POST")).toBe(false);
   });
 
-  it("the venue is a real place: a pasted maps link travels with the creation, anything that is not a maps link stops the step", async () => {
-    const { client, calls } = fakeClient({ "GET /celebrations/event-types": () => ({ items: [WEDDING] }), "POST /celebrations": () => ({ ...CELEBRATION, id: "c-new" }) });
+  it("the venue is a real place: searching marks its point, which travels with the creation as locations.main plus an OpenStreetMap mirror; there is no link field", async () => {
+    const place = { id: "way/9", name: "Salón Las Palmas", label: "Salón Las Palmas, Santa Cruz, Bolivia", lat: -17.7833, lng: -63.1821, osmType: "way", osmId: 9 };
+    const { client, calls } = fakeClient({ "GET /celebrations/event-types": () => ({ items: [WEDDING] }), "GET /providers/geo/search": () => ({ items: [place], attribution: "© OpenStreetMap contributors" }), "POST /celebrations": () => ({ ...CELEBRATION, id: "c-new" }) });
     renderApp(<OnboardingScreen step={1} onNavigate={navigate} />, client);
     fireEvent.click(await screen.findByRole("radio", { name: "Boda" }));
     fireEvent.click(screen.getByTestId("onboarding-next"));
     type("Novia", "Ana"); type("Novio", "Luis"); fillWhenWhere();
     expect(screen.getByTestId("onboarding-venue-map")).toBeTruthy();
-    type("Enlace del mapa", "javascript:alert(1)");
-    expect(screen.getByText(/Pega un enlace de Google Maps/)).toBeTruthy();
-    fireEvent.click(screen.getByTestId("onboarding-next"));
-    expect(screen.queryByLabelText("Nombre de la celebración")).toBeNull();
-    type("Enlace del mapa", "https://maps.app.goo.gl/AbC123");
-    expect(screen.getByText(/Punto marcado/)).toBeTruthy();
+    expect(screen.queryByLabelText("Enlace del mapa")).toBeNull();
+    expect(screen.getByText(/Sin punto en el mapa/)).toBeTruthy();
+    fireEvent.click(screen.getByTestId("onboarding-venue-search"));
+    fireEvent.click(await screen.findByRole("button", { name: "Salón Las Palmas, Santa Cruz, Bolivia" }));
+    expect(screen.getByText(/Punto marcado cerca de/)).toBeTruthy();
     fireEvent.click(screen.getByTestId("onboarding-next"));
     fireEvent.click(screen.getByTestId("onboarding-create"));
     await waitFor(() => expect(navigate).toHaveBeenCalledWith("/onboarding/listo?c=c-new"));
-    expect((calls.find((call) => call.method === "POST")?.body as { content: Record<string, unknown> }).content).toMatchObject({ venueName: "Salón Las Palmas", venueMapUrl: "https://maps.app.goo.gl/AbC123" });
+    const content = (calls.find((call) => call.method === "POST")?.body as { content: Record<string, unknown> }).content;
+    expect(content).toMatchObject({ venueName: "Salón Las Palmas", venueMapUrl: "https://www.openstreetmap.org/?mlat=-17.783300&mlon=-63.182100", locations: { main: { lat: -17.7833, lng: -63.1821, source: "search", forName: "Salón Las Palmas", osm: { type: "way", id: 9 } } } });
+    expect(JSON.stringify(content)).not.toContain("google");
+  });
+
+  it("without a point the invitation is created with the venue as text only", async () => {
+    const { client, calls } = fakeClient({ "GET /celebrations/event-types": () => ({ items: [WEDDING] }), "POST /celebrations": () => ({ ...CELEBRATION, id: "c-new" }) });
+    renderApp(<OnboardingScreen step={1} onNavigate={navigate} />, client);
+    fireEvent.click(await screen.findByRole("radio", { name: "Boda" }));
+    fireEvent.click(screen.getByTestId("onboarding-next"));
+    type("Novia", "Ana"); type("Novio", "Luis"); fillWhenWhere();
+    fireEvent.click(screen.getByTestId("onboarding-next"));
+    fireEvent.click(screen.getByTestId("onboarding-create"));
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith("/onboarding/listo?c=c-new"));
+    const content = (calls.find((call) => call.method === "POST")?.body as { content: Record<string, unknown> }).content;
+    expect(content["venueName"]).toBe("Salón Las Palmas");
+    expect(content).not.toHaveProperty("locations");
+    expect(content).not.toHaveProperty("venueMapUrl");
   });
 
   it("half a date (a time without its day, or a day without its time) stops the step with a clear message and keeps what was typed", async () => {

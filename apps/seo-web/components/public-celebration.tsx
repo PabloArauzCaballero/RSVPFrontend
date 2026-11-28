@@ -6,7 +6,11 @@ import { eventJsonLd, jsonLdScript } from "../lib/json-ld";
 import { uiLocale } from "../lib/locale";
 import { celebrationPath, siteUrl } from "../lib/metadata";
 import { earlyCredentialScript } from "../lib/guest-credential";
+import { guestApiBase } from "../lib/guest-client";
 import { RsvpCredentialIsland } from "./rsvp-credential-island";
+
+/** Map settings of the backend (tile server and attribution at run time); the page falls back to OpenStreetMap's own server when it cannot be read. */
+const mapConfigUrl = (): string => `${guestApiBase().replace(/\/$/, "")}/providers/geo/map-config`;
 
 /** The public celebration (A1) or one of its sections (A2–A8), server-rendered with its theme. */
 export function PublicCelebration({ page, only }: { readonly page: PublicPage; readonly only?: SectionId }) {
@@ -40,7 +44,7 @@ export function PublicCelebration({ page, only }: { readonly page: PublicPage; r
           personal». `RsvpCredentialIsland` flips it to «Confirmar asistencia» when this tab holds the guest's credential; the
           token is never put in the markup. The guest arriving by the personal link goes to `/c/{slug}/rsvp/{token}` directly.
           The gifts button needs nothing: it is always `/c/{slug}/regalos`. */}
-      <CelebrationRenderer theme={theme} view={view} gallery={gallery} t={t} only={only} basePath={basePath} rsvpHelpHref={celebrationPath(view.slug, "rsvp")} rsvpAdaptive now={visualTestNow()} />
+      <CelebrationRenderer theme={theme} view={view} gallery={gallery} t={t} only={only} basePath={basePath} rsvpHelpHref={celebrationPath(view.slug, "rsvp")} rsvpAdaptive mapConfigUrl={mapConfigUrl()} now={visualTestNow()} />
       <RsvpCredentialIsland slug={view.slug} />
     </>
   );

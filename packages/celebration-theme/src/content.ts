@@ -1,4 +1,7 @@
+import { directionsHref, formatPoint, readLocations, resolveLocation, type CelebrationLocation, type MapPoint } from "./location.js";
 import type { LocalDateTime, SectionId } from "./types.js";
+
+export type { MapPoint } from "./location.js";
 
 /**
  * The celebration content model shared by the host editor (writes it) and the public site
@@ -13,7 +16,7 @@ export const RecommendationKind = { Lodging: "lodging", Transport: "transport", 
 export type RecommendationKind = (typeof RecommendationKind)[keyof typeof RecommendationKind];
 
 export interface ScheduleItem { readonly id: string; readonly title: string; readonly description?: string; readonly startsAt: string; readonly venueKey?: string }
-export interface Venue { readonly key: string; readonly kind: VenueKind; readonly name: string; readonly address?: string }
+export interface Venue { readonly key: string; readonly kind: VenueKind; readonly name: string; readonly address?: string; /** The point the host marked for this venue (see `location.ts`); absent when none. */ readonly location?: CelebrationLocation }
 export interface FaqItem { readonly question: string; readonly answer: string }
 export interface Recommendation { readonly kind: RecommendationKind; readonly name: string; readonly description?: string; readonly listingId?: string }
 export interface HostName { readonly role: string; readonly label: string; readonly name: string }
@@ -54,8 +57,8 @@ export interface CelebrationContent {
   readonly subtitle: string;
   readonly eventDate: string | null;
   readonly venueName: string;
-  /** The exact place of the main venue: a link to a maps service the host marked or pasted; absent when there is none or it is not a maps link. */
-  readonly venueMapUrl?: string;
+  /** The exact place of the main venue, from `content.locations.main` (or, for old invitations, from the point of the legacy `venueMapUrl`); never a link. */
+  readonly venueLocation?: CelebrationLocation;
   readonly hosts: readonly HostName[];
   readonly story: string;
   readonly dressCode: string;
@@ -85,12 +88,17 @@ export function readContent(view: Pick<PublicCelebrationView, "content" | "event
   const content = view.content;
   const labels = isRecord(content[SCHEDULE_LABELS]) ? content[SCHEDULE_LABELS] : {};
   const hosts = isRecord(content["hosts"]) ? content["hosts"] : {};
+  const locations = readLocations(content["locations"]);
+  const mainLocation = (source: Unknown): { readonly venueLocation?: CelebrationLocation } => {
+    const found = resolveLocation({ saved: locations["main"], name: text(source["venueName"]), legacy: pointOf(text(source["venueMapUrl"])) });
+    return found ? { venueLocation: found } : {};
+  };
   return {
     title: text(content["title"]),
     subtitle: text(content["subtitle"]),
     eventDate: text(content["eventDate"]) || null,
     venueName: text(content["venueName"]),
-    ...(mapUrl(content["venueMapUrl"]) ? { venueMapUrl: mapUrl(content["venueMapUrl"]) as string } : {}),
+    ...mainLocation(content),
     hosts: view.eventType.hostRoles.map((role) => ({ ...role, name: text(hosts[role.role]) })).filter((host) => host.name),
     story: text(content["story"]),
     dressCode: text(content["dressCode"]),
@@ -102,7 +110,12 @@ export function readContent(view: Pick<PublicCelebrationView, "content" | "event
       })
       .filter((item) => item.title && item.startsAt),
     venues: records(content["venues"])
-      .map((item, index) => ({ key: text(item["key"]) || String(index), kind: oneOf(item["kind"], venueKinds, VenueKind.Other), name: text(item["name"]), address: optionalText(item["address"]) }))
+      .map((item, index) => {
+        const key = text(item["key"]) || String(index);
+        const name = text(item["name"]);
+        const location = resolveLocation({ saved: locations[key], name });
+        return { key, kind: oneOf(item["kind"], venueKinds, VenueKind.Other), name, address: optionalText(item["address"]), ...(location ? { location } : {}) };
+      })
       .filter((venue) => venue.name),
     faq: records(content["faq"]).map((item) => ({ question: text(item["question"]), answer: text(item["answer"]) })).filter((item) => item.question && item.answer),
     recommendations: records(content["recommendations"])
@@ -137,7 +150,6 @@ export function hasSectionContent(section: SectionId, content: CelebrationConten
 }
 
 const REDIRECTOR = "/r/";
-const MAPS_SEARCH = "https://www.google.com/maps/search/?api=1&query=";
 
 /** Every partner link goes through the redirector: it records the lead and adds attribution. */
 export function partnerHref(listingId: string): string {
@@ -145,8 +157,8 @@ export function partnerHref(listingId: string): string {
 }
 
 /**
- * Hosts whose links a guest may be sent to as "how to get there". The link is typed or pasted by the host and ends up in an
- * `href` of the public page, so only `https` links of maps services are accepted: never a script URL or an arbitrary site.
+ * Maps services whose links may still be READ, only to extract a point from an invitation written before `locations` existed.
+ * The link itself is never shown, linked or stored again: the public page builds its own OpenStreetMap links from coordinates.
  */
 const MAP_HOSTS: readonly { readonly host: RegExp; readonly path?: RegExp }[] = [
   { host: /^(www\.|maps\.)?google\.[a-z.]{2,6}$/, path: /^\/maps(\/|$)/ },
@@ -172,16 +184,9 @@ export function mapUrl(value: unknown): string | undefined {
   return MAP_HOSTS.some((rule) => rule.host.test(host) && (!rule.path || rule.path.test(url.pathname))) ? url.toString() : undefined;
 }
 
-export interface MapPoint { readonly lat: number; readonly lng: number }
-const COORDINATE_DIGITS = 6;
 const MAX_LAT = 90;
 const MAX_LNG = 180;
 const POINT = /(-?\d{1,2}(?:\.\d+)?),\s*(-?\d{1,3}(?:\.\d+)?)/;
-
-/** A maps link that opens exactly on a point marked on the map. */
-export function pointUrl({ lat, lng }: MapPoint): string {
-  return `${MAPS_SEARCH}${lat.toFixed(COORDINATE_DIGITS)}%2C${lng.toFixed(COORDINATE_DIGITS)}`;
-}
 
 /** The point a maps link carries in sight (`query=lat,lng`, `q=lat,lng`, `@lat,lng`, `ll=lat,lng`); null when it has none, as short links do. */
 export function pointOf(link: string): MapPoint | null {
@@ -199,27 +204,33 @@ export function pointOf(link: string): MapPoint | null {
   return null;
 }
 
-/** Navigation to a venue (not a partner): the place the host marked when there is one, otherwise a maps search for its name and address. */
-export function navigationHref(venue: Pick<Venue, "name" | "address"> & { readonly mapUrl?: string }): string {
-  const marked = mapUrl(venue.mapUrl);
-  if (marked) return marked;
-  return `${MAPS_SEARCH}${encodeURIComponent([venue.name, venue.address].filter(Boolean).join(", "))}`;
+/** «How to get there»: OpenStreetMap directions to the point the host marked; undefined when the venue has no point (it then shows text only). */
+export function navigationHref(venue: { readonly location?: CelebrationLocation | undefined }): string | undefined {
+  return venue.location ? directionsHref(venue.location) : undefined;
 }
 
 /** A venue as a guest sees it in the venues section: listed or main, with the exact place when the host marked one. */
-export interface ShownVenue { readonly key: string; readonly kind: VenueKind; readonly name: string; readonly address?: string; readonly mapUrl?: string }
+export interface ShownVenue { readonly key: string; readonly kind: VenueKind; readonly name: string; readonly address?: string; readonly location?: CelebrationLocation }
+
+/** The address line of a venue: what the host wrote, else the one the search found, with the host's reference after it. */
+export function venueLines(venue: ShownVenue): readonly string[] {
+  return [venue.address ?? venue.location?.address, venue.location?.reference].filter((line): line is string => Boolean(line));
+}
 
 /**
  * The venues section in order. The main venue leads when it is the only one, and also when the host marked its exact place
  * and did not repeat it in the list; a listed venue with the main venue's name takes its marked place. Shared by both renderers.
  */
-export function shownVenues(content: Pick<CelebrationContent, "venueName" | "venueMapUrl" | "venues">): readonly ShownVenue[] {
-  const main: ShownVenue = { key: "main", kind: VenueKind.Other, name: content.venueName, ...(content.venueMapUrl ? { mapUrl: content.venueMapUrl } : {}) };
-  const listed = content.venues.map((venue): ShownVenue => (venue.name === content.venueName && content.venueMapUrl ? { ...venue, mapUrl: content.venueMapUrl } : venue));
+export function shownVenues(content: Pick<CelebrationContent, "venueName" | "venues"> & { readonly venueLocation?: CelebrationLocation | undefined }): readonly ShownVenue[] {
+  const main: ShownVenue = { key: "main", kind: VenueKind.Other, name: content.venueName, ...(content.venueLocation ? { location: content.venueLocation } : {}) };
+  const listed = content.venues.map((venue): ShownVenue => (venue.name === content.venueName && content.venueLocation && !venue.location ? { ...venue, location: content.venueLocation } : venue));
   const repeated = content.venues.some((venue) => venue.name === content.venueName);
   if (!content.venues.length) return [main];
-  return content.venueMapUrl && content.venueName && !repeated ? [main, ...listed] : listed;
+  return content.venueLocation && content.venueName && !repeated ? [main, ...listed] : listed;
 }
+
+/** The coordinates as text, for the accessible description of a map (never the only way to know where the place is). */
+export const pointText = formatPoint;
 
 /** Path of each public section, in Spanish as the product's URLs are (REQ-F10-01). */
 export const SECTION_PATHS: Readonly<Partial<Record<SectionId, string>>> = {

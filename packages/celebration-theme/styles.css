@@ -419,3 +419,23 @@ html:has(.cdesign-dock) { scroll-padding-bottom: 6rem; }
 .celebration-design .cdesign-section-body[data-display="list"] .celebration-schedule li { counter-increment: act; }
 .celebration-design .cdesign-section-body[data-display="list"] .celebration-schedule li::before { content: counter(act, upper-roman); left: 6.75rem; top: .95rem; width: 2.5rem; height: auto; border-radius: 0; background: none; box-shadow: none; text-align: center; font-family: var(--celebration-heading-font); font-weight: 600; font-size: 1rem; line-height: 1.6; color: var(--celebration-accent); }
 .celebration-design .cdesign-section-body[data-display="list"] .celebration-schedule li::after { display: none; }
+
+/* MAP · a place on the invitation: text first, then «Ver mapa», «Cómo llegar» and «Copiar dirección». The map loads only on request. */
+.celebration-location { display: grid; gap: .5rem; margin-top: .35rem; }
+.celebration-location-actions { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.celebration-venues .celebration-location-actions { justify-content: center; }
+.celebration[data-align="start"] .celebration-venues .celebration-location-actions { justify-content: flex-start; }
+.celebration-location-button { min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; padding: .4rem 1rem; border: 2px solid var(--celebration-accent); border-radius: 9999px; background: var(--celebration-surface); color: var(--celebration-text); font: inherit; font-weight: 600; cursor: pointer; }
+.celebration-location-button:hover { background: color-mix(in srgb, var(--celebration-accent) 14%, var(--celebration-surface)); }
+.celebration-location-button:focus-visible, .celebration-location a:focus-visible { outline: 3px solid var(--celebration-accent); outline-offset: 3px; }
+.celebration-location a { justify-self: auto; }
+.celebration-location-map { display: grid; gap: .5rem; }
+.celebration-map { width: 100%; height: clamp(14rem, 55vw, 20rem); border: 1px solid color-mix(in srgb, var(--celebration-text) 18%, transparent); border-radius: var(--celebration-radius, 0); overflow: hidden; background: color-mix(in srgb, var(--celebration-muted) 12%, var(--celebration-surface)); isolation: isolate; text-align: start; }
+.celebration-map:focus-visible { outline: 3px solid var(--celebration-accent); outline-offset: 2px; }
+.celebration-map a { min-height: 0; display: inline; }
+/* The pin is drawn (no image file): a dark teardrop with a light edge, legible on streets and parks in both colour schemes. */
+.celebration-map-pin { background: none; border: 0; }
+.celebration-map-pin span { display: block; width: 28px; height: 28px; margin: 0 0 0 0; border-radius: 50% 50% 50% 0; background: #302c28; border: 3px solid #fffbf4; box-shadow: 0 1px 4px rgb(0 0 0 / .4); transform: rotate(-45deg) translate(6px, -6px); transform-origin: center; position: relative; }
+.celebration-map-pin span::after { content: ""; position: absolute; inset: 6px; border-radius: 50%; background: #fffbf4; }
+.cdesign-map { width: 100%; }
+.celebration-schedule-place { color: var(--celebration-muted); font-size: .95em; }

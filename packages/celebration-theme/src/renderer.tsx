@@ -28,6 +28,8 @@ export interface CelebrationRendererProps {
   readonly rsvpAdaptive?: boolean;
   /** What the gift list holds (rsvp-f1's `gifts.status`); absent means OPEN. Only the gifts button's label changes. */
   readonly giftsStatus?: GiftsStatus;
+  /** Backend `GET /providers/geo/map-config` (tile server and attribution at run time); absent, OpenStreetMap's own public server. */
+  readonly mapConfigUrl?: string;
   /** Injected for deterministic rendering in tests and previews. */
   readonly now?: Date;
   readonly colorScheme?: ColorScheme;
@@ -103,7 +105,7 @@ export function CelebrationRenderer(props: CelebrationRendererProps): ReactNode 
               {layout.sectionArt && !props.only && SECTION_ART[section] ? <SectionDrawing id={SECTION_ART[section]} /> : null}
               <h2 id={headingId} className={props.only ? "celebration-visually-hidden" : undefined}>{t(sectionTitleKey(section))}</h2>
               <Body content={content} gallery={gallery} timeZone={view.timeZone} locale={view.locale} t={t} rsvpHref={props.rsvpHref} rsvpHelpHref={props.rsvpHelpHref} rsvpAdaptive={props.rsvpAdaptive}
-                giftsHref={giftsPath(view.slug)} giftsStatus={props.giftsStatus} />
+                giftsHref={giftsPath(view.slug)} giftsStatus={props.giftsStatus} {...(props.mapConfigUrl ? { mapConfigUrl: props.mapConfigUrl } : {})} />
             </section>
           );
         })}

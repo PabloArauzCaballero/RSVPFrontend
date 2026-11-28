@@ -1,16 +1,16 @@
 import { useState, type ReactNode } from "react";
 import { Modal, ScrollView, Text, View, useWindowDimensions } from "react-native";
-import { themeFromTemplate } from "@rsvp/celebration-theme/model";
+import { LOCATIONS_KEY, MAIN_LOCATION, readLocations, resolveLocation, pointOf, themeFromTemplate, type CelebrationLocation } from "@rsvp/celebration-theme/model";
 import { spacing } from "@rsvp/design-tokens";
 import { useEditCelebration, useMediaAssets, useTemplate, type Celebration, type TranslatedEventType } from "@rsvp/query-hooks";
 import type { Translate } from "@rsvp/i18n";
 import { useApiClient, useLocale, useT } from "../platform/providers";
 import { CelebrationScreen, type Loaded, type ScreenProps } from "./gate";
-import { asRecord, asRecords, asText, contentPatch, isCalendarDate, newItemId, scheduleContent, scheduleDraft, toWallClock, wallClockAt, type ScheduleDraft } from "./content-draft";
+import { asRecord, asRecords, asText, contentPatch, isCalendarDate, newItemId, prunedLocations, scheduleContent, scheduleDraft, toWallClock, wallClockAt, withPlaceLocation, type ScheduleDraft } from "./content-draft";
 import { eventCalendarDay, eventDateInstant } from "./event-date";
 import { eventDateErrorKey } from "./celebration-errors";
 import { EDITOR_SECTIONS, editorPath, editorSectionLabel, withCelebration, type EditorSection } from "./routes";
-import { LocationField, mapLinkProblem } from "./location-field";
+import { LocationField } from "./location-field";
 import { useSaveHeader } from "./save-bar";
 import { EditorProgress, readyCount, SectionRow, sectionStates } from "./editor-sections";
 import { previewView } from "./preview-model";
@@ -55,7 +55,7 @@ function limitError(t: Translate, value: string, max: number | undefined): { rea
   return excess === null || max === undefined ? {} : { error: t("host.limits.tooLong", { count: excess, max }) };
 }
 
-function ListEditor({ items, onChange, fields, itemLabel, addLabel, t }: { readonly items: readonly Row[]; readonly onChange: (items: Row[]) => void; readonly fields: readonly { readonly key: string; readonly label: string; readonly multiline?: boolean; readonly max?: number; /** A calendar day or a time of day, picked instead of typed. */ readonly picker?: "date" | "time"; readonly choices?: readonly { readonly value: string; readonly label: string }[] }[]; readonly itemLabel: (n: number) => string; readonly addLabel: string; readonly t: Translate }): ReactNode {
+function ListEditor({ items, onChange, fields, itemLabel, addLabel, t }: { readonly items: readonly Row[]; readonly onChange: (items: Row[]) => void; readonly fields: readonly { readonly key: string; readonly label: string; readonly multiline?: boolean; readonly max?: number; /** A calendar day or a time of day, picked instead of typed. */ readonly picker?: "date" | "time"; readonly choices?: readonly { readonly value: string; readonly label: string }[]; /** A field drawn by the caller (it receives the row and how to change one of its values). */ readonly render?: (item: Row, update: (key: string, value: string) => void) => ReactNode }[]; readonly itemLabel: (n: number) => string; readonly addLabel: string; readonly t: Translate }): ReactNode {
   const styles = useStyles();
   const update = (index: number, key: string, value: string): void => onChange(items.map((item, position) => (position === index ? { ...item, [key]: value } : item)));
   const move = (index: number, delta: number): void => {
@@ -78,7 +78,8 @@ function ListEditor({ items, onChange, fields, itemLabel, addLabel, t }: { reado
               { key: "remove", label: t("host.common.remove"), onPress: () => onChange(items.filter((_, position) => position !== index)), destructive: true }
             ]} />
           </View>
-          {fields.map((field) => field.choices
+          {fields.map((field) => field.render ? <View key={field.key}>{field.render(item, (key, value) => update(index, key, value))}</View>
+            : field.choices
             ? <ChoiceGroup key={field.key} label={field.label} choices={field.choices} value={item[field.key] ?? null} onChange={(value) => update(index, field.key, value)} />
             : field.picker === "date" ? <DateInput key={field.key} label={field.label} value={item[field.key] ?? ""} onChange={(value) => update(index, field.key, value)} />
             : field.picker === "time" ? <TimeInput key={field.key} label={field.label} value={item[field.key] ?? ""} onChange={(value) => update(index, field.key, value)} />
@@ -171,6 +172,9 @@ function Editor({ loaded, section, saved, onSaved, onNavigate }: { readonly load
   const text = (key: string): string => asText(draft[key]);
   const set = (key: string, value: unknown): void => setDraft((current) => ({ ...current, [key]: value }));
   const hosts = asRecord(draft["hosts"]);
+  const locations = readLocations(draft[LOCATIONS_KEY]);
+  /** The point shown for the main venue: the saved one, or the one an old link carried (marked unverified) so the host can confirm it. */
+  const mainLocation: CelebrationLocation | null = resolveLocation({ saved: locations[MAIN_LOCATION], name: text("venueName"), legacy: pointOf(text("venueMapUrl")) }) ?? (locations[MAIN_LOCATION] ?? null);
   const wide = width >= WIDE;
   const date = toWallClock(eventDate);
   const originalDate = wallClockAt(celebration, "eventDate");
@@ -196,14 +200,13 @@ function Editor({ loaded, section, saved, onSaved, onNavigate }: { readonly load
   const plan = (hasPassed: boolean): Plan => {
     const items = scheduleContent(schedule);
     if (slugIssue) return { ok: false, message: t(`host.limits.slug${slugIssue === "length" ? "Length" : "Pattern"}`) };
-    if (mapLinkProblem(text("venueMapUrl"))) return { ok: false, message: t("host.location.linkInvalid") };
     if (contentOverLimit(draft, schedule, extraFields(eventType)) > 0) return { ok: false, message: t("host.limits.fieldsTooLong") };
     if (!date.ok) return { ok: false, message: t(isCalendarDate(eventDate.date.trim()) ? "host.onboarding.timeInvalid" : "host.onboarding.dateInvalid") };
     if (hasPassed) return { ok: false, message: t("host.onboarding.dateRejected") };
     if (!items.ok) return { ok: false, message: t("host.common.invalid", { detail: t("host.editor.schedule.item", { n: items.index + 1 }) }) };
     const unchangedSchedule = JSON.stringify(scheduleDraft(celebration)) === JSON.stringify(schedule);
     const compacted = Object.fromEntries(Object.entries(REQUIRED_ROW_FIELD).filter(([key]) => Array.isArray(draft[key])).map(([key, required]) => [key, compact(rows(draft[key], ROW_KEYS[key] ?? []), required)]));
-    const next: Draft = { ...draft, ...compacted, ...(unchangedDate ? {} : { eventDate: date.value }), ...(unchangedSchedule ? {} : { schedule: items.value }) };
+    const next: Draft = { ...prunedLocations({ ...draft, ...compacted }), ...(unchangedDate ? {} : { eventDate: date.value }), ...(unchangedSchedule ? {} : { schedule: items.value }) };
     return { ok: true, patch: contentPatch(celebration.content, next), slugChanged: slugEditable && slug !== celebration.slug, content: next };
   };
   /**
@@ -219,6 +222,8 @@ function Editor({ loaded, section, saved, onSaved, onNavigate }: { readonly load
     });
   };
   const requiredLabel = (field: string): string => (field.startsWith(HOST_PREFIX) ? eventType?.hostRoles.find((role) => role.role === field.slice(HOST_PREFIX.length))?.label ?? field : field === "eventDate" ? `${t("host.onboarding.dateLabel")} / ${t("host.onboarding.timeLabel")}` : field === "title" ? t("host.editor.general.title") : field === "venueName" ? t("host.editor.general.venueName") : fieldLabel(t, field));
+  /** Places an activity can be held at: «sin lugar» plus the venues of the list that have a name. */
+  const venueChoices = [{ value: "", label: t("host.editor.schedule.noVenue") }, ...asRecords(draft["venues"]).filter((venue) => asText(venue["key"]) && asText(venue["name"]).trim()).map((venue) => ({ value: asText(venue["key"]), label: asText(venue["name"]) }))];
   const lacking = attempted ? requiredMissing() : [];
   const dateFieldError = dateErrorKey ? t(dateErrorKey) : lacking.includes("eventDate") && !eventDate.date.trim() ? t("host.onboarding.dateInvalid") : undefined;
   const need = (field: string): { readonly error?: string } => (lacking.includes(field) ? { error: t("host.onboarding.required") } : {});
@@ -252,7 +257,7 @@ function Editor({ loaded, section, saved, onSaved, onNavigate }: { readonly load
           <View style={{ flexGrow: 1, flexBasis: TIME_BASIS }}><TimeInput label={t("host.onboarding.timeLabel")} value={eventDate.time} onChange={(value) => setDatePart("time", value)} testID="field-event-time" {...(lacking.includes("eventDate") && !eventDate.time.trim() ? { error: t("host.onboarding.timeInvalid") } : {})} /></View>
         </View>
         <Text style={styles.muted}>{t("host.editor.schedule.zoneHelp", { timeZone: celebration.timeZone })}</Text>
-        <LocationField name={text("venueName")} onName={(value) => set("venueName", value)} link={text("venueMapUrl")} onLink={(value) => set("venueMapUrl", value)} testID="field-venue"
+        <LocationField name={text("venueName")} onName={(value) => set("venueName", value)} location={mainLocation} onLocation={(location) => setDraft((current) => withPlaceLocation(current, MAIN_LOCATION, location))} testID="field-venue"
           {...(need("venueName").error ?? limitError(t, text("venueName"), LIMITS.venueName).error ? { nameError: need("venueName").error ?? limitError(t, text("venueName"), LIMITS.venueName).error } : {})} />
         {extraFields(eventType).map((field) => <Field key={field} label={fieldLabel(t, field)} value={text(field)} {...need(field)} {...limitError(t, text(field), LIMITS.extraField)} onChange={(value) => set(field, value)} />)}
         <Field label={t("host.editor.general.slug")} value={slug} onChange={(value) => setSlug(value.toLowerCase())} testID="slug"
@@ -269,7 +274,11 @@ function Editor({ loaded, section, saved, onSaved, onNavigate }: { readonly load
       <Part section="lugares">
         <ListEditor t={t} items={rows(draft["venues"], ["key", "kind", "name", "address"])} onChange={(items) => set("venues", items.map((item, index) => ({ ...item, key: item["key"] || newItemId(`venue${index}`) })))}
           itemLabel={(n) => t("host.editor.venues.item", { n })} addLabel={t("host.editor.venues.add")}
-          fields={[{ key: "name", label: t("host.editor.venues.name"), max: LIMITS.venueName }, { key: "address", label: t("host.editor.venues.address"), max: LIMITS.venueAddress }, { key: "kind", label: t("host.editor.venues.kind"), choices: VENUE_KINDS.map((kind) => ({ value: kind, label: t(`host.editor.venues.kinds.${kind}`) })) }]} />
+          fields={[{ key: "name", label: t("host.editor.venues.name"), max: LIMITS.venueName, render: (item, update) => (
+            <LocationField name={item["name"] ?? ""} onName={(value) => update("name", value)} nameLabel={t("host.editor.venues.name")} testID={`field-venue-${item["key"] || "new"}`}
+              location={item["key"] ? resolveLocation({ saved: locations[item["key"]], name: item["name"] ?? "" }) ?? (locations[item["key"]] ?? null) : null}
+              onLocation={(location) => { if (item["key"]) setDraft((current) => withPlaceLocation(current, item["key"] as string, location)); }}
+              {...(overLimit(item["name"] ?? "", LIMITS.venueName) === null ? {} : { nameError: t("host.limits.tooLong", { count: overLimit(item["name"] ?? "", LIMITS.venueName) ?? 0, max: LIMITS.venueName }) })} />) }, { key: "address", label: t("host.editor.venues.address"), max: LIMITS.venueAddress }, { key: "kind", label: t("host.editor.venues.kind"), choices: VENUE_KINDS.map((kind) => ({ value: kind, label: t(`host.editor.venues.kinds.${kind}`) })) }]} />
       </Part>
     ),
     historia: () => (
@@ -280,9 +289,9 @@ function Editor({ loaded, section, saved, onSaved, onNavigate }: { readonly load
     itinerario: () => (
       <Part section="itinerario">
         <Text style={styles.muted}>{t("host.editor.schedule.zoneHelp", { timeZone: celebration.timeZone })}</Text>
-        <ListEditor t={t} items={schedule.map(({ id: _id, ...item }) => item)} onChange={(items) => setSchedule(items.map((item, index) => ({ id: schedule[index]?.id ?? newItemId("s"), title: item["title"] ?? "", description: item["description"] ?? "", date: item["date"] ?? "", time: item["time"] ?? "" })))}
+        <ListEditor t={t} items={schedule.map(({ id: _id, ...item }) => item)} onChange={(items) => setSchedule(items.map((item, index) => ({ id: schedule[index]?.id ?? newItemId("s"), title: item["title"] ?? "", description: item["description"] ?? "", date: item["date"] ?? "", time: item["time"] ?? "", venueKey: item["venueKey"] ?? "" })))}
           itemLabel={(n) => t("host.editor.schedule.item", { n })} addLabel={t("host.editor.schedule.add")}
-          fields={[{ key: "title", label: t("host.editor.schedule.title"), max: LIMITS.scheduleTitle }, { key: "date", label: t("host.onboarding.dateLabel"), picker: "date" }, { key: "time", label: t("host.onboarding.timeLabel"), picker: "time" }, { key: "description", label: t("host.editor.schedule.description"), multiline: true, max: LIMITS.scheduleDescription }]} />
+          fields={[{ key: "title", label: t("host.editor.schedule.title"), max: LIMITS.scheduleTitle }, { key: "date", label: t("host.onboarding.dateLabel"), picker: "date" }, { key: "time", label: t("host.onboarding.timeLabel"), picker: "time" }, { key: "description", label: t("host.editor.schedule.description"), multiline: true, max: LIMITS.scheduleDescription }, ...(venueChoices.length > 1 ? [{ key: "venueKey", label: t("host.editor.schedule.venue"), choices: venueChoices }] : [])]} />
       </Part>
     ),
     secciones: () => (

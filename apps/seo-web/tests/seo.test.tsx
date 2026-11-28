@@ -181,6 +181,14 @@ describe("metadata and crawling", () => {
     expect(celebrationMetadata({ ...VIEW, indexable: true }, GALLERY, t, { id: "faq", path: "faq" }).robots).toEqual({ index: true, follow: true });
   });
 
+  it("MAP · the event's JSON-LD names the same place the page leads with and adds its coordinates only when the hosts marked a point", () => {
+    const marked = eventJsonLd({ ...VIEW, content: { ...VIEW.content, venueName: "Hacienda El Carmen", venues: [], locations: { main: { lat: -17.7833, lng: -63.1821, source: "pin", address: "Camino al Urubó 5" } } } }, [], "u");
+    expect(marked?.location).toEqual({ "@type": "Place", name: "Hacienda El Carmen", address: "Camino al Urubó 5", geo: { "@type": "GeoCoordinates", latitude: -17.7833, longitude: -63.1821 } });
+    const textOnly = eventJsonLd({ ...VIEW, content: { ...VIEW.content, venueName: "Hacienda El Carmen", venues: [] } }, [], "u");
+    expect(textOnly?.location).toEqual({ "@type": "Place", name: "Hacienda El Carmen" });
+    expect(JSON.stringify(marked)).not.toContain("google");
+  });
+
   it("REQ-F08-05 · robots keeps private surfaces and magic links out", () => {
     const rules = robots().rules;
     const disallow = (Array.isArray(rules) ? rules[0] : rules)?.disallow;

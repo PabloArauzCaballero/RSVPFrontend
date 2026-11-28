@@ -29,7 +29,17 @@ export const hostEnUS: DeepStrings<typeof hostEsBO> = {
     serverLoad: "The server did not respond as expected. Try again in a few minutes.",
     networkLoad: "Cannot reach the server. Check your internet and try again."
   },
-  location: { linkPlaceholder: "https://maps.app.goo.gl/…", mark: "Mark on the map", change: "Change the point", marked: "Point marked. Your guests will open it with “How to get there”.", link: "Map link", linkHelp: "Optional. It is filled in when you mark the point; you can also paste the link Google Maps gives you when you share the place.", linkHelpNative: "Optional. Paste the link Google Maps gives you when you share the place; your guests will open it with “How to get there”.", linkInvalid: "Paste a Google Maps, Apple Maps, Waze or OpenStreetMap link that starts with https://.", pickerTitle: "Mark the place on the map", search: "Search for a place or address", searchPlaceholder: "Las Palmas Hall, Santa Cruz", searchButton: "Search", results: "Search results", noResults: "We could not find that place. Try the street or area.", searchError: "We could not search right now. Try again or paste a map link.", searching: "Searching for places…", resultsCount_one: "We found one place", resultsCount_other: "We found {{count}} places", attribution: "© OpenStreetMap", locationError: "We could not get your location. Check the browser permission or search for the place by name.", mapLabel: "Map: move it until the pin sits on the place", hint: "Move the map until the pin sits right on the place.", myLocation: "Use my location", use: "Done" },
+  location: {
+    mark: "Mark on the map", change: "Change the point", remove: "Remove the point", marked: "Point marked on the map. Your guests will see the map and “Get directions”.",
+    markedNear: "Point marked near “{{address}}”.", unmarked: "No point on the map: your guests will see only the name and address. You can search for it or mark it on the map.",
+    needsReview: "You changed the venue name. Check that the point is still in the right place.", reference: "Reference (optional)", referenceHelp: "A hint for getting there: “green gate”, “across from the square”.", referencePlaceholder: "Green gate, second floor",
+    privacy: "Anyone with the invitation link will see the exact point. If it is a home, keep just the area or a reference and do not mark the point.",
+    pickerTitle: "Mark the place on the map", search: "Search for a place or address", searchPlaceholder: "Las Palmas Hall, Santa Cruz", searchButton: "Search", searchPrivacy: "The search sends what you type to OpenStreetMap. Do not type personal data.",
+    results: "Search results", noResults: "We could not find that place. Try the street or area, or mark it on the map.", searchError: "We could not search right now. Try again or mark it on the map.",
+    searchBusy: "There are a lot of searches right now. Wait a few seconds and try again.", searchOff: "Search is not available right now. Mark the point on the map or write the place as text.", searching: "Searching for places…",
+    resultsCount_one: "We found one place", resultsCount_other: "We found {{count}} places", attribution: "© OpenStreetMap", locationError: "We could not get your location. Check the browser permission or search for the place by name.",
+    mapLabel: "Map: move it until the pin sits on the place", mapUnavailable: "We could not load the map. You can search for the place by name.", hint: "Move the map until the pin sits right on the place.", myLocation: "Use my location", use: "Done", cancel: "Cancel"
+  },
   limits: {
     requiredMissing: "To save, fill in: {{fields}}.", fieldsTooLong: "Some texts are too long. Shorten them to save.",
     tooLong_one: "Remove {{count}} character: the maximum is {{max}}.",
@@ -70,7 +80,7 @@ export const hostEnUS: DeepStrings<typeof hostEsBO> = {
     hosts: { help: "The roles come from the event type: {{eventType}}." },
     venues: { name: "Venue name", address: "Address", kind: "Type", kinds: { ceremony: "Ceremony", reception: "Reception", other: "Other" }, add: "Add venue", item: "Venue {{n}}" },
     story: { label: "Your story", help: "Separate paragraphs with a blank line." },
-    schedule: { title: "Activity", date: "Date", time: "Time", description: "Details", add: "Add activity", item: "Activity {{n}}", zoneHelp: "Write the event's local time ({{timeZone}})." },
+    schedule: { title: "Activity", date: "Date", time: "Time", description: "Details", add: "Add activity", item: "Activity {{n}}", zoneHelp: "Write the event's local time ({{timeZone}}).", venue: "Venue (optional)", noVenue: "No venue" },
     extra: { dressCode: "Dress code", faq: "FAQ", question: "Question", answer: "Answer", addFaq: "Add question", recommendations: "Recommendations", recommendationName: "Name", recommendationDescription: "Description", recommendationKind: "Type", kinds: { lodging: "Lodging", transport: "Transport", other: "Other" }, listingId: "Partner code (optional)", listingHelp: "If it's a partner, its link goes through our redirector.", addRecommendation: "Add recommendation", item: "Item {{n}}" }
   },
   gallery: {

@@ -1,7 +1,7 @@
 import { Fragment, type CSSProperties, type ReactNode } from "react";
 import { artPalette, artVariables } from "../art/palette.js";
 import { drawingById, InvitationArt, ornamentSetById, OrnamentCorner, OrnamentFrame, OrnamentSeparator } from "../art/index.js";
-import { daysUntil, giftsPath, hasSectionContent, partnerHref, readContent, SECTION_PATHS, sectionTitleKey, type CelebrationContent, type GalleryImage, type PublicCelebrationView } from "../content.js";
+import { daysUntil, giftsPath, hasSectionContent, partnerHref, readContent, SECTION_PATHS, sectionTitleKey, shownVenues, venueLines, type CelebrationContent, type GalleryImage, type PublicCelebrationView } from "../content.js";
 import { Dock } from "../dock.js";
 import { Flourish } from "../flourish.js";
 import { formatDate } from "../format.js";
@@ -9,7 +9,9 @@ import type { CelebrationRendererProps } from "../renderer.js";
 import { SectionNav } from "../section-nav.js";
 import { GiftsAction, RsvpAction, SECTIONS } from "../sections/index.js";
 import { AudioPlayer, EmbedFacade, MediaBackdrop, MediaImage } from "../media/components.js";
-import { embedFromConfig, mapEmbed } from "../media/embed.js";
+import { embedFromConfig } from "../media/embed.js";
+import { LocationView } from "../map/location-view.js";
+import { locationLabels } from "../map/labels.js";
 import { clampScrim, type PublicMedia } from "../media/variants.js";
 import { layoutOf, themeVariables } from "../theme.js";
 import type { CelebrationTheme, SectionId, Translate } from "../types.js";
@@ -141,7 +143,7 @@ function BlockBody({ block, element, context }: { readonly block: DesignBlock; r
   const draw = element.animation?.entrance === "draw" || settings["drawOnEnter"] === true;
   const sectionProps = {
     content, gallery, timeZone: view.timeZone, locale: view.locale, t, rsvpHref: props.rsvpHref, rsvpHelpHref: props.rsvpHelpHref, rsvpAdaptive: props.rsvpAdaptive,
-    giftsHref: context.giftsHref, giftsStatus: props.giftsStatus
+    giftsHref: context.giftsHref, giftsStatus: props.giftsStatus, ...(props.mapConfigUrl ? { mapConfigUrl: props.mapConfigUrl } : {})
   };
   switch (block.type) {
     case "cover": return <CoverBlock block={block} context={context} />;
@@ -193,9 +195,11 @@ function BlockBody({ block, element, context }: { readonly block: DesignBlock; r
       return <EmbedFacade embed={embedFromConfig("music", settings)} title={content.title} t={t} />;
     }
     case "map": {
-      const venue = content.venues[Number(settings["venueIndex"])];
-      const query = venue ? [venue.name, venue.address].filter(Boolean).join(", ") : "";
-      return venue ? <EmbedFacade embed={mapEmbed(query)} title={venue.name} t={t} /> : null;
+      // The block points at a venue of the list by position; without one it shows the main venue. Always the host's own point on OpenStreetMap, never a search elsewhere.
+      const chosen = content.venues[Number(settings["venueIndex"])];
+      const shown = shownVenues(content);
+      const venue = (chosen && shown.find((item) => item.key === chosen.key)) || shown[0];
+      return venue?.name ? <div className="cdesign-map"><LocationView name={venue.name} lines={venueLines(venue)} location={venue.location} labels={locationLabels(t, venue.name)} mapConfigUrl={props.mapConfigUrl} /></div> : null;
     }
     // Blocks the renderer does not draw yet (wedding party, free HTML) are left out, never half-drawn.
     default: return null;

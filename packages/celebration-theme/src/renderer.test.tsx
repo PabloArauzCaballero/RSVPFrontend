@@ -253,7 +253,8 @@ describe("content helpers", () => {
     expect(sectionForPath("itinerario")).toBe("schedule");
     expect(sectionForPath("admin")).toBeUndefined();
     expect(partnerHref("a b")).toBe("/r/a%20b");
-    expect(navigationHref({ name: "Iglesia", address: "Plaza" })).toBe("https://www.google.com/maps/search/?api=1&query=Iglesia%2C%20Plaza");
+    expect(navigationHref({ location: { lat: -16.5, lng: -68.15, source: "pin" } })).toBe("https://www.openstreetmap.org/directions?route=%3B-16.500000%2C-68.150000");
+    expect(navigationHref({})).toBeUndefined();
     expect(daysUntil(null, NOW)).toBeNull();
     expect(daysUntil("not a date", NOW)).toBeNull();
     expect(daysUntil("2026-10-01T00:00:00Z", NOW)).toBe(0);

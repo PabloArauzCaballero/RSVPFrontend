@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { AudioPlayer, EmbedFacade, MediaBackdrop, MediaImage, embedFromConfig, FRAME_HOSTS, frameSrcDirective, isAllowedEmbedUrl, mapEmbed, spotifyEmbed, vimeoEmbed, youtubeEmbed, youtubeFromLink, imageSources, clampScrim, type PublicMedia } from "../index.js";
+import { AudioPlayer, EmbedFacade, MediaBackdrop, MediaImage, embedFromConfig, FRAME_HOSTS, frameSrcDirective, isAllowedEmbedUrl, spotifyEmbed, vimeoEmbed, youtubeEmbed, youtubeFromLink, imageSources, clampScrim, type PublicMedia } from "../index.js";
 import { BLACK, WHITE, contrastRatio, mix, requiredScrim } from "../design/colour.js";
 
 afterEach(cleanup);
@@ -20,7 +20,6 @@ describe("embeds: allowlist", () => {
     expect(vimeoEmbed("76979871")?.url).toBe("https://player.vimeo.com/video/76979871?dnt=1");
     expect(spotifyEmbed("https://open.spotify.com/intl-es/track/4uLU6hMCjMI75M1A2tKUQC?si=x")?.url).toBe("https://open.spotify.com/embed/track/4uLU6hMCjMI75M1A2tKUQC");
     expect(spotifyEmbed("playlist/37i9dQZF1DXcBWIGoYBM5M")?.url).toBe("https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M");
-    expect(mapEmbed("Plaza Murillo, La Paz")?.url).toBe("https://www.google.com/maps?q=Plaza%20Murillo%2C%20La%20Paz&output=embed");
   });
 
   it.each([
@@ -42,13 +41,11 @@ describe("embeds: allowlist", () => {
   it("a hostile id never reaches a URL", () => {
     for (const id of ["../../x", "abc\"onload=\"x", "dQw4w9WgXcQ&autoplay=1", "dQw4w9WgXcQ/../x", "a".repeat(40)]) expect(youtubeEmbed(id)).toBeNull();
     for (const id of ["abc", "1234567890123456789", "12345?x=1"]) expect(vimeoEmbed(id)).toBeNull();
-    expect(mapEmbed("<script>alert(1)</script>")).toBeNull();
-    expect(mapEmbed("x".repeat(300))).toBeNull();
   });
 
   it("isAllowedEmbedUrl accepts only https on the listed hosts", () => {
     for (const host of FRAME_HOSTS) expect(isAllowedEmbedUrl(`https://${host}/x`)).toBe(true);
-    for (const url of ["http://www.youtube-nocookie.com/x", "https://www.youtube.com/embed/x", "https://evil.example/", "https://www.youtube-nocookie.com.evil.example/", "https://u@www.google.com/", "https://www.google.com:444/", "not a url"]) expect(isAllowedEmbedUrl(url)).toBe(false);
+    for (const url of ["http://www.youtube-nocookie.com/x", "https://www.youtube.com/embed/x", "https://evil.example/", "https://www.youtube-nocookie.com.evil.example/", "https://www.google.com/maps?q=x&output=embed", "https://u@open.spotify.com/", "https://open.spotify.com:444/", "not a url"]) expect(isAllowedEmbedUrl(url)).toBe(false);
   });
 
   it("block configs map to embeds and unknown shapes to nothing", () => {
@@ -57,8 +54,8 @@ describe("embeds: allowlist", () => {
     expect(embedFromConfig("music", { source: "spotify", ref: "https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC" })?.kind).toBe("audio");
     expect(embedFromConfig("music", { source: "youtube", ref: "https://evil.example/watch?v=dQw4w9WgXcQ" })).toBeNull();
     expect(embedFromConfig("music", { source: "media", ref: "uuid" })).toBeNull();
-    expect(embedFromConfig("map", { venueIndex: 0 }, "Casa de la Libertad, Sucre")?.kind).toBe("map");
-    expect(embedFromConfig("map", { venueIndex: 0 })).toBeNull();
+    // Locations are never an iframe: they are drawn by LocationView (OpenStreetMap), so no map kind exists here.
+    expect(embedFromConfig("map" as never, { venueIndex: 0 })).toBeNull();
   });
 
   it("seo-web's CSP frame-src is exactly this allowlist", () => {
@@ -66,7 +63,8 @@ describe("embeds: allowlist", () => {
     const hosts = /const frameHosts = \[([^\]]+)\]/.exec(config)?.[1]?.split(",").map((item) => item.trim().replace(/'/g, "")) ?? [];
     expect(hosts).toEqual([...FRAME_HOSTS]);
     expect(config).toContain("${frameSrc}");
-    expect(frameSrcDirective()).toBe("frame-src https://www.youtube-nocookie.com https://player.vimeo.com https://open.spotify.com https://www.google.com");
+    expect(frameSrcDirective()).toBe("frame-src https://www.youtube-nocookie.com https://player.vimeo.com https://open.spotify.com");
+    expect(FRAME_HOSTS).not.toContain("www.google.com");
   });
 });
 
