@@ -10456,7 +10456,7 @@ export interface operations {
                 ref?: string;
                 /** @description Ignored since 3.10.0 (M34). The visitor is always the server's hash of the client address and user agent, never a value the client sends; with the listing and the destination it is the deduplication key of billable leads (24 h on GIFT_LIST). Old links that still carry it keep working. */
                 sessionId?: string;
-                /** @description Where the link was shown. PREVIEW (R6a, 3.8.0): a preview in the provider portal or in moderation; since 3.10.0 (M-2) it only counts with a ctx issued for that listing (issueLeadContext, relation PREVIEW). Without it the click is evaluated like any other and recorded as PUBLIC_SITE. */
+                /** @description Where the link was shown. PREVIEW (R6a, 3.8.0): a preview in the provider portal or in moderation; since 3.10.0 (M-2) it only counts with a ctx issued for that listing (issueLeadContext, relation PREVIEW). Without it the click is evaluated like any other and recorded as PUBLIC_SITE. CELEBRATION_SITE (guest marketplace tab) is one valid lead per visitor, offer and button every 24 hours. */
                 surface?: "PUBLIC_SITE" | "SEARCH" | "CELEBRATION_SITE" | "GIFT_LIST" | "EMAIL" | "APP" | "QUOTE_FORM" | "PREVIEW";
                 /** @description Since 3.9.0 (R5): the id of the product version (gift-list variantCode). Sets {version} and the price of the WhatsApp message; an id that is not a version of the product is ignored (the product's price, no version). */
                 variant?: string;

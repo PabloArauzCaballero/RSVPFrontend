@@ -2433,24 +2433,6 @@
             "description": "Absent means the primary destination of the listing: PRODUCT_PAGE of a product, otherwise the first stored and enabled destination in this enum order."
           },
           {
-            "name": "surface",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "PUBLIC_SITE",
-                "SEARCH",
-                "CELEBRATION_SITE",
-                "GIFT_LIST",
-                "EMAIL",
-                "APP",
-                "QUOTE_FORM"
-              ]
-            },
-            "description": "CELEBRATION_SITE (guest marketplace tab) is one valid lead per visitor, offer and button every 24 hours."
-          },
-          {
             "name": "celebrationId",
             "in": "query",
             "required": false,
@@ -2526,7 +2508,7 @@
                 "PREVIEW"
               ]
             },
-            "description": "Where the link was shown. PREVIEW (R6a, 3.8.0): a preview in the provider portal or in moderation; since 3.10.0 (M-2) it only counts with a ctx issued for that listing (issueLeadContext, relation PREVIEW). Without it the click is evaluated like any other and recorded as PUBLIC_SITE."
+            "description": "Where the link was shown. PREVIEW (R6a, 3.8.0): a preview in the provider portal or in moderation; since 3.10.0 (M-2) it only counts with a ctx issued for that listing (issueLeadContext, relation PREVIEW). Without it the click is evaluated like any other and recorded as PUBLIC_SITE. CELEBRATION_SITE (guest marketplace tab) is one valid lead per visitor, offer and button every 24 hours."
           },
           {
             "name": "ctx",
