@@ -73,6 +73,28 @@ export function uniqueZones(zones: readonly string[]): string[] {
   return [...seen.values()];
 }
 
+const DAYS_ES = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"] as const;
+const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+/**
+ * The lines of text of a provider's business hours. The catalogue sends the contract `BusinessHours` OBJECT
+ * (`{ weekly: [{ weekdays: [1,2,3], opens: "09:00", closes: "18:00" }], note? }`), not a list: one line per row ("Lun, Mar, Mié 09:00-18:00")
+ * and the note last. Anything else (absent, a list of lines from an older mock, malformed rows) never throws: it gives what can be read.
+ */
+export function hoursLines(value: unknown): readonly string[] {
+  if (Array.isArray(value)) return value.filter((line): line is string => typeof line === "string" && line.trim() !== "");
+  if (!value || typeof value !== "object") return [];
+  const { weekly, note } = value as { weekly?: unknown; note?: unknown };
+  const rows = Array.isArray(weekly) ? weekly.flatMap((row): string[] => {
+    if (!row || typeof row !== "object") return [];
+    const { weekdays, opens, closes } = row as { weekdays?: unknown; opens?: unknown; closes?: unknown };
+    if (typeof opens !== "string" || typeof closes !== "string" || !TIME.test(opens) || !TIME.test(closes) || !Array.isArray(weekdays)) return [];
+    const days = [...new Set(weekdays.filter((day): day is number => Number.isInteger(day) && day >= 0 && day <= 6))].sort((a, b) => a - b).map((day) => DAYS_ES[day]);
+    return days.length ? [`${days.join(", ")} ${opens}-${closes}`] : [];
+  }) : [];
+  return [...rows, ...(typeof note === "string" && note.trim() ? [note.trim()] : [])];
+}
+
 export function partnerFromListings(slug: string, cards: readonly DirectoryCard[]): Partner | null {
   const own = cards.filter((card) => card.providerSlug === slug && card.verified);
   const head = own[0];
@@ -91,7 +113,7 @@ export function partnerFromListings(slug: string, cards: readonly DirectoryCard[
     ...(head.imageUrl ? { imageUrl: head.imageUrl } : {}),
     ...(addressText(head.address) ? { address: addressText(head.address) } : {}),
     ...(addressPoint(head.address) ? { point: addressPoint(head.address) as { lat: number; lng: number } } : {}),
-    hours: head.hours ?? [],
+    hours: hoursLines(head.hours),
     coverage: uniqueZones(own.flatMap((card) => [...(card.coverage ?? []), ...(card.fulfillment?.coverageZones ?? [])])),
     ...(own.find((card) => card.providerId)?.providerId ? { providerId: own.find((card) => card.providerId)?.providerId as string } : {}),
     primaryListingId: withContact.listingId,

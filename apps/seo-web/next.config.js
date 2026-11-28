@@ -58,7 +58,16 @@ const nextConfig = {
       { key: 'Referrer-Policy', value: 'no-referrer' },
       { key: 'X-Robots-Tag', value: 'noindex, nofollow' }
     ];
-    return [{ source: '/((?!vista-previa$).*)', headers: securityHeaders }, { source: '/vista-previa', headers: previewHeaders }, { source: '/c/:slug/rsvp/:path*', headers: privateHeaders }, { source: '/c/:slug/rsvp', headers: privateHeaders }, { source: '/rsvp/:path*', headers: privateHeaders }];
+    // MAP · `/mapa/incrustado` is the second (and last) page that may be framed: the app's map views load it in an iframe (web) or a web
+    // view (native). It holds no form and no action (a map and a pin), so framing it by the site itself and by the app's origin gives no
+    // clickjacking surface. X-Frame-Options cannot name a second origin, so it is dropped and `frame-ancestors` says who may frame it.
+    // Every other path keeps DENY / frame-ancestors 'none'.
+    const mapHeaders = [
+      ...previewHeaders.filter((header) => header.key !== 'Content-Security-Policy' && header.key !== 'Cache-Control' && header.key !== 'Referrer-Policy'),
+      { key: 'Content-Security-Policy', value: `frame-ancestors 'self' ${appOrigin === "'none'" ? '' : appOrigin}`.trim() },
+      { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' }
+    ];
+    return [{ source: '/((?!vista-previa$|mapa/incrustado$).*)', headers: securityHeaders }, { source: '/vista-previa', headers: previewHeaders }, { source: '/mapa/incrustado', headers: mapHeaders }, { source: '/c/:slug/rsvp/:path*', headers: privateHeaders }, { source: '/c/:slug/rsvp', headers: privateHeaders }, { source: '/rsvp/:path*', headers: privateHeaders }];
   },
   webpack: (config) => {
     // Workspace packages use NodeNext-style "./x.js" imports that point to .ts sources.
