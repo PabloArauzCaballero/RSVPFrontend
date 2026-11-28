@@ -13,7 +13,7 @@ export interface DesignBox { readonly top: number; readonly right: number; reado
 export interface DesignBorder { readonly width: number; readonly style: "solid" | "dashed" | "dotted"; readonly colour: PaletteRole }
 export type DesignBackground =
   | { readonly kind: "colour"; readonly role: PaletteRole }
-  | { readonly kind: "media"; readonly mediaId: string; readonly fit: "cover" | "contain"; readonly scrim?: number }
+  | { readonly kind: "media"; readonly mediaId: string; readonly fit: "cover" | "contain"; readonly scrim?: number; readonly veil?: DesignVeil }
   | { readonly kind: "illustration"; readonly illustrationId: string };
 export interface DesignTypographyOverride {
   readonly role?: "heading" | "body" | "monogram";
@@ -26,7 +26,23 @@ export interface DesignTypographyOverride {
   readonly colour?: PaletteRole;
 }
 export type DesignEntrance = "none" | "fade" | "rise" | "scale" | "draw" | "envelope";
-export interface DesignAnimation { readonly entrance: DesignEntrance; readonly delayMs?: number; readonly durationMs?: number }
+/** Contract 1.8.0 (fidelity): the veil of a photo background. `even` (what an absent value means: every document saved before 1.8.0 keeps its uniform veil) is one veil over the whole photo; `graded` (explicit) is strong behind the text and light elsewhere. */
+export type DesignVeil = "graded" | "even";
+export const DESIGN_VEILS: readonly DesignVeil[] = ["graded", "even"];
+/** Curated named animations. The renderer owns their duration and easing; every one is off under `prefers-reduced-motion`. */
+export type AnimationName = "aparecer" | "mecerse" | "revelar-telon" | "abrir-puertas";
+export const ANIMATION_NAMES: readonly AnimationName[] = ["aparecer", "mecerse", "revelar-telon", "abrir-puertas"];
+/** Named animations a page can play; the others are for elements (`mecerse`) or pages only (`abrir-puertas`, `revelar-telon`). */
+export const PAGE_ANIMATIONS: readonly AnimationName[] = ["aparecer", "revelar-telon", "abrir-puertas"];
+export const ELEMENT_ANIMATIONS: readonly AnimationName[] = ["aparecer", "mecerse", "revelar-telon"];
+export type DesignMask = "arch" | "deco-doors" | "chamfer" | "circle" | "rounded" | "stamp";
+export const DESIGN_MASKS: readonly DesignMask[] = ["arch", "deco-doors", "chamfer", "circle", "rounded", "stamp"];
+/** Blocks a mask can cut: the ones without text (the contract refuses it elsewhere). */
+export const MASKABLE_BLOCKS: readonly string[] = ["image", "gallery", "illustration", "monogram", "ornament", "video", "map"];
+export type DesignFrameStyle = "double" | "deco" | "hairline";
+export const DESIGN_FRAME_STYLES: readonly DesignFrameStyle[] = ["double", "deco", "hairline"];
+export interface DesignFrame { readonly style: DesignFrameStyle; readonly colour: PaletteRole }
+export interface DesignAnimation { readonly entrance: DesignEntrance; readonly delayMs?: number; readonly durationMs?: number; readonly name?: AnimationName }
 export type DesignLink =
   | { readonly kind: "url"; readonly href: string }
   | { readonly kind: "section"; readonly section: string }
@@ -53,6 +69,9 @@ export interface DesignElement {
   readonly typography?: DesignTypographyOverride;
   readonly animation?: DesignAnimation;
   readonly link?: DesignLink;
+  /** Contract 1.8.0: the shape the element is clipped to, and the frame drawn around it. Never on the gifts and reply buttons. */
+  readonly mask?: DesignMask;
+  readonly frame?: DesignFrame;
 }
 
 export interface DesignCanvas {
@@ -68,6 +87,8 @@ export interface DesignPage {
   readonly section?: string;
   readonly style: string;
   readonly background?: DesignBackground;
+  /** Contract 1.8.0: how the page enters (`aparecer`, `revelar-telon` or `abrir-puertas`). */
+  readonly animation?: DesignAnimation;
   readonly canvases: { readonly mobile: DesignCanvas; readonly desktop?: DesignCanvas };
 }
 

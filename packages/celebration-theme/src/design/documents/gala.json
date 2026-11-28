@@ -154,6 +154,10 @@
                   "right": 16,
                   "bottom": 24,
                   "left": 16
+                },
+                "frame": {
+                  "style": "deco",
+                  "colour": "accent"
                 }
               },
               {
@@ -238,6 +242,10 @@
                   "right": 32,
                   "bottom": 32,
                   "left": 32
+                },
+                "frame": {
+                  "style": "deco",
+                  "colour": "accent"
                 }
               },
               {
@@ -256,6 +264,10 @@
               }
             ]
           }
+        },
+        "animation": {
+          "entrance": "none",
+          "name": "abrir-puertas"
         }
       },
       {
@@ -554,7 +566,7 @@
         "id": "cover",
         "type": "cover",
         "config": {
-          "variant": "corporate",
+          "variant": "deco",
           "envelope": false
         }
       },

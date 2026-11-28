@@ -128,7 +128,7 @@ a.de-btn { text-decoration: none; box-sizing: border-box; }
 .de-fieldset legend { font-size: 13px; color: var(--de-muted); padding: 0 4px; }
 .de-field--inline { grid-template-columns: 1fr 72px; align-items: center; margin-bottom: 8px; }
 .de-field--inline input[type="color"] { height: 44px; }
-.de-basic select, .de-basic textarea { width: 100%; min-height: 44px; border: 1px solid var(--de-field); border-radius: 6px; padding: 6px 10px; background: var(--de-surface); color: var(--de-text); font: inherit; }
+.de-basic select, .de-basic textarea, .de-inspector select { width: 100%; min-height: 44px; border: 1px solid var(--de-field); border-radius: 6px; padding: 6px 10px; background: var(--de-surface); color: var(--de-text); font: inherit; }
 .de-sections { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .de-sections li { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: center; min-height: 44px; }
 .de-sections label { display: flex; align-items: center; gap: 8px; min-height: 44px; }

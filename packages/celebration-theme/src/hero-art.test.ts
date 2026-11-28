@@ -15,7 +15,7 @@ function uuid5(name: string): string {
 }
 
 describe("F4 · the art each template wears", () => {
-  it("every one of the 30 seeded templates has its cover drawing, keyed by the deterministic id of its seed key", () => {
+  it("every one of the 36 seeded templates has its cover drawing, keyed by the deterministic id of its seed key", () => {
     for (const template of seeded.templates) {
       const art = SEEDED_ART[uuid5(template.key)];
       expect(art, template.key).toBeDefined();

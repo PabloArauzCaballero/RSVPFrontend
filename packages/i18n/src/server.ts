@@ -30,6 +30,8 @@ import { accountEsBO } from "../locales/es-BO/account.js";
 import { designEditorEnUS } from "../locales/en-US/design-editor.js";
 import { designEditorEsBO } from "../locales/es-BO/design-editor.js";
 import { legalEnUS } from "../locales/en-US/legal.js";
+import { moderationEnUS } from "../locales/en-US/moderation.js";
+import { moderationEsBO } from "../locales/es-BO/moderation.js";
 import { legalEsBO } from "../locales/es-BO/legal.js";
 
 /**
@@ -37,8 +39,8 @@ import { legalEsBO } from "../locales/es-BO/legal.js";
  * translator. Safe in Next.js server components, where react-i18next cannot load.
  */
 
-const esBO = { ...esBOCommon, celebration: celebrationEsBO, directory: directoryEsBO, host: hostEsBO, admin: adminEsBO, landing: landingEsBO, partner: partnerEsBO, search: searchEsBO, rsvp: rsvpEsBO, guests: guestsEsBO, gifts: giftsEsBO, ...quoteEsBO, portal: portalEsBO, legal: legalEsBO, account: accountEsBO, designEditor: designEditorEsBO };
-const enUS = { ...enUSCommon, celebration: celebrationEnUS, directory: directoryEnUS, host: hostEnUS, admin: adminEnUS, landing: landingEnUS, partner: partnerEnUS, search: searchEnUS, rsvp: rsvpEnUS, guests: guestsEnUS, gifts: giftsEnUS, ...quoteEnUS, portal: portalEnUS, legal: legalEnUS, account: accountEnUS, designEditor: designEditorEnUS };
+const esBO = { ...esBOCommon, moderation: moderationEsBO, celebration: celebrationEsBO, directory: directoryEsBO, host: hostEsBO, admin: adminEsBO, landing: landingEsBO, partner: partnerEsBO, search: searchEsBO, rsvp: rsvpEsBO, guests: guestsEsBO, gifts: giftsEsBO, ...quoteEsBO, portal: portalEsBO, legal: legalEsBO, account: accountEsBO, designEditor: designEditorEsBO };
+const enUS = { ...enUSCommon, moderation: moderationEnUS, celebration: celebrationEnUS, directory: directoryEnUS, host: hostEnUS, admin: adminEnUS, landing: landingEnUS, partner: partnerEnUS, search: searchEnUS, rsvp: rsvpEnUS, guests: guestsEnUS, gifts: giftsEnUS, ...quoteEnUS, portal: portalEnUS, legal: legalEnUS, account: accountEnUS, designEditor: designEditorEnUS };
 
 /** Every resource, by locale; tests compare their key sets. */
 export const resources = { "es-BO": esBO, "en-US": enUS } as const;

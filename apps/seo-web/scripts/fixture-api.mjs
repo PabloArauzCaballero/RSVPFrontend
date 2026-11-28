@@ -69,6 +69,11 @@ Object.assign(V2_IDS, { minimalista: "869eeeec-3666-5b8b-bde6-ee717e43568f", "ar
   "corporativo-grafito": "31f50a64-17fe-5ddf-84e2-6a2d1812fb30", inauguracion: "c075dcc9-346f-5238-b56c-22d6ae7c948c", "fiesta-patronal": "effedaf6-1f6c-5446-b263-dd9438e2feac", "otros-evento": "e72b06cb-5175-5121-8e05-23854a78d1af" });
 Object.assign(V2_CONTENT, { minimalista: { title: "Valeria y Tomás", hosts: { BRIDE: "Valeria", GROOM: "Tomás" } }, "arena-terracota": { title: "Bautizo de Emilia", hosts: {} }, corporativo: { title: "Cumbre de Innovación 2026", hosts: {} },
   "corporativo-grafito": { title: "Asamblea anual 2026", hosts: {} }, inauguracion: { title: "Inauguración de Café Altiplano", hosts: {} }, "fiesta-patronal": { title: "Fiesta de la Virgen de Urkupiña", hosts: {} }, "otros-evento": { title: "Encuentro de la familia Rojas", hosts: {} } });
+// Decision 6 · the six extra templates (Otros, Despedida, Pedida; uuid5 of the key, P20), each with the title its event would carry.
+Object.assign(V2_IDS, { "otros-rumbo": "0f2e158b-0faa-5132-993c-a4ea99322775", "otros-mesa": "2c2ff3d9-90a2-5fb3-a785-fb02b683e647", "despedida-disco": "222aca44-32fa-55c3-af78-2787ceee0130",
+  "despedida-esmoquin": "9b901c0b-4178-534c-8166-de476e77527d", "pedida-solitario": "577d5708-976d-53e0-897b-5c299f4b79bf", "pedida-rosa": "d76ce414-6e7d-5f66-b34e-1165c3df4f94" });
+Object.assign(V2_CONTENT, { "otros-rumbo": { title: "Viaje de la familia Rojas", hosts: {} }, "otros-mesa": { title: "Almuerzo de fin de año", hosts: {} }, "despedida-disco": { title: "Despedida de Andrea", hosts: {} },
+  "despedida-esmoquin": { title: "Despedida de Gonzalo", hosts: {} }, "pedida-solitario": { title: "Pedida de Lucía y Marco", hosts: { BRIDE: "Lucía", GROOM: "Marco" } }, "pedida-rosa": { title: "Pedida de Camila y Diego", hosts: { BRIDE: "Camila", GROOM: "Diego" } } });
 const v2Celebrations = Object.entries(V2_IDS).flatMap(([name, templateId], index) => [false, true].map((bare) => ({
   slug: `fixture-v2-${name}${bare ? "-sinfoto" : ""}`, templateId, bare,
   view: { ...view, celebrationId: `00000000-0000-4000-8000-${String(100 + index * 2 + (bare ? 1 : 0)).padStart(12, "0")}`, slug: `fixture-v2-${name}${bare ? "-sinfoto" : ""}`, templateId,
@@ -91,7 +96,7 @@ const mediosTemplate = () => {
   const base = v2Template("marfil");
   const theme = structuredClone(base.theme);
   theme.pages = theme.pages.map((page) => {
-    if (page.kind === "cover") return { ...page, background: { kind: "media", mediaId: MEDIOS.bg, fit: "cover" } };
+    if (page.kind === "cover") return { ...page, background: { kind: "media", mediaId: MEDIOS.bg, fit: "cover", veil: "graded" } };
     if (page.section !== "story") return page;
     const at = (id, block, y) => ({ id, block, x: 0, y, w: 4, h: 1, visible: true });
     return { ...page, canvases: { ...page.canvases, mobile: { ...page.canvases.mobile, elements: [...page.canvases.mobile.elements, at("m-pic", "m-pic", 1), at("m-vid", "m-vid", 2), at("m-map", "m-map", 3), at("m-song", "m-song", 4)] } } };
@@ -114,15 +119,61 @@ const libreTemplate = () => {
 };
 const libre = { slug: "fixture-v2-libre", view: { ...view, celebrationId: "00000000-0000-4000-8000-000000000198", slug: "fixture-v2-libre", templateId: "6f6f6f6f-6f6f-46f6-86f6-6f6f6f6f6f6f" } };
 const medios = { slug: "fixture-v2-medios", view: { ...view, celebrationId: "00000000-0000-4000-8000-000000000199", slug: "fixture-v2-medios", templateId: "5e5e5e5e-5e5e-45e5-85e5-5e5e5e5e5e5e" } };
+// F7 · `fixture-v2-musica-oculta`: the same page as `fixture-v2-medios` after moderation hid the own MP3 only (decision of Pablo 2026-11-26). The view says so in `hiddenElements`
+// and the media service no longer lists the file; the invitation, its photos and both buttons stay.
+const musicaOculta = { slug: "fixture-v2-musica-oculta", view: { ...medios.view, celebrationId: "00000000-0000-4000-8000-000000000200", slug: "fixture-v2-musica-oculta", hiddenElements: [{ kind: "SECTION", id: "music" }] } };
+// F7 · `fixture-v2-medios-en`: the same page published in English, to see the report's words in en-US.
+const mediosEn = { slug: "fixture-v2-medios-en", view: { ...medios.view, celebrationId: "00000000-0000-4000-8000-000000000201", slug: "fixture-v2-medios-en", locale: "en-US" } };
 const silence = () => { const rate = 8000, samples = rate * 2, data = Buffer.alloc(samples * 2); const head = Buffer.alloc(44); head.write("RIFF", 0); head.writeUInt32LE(36 + data.length, 4); head.write("WAVEfmt ", 8); head.writeUInt32LE(16, 16); head.writeUInt16LE(1, 20); head.writeUInt16LE(1, 22); head.writeUInt32LE(rate, 24); head.writeUInt32LE(rate * 2, 28); head.writeUInt16LE(2, 32); head.writeUInt16LE(16, 34); head.write("data", 36); head.writeUInt32LE(data.length, 40); return Buffer.concat([head, data]); };
+// The worst picture for text: 12 columns of pure black and pure white squares, so every patch under a line of text is an extreme.
+const checkerboard = () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1280" width="1920" height="1280"><rect width="1920" height="1280" fill="#fff"/>${Array.from({ length: 8 * 12 }, (_, i) => ((i % 12) + Math.floor(i / 12)) % 2 === 0 ? `<rect x="${(i % 12) * 160}" y="${Math.floor(i / 12) * 160}" width="160" height="160" fill="#000"/>` : "").join("")}</svg>`;
 let sharpModule;
 const encoded = new Map();
 async function rasterOf(n, width, format) {
   sharpModule ??= (await import("sharp")).default;
   const key = `${n}-${width}-${format}`;
-  if (!encoded.has(key)) encoded.set(key, await sharpModule(Buffer.from(image(n * 70))).resize({ width }).toFormat(format).toBuffer());
+  if (!encoded.has(key)) encoded.set(key, await sharpModule(Buffer.from(n === 9 ? checkerboard() : image(n * 70))).resize({ width }).toFormat(format).toBuffer());
   return encoded.get(key);
 }
+
+// PL-FE145-2 / V6 · `fixture-v2-velo`: Marfil with the WORST picture (a black and white checkerboard, every pixel a pure extreme) behind every page, under the graded veil, and a block of every kind
+// that carries text over it. The e2e measures the painted panel and the ink of each text against that picture.
+const VELO = { bg: "44444444-4444-4444-8444-444444444444", gradient: "55555555-5555-4555-8555-555555555555" };
+const veloGallery = [{ id: "g1", width: 1920, height: 1280, isCover: true, purpose: "cover", variants: raster(1) }, { id: "g2", width: 1920, height: 1280, isCover: false, purpose: "gallery", variants: raster(2) },
+  { id: VELO.bg, width: 1920, height: 1280, isCover: false, purpose: "background", variants: raster(9) }, { id: VELO.gradient, width: 1920, height: 1280, isCover: false, purpose: "background", variants: raster(5) }, { id: MEDIOS.song, width: null, height: null, isCover: false, purpose: "music", durationMs: 2000, variants: { audio: `http://localhost:${PORT}/audio/song.wav` } }];
+// R3-1: the same page over a smooth gradient picture (`-degradado`) and under the even veil (`-parejo`), so the titles and introductions are measured on pixels in every case.
+const VELO_VARIANTS = { velo: { picture: 9, veil: "graded" }, "velo-degradado": { picture: 5, veil: "graded" }, "velo-parejo": { picture: 5, veil: "even" } };
+const veloTemplate = (variant = "velo") => {
+  const base = v2Template("marfil");
+  const theme = structuredClone(base.theme);
+  theme.pages = theme.pages.map((page) => {
+    const withBg = { ...page, background: { kind: "media", mediaId: VELO_VARIANTS[variant].picture === 9 ? VELO.bg : VELO.gradient, fit: "cover", veil: VELO_VARIANTS[variant].veil } };
+    if (page.section !== "story") return withBg;
+    const at = (id, block, y) => ({ id, block, x: 0, y, w: 4, h: 1, visible: true });
+    return { ...withBg, canvases: { ...withBg.canvases, mobile: { ...withBg.canvases.mobile, elements: [...withBg.canvases.mobile.elements, at("v-btn", "v-btn", 1), at("v-vid", "v-vid", 2), at("v-map", "v-map", 3), at("v-song", "v-song", 4), at("v-party", "v-party", 5), at("v-gal", "v-gal", 6)] } } };
+  });
+  theme.blocks = [...theme.blocks,
+    { id: "v-btn", type: "button", config: { label: "Saber más", style: "outline" } },
+    { id: "v-vid", type: "video", config: { provider: "youtube", videoId: "dQw4w9WgXcQ" } },
+    { id: "v-map", type: "map", config: { venueIndex: 0 } },
+    { id: "v-song", type: "music", config: { source: "media", ref: MEDIOS.song } },
+    { id: "v-party", type: "weddingParty", config: { people: [{ name: "Camila Rojas", role: "Dama de honor" }, { name: "Tomás Vega", role: "Padrino" }] } },
+    { id: "v-gal", type: "gallery", config: { display: "grid" } }];
+  return { ...base, id: veloIds[variant][1], theme };
+};
+const veloIds = { velo: ["00000000-0000-4000-8000-000000000197", "7a7a7a7a-7a7a-47a7-87a7-7a7a7a7a7a7a"], "velo-degradado": ["00000000-0000-4000-8000-000000000196", "7a7a7a7a-7a7a-47a7-87a7-7a7a7a7a7a7b"], "velo-parejo": ["00000000-0000-4000-8000-000000000195", "7a7a7a7a-7a7a-47a7-87a7-7a7a7a7a7a7c"] };
+const velos = Object.entries(veloIds).map(([key, [celebrationId, templateId]]) => ({ key, slug: `fixture-v2-${key}`, view: { ...view, celebrationId, slug: `fixture-v2-${key}`, templateId } }));
+
+// R3-4 · `fixture-v2-poster`: the `poster` cover variant (the photo fills the block, the text rides on its own strong veil) over the worst picture, a black and white checkerboard.
+const posterId = { celebrationId: "00000000-0000-4000-8000-000000000194", templateId: "7a7a7a7a-7a7a-47a7-87a7-7a7a7a7a7a7d" };
+const posterGallery = [{ id: "g1", width: 1920, height: 1280, isCover: true, purpose: "cover", variants: raster(9) }];
+const posterTemplate = () => {
+  const base = v2Template("marfil");
+  const theme = structuredClone(base.theme);
+  theme.blocks = theme.blocks.map((block) => block.type === "cover" ? { ...block, config: { ...block.config, variant: "poster" } } : block);
+  return { ...base, id: posterId.templateId, theme };
+};
+const poster = { slug: "fixture-v2-poster", view: { ...view, celebrationId: posterId.celebrationId, slug: "fixture-v2-poster", templateId: posterId.templateId } };
 
 const providers = [
   { listingId: "7d1c1a34-5d4c-4a39-9a2e-0f4f2d3d7b11", providerSlug: "hotel-andino", name: "Hotel Andino", category: "ACCOMMODATION", city: "La Paz", department: "La Paz", verified: true, summary: "Hospedaje boutique en el centro histórico, con salón para recepciones de hasta 120 personas.", priceFrom: { amountMinor: 45000, currency: "BOB" }, imageUrl: img(1), destinations: ["WHATSAPP", "PHONE", "EMAIL", "OFFICIAL_SITE"], coverage: ["La Paz", "El Alto"], address: "Calle Comercio 123, La Paz", hours: ["Lu-Do 08:00-22:00"], lat: -16.4955, lng: -68.1336 },
@@ -169,9 +220,21 @@ createServer(async (req, res) => {
   if (path === `/celebrations/public/${libre.slug}`) return json(res, 200, libre.view);
   if (path === `/media/public/celebrations/${libre.view.celebrationId}/assets`) return json(res, 200, { items: gallery });
   if (path === `/media/templates/${libre.view.templateId}`) return json(res, 200, libreTemplate());
+  if (path === `/celebrations/public/${poster.slug}`) return json(res, 200, poster.view);
+  if (path === `/media/public/celebrations/${poster.view.celebrationId}/assets`) return json(res, 200, { items: posterGallery });
+  if (path === `/media/templates/${poster.view.templateId}`) return json(res, 200, posterTemplate());
+  for (const velo of velos) {
+    if (path === `/celebrations/public/${velo.slug}`) return json(res, 200, velo.view);
+    if (path === `/media/public/celebrations/${velo.view.celebrationId}/assets`) return json(res, 200, { items: veloGallery });
+    if (path === `/media/templates/${velo.view.templateId}`) return json(res, 200, veloTemplate(velo.key));
+  }
   if (path === `/celebrations/public/${medios.slug}`) return json(res, 200, medios.view);
   if (path === `/media/public/celebrations/${medios.view.celebrationId}/assets`) return json(res, 200, { items: mediosGallery });
   if (path === `/media/templates/${medios.view.templateId}`) return json(res, 200, mediosTemplate());
+  if (path === `/celebrations/public/${mediosEn.slug}`) return json(res, 200, mediosEn.view);
+  if (path === `/media/public/celebrations/${mediosEn.view.celebrationId}/assets`) return json(res, 200, { items: mediosGallery });
+  if (path === `/celebrations/public/${musicaOculta.slug}`) return json(res, 200, musicaOculta.view);
+  if (path === `/media/public/celebrations/${musicaOculta.view.celebrationId}/assets`) return json(res, 200, { items: mediosGallery.filter((item) => item.purpose !== "music") });
   if (path.startsWith("/img/")) { res.writeHead(200, { "content-type": "image/svg+xml", "cache-control": "public, max-age=3600" }); return res.end(image(Number(path.match(/(\d+)/)?.[1] ?? 1) * 70)); }
   if (path === "/celebrations/public") return json(res, 200, { items: [{ slug: SLUG, updatedAt: "2026-11-01T00:00:00Z", supportedLocales: ["es-BO", "en-US"] }] });
   if (path === `/celebrations/public/${SLUG}`) return json(res, 200, view);
