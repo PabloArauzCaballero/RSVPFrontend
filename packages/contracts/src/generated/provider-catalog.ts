@@ -1777,7 +1777,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description One partner redirector (A23). The own gift-catalog products (H05B) resolve their PRODUCT_PAGE through the H05B boundary: the stored validated officialProductUrl with controlled UTM and correlationId, an anonymous nonbillable click (valid:false, reason unassessed) and its provider.lead.marked-invalid.v1 outbox committed atomically before the 302; a suspended provider records the click (reason suspended) and answers 404 without Location; unknown or duplicate query keys (url, next, redirect...) answer 422. Every other listing and destination (OFFICIAL_SITE, LANDING, WHATSAPP, PHONE, EMAIL, INSTAGRAM, PRODUCT_PAGE) is resolved by the marketplace redirector: the lead (valid, or invalid dup/bot) and its event are stored in one transaction before the 302 (never 301). Only a destination stored on the listing, enabled in its lead configuration and still passing its whitelist can become the Location; anything else is 404. tel: and mailto: targets are returned intact; https targets get utm_source, utm_medium, utm_campaign and correlationId. Failure to persist the click or its outbox answers 503 and never 302. Since 3.8.0 (R5) a PRODUCT's WHATSAPP redirect carries the provider's message in the text parameter of the wa.me link (see the API description); no query parameter can add text to it. */
+        /** @description One partner redirector (A23). The own gift-catalog products (H05B) resolve their PRODUCT_PAGE through the H05B boundary: the stored validated officialProductUrl with controlled UTM and correlationId, an anonymous nonbillable click (valid:false, reason unassessed) and its provider.lead.marked-invalid.v1 outbox committed atomically before the 302; a suspended provider records the click (reason suspended) and answers 404 without Location; unknown or duplicate query keys (url, next, redirect...) answer 422. Every other listing and destination (OFFICIAL_SITE, LANDING, WHATSAPP, PHONE, EMAIL, INSTAGRAM, PRODUCT_PAGE) is resolved by the marketplace redirector: the lead (valid, or invalid dup/bot) and its event are stored in one transaction before the 302 (never 301). Only a destination stored on the listing, enabled in its lead configuration and still passing its whitelist can become the Location; anything else is 404. tel: and mailto: targets are returned intact; https targets get utm_source, utm_medium, utm_campaign and correlationId. Failure to persist the click or its outbox answers 503 and never 302. Since 3.9.0 (R5) a PRODUCT's WHATSAPP redirect carries the provider's message in the text parameter of the wa.me link (see the API description); no query parameter can add text to it. */
         get: operations["resolveListingRedirect"];
         put?: never;
         post?: never;
@@ -10030,8 +10030,9 @@ export interface operations {
         parameters: {
             query?: {
                 celebrationId?: string;
-                /** @description Since 3.8.0 (R5): public slug of the celebration whose title, date and delivery notes fill {celebracion}, {fecha} and {entrega}. It counts only when celebrationId is sent and is that celebration's id; a slug without celebrationId is ignored. */
+                /** @description Since 3.9.0 (R5): public slug of the celebration whose title, date and delivery notes fill {celebracion}, {fecha} and {entrega}. It counts only when celebrationId is sent and is that celebration's id; a slug without celebrationId is ignored. */
                 celebrationSlug?: string;
+                /** @description City slug (GET /providers/geo). Since 3.9.0 it also gives {ciudad} of the WhatsApp message. */
                 city?: string;
                 correlationId?: string;
                 country?: string;
@@ -10041,12 +10042,13 @@ export interface operations {
                 destination?: "OFFICIAL_SITE" | "LANDING" | "WHATSAPP" | "PHONE" | "EMAIL" | "INSTAGRAM" | "PRODUCT_PAGE";
                 /** @description Type of the celebration (a code such as WEDDING). Stored with the click so the provider sees it without seeing the celebration (D-10 #34). */
                 eventType?: string;
-                /** @description Since 3.8.0 (R5): the gift of the guest's list the click comes from. Stored with the lead; never shown to the provider. */
+                /** @description Since 3.9.0 (R5): the gift of the guest's list the click comes from. Stored with the lead; never shown to the provider. */
                 giftItemId?: string;
                 /** @description Requires celebrationId. */
                 guestId?: string;
+                /** @description es-BO or en-US (or an Accept-Language value). Since 3.9.0 it picks the template language and the formats of price and date of the WhatsApp message. */
                 locale?: string;
-                /** @description Since 3.8.0 (R5): units the guest wants; {cantidad} of the WhatsApp message (default 1). A value above 200 (the most a gift can hold) is cut to 200, so the redirect always lands; 422 INVALID_QUANTITY only when it is not a positive integer. */
+                /** @description Since 3.9.0 (R5): units the guest wants; {cantidad} of the WhatsApp message (default 1). A value above 200 (the most a gift can hold) is cut to 200, so the redirect always lands; 422 INVALID_QUANTITY only when it is not a positive integer. */
                 quantity?: number;
                 /** @description Referrer; defaults to the Referer header. */
                 ref?: string;
@@ -10054,7 +10056,7 @@ export interface operations {
                 sessionId?: string;
                 /** @description Where the link was shown. PREVIEW (R6a, 3.8.0): a preview in the provider portal or in moderation; since 3.10.0 (M-2) it only counts with a ctx issued for that listing (issueLeadContext, relation PREVIEW). Without it the click is evaluated like any other and recorded as PUBLIC_SITE. */
                 surface?: "PUBLIC_SITE" | "SEARCH" | "CELEBRATION_SITE" | "GIFT_LIST" | "EMAIL" | "APP" | "QUOTE_FORM" | "PREVIEW";
-                /** @description Since 3.8.0 (R5): the id of the product version (gift-list variantCode). Sets {version} and the price of the WhatsApp message; an id that is not a version of the product is ignored (the product's price, no version). */
+                /** @description Since 3.9.0 (R5): the id of the product version (gift-list variantCode). Sets {version} and the price of the WhatsApp message; an id that is not a version of the product is ignored (the product's price, no version). */
                 variant?: string;
             };
             header?: never;
