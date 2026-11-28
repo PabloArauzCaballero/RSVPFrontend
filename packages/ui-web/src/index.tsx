@@ -52,16 +52,61 @@ export type ButtonProps = PropsWithChildren<{
   onPress?: () => void;
 } & VariantProps<typeof buttonVariants> & ButtonHTMLAttributes<HTMLButtonElement>>;
 
+/** An event type code (WEDDING, BABY_SHOWER): the same shape the redirector accepts; anything else is not sent. */
+const EVENT_TYPE_SHAPE = /^[A-Z][A-Z0-9_]{1,59}$/;
 const LISTING_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export type PartnerDestination = 'OFFICIAL_SITE' | 'LANDING' | 'WHATSAPP' | 'PHONE' | 'EMAIL' | 'INSTAGRAM' | 'PRODUCT_PAGE';
-export type PartnerSurface = 'PUBLIC_SITE' | 'SEARCH' | 'CELEBRATION_SITE' | 'GIFT_LIST' | 'EMAIL' | 'APP' | 'QUOTE_FORM';
-/** The only way to point at a partner: the redirector `/r/{listingId}`, which records the lead and answers 302. Never the partner URL. */
-export function partnerRedirectHref(listingId: string, options: { destination?: PartnerDestination; surface?: PartnerSurface; celebrationId?: string } = {}): string {
+/**
+ * Surface of a click. `PREVIEW` (the provider portal or moderation previewing a page): per provider-catalog 3.8.0 the click is recorded as an
+ * invalid (non-billable) lead with reason `PREVIEW`, with or without `ctx`. Restricting PREVIEW to the portal's own signed `ctx` is not in this
+ * contract (it arrives with BE R6b, #166), so today anyone can append `surface=PREVIEW` to a link and the click is not billed.
+ */
+export type PartnerSurface = 'PUBLIC_SITE' | 'SEARCH' | 'CELEBRATION_SITE' | 'GIFT_LIST' | 'EMAIL' | 'APP' | 'QUOTE_FORM' | 'PREVIEW';
+/**
+ * A `ctx` (the member's signed lead context) is only valid together with the celebration it was signed for, so the type demands `celebrationId`
+ * whenever `ctx` is a value. Without a celebration there is no `ctx`.
+ */
+export interface PartnerGiftContext {
+  /** Public slug of the celebration; with `celebrationId` (always send both) it fills {celebracion}, {fecha} and {entrega} of the WhatsApp message. */
+  celebrationSlug?: string;
+  /** The gift of the guest's list the click comes from (stored with the lead, never shown to the provider). */
+  giftItemId?: string;
+  /** The product version (the gift's `variantCode`). */
+  variant?: string | null;
+  /** Units the guest wants, a positive integer: {cantidad}. */
+  quantity?: number;
+  /** City slug of the celebration, when known: {ciudad}. */
+  city?: string;
+  /** Event type code of the celebration (`eventType.code` of its public view): the provider reports break leads down by it. */
+  eventType?: string;
+}
+export type PartnerLinkContext =
+  | ({ celebrationId: string; ctx?: string | null } & PartnerGiftContext)
+  | { celebrationId?: undefined; ctx?: undefined };
+export type PartnerRedirectOptions = { destination?: PartnerDestination; surface?: PartnerSurface; /** es-BO or en-US: the language of the provider's template. */ locale?: string } & PartnerLinkContext;
+
+/**
+ * The only way to point at a partner: the redirector `/r/{listingId}`, which records the lead and answers 302. Never the partner URL.
+ * With `ctx` the result is a bearer link (whoever holds it clicks for free in the member's name): use it only to navigate, never as a visible or copyable `href`.
+ */
+export function partnerRedirectHref(listingId: string, options: PartnerRedirectOptions = {}): string {
   if (!LISTING_ID.test(listingId)) throw new Error('PartnerLink needs a listing id (UUID), never a partner URL');
   const query = new URLSearchParams();
   if (options.destination) query.set('destination', options.destination);
   if (options.surface) query.set('surface', options.surface);
-  if (options.celebrationId) query.set('celebrationId', options.celebrationId);
+  if (options.celebrationId) {
+    query.set('celebrationId', options.celebrationId);
+    // R5: what the redirector needs to resolve the WhatsApp message on the server. Never the guest's name, phone or id (PF-1).
+    if (options.celebrationSlug) query.set('celebrationSlug', options.celebrationSlug);
+    if (options.giftItemId) query.set('giftItemId', options.giftItemId);
+    if (options.variant) query.set('variant', options.variant);
+    if (Number.isInteger(options.quantity) && (options.quantity ?? 0) > 0) query.set('quantity', String(options.quantity));
+    if (options.city) query.set('city', options.city);
+    if (options.eventType && EVENT_TYPE_SHAPE.test(options.eventType)) query.set('eventType', options.eventType);
+  }
+  if (options.locale) query.set('locale', options.locale);
+  // R6a: the member's signed lead context (opaque, ~5 min).
+  if (options.ctx) query.set('ctx', options.ctx);
   const text = query.toString();
   return `/r/${encodeURIComponent(listingId)}${text ? `?${text}` : ''}`;
 }
@@ -69,13 +114,44 @@ export function partnerRedirectHref(listingId: string, options: { destination?: 
 /**
  * A link to a partner. It takes a listing id, not a URL, so a direct partner link is impossible by construction; the rel is always
  * `sponsored nofollow` and the disclaimer travels with the link (visible, and tied to it with aria-describedby).
+ *
+ * R6a: the DOM `href` NEVER carries `ctx` (the lead context is a bearer: «copy link address», a long-press or a middle-click preview would hand it
+ * out). It is added only when navigating: a plain click or Enter opens it in this tab, ctrl/cmd/shift-click and middle-click in a new tab. The browser
+ * context menu («open in new tab») uses the `href`, so that click is evaluated without a member context (billed as a normal visitor's).
+ *
+ * Limits of navigating with `window.open(..., 'noopener')` instead of the `href` (all of them fall back to a click without a member context, never to a leak):
+ *  1. A blocked pop-up cannot be detected: with `noopener` it always returns null, so a blocked new tab is silent (a click that is a user gesture is rarely blocked).
+ *  2. Safari fires no `click` for a middle-click on a link (it opens the `href` directly), so there the new tab carries no `ctx`.
+ *  3. Before hydration the handlers do not exist: a click then follows the plain `href` and carries no `ctx`.
  */
-export function PartnerLink({ listingId, destination, surface, celebrationId, children, className, disclaimer = true }: PropsWithChildren<{ listingId: string; destination?: PartnerDestination; surface?: PartnerSurface; celebrationId?: string; className?: string; disclaimer?: boolean }>) {
+export function PartnerLink({ listingId, children, className, disclaimer = true, onFollow, ...link }: PropsWithChildren<{ listingId: string; className?: string; disclaimer?: boolean; /** R5: called when the visitor follows the link (click, Enter or middle click), before leaving: the gift list records the attempt for «¿Lo compraste?». */ onFollow?: () => void } & PartnerRedirectOptions>) {
   const t = useStrings();
   const id = useId();
+  const href = partnerRedirectHref(listingId, { ...link, ctx: undefined });
+  const bearer = link.ctx ? partnerRedirectHref(listingId, link) : null;
   return (
     <span className="inline-flex flex-col gap-1">
-      <a href={partnerRedirectHref(listingId, { destination, surface, celebrationId })} rel="sponsored nofollow noopener" aria-describedby={disclaimer ? id : undefined} className={cn(buttonVariants({ variant: 'secondary' }), className)}>{children}</a>
+      <a
+        href={href}
+        rel="sponsored nofollow noopener"
+        aria-describedby={disclaimer ? id : undefined}
+        className={cn(buttonVariants({ variant: 'secondary' }), className)}
+        onClick={bearer || onFollow ? (event) => {
+          if (event.defaultPrevented || event.altKey || event.button !== 0) return;
+          onFollow?.();
+          if (!bearer) return;
+          event.preventDefault();
+          if (event.metaKey || event.ctrlKey || event.shiftKey) window.open(bearer, '_blank', 'noopener');
+          else window.open(bearer, '_self');
+        } : undefined}
+        onAuxClick={bearer || onFollow ? (event) => {
+          if (event.button !== 1) return;
+          onFollow?.();
+          if (!bearer) return;
+          event.preventDefault();
+          window.open(bearer, '_blank', 'noopener');
+        } : undefined}
+      >{children}</a>
       {disclaimer ? <span id={id} className="text-xs text-text-muted">{t.partnerDisclaimer}</span> : null}
     </span>
   );

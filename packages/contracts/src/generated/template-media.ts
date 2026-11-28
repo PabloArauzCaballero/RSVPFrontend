@@ -1204,6 +1204,8 @@ export interface components {
             durationMs?: number | null;
             filename?: string;
             height?: number | null;
+            /** @description F7 / PL-142-R4: an administrator hid this file (the whole page, the gallery section or the file itself) and it is not served. `variants` is empty while true. Absent in responses of services older than 1.5.0, which read as false. Never true in the public gallery, which omits hidden files. */
+            hidden?: boolean;
             /** Format: uuid */
             id?: string;
             isCover?: boolean;
@@ -2379,7 +2381,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Unknown asset, variant, or celebration not published */
+            /** @description Unknown asset, variant, or celebration not published, or the file is hidden by moderation (F7 / PL-142-R4): the same answer, so the public learns nothing about the moderation. It answers 302 again as soon as the hiding is lifted. */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -2401,7 +2403,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Gallery of a published celebration; variant URLs are the stable /public/assets/{id}/{variant} links */
+            /** @description Gallery of a published celebration; variant URLs are the stable /public/assets/{id}/{variant} links. Files hidden by moderation (F7) are not listed. */
             200: {
                 headers: {
                     [name: string]: unknown;

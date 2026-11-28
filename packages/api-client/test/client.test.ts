@@ -51,4 +51,18 @@ describe("bodiless success responses", () => {
     const client = createApiClient({ baseUrl: "http://x", tokenStore: { getAccessToken: async () => null, getRefreshToken: async () => null, setTokens: async () => undefined, clear: async () => undefined }, refreshSession: { refresh: async () => { throw new Error("unused"); } }, fetchFn });
     await expect(client.request("/identity/auth/password-recovery", { method: "POST", body: { email: "a@b.co" }, auth: false })).resolves.toBeUndefined();
   });
+
+  it("returns the body as text and asks for text/csv with responseType text, without parsing it as JSON", async () => {
+    const csv = "proveedor,producto\r\nDulce Sol,Torta\r\n";
+    const fetchFn = vi.fn().mockResolvedValue(new Response(csv, { status: 200, headers: { "content-type": "text/csv" } }));
+    const client = createApiClient({ baseUrl: "https://api.test", tokenStore: { getAccessToken: async () => "t", getRefreshToken: async () => null, setTokens: vi.fn(), clear: vi.fn() }, refreshSession: { refresh: vi.fn() }, fetchFn });
+    await expect(client.request<string>("/providers/admin/leads/report.csv?month=2026-11", { responseType: "text" })).resolves.toBe(csv);
+    expect(new Headers(fetchFn.mock.calls[0][1].headers).get("accept")).toContain("text/csv");
+  });
+  it("keeps JSON as the default answer and Accept", async () => {
+    const fetchFn = vi.fn().mockResolvedValue(new Response('{"a":1}', { status: 200 }));
+    const client = createApiClient({ baseUrl: "https://api.test", tokenStore: { getAccessToken: async () => null, getRefreshToken: async () => null, setTokens: vi.fn(), clear: vi.fn() }, refreshSession: { refresh: vi.fn() }, fetchFn });
+    await expect(client.request("/x", { auth: false })).resolves.toEqual({ a: 1 });
+    expect(new Headers(fetchFn.mock.calls[0][1].headers).get("accept")).toBe("application/json");
+  });
 });

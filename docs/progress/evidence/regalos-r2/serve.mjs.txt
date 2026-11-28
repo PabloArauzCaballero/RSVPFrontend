@@ -1,0 +1,64 @@
+// Local walk of R2 FE (not committed): the REAL provider-catalog runtime (BE worktree build) on a disposable PostgreSQL 16,
+// with the in-process S3 stand-in of the BE suite and the real photo worker pass (sharp). A small gateway on GATEWAY_PORT
+// adds CORS (Kong does it in TEST) and routes /providers/* and /listings* to the real runtime, the media bucket to the S3
+// stand-in, and anything else (identity, notification…) to the visual contract mock of the FE.
+// Usage: PROVIDER_IT_SHARED_POSTGRES_URL=... BE=/var/tmp/wt-r2fe-be node serve.mjs
+import http from 'node:http';
+import { writeFileSync } from 'node:fs';
+const BE = process.env.BE ?? '/var/tmp/wt-r2fe-be';
+const svc = `${BE}/apps/provider-catalog-service`;
+const { createEnvironment, verifiedProvider } = await import(`${svc}/test/support.mjs`);
+const { startS3StandIn } = await import(`${svc}/test/helpers/s3-stand-in.mjs`);
+const { runPhotoWorkerPass } = await import(`${svc}/dist/marketplace/application/command/photo-worker.js`);
+const { SharpPhotoRenderer } = await import(`${svc}/dist/marketplace/infrastructure/media/sharp-photo-renderer.js`);
+
+const GATEWAY_PORT = Number(process.env.GATEWAY_PORT ?? 28400);
+const MOCK = `http://127.0.0.1:${process.env.MOCK_PORT ?? 28310}`;
+const GATEWAY = `http://127.0.0.1:${GATEWAY_PORT}`;
+const BUCKET = 'provider-media';
+
+const s3 = await startS3StandIn();
+const env = await createEnvironment({ env: {
+  PROVIDER_DOCS_S3_ENDPOINT: s3.endpoint, PROVIDER_DOCS_PUBLIC_ENDPOINT: GATEWAY, PROVIDER_DOCS_S3_ACCESS_KEY: s3.accessKey, PROVIDER_DOCS_S3_SECRET_KEY: s3.secretKey,
+  PROVIDER_MEDIA_BUCKET: BUCKET
+} });
+const provider = await verifiedProvider(env, { name: 'Cristalería Recorrido' });
+const upstream = new URL(env.runtime.address);
+const s3url = new URL(s3.endpoint);
+
+const renderer = new SharpPhotoRenderer();
+const worker = setInterval(() => { runPhotoWorkerPass(env.runtime.deps, renderer, { batch: 5 }).catch((error) => console.error('worker', error.message)); }, 1000);
+
+const CORS_BASE = {
+  'access-control-allow-credentials': 'true', 'vary': 'Origin', 'access-control-allow-methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS,HEAD',
+  'access-control-allow-headers': 'authorization,content-type,if-match,idempotency-key,accept-language,x-request-id,x-correlation-id,traceparent,cache-control',
+  'access-control-expose-headers': 'etag,location,retry-after'
+};
+const log = [];
+const gateway = http.createServer((request, response) => {
+  const CORS = { ...CORS_BASE, 'access-control-allow-origin': request.headers.origin ?? '*' };
+  if (request.method === 'OPTIONS') { response.writeHead(204, CORS); response.end(); return; }
+  const path = request.url ?? '/';
+  let target; const headers = { ...request.headers };
+  if (path.startsWith(`/${BUCKET}/`)) {
+    target = s3url;
+    // MinIO serves the public/ prefix anonymously (decision 3); the stand-in wants a signature or a header, so public GETs get one.
+    if (path.startsWith(`/${BUCKET}/public/`) && request.method === 'GET') headers.authorization = 'anonymous-public-read';
+  } else if (path.startsWith('/providers') || path.startsWith('/listings')) target = upstream;
+  else target = new URL(MOCK);
+  headers.host = target.host;
+  const forward = http.request({ host: target.hostname, port: target.port, method: request.method, path, headers }, (reply) => {
+    const out = { ...reply.headers, ...CORS };
+    response.writeHead(reply.statusCode ?? 502, out);
+    reply.pipe(response);
+    if (target !== s3url || request.method !== 'GET') log.push(`${new Date().toISOString()} ${request.method} ${path.replace(/[0-9a-f]{8}-[0-9a-f-]{27}/g, ':id').replace(/X-Amz-[^&]+/g, '…')} -> ${reply.statusCode} ${target === upstream ? 'provider-catalog' : target === s3url ? 's3' : 'mock'}`);
+  });
+  forward.on('error', (error) => { response.writeHead(502, CORS); response.end(String(error.message)); });
+  request.pipe(forward);
+});
+await new Promise((resolve) => gateway.listen(GATEWAY_PORT, '127.0.0.1', resolve));
+writeFileSync(process.env.OUT ?? './walk.json', JSON.stringify({ gateway: GATEWAY, providerId: provider.id, ownerToken: provider.owner, ownerId: provider.ownerId, adminToken: provider.admin }, null, 2));
+console.log(`ready gateway=${GATEWAY} provider=${provider.id}`);
+const shutdown = async () => { clearInterval(worker); writeFileSync(process.env.LOG ?? './walk-log.txt', log.join('\n')); gateway.close(); await env.close(); await s3.close(); process.exit(0); };
+process.on('SIGTERM', shutdown); process.on('SIGINT', shutdown);
+setInterval(() => writeFileSync(process.env.LOG ?? './walk-log.txt', log.join('\n')), 2000);

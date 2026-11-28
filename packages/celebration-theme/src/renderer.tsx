@@ -43,7 +43,8 @@ function Hero({ props, cover }: { readonly props: CelebrationRendererProps; read
   const layout = layoutOf(theme);
   const days = daysUntil(content.eventDate, props.now ?? new Date());
   const countdownKey = days ? "celebration.hero.countdown" : "celebration.hero.today";
-  const image = cover?.variants.full ?? null;
+  // A vector drawing has no raster variants: the worker may make one the automatic cover.
+  const image = cover?.variants.full ?? cover?.variants.svg ?? null;
   const heroDrawing = theme.heroArt ? drawingById(theme.heroArt) : undefined;
   const ornamentSet = theme.ornamentSet ? ornamentSetById(theme.ornamentSet) : undefined;
   // A title made of the hosts' names ("Ana y Luis") already says who: repeating them underneath is noise.

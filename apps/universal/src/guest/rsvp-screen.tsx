@@ -148,17 +148,21 @@ function FailureNotice({ failure, onRetry, busy }: { readonly failure: RsvpFailu
   );
 }
 
-/** One tap to the gift list, shown only when the list has something to give (or could not be checked). */
+/**
+ * One tap to the gift list, shown only when the list has something to give (or could not be checked). The line under it
+ * invites to reserve only when the list is known to be open; closed by hand it says so (the guest can still see their own).
+ */
 function GiftsLink({ client, celebrationId, slug, token }: { readonly client: ReturnType<typeof useApiClient>; readonly celebrationId: string; readonly slug: string; readonly token: string }): ReactNode {
   const styles = useStyles();
   const t = useT();
   const list = useGiftList(client, celebrationId, token);
   const empty = list.isSuccess && guestVisible(list.data.items).length === 0;
   if (empty) return null;
+  const hint = !list.isSuccess ? null : list.data.closed ? "rsvp.invite.giftsClosedHint" : "rsvp.invite.giftsHint";
   return (
     <Enter from="down"><View style={{ alignSelf: "stretch", gap: spacing[2] }}>
       <ActionButton icon="arrow" label={t("rsvp.invite.giftsCta")} onPress={() => { saveGiftCredential(slug, token); router.push(`/c/${encodeURIComponent(slug)}/regalos` as never); }} testID="open-gifts" />
-      <Text style={[styles.muted, { textAlign: "center" }]}>{t("rsvp.invite.giftsHint")}</Text>
+      {hint ? <Text style={[styles.muted, { textAlign: "center" }]}>{t(hint)}</Text> : null}
     </View></Enter>
   );
 }
@@ -289,8 +293,7 @@ function AnswerForm({ celebrationId, token, state, allowed, mode, onSaved, onClo
       {draft.status === "CONFIRMED" ? <CompanionsStepper value={draft.requestedCompanions} onChange={(requestedCompanions) => change({ requestedCompanions })} allowed={allowed} error={errors.requestedCompanions} /> : null}
       {draft.status ? <ExtrasFields dietaryNotes={draft.dietaryNotes} message={draft.message} onChange={change} errors={errors} /> : null}
       {Object.keys(errors).length ? <Text accessibilityRole="alert" style={[styles.muted, { color: palette.danger }]}>{t("rsvp.invite.errors.summary")}</Text> : null}
-      {failure ? <FailureNotice failure={failure} busy={busy} onRetry={() => { void submit(); }} /> : null}
-      <StickyActions>
+      <StickyActions label={t("common.actions")} summary={failure ? <FailureNotice failure={failure} busy={busy} onRetry={() => { void submit(); }} /> : undefined}>
         <ActionButton testID="rsvp-submit" label={label} busy={busy} onPress={() => { void submit(); }} />
         {onCancel ? <ActionButton icon="close" variant="secondary" label={t("rsvp.invite.cancelEdit")} disabled={busy} onPress={onCancel} testID="rsvp-cancel-edit" /> : null}
       </StickyActions>
@@ -382,7 +385,7 @@ function PublicRegistrationForm({ view, slug, cover, hosts, contact }: { readonl
         <Text testID="rsvp-privacy-link" accessibilityRole="link" style={[styles.body, { fontWeight: "600", textDecorationLine: "underline" }]} onPress={() => router.push("/privacidad")}>{t("legal.links.privacy")}</Text>
         {errors.consent ? <Text accessibilityRole="alert" style={[styles.muted, { color: palette.danger }]}>{errors.consent}</Text> : null}
         {Object.keys(errors).length ? <Text accessibilityRole="alert" style={[styles.muted, { color: palette.danger }]}>{t("rsvp.invite.errors.summary")}</Text> : null}
-        <StickyActions summary={failure ? <FailureNotice failure={failure} busy={busy} onRetry={() => { void submit(); }} /> : undefined}>
+        <StickyActions label={t("common.actions")} summary={failure ? <FailureNotice failure={failure} busy={busy} onRetry={() => { void submit(); }} /> : undefined}>
           <ActionButton testID="rsvp-register" label={busy ? t("rsvp.invite.submitting") : t("rsvp.invite.open.submit")} busy={busy} onPress={() => { void submit(); }} />
         </StickyActions>
       </View>

@@ -16,8 +16,30 @@ const NOW = "2026-11-04T15:00:00.000Z";
 const provider = { id: P, slug: "foto-altiplano", name: "Foto Altiplano", status: "VERIFIED", plan: "FREE", currency: "BOB", timeZone: "America/La_Paz", version: 3, leadConfig: { mode: "REDIRECT" } };
 const listings = [
   { id: L1, providerId: P, type: "SERVICE", category: "FOTOGRAFIA", city: "La Paz", title: "Cobertura de boda", published: true, priceFromMinor: 450000 },
-  { id: L2, providerId: P, type: "PRODUCT", category: "BOOKS_STATIONERY", city: "La Paz", title: "Álbum de 40 páginas", published: false, priceFromMinor: 90000 }
+  { id: L2, providerId: P, type: "PRODUCT", category: "BOOKS_STATIONERY", city: "La Paz", title: "Álbum de 40 páginas", published: false, priceFromMinor: 90000, version: 4, completeness: "INCOMPLETE", missing: ["PHOTO", "COVERAGE"] }
 ];
+/** R2 · a product sheet (provider-catalog 3.5.0): two versions, one ready photo and one still processing, coverage still missing. */
+const pastel = (fill: string): string => `data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="480" height="320"><rect width="480" height="320" fill="${fill}"/><rect x="150" y="70" width="180" height="180" rx="12" fill="#ffffff"/></svg>`)}`;
+const readyPhoto = { id: "33333333-3333-4333-8333-333333333333", listingId: L2, variantId: null, status: "READY", rejectReason: null, contentType: "image/jpeg", altText: "Álbum abierto sobre una mesa", position: 0, createdAt: NOW, updatedAt: NOW,
+  renditions: { thumb: { url: pastel("#E9E1D3"), width: 160, height: 107 }, card: { url: pastel("#E9E1D3"), width: 480, height: 320 }, full: { url: pastel("#E9E1D3"), width: 1280, height: 853 } } };
+const sheet = {
+  ...listings[1], titles: { "es-BO": "Álbum de 40 páginas" }, descriptions: { "es-BO": "Álbum de fotos con tapa de cuero, 40 páginas de cartulina, 30 × 30 cm." }, disclaimer: "", featured: false, destinations: ["WHATSAPP"], adminHiddenReason: null,
+  priceMinor: 90000, currency: "BOB", stock: "AVAILABLE", giftIdeas: ["BOOK"], details: { dimensions: "30 × 30 cm" }, whatsappTemplate: null,
+  variants: [{ id: "44444444-4444-4444-8444-444444444441", label: "Tapa negra", priceMinor: 90000, stock: "AVAILABLE", sku: null, position: 0, isDefault: true }, { id: "44444444-4444-4444-8444-444444444442", label: "Tapa con nombre grabado", priceMinor: 120000, stock: "MADE_TO_ORDER", sku: null, position: 1, isDefault: false }],
+  delivery: { coverageCities: [], leadTimeDays: 5, shippingCostMinor: 0, pickupAvailable: true, conditions: {} },
+  photos: [readyPhoto, { ...readyPhoto, id: "33333333-3333-4333-8333-333333333334", status: "PROCESSING", altText: null, position: 1, renditions: null }],
+  imageUrl: undefined
+};
+const giftIdeas = [
+  { code: "BOOK", name: "Libro o álbum", names: { "es-BO": "Libro o álbum", "en-US": "Book or album" }, categories: ["BOOKS_STATIONERY"], eventTypes: ["BAUTIZO", "ANNIVERSARY", "BIRTHDAY", "CORPORATE"], priceHintMinor: null },
+  { code: "CORPORATE_KIT", name: "Kit corporativo de marca", names: { "es-BO": "Kit corporativo de marca", "en-US": "Branded corporate kit" }, categories: ["PERSONALIZED", "BOOKS_STATIONERY"], eventTypes: ["CORPORATE"], priceHintMinor: null }
+];
+const geo = { country: "BO", source: "visual", items: [
+  { slug: "la-paz", name: "La Paz", department: "La Paz", departmentCode: "LP", capital: true },
+  { slug: "el-alto", name: "El Alto", department: "La Paz", departmentCode: "LP", capital: false },
+  { slug: "cochabamba", name: "Cochabamba", department: "Cochabamba", departmentCode: "CB", capital: true },
+  { slug: "santa-cruz", name: "Santa Cruz de la Sierra", department: "Santa Cruz", departmentCode: "SC", capital: true }
+] };
 /**
  * GET /providers/categories: a sample of the catalog's categories (provider-catalog migration M-1 adds the product ones).
  * `listingType: null` is a category both offer types use. Like the service, `type` keeps that type plus the shared ones.
@@ -59,7 +81,11 @@ const routes: readonly (readonly [RegExp, (request: Request) => Reply])[] = [
   // Provider portal
   [/^\/providers\/mine$/, () => ok({ items: [provider] })],
   [new RegExp(`^/providers/${P}$`), () => ok(provider)],
+  [new RegExp(`^/providers/${P}/listings/${L2}(\\?.*)?$`), () => ok(sheet)],
   [new RegExp(`^/providers/${P}/listings`), () => ok({ items: listings })],
+  [new RegExp(`^/providers/${P}/whatsapp-template`), () => ok({ providerId: P, template: null, defaultTemplate: { "es-BO": "Hola {proveedor}, vengo de DOne. Quiero regalar {producto} ({version}) × {cantidad}, precio {precio}, para {celebracion} el {fecha} en {ciudad}. {entrega}" }, variables: ["producto", "version", "precio", "cantidad", "celebracion", "fecha", "ciudad", "entrega", "proveedor"] })],
+  [/^\/providers\/gift-ideas(\?.*)?$/, () => ok({ items: giftIdeas })],
+  [/^\/providers\/geo(\?.*)?$/, () => ok(geo)],
   [new RegExp(`^/providers/${P}/leads`), () => ok({ total: 2, items: [{ id: "ld-1", listingId: L1, kind: "FORM", valid: true, billable: true, occurredAt: NOW }, { id: "ld-2", listingId: L1, kind: "REDIRECT", destination: "WHATSAPP", valid: false, invalidReason: "dup", occurredAt: NOW }] })],
   [new RegExp(`^/providers/${P}/metrics`), () => ok({ providerId: P, from: "2026-10-07", to: "2026-11-06", totals: { impressions: 1240, clicks: 96, validLeads: 14, invalidLeads: 2, ctr: 0.077 }, rows: [] })],
   [new RegExp(`^/providers/${P}/availability`), () => ok({ providerId: P, timeZone: "America/La_Paz", capacityPerDay: 2, rules: [{ weekdays: [1, 2, 3, 4, 5], start: "09:00", end: "18:00" }], blackouts: [], version: 1 })],

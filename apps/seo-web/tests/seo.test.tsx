@@ -167,6 +167,19 @@ describe("metadata and crawling", () => {
     expect(celebrationMetadata({ ...VIEW, content: { title: "X" } }, [], t).description).toBe("Toda la información de la celebración en un solo lugar.");
   });
 
+  it("an SVG cover is never the shared picture: another gallery photo with raster variants goes, or none", () => {
+    const drawing = { id: "s", width: null, height: null, isCover: true, purpose: "gallery", variants: { svg: "https://media.test/d.svg" } };
+    const background = { id: "b", width: 10, height: 10, isCover: false, purpose: "background", variants: { full: "https://media.test/bg.webp" } };
+    const photo = { ...GALLERY[0]!, isCover: false };
+    const withPhoto = [drawing, background, photo];
+    expect(celebrationMetadata(VIEW, withPhoto, t).openGraph).toMatchObject({ images: [{ url: photo.variants.full, width: 1920, height: 1280 }] });
+    const alone = celebrationMetadata(VIEW, [drawing, background], t);
+    expect(alone.openGraph).not.toHaveProperty("images");
+    expect(alone.twitter).toMatchObject({ card: "summary" });
+    expect(eventJsonLd(VIEW, withPhoto, "u")?.image).toEqual([photo.variants.full]);
+    expect(eventJsonLd(VIEW, [drawing, background], "u")).not.toHaveProperty("image");
+  });
+
   it("M10 · D-1 · a celebration is noindex unless its host enabled indexing", () => {
     expect(celebrationMetadata(VIEW, GALLERY, t).robots).toEqual({ index: false, follow: false });
     expect(celebrationMetadata({ ...VIEW, indexable: false }, GALLERY, t).robots).toEqual({ index: false, follow: false });

@@ -1,9 +1,10 @@
 import { useState, type ReactNode } from "react";
 import { Linking, Text, View } from "react-native";
 import { useModerationDecision, useModerationQueue, useVerificationAction, useVerificationQueue, type ModerationItem, type ModerationStatus, type VerificationAction, type VerificationItem, type VerificationStatus } from "@rsvp/query-hooks/admin";
+import { categoryLabel, useOfferCategories } from "@rsvp/query-hooks";
 import { spacing } from "@rsvp/design-tokens";
 import { AvatarMark, Button, Chip, Stagger, useColors } from "@rsvp/ui";
-import { useApiClient, useT } from "../platform/providers";
+import { useApiClient, useLocale, useT } from "../platform/providers";
 import { ActionButton, ChoiceGroup, FilterSelect, Notice, OverflowMenu, PageIntro, useStyles } from "../host/ui";
 import { AdminScreen, adminOnly } from "./admin-screen";
 import { AdminErrorNotice, QueryBoundary, ReasonDialog, useStamp, Stack } from "./shared";
@@ -40,7 +41,7 @@ function RowActions({ primary, items }: { readonly primary?: ReactNode; readonly
   return <View style={[styles.row, { flexWrap: "nowrap" }]}>{primary}<OverflowMenu label={t("admin.dashboard.more")} items={items} /></View>;
 }
 
-function VerificationRow({ item, busy, onVerify, onAsk }: { readonly item: VerificationItem; readonly busy: boolean; readonly onVerify: () => void; readonly onAsk: (action: "reject" | "suspend") => void }): ReactNode {
+function VerificationRow({ item, category, busy, onVerify, onAsk }: { readonly item: VerificationItem; readonly category: string; readonly busy: boolean; readonly onVerify: () => void; readonly onAsk: (action: "reject" | "suspend") => void }): ReactNode {
   const t = useT();
   const stamp = useStamp();
   const styles = useStyles();
@@ -56,7 +57,7 @@ function VerificationRow({ item, busy, onVerify, onAsk }: { readonly item: Verif
   return (
     <View style={rowStyle} accessibilityLabel={item.name}>
       <View style={[styles.row, { justifyContent: "space-between", flexWrap: "nowrap", gap: spacing[3] }]}><View style={{ flexShrink: 0 }}><AvatarMark name={item.name} size={40} /></View><Text accessibilityRole="header" style={[styles.subtitle, { flex: 1, flexShrink: 1, overflowWrap: "anywhere" } as object]}>{item.name}</Text><Chip tone={item.status === "VERIFIED" ? "yes" : item.status === "PENDING" ? "maybe" : "no"}>{t(`admin.verification.state.${item.status}`)}</Chip></View>
-      <Text style={styles.muted}>{`${item.category} · ${item.city} · ${t("admin.verification.submitted", { when: stamp(item.submittedAt) })}`}</Text>
+      <Text style={styles.muted}>{[category, item.city, t("admin.verification.submitted", { when: stamp(item.submittedAt) })].filter(Boolean).join(" · ")}</Text>
       {item.reason ? <Text style={styles.muted}>{t("admin.common.reasonOn", { reason: item.reason })}</Text> : null}
       {actions.length === 0 ? <Text style={styles.muted} testID={`no-action-${item.providerId}`}>{t(item.status === "REJECTED" ? "admin.verification.noActionRejected" : "admin.verification.noActionSuspended")}</Text> : null}
       {first ? <RowActions primary={button(first)} items={rest.map((action) => ({ key: action, label: label(action), onPress: () => onAsk(action as "reject" | "suspend"), testID: `${action}-${item.providerId}`, destructive: true }))} /> : null}
@@ -67,6 +68,8 @@ function VerificationRow({ item, busy, onVerify, onAsk }: { readonly item: Verif
 function VerificationScreenContent({ onNavigate }: Nav): ReactNode {
   const t = useT();
   const client = useApiClient();
+  const categories = useOfferCategories(client, useLocale());
+  const categoryNames = Object.fromEntries((categories.data?.items ?? []).map((item) => [item.code, item.name]));
   const [status, setStatus] = useState<VerificationStatus>("PENDING");
   const [shown, setShown] = useState(PAGE);
   const queue = useVerificationQueue(client, status);
@@ -82,7 +85,7 @@ function VerificationScreenContent({ onNavigate }: Nav): ReactNode {
       <AdminErrorNotice error={act.error} onReload={() => { act.reset(); void queue.refetch(); }} />
       <QueryBoundary query={queue} avatar illustration={status === "PENDING" ? "nothingPending" : "emptySearch"} {...(status === "PENDING" ? { emptyTitle: t("admin.common.allClearTitle") } : {})} empty={t("admin.verification.empty", { status: t(`admin.verification.statuses.${status}`) })}>
         {(data) => <><Stagger>{data.items.slice(0, shown).map((item) => (
-          <VerificationRow key={item.providerId} item={item} busy={act.isPending && act.variables?.providerId === item.providerId}
+          <VerificationRow key={item.providerId} item={item} category={categoryLabel(item.category, t, categoryNames)} busy={act.isPending && act.variables?.providerId === item.providerId}
             onVerify={() => actOnce({ providerId: item.providerId, action: "verify" })} onAsk={(action) => setAsking({ item, action })} />
         ))}</Stagger><ShowMore total={data.items.length} shown={shown} onMore={() => setShown((current) => current + PAGE)} /></>}
       </QueryBoundary>

@@ -72,16 +72,22 @@ export const hostEsBO = {
   },
   gallery: {
     processing: "Preparando {{name}}… Aparecerá aquí cuando esté lista.", processingSlow: "{{name}} está tardando más de lo normal. Puedes comprobar de nuevo o eliminarla e intentar con otra foto.", checkAgain: "Comprobar de nuevo", rejected: "No pudimos preparar {{name}}. Elimina esta foto e intenta subir otra.", refreshFailedTitle: "No pudimos actualizar tus fotos",
-    title: "Tus fotos", intro: "La primera es la portada. Puedes cambiarla cuando quieras.", help: "JPG, PNG o WebP, de hasta 10 MB cada una.",
-    add: "Agregar foto", uploading: "Subiendo {{name}}… {{percent}} %", cover: "Portada", makeCover: "Usar como portada", delete: "Eliminar",
+    title: "Tus fotos", intro: "La primera es la portada. Puedes cambiarla cuando quieras.", dropHint: "Arrastra tus fotos aquí o usa «Agregar fotos».",
+    add: "Agregar fotos", cover: "Portada", makeCover: "Usar como portada", delete: "Eliminar",
     emptyTitle: "Aquí van las fotos de su historia", emptyBody: "Sube la primera y será la portada de tu invitación.", loadFailedTitle: "No pudimos cargar tus fotos",
     deleteTitle: "¿Eliminar esta foto?", deleteBody: "Se quita de tu invitación y no se puede deshacer.", deleted: "Foto eliminada.", orderSaved: "Orden guardado.",
-    photo: "Foto {{n}}", invalidType: "Ese archivo no es una imagen JPG, PNG o WebP.", tooLarge: "La imagen supera los 10 MB. Prueba con una más liviana.", failed: "No pudimos subir {{name}}. Inténtalo de nuevo."
+    photo: "Foto {{n}}"
   },
   media: {
     title: "Archivos", quota: "{{assets}} de {{maxAssets}} archivos · {{used}} de {{max}} usados", quotaFull: "Llegaste al límite de archivos de esta invitación. Elimina alguno para subir otro.",
-    add: "Agregar archivos", addMusic: "Subir música (MP3)", help: "JPG, PNG, WebP, GIF, AVIF, SVG o HEIC, de hasta {{max}} MB cada uno.", helpMusic: "MP3 de hasta {{max}} MB y {{minutes}} minutos.",
-    queued: "En espera", uploading: "Subiendo {{name}}… {{percent}} %", processing: "Preparando {{name}}…", done: "{{name}} está lista.", retry: "Reintentar", remove: "Quitar de la lista", clear: "Limpiar lista",
+    add: "Agregar archivos", addMusic: "Subir música (MP3)", help: "JPG, PNG, WebP, GIF, AVIF, SVG o HEIC, de hasta {{max}} MB cada uno (SVG: hasta {{svgMax}} MB).", helpMusic: "MP3 de hasta {{max}} MB y {{minutes}} minutos.",
+    queued: "En espera", uploading: "Subiendo {{name}}…", progressLabel: "Avance de {{name}}", quotaLabel: "Espacio usado", processing: "Preparando {{name}}…", done: "Listo: {{name}}.", retry: "Reintentar", remove: "Quitar de la lista", clear: "Limpiar lista",
+    retryNamed: "Reintentar {{name}}", removeNamed: "Quitar de la lista {{name}}", takePhoto: "Tomar foto", openSettings: "Abrir ajustes",
+    zone: "Subir archivos", zoneMusic: "Subir música", dropHint: "Arrastra tus archivos aquí o elígelos.", dropHintMusic: "Arrastra tu MP3 aquí o elígelo.", dropNow: "Suelta para subir.", dropInvalid: "Eso no se puede subir aquí.",
+    pickProblems: {
+      libraryDenied: "No tenemos permiso para ver tus fotos. Actívalo en los ajustes del teléfono y vuelve a intentarlo.", cameraDenied: "No tenemos permiso para usar la cámara. Actívalo en los ajustes del teléfono o elige una foto de la galería.",
+      unreadable: "No pudimos abrir esos archivos. Vuelve a elegirlos.", batch: "Se agregan hasta {{max}} archivos por vez. Quedaron {{left}} fuera: elígelos cuando terminen estos.", notAFile: "Eso no es un archivo. Si es una imagen de otra página, guárdala en tu equipo y súbela desde ahí."
+    },
     rightsTitle: "Aviso de derechos de autor", rights: "Confirmo que tengo derecho a usar esta música en mi invitación y entiendo que se retirará si recibimos una denuncia de derechos de autor.", rightsRequired: "Acepta el aviso de derechos para subir música.",
     failures: {
       type: "{{name}}: este tipo de archivo no se puede subir aquí.", tooLarge: "{{name}} es demasiado grande. Prueba con una versión más liviana.", quotaAssets: "{{name}}: ya no caben más archivos en esta invitación.",
@@ -113,7 +119,7 @@ export const hostEsBO = {
     unpublish: "Despublicar", unpublishConfirm: "El sitio dejará de verse hasta que lo publiques otra vez. El enlace no cambia.", reasonLabel: "Motivo (opcional)",
     archive: "Archivar", archiveConfirm: "Archivar es definitivo: la celebración ya no se podrá publicar ni editar.", more: "Más opciones",
     status: { DRAFT: "Borrador: solo tú la ves.", PUBLISHED: "Publicada: cualquiera con el enlace la ve.", ARCHIVED: "Archivada." },
-    live: { PUBLISHING: "Publicando… Tu invitación estará visible en unos segundos. Te avisamos aquí cuando esté lista para compartir.", UNPUBLISHING: "Retirando tu invitación… Puede seguir visible unos segundos.", slow: "Está tardando más de lo normal. Puedes salir de esta pantalla; si en unos minutos sigue igual, escríbenos.", unknown: "No pudimos comprobar si tu invitación ya está visible. Antes de compartir el enlace, vuelve a intentarlo." },
+    live: { PUBLISHING: "Publicando… Tu invitación estará visible en unos segundos. Te avisamos aquí cuando esté lista para compartir.", UNPUBLISHING: "Retirando tu invitación… Puede seguir visible unos segundos.", HIDDEN: "Tu invitación está oculta por una decisión de moderación: tus invitados no pueden verla.", slow: "Está tardando más de lo normal. Puedes salir de esta pantalla; si en unos minutos sigue igual, escríbenos.", unknown: "No pudimos comprobar si tu invitación ya está visible. Antes de compartir el enlace, vuelve a intentarlo." },
     searchIndexing: { label: "Mostrar en buscadores", on: "Google y otros buscadores pueden mostrar tu invitación y la incluimos en el mapa del sitio.", off: "Solo la ve quien tiene el enlace: le pedimos a los buscadores que no la muestren." },
     share: "Comparte el enlace", link: "Enlace público", copy: "Copiar enlace", copied: "Enlace copiado.", whatsappPreview: "Así se verá en WhatsApp"
   },

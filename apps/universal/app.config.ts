@@ -24,7 +24,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   web: { bundler: "metro", output: "single", favicon: "./assets/favicon.png" },
   plugins: [
     "expo-router",
-    ["expo-image-picker", { photosPermission: "DOne usa tus fotos solo para la galería de tu invitación y el catálogo de regalos." }],
+    // Camera and library only to upload photos. No video is recorded, so no microphone: without this the plugin adds RECORD_AUDIO.
+    ["expo-image-picker", { photosPermission: "DOne usa tus fotos solo para la galería de tu invitación y el catálogo de regalos.", cameraPermission: "DOne usa la cámara solo para tomar las fotos que decides subir.", microphonePermission: false }],
     ["expo-notifications", { icon: "./assets/notification-icon.png", color: "#111111" }],
     // The app's languages, declared to the OS: iOS writes CFBundleLocalizations (without it the bundle runs in English and
     // Settings offers no per-app language) and Android its locales_config. Keep in step with `supportedLocales` of @rsvp/i18n.

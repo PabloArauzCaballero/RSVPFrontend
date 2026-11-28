@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { GiftItem } from "@rsvp/query-hooks";
 import { GiftExperience, arrange } from "../components/gift/gift-experience";
 import { loadGiftPage } from "../lib/gifts";
 import { createApiClient } from "@rsvp/api-client";
+import { onlineManager } from "@tanstack/react-query";
 
 const CELEBRATION = "4f0f2d3d-0000-4000-8000-000000000001";
 const item = (over: Partial<GiftItem> & { id: string }): GiftItem => ({ listId: "l", celebrationId: CELEBRATION, title: over.id, price: { amountMinor: 10000, currency: "BOB" }, source: "CATALOGED", status: "AVAILABLE", availability: "AVAILABLE", version: 0, createdAt: "2026-11-01T00:00:00Z", productListingId: `7d1c1a34-5d4c-4a39-9a2e-0f4f2d3d7b${over.id.length}0`, ...over });
@@ -27,6 +28,7 @@ beforeEach(() => {
   posts = [];
   photoHeaders = [];
   window.sessionStorage.clear();
+  window.localStorage.clear();
   window.sessionStorage.setItem("rsvp.guest.credential.ana-luis", "guest-credential-0123456789");
   HTMLDialogElement.prototype.showModal = function showModal(this: HTMLDialogElement) { this.setAttribute("open", ""); };
   HTMLDialogElement.prototype.close = function close(this: HTMLDialogElement) { this.removeAttribute("open"); };
@@ -89,6 +91,135 @@ describe("M21 · la lista de regalos de la web es la de la app", () => {
     fireEvent.click(screen.getByRole("button", { name: "Confirmar reserva" }));
     expect((await screen.findByTestId("reserve-error")).textContent).toBe(text);
     expect(screen.getByRole("button", { name: "Confirmar reserva" })).toBeTruthy();
+  });
+});
+
+describe('REG-01 · lista cerrada por el anfitrión', () => {
+  const MINE = { id: 'res-1', itemId: 'cat-2', celebrationId: CELEBRATION, status: 'COMMITTED', requestedAt: '2026-11-20T00:00:00Z' };
+  /** The server as Gift List 1.15.0 answers: `closed` in the list, 409 LIST_CLOSED on a reservation, own reservations and cancel untouched. */
+  function stubClosable(state: { closed: boolean; mine?: boolean; empty?: boolean; taken?: boolean }) {
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes('/listings/')) return json(404, {});
+      if (init?.method === 'POST') {
+        posts.push({ url, key: new Headers(init.headers).get('idempotency-key') });
+        if (url.endsWith('/cancel')) { state.mine = false; return json(200, { ...MINE, status: 'CANCELLED' }); }
+        if (state.taken) return json(409, { type: 'x', title: 'Conflict', status: 409, code: 'GIFT_NOT_AVAILABLE' });
+        state.closed = true;
+        return json(409, { type: 'x', title: 'Conflict', status: 409, code: 'LIST_CLOSED' });
+      }
+      if (url.includes('/my-reservations')) return json(200, { items: state.mine ? [MINE] : [] });
+      const items = ITEMS.map((gift) => (gift.id === 'cat-2' && state.mine ? { ...gift, status: 'COMMITTED' } : gift));
+      return json(200, { items: state.empty ? [] : items, partnerPriorityEnabled: true, closed: state.closed });
+    }));
+  }
+  const reserveButtons = () => screen.queryAllByRole('button', { name: /^Reservar / });
+
+  it('says the list is closed and offers no reservation, in es-BO and en-US', async () => {
+    stubClosable({ closed: true });
+    const first = renderList();
+    expect((await screen.findByTestId('gift-list-closed')).textContent).toBe('La lista de regalos está cerradaQuienes te invitan la cerraron: ya no se pueden reservar regalos.');
+    expect(screen.getByText('Torta')).toBeTruthy();
+    expect(reserveButtons()).toHaveLength(0);
+    expect(screen.queryByText('Reserva un regalo en un toque y nadie más regalará lo mismo.')).toBeNull();
+    expect(document.activeElement).not.toBe(screen.getByTestId('gift-list-closed'));
+    first.unmount();
+    render(<GiftExperience slug="ana-luis" celebrationId={CELEBRATION} celebrationTitle="Ana y Luis" locale="en-US" />);
+    expect((await screen.findByTestId('gift-list-closed')).textContent).toBe('The gift list is closedYour hosts closed it: gifts can no longer be reserved.');
+  });
+
+  it('closed while the form was open: the 409 closes the form, explains it and never offers a retry', async () => {
+    const state = { closed: false };
+    stubClosable(state);
+    renderList();
+    fireEvent.click(await screen.findByRole('button', { name: 'Reservar Torta' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar reserva' }));
+    const note = await screen.findByTestId('gift-list-closed');
+    await waitFor(() => expect(document.activeElement).toBe(note));
+    expect(screen.queryByRole('button', { name: 'Confirmar reserva' })).toBeNull();
+    expect(reserveButtons()).toHaveLength(0);
+    expect(screen.queryByText(/Inténtalo de nuevo|Puedes volver a tocar/)).toBeNull();
+    expect(posts).toHaveLength(1);
+  });
+
+  it('what the guest already reserved stays and can still be cancelled, warned that it cannot be taken back while closed', async () => {
+    stubClosable({ closed: true, mine: true });
+    renderList();
+    const mine = within(await screen.findByTestId('my-reservation'));
+    expect(screen.getByTestId('gift-list-closed').textContent).toContain('Lo que ya reservaste se mantiene. Si quieres, puedes cancelarlo.');
+    fireEvent.click(mine.getByRole('button', { name: 'Cancelar mi reserva de Mesa' }));
+    expect(screen.getByRole('dialog').textContent).toContain('no podrás volver a reservarlo mientras siga cerrada');
+    expect(screen.getByRole('dialog').textContent).not.toContain('Si cambias de idea');
+    fireEvent.click(screen.getByRole('button', { name: 'Sí, cancelar la reserva' }));
+    expect(await screen.findByTestId('reservation-cancelled')).toBeTruthy();
+    expect(posts.map((post) => post.url.endsWith('/reservations/res-1/cancel'))).toEqual([true]);
+    expect(reserveButtons()).toHaveLength(0);
+  });
+
+  /** The page re-reads the list after a cancellation: the way these tests let the next read arrive on the mounted page. */
+  const cancelMine = async () => {
+    fireEvent.click(within(await screen.findByTestId('my-reservation')).getByRole('button', { name: 'Cancelar mi reserva de Mesa' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Sí, cancelar la reserva' }));
+  };
+
+  it('closed, then reopened on the same page: the notice goes, «Reservar» comes back and the old form does not', async () => {
+    const state = { closed: false, mine: true };
+    stubClosable(state);
+    renderList();
+    fireEvent.click(await screen.findByRole('button', { name: 'Reservar Torta' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar reserva' }));
+    await screen.findByTestId('gift-list-closed');
+    expect(reserveButtons()).toHaveLength(0);
+    state.closed = false;
+    await cancelMine();
+    expect(await screen.findByRole('button', { name: 'Reservar Torta' })).toBeTruthy();
+    expect(screen.queryByTestId('gift-list-closed')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Confirmar reserva' })).toBeNull();
+    expect(screen.getByText('Reserva un regalo en un toque y nadie más regalará lo mismo.')).toBeTruthy();
+  });
+
+  /** A later re-read of the mounted list that touches nothing else: the data is stale and the connection comes back. */
+  const reread = async () => {
+    const later = Date.now() + 60_000;
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(later);
+    // React Query reacts to the reconnection after an await: the clock stays ahead until that has run.
+    try { await act(async () => { onlineManager.setOnline(false); onlineManager.setOnline(true); }); } finally { clock.mockRestore(); }
+  };
+
+  it('the alternatives of a «taken» gift go away when the list closes', async () => {
+    const state = { closed: false, taken: true };
+    stubClosable(state);
+    renderList();
+    fireEvent.click(await screen.findByRole('button', { name: 'Reservar Torta' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar reserva' }));
+    expect(await screen.findByTestId('alternatives')).toBeTruthy();
+    state.closed = true;
+    await reread();
+    await screen.findByTestId('gift-list-closed');
+    expect(screen.queryByTestId('alternatives')).toBeNull();
+    expect(screen.queryByTestId('gift-taken')).toBeNull();
+    expect(reserveButtons()).toHaveLength(0);
+  });
+
+  it('closed and empty: only the closed notice, no «Aún no hay regalos» that promises more', async () => {
+    stubClosable({ closed: true, empty: true });
+    renderList();
+    await screen.findByTestId('gift-list-closed');
+    expect(screen.queryByText('Aún no hay regalos')).toBeNull();
+  });
+
+  it('a removed gift opened by its link does not say the list is still open', async () => {
+    stubClosable({ closed: true });
+    render(<GiftExperience slug="ana-luis" celebrationId={CELEBRATION} celebrationTitle="Ana y Luis" locale="es-BO" onlyItemId="removed" />);
+    expect(await screen.findByText('Puede que los anfitriones lo hayan quitado. Puedes volver a la lista para ver los demás.')).toBeTruthy();
+    expect(screen.queryByText(/sigue abierta/)).toBeNull();
+  });
+
+  it('an open list (closed false, reopened) offers to reserve and shows no notice', async () => {
+    stubClosable({ closed: false });
+    renderList();
+    expect(await screen.findByRole('button', { name: 'Reservar Torta' })).toBeTruthy();
+    expect(screen.queryByTestId('gift-list-closed')).toBeNull();
   });
 });
 
@@ -253,7 +384,8 @@ describe("REQ-F22-03 · partner links go through the redirector (DOM scan)", () 
   it("no anchor leaves for a partner outside /r/", async () => {
     stubFetch(() => json(201, {}), undefined, () => json(200, { destinationTypes: ["OFFICIAL_SITE"] }));
     renderList();
-    await screen.findAllByRole("link", { name: "Ver en la tienda del aliado" });
+    // «Ver en la tienda» is also the label of a host-typed store link, which renders at once: wait for the partner's own anchor.
+    await waitFor(() => expect(document.querySelector("[data-source=CATALOGED] a[href^='/r/']")).toBeTruthy());
     const partnerAnchors = [...document.querySelectorAll("[data-source=CATALOGED] a")].map((anchor) => anchor.getAttribute("href") ?? "");
     expect(partnerAnchors.some((href) => href.startsWith("/r/") && href.includes("surface=GIFT_LIST"))).toBe(true);
     expect(partnerAnchors.filter((href) => /^https?:/.test(href))).toEqual([]);
@@ -262,14 +394,14 @@ describe("REQ-F22-03 · partner links go through the redirector (DOM scan)", () 
   it("links a store and WhatsApp independently when both are available", async () => {
     stubFetch(() => json(201, {}), undefined, () => json(200, { destinationTypes: ["OFFICIAL_SITE", "WHATSAPP", "PRODUCT_PAGE"] }));
     renderList();
-    await screen.findAllByRole("link", { name: "Consultar por WhatsApp" });
+    await screen.findAllByRole("link", { name: "Pedir por WhatsApp" });
     const gift = within(document.querySelector<HTMLElement>('[data-gift-id="cat-1"]')!);
-    const store = gift.getByRole("link", { name: "Ver en la tienda del aliado" });
-    const whatsapp = gift.getByRole("link", { name: "Consultar por WhatsApp" });
+    const store = gift.getByRole("link", { name: "Ver en la tienda" });
+    const whatsapp = gift.getByRole("link", { name: "Pedir por WhatsApp" });
     for (const [anchor, destination] of [[store, "PRODUCT_PAGE"], [whatsapp, "WHATSAPP"]] as const) {
       const target = new URL(anchor.getAttribute("href")!, "https://done.example");
       expect(target.pathname).toBe(`/r/${ITEMS.find((entry) => entry.id === "cat-1")!.productListingId}`);
-      expect(Object.fromEntries(target.searchParams)).toEqual({ destination, surface: "GIFT_LIST", celebrationId: CELEBRATION });
+      expect(Object.fromEntries(target.searchParams)).toEqual({ destination, surface: "GIFT_LIST", celebrationId: CELEBRATION, celebrationSlug: "ana-luis", giftItemId: "cat-1", quantity: "1", locale: "es-BO" });
     }
   });
 });
@@ -360,5 +492,41 @@ describe("D-3 · the guest cancels their own reservation from the gift page", ()
     const keys = calls.filter((call) => call.method === "POST").map((call) => call.key);
     expect(keys.length).toBeGreaterThanOrEqual(2);
     expect(new Set(keys).size).toBe(1);
+  });
+});
+
+describe("R6a · ctx del miembro en los enlaces /r/ de la lista", () => {
+  const TOKEN = "lead-context-de-prueba";
+  const partnerHrefs = () => screen.getAllByRole("link").map((a) => a.getAttribute("href") ?? "").filter((href) => href.startsWith("/r/"));
+
+  it("a list read that carries leadContext keeps it OUT of every /r/ link href (copy link address would hand it out) and adds it only when navigating", async () => {
+    stubFetch(() => json(201, {}), () => json(200, { items: ITEMS, partnerPriorityEnabled: true, leadContext: TOKEN }), () => json(200, { destinationTypes: ["PRODUCT_PAGE", "WHATSAPP"] }));
+    const { container } = renderList();
+    const links = await screen.findAllByRole("link", { name: "Pedir por WhatsApp" });
+    expect(partnerHrefs().length).toBeGreaterThan(0);
+    for (const href of partnerHrefs()) {
+      const url = new URL(href, "http://site.test");
+      expect(url.searchParams.has("ctx")).toBe(false);
+      expect(url.searchParams.get("celebrationId")).toBe(CELEBRATION);
+      expect(url.searchParams.get("surface")).toBe("GIFT_LIST");
+    }
+    expect(container.innerHTML).not.toContain(TOKEN);
+    const open = vi.spyOn(window, "open").mockReturnValue(null);
+    try {
+      fireEvent.click(links[0]!);
+      const target = new URL(String(open.mock.calls[0]?.[0]), "http://site.test");
+      expect(target.pathname.startsWith("/r/")).toBe(true);
+      expect(target.searchParams.get("ctx")).toBe(TOKEN);
+      expect(target.searchParams.get("celebrationId")).toBe(CELEBRATION);
+    } finally {
+      open.mockRestore();
+    }
+  });
+
+  it("a guest's list (leadContext null) has no ctx on any /r/ link", async () => {
+    stubFetch(() => json(201, {}), () => json(200, { items: ITEMS, partnerPriorityEnabled: true, leadContext: null }), () => json(200, { destinationTypes: ["PRODUCT_PAGE", "WHATSAPP"] }));
+    renderList();
+    await screen.findAllByRole("link", { name: "Pedir por WhatsApp" });
+    for (const href of partnerHrefs()) expect(href).not.toContain("ctx");
   });
 });

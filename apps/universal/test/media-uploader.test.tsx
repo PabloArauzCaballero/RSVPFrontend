@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MediaUploader } from "../src/host/media/media-uploader";
+import { MediaPermissionError } from "../src/platform/media-file";
 import { baseHandlers, fakeClient, HttpFailure, renderApp } from "./support";
 
 const QUOTA = { assets: 3, bytes: 5 * 1024 * 1024, maxAssets: 100, maxBytes: 500 * 1024 * 1024 };
@@ -10,6 +11,8 @@ const picked = (name: string, type = "image/png", size = 1000) => ({ file: new B
 
 class FakeXhr {
   static failWith: number | null = null;
+  /** Leaves the request open after the first progress event, to look at the screen while the file is uploading. */
+  static hold = false;
   static sent: string[] = [];
   upload: { onprogress?: (event: { lengthComputable: boolean; loaded: number; total: number }) => void } = {};
   status = 200;
@@ -21,13 +24,14 @@ class FakeXhr {
   send(): void {
     FakeXhr.sent.push(this.url);
     this.upload.onprogress?.({ lengthComputable: true, loaded: 5, total: 10 });
+    if (FakeXhr.hold) return;
     if (FakeXhr.failWith === 0) { this.onerror?.(); return; }
     this.status = FakeXhr.failWith ?? 200;
     this.onload?.();
   }
 }
 
-beforeEach(() => { FakeXhr.failWith = null; FakeXhr.sent = []; vi.stubGlobal("XMLHttpRequest", FakeXhr); });
+beforeEach(() => { FakeXhr.hold = false; FakeXhr.failWith = null; FakeXhr.sent = []; vi.stubGlobal("XMLHttpRequest", FakeXhr); });
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 const listWithQuota = (usage = QUOTA) => ({ "GET /media/celebrations/c-1/assets": () => ({ items: [], usage }) });
@@ -67,8 +71,52 @@ describe("F6 · MediaUploader", () => {
     fireEvent.click(screen.getByTestId("media-add"));
     expect(await screen.findByText("uno.png: se cortó la conexión. Reintenta cuando vuelva.")).toBeTruthy();
     FakeXhr.failWith = null;
-    fireEvent.click(await screen.findByRole("button", { name: "Reintentar" }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Reintentar / }));
     expect(await screen.findByText("Preparando uno.png…")).toBeTruthy();
+  });
+
+  it("a file the worker rejects stops saying Preparing: it becomes an error the person can remove", async () => {
+    let worker: "PROCESSING" | "REJECTED" = "PROCESSING";
+    const { client } = fakeClient({
+      ...baseHandlers(),
+      "GET /media/celebrations/c-1/assets": () => ({ items: [asset("r1", worker)], usage: QUOTA }),
+      "POST /media/uploads/presign": () => intent("r1"), "POST /media/uploads/r1/complete": () => asset("r1")
+    });
+    renderApp(<MediaUploader celebrationId="c-1" purpose="gallery" pick={async () => [picked("rota.png")]} />, client);
+    await screen.findByTestId("media-quota");
+    fireEvent.click(screen.getByTestId("media-add"));
+    expect(await screen.findByText("Preparando rota.png…")).toBeTruthy();
+    worker = "REJECTED";
+    expect(await screen.findByText("No pudimos preparar rota.png. Quítalo e intenta con otro.", {}, { timeout: 8000 })).toBeTruthy();
+    expect(screen.queryByText("Preparando rota.png…")).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Reintentar / })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /^Quitar de la lista / }));
+    expect(screen.queryByText(/rota\.png/)).toBeNull();
+  });
+
+  it("the live region says the state of a file, never its percentage: that lives in the progress bar's value", async () => {
+    FakeXhr.hold = true;
+    const { client } = fakeClient({ ...baseHandlers(), ...listWithQuota(), "POST /media/uploads/presign": () => intent("p1") });
+    renderApp(<MediaUploader celebrationId="c-1" purpose="gallery" pick={async () => [picked("lenta.png")]} />, client);
+    await screen.findByTestId("media-quota");
+    fireEvent.click(screen.getByTestId("media-add"));
+    const status = await screen.findByText("Subiendo lenta.png…");
+    expect(status.textContent).not.toMatch(/%/);
+    const bars = screen.getAllByRole("progressbar");
+    expect(bars.map((bar) => bar.getAttribute("aria-label"))).toEqual(["Espacio usado", "Avance de lenta.png"]);
+    expect(bars[1]?.getAttribute("aria-valuenow")).toBe("50");
+  });
+
+  it("an upload that ends while the list already says REJECTED settles at once, without waiting for another read", async () => {
+    const { client } = fakeClient({
+      ...baseHandlers(),
+      "GET /media/celebrations/c-1/assets": () => ({ items: [asset("z1", "REJECTED")], usage: QUOTA }),
+      "POST /media/uploads/presign": () => intent("z1"), "POST /media/uploads/z1/complete": () => asset("z1")
+    });
+    renderApp(<MediaUploader celebrationId="c-1" purpose="gallery" pick={async () => [picked("tarde.png")]} />, client);
+    await screen.findByTestId("media-quota");
+    fireEvent.click(screen.getByTestId("media-add"));
+    expect(await screen.findByText("No pudimos preparar tarde.png. Quítalo e intenta con otro.")).toBeTruthy();
   });
 
   it("the server's quota answer becomes a message about space, with no retry button", async () => {
@@ -80,8 +128,8 @@ describe("F6 · MediaUploader", () => {
     await screen.findByTestId("media-quota");
     fireEvent.click(screen.getByTestId("media-add"));
     expect(await screen.findByText("grande.png no cabe en el espacio que te queda. Elimina algo o sube un archivo más liviano.")).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Reintentar" })).toBeNull();
-    expect(screen.getByRole("button", { name: "Quitar de la lista" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /^Reintentar / })).toBeNull();
+    expect(screen.getByRole("button", { name: /^Quitar de la lista / })).toBeTruthy();
   });
 
   it("checks type and size before sending a byte", async () => {
@@ -114,6 +162,18 @@ describe("F6 · MediaUploader", () => {
     fireEvent.click(screen.getByTestId("media-rights"));
     fireEvent.click(screen.getByTestId("media-add"));
     await waitFor(() => expect(calls.find((call) => call.path === "/media/uploads/presign")?.body).toEqual(expect.objectContaining({ purpose: "music", rightsNoticeVersion: "2026-11-24", contentType: "audio/mpeg" })));
-    expect(pick).toHaveBeenCalledWith("audio");
+    expect(pick).toHaveBeenCalledWith("audio", "library");
+  });
+
+  it("explains a denied permission and a file that could not be read, without uploading anything", async () => {
+    const { client, calls } = fakeClient({ ...baseHandlers(), ...listWithQuota() });
+    const pick = vi.fn().mockRejectedValueOnce(new MediaPermissionError("library")).mockRejectedValueOnce(new Error("blob"));
+    renderApp(<MediaUploader celebrationId="c-1" purpose="gallery" pick={pick} />, client);
+    fireEvent.click(await screen.findByTestId("media-add"));
+    expect(await screen.findByText(/No tenemos permiso para ver tus fotos/)).toBeTruthy();
+    fireEvent.click(screen.getByTestId("media-add"));
+    expect(await screen.findByText("No pudimos abrir esos archivos. Vuelve a elegirlos.")).toBeTruthy();
+    expect(screen.queryByText(/No tenemos permiso/)).toBeNull();
+    expect(calls.some((call) => call.path.includes("presign"))).toBe(false);
   });
 });

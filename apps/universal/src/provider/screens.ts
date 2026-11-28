@@ -12,3 +12,4 @@ export { MetricsScreen } from "./metrics-screen";
 export { MicrositeScreen } from "./microsite-screen";
 export { ProductsScreen, ServicesScreen } from "./services-screen";
 export { QuotesScreen } from "./quotes-screen";
+export { NewProductScreen, ProductEditorScreen } from "./product-editor/product-editor-screen";

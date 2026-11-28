@@ -21,7 +21,7 @@ export const rsvpEnUS: DeepStrings<typeof rsvpEsBO> = {
     doneTitle: "Done, you are in.", doneBodyUntil: "Your answer is saved. You can change it until {{date}}.", doneBodyAnytime: "Your answer is saved. You can change it whenever you like.",
     declinedTitle: "Thanks for letting them know.", declinedBody: "It is noted that you cannot come. If you change your mind, you can change your answer.",
     savedNote: "Changes saved.",
-    giftsCta: "See the gift list", giftsHint: "Want to give a gift? Reserve one in a tap.",
+    giftsCta: "See the gift list", giftsClosedHint: "The gift list is closed: gifts can no longer be reserved.", giftsHint: "Want to give a gift? Reserve one in a tap.",
     againTitleYes: "Your attendance is confirmed", againTitleNo: "It is noted that you cannot come", edit: "Change my answer", editHint: "You can change it until the deadline.",
     summaryLabel: "Your answer", summaryCompanions: "Approved companions: {{count}}", summaryPending: "{{count}} to approve: your hosts decide", summaryDietary: "Dietary restriction: {{value}}", summaryMessage: "Your message: {{value}}", summaryUpdated: "Updated on {{date}}",
     closedTitle: "The time to answer is over", closedOn: "Answers closed on {{date}} ({{timeZone}} time).", closedGeneric: "Your hosts closed the answers.",

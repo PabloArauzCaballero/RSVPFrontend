@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import type { ApiClient } from "@rsvp/api-client";
+import type { ProviderCatalogPaths } from "@rsvp/contracts";
 
 /**
  * Partner administration (A24): the admin creates partners through a server-side intake and manages them from a table.
@@ -17,11 +18,16 @@ export type CiExtension = "LP" | "CB" | "SC" | "OR" | "PT" | "CH" | "TJ" | "BE" 
 export type KypDocumentKind = "IDENTITY" | "BUSINESS_REGISTRATION" | "TAX_ID" | "ADDRESS_PROOF" | "POWER_OF_ATTORNEY" | "BANK_CERTIFICATE" | "OTHER";
 export type DocumentReview = "PENDING" | "ACCEPTED" | "REJECTED";
 export type IntakeStatus = "OPEN" | "COMMITTED" | "DISCARDED";
-export type PartnerSort = (typeof PARTNER_SORTS)[number];
+/** Query of GET /providers/admin/partners, as the generated contract declares it. */
+type PartnerListQuery = NonNullable<ProviderCatalogPaths["/providers/admin/partners"]["get"]["parameters"]["query"]>;
+export type PartnerSort = NonNullable<PartnerListQuery["sort"]>;
 export const PARTNER_STATUSES: readonly PartnerStatus[] = ["DRAFT", "PENDING_VERIFICATION", "VERIFIED", "SUSPENDED", "REJECTED"];
 export const KYP_STATUSES: readonly KypStatus[] = ["COMPLETE", "PENDING", "EXPIRING", "EXPIRED"];
 export const PARTNER_ORIGINS: readonly PartnerOrigin[] = ["ADMIN", "SELF_SERVICE"];
-export const PARTNER_SORTS = ["name", "-name", "kypStatus", "-kypStatus", "createdAt", "-createdAt", "updatedAt", "-updatedAt"] as const;
+export const PARTNER_SORTS = ["name", "-name", "kypStatus", "-kypStatus", "createdAt", "-createdAt", "updatedAt", "-updatedAt"] as const satisfies readonly PartnerSort[];
+type NoneMissing<TMissing extends never> = TMissing;
+/** Compile-time only: a sort the contract adds and PARTNER_SORTS lacks fails here (a removed one fails the `satisfies` above). */
+export type UnlistedPartnerSort = NoneMissing<Exclude<PartnerSort, (typeof PARTNER_SORTS)[number]>>;
 export const PARTNERS_PAGE_SIZE = 25;
 
 export interface PartnerIdentity { readonly name?: string; readonly slug?: string; readonly categoryCodes?: readonly string[]; readonly description?: string; readonly plan?: string }
@@ -99,7 +105,7 @@ export interface IdentityUser { readonly id: string; readonly email: string; rea
 export interface PartnerFilters {
   readonly q?: string; readonly status?: PartnerStatus; readonly kypStatus?: KypStatus; readonly categoryCode?: string; readonly cityCode?: string; readonly zoneCode?: string;
   readonly personType?: PersonType; readonly origin?: PartnerOrigin; readonly plan?: string; readonly kypExpiringWithinDays?: number;
-  readonly createdFrom?: string; readonly createdTo?: string; readonly hasPublishedListings?: boolean; readonly sort?: PartnerSort; readonly page?: number; readonly pageSize?: number;
+  readonly createdFrom?: string; readonly createdTo?: string; readonly hasPublishedListings?: boolean; readonly sort?: PartnerSort; readonly page?: PartnerListQuery["page"]; readonly pageSize?: PartnerListQuery["pageSize"];
 }
 
 export const partnerKeys = {
@@ -121,7 +127,7 @@ const enc = encodeURIComponent;
 const INTAKES = "/providers/admin/intakes";
 const PARTNERS = "/providers/admin/partners";
 
-/** Provider Catalog 3.4.0 applies the filters and sort before paginating the result. */
+/** Provider Catalog 3.5.0 applies the filters and sort before paginating the result. */
 export function adminPartnersPath(filters: PartnerFilters): string {
   const params = new URLSearchParams();
   const put = (key: string, value: string | number | boolean | undefined): void => { if (value !== undefined && value !== "") params.append(key, String(value)); };

@@ -18,6 +18,13 @@ describe("CelebrationRenderer", () => {
     expect(renderWith(template, { colorScheme: "dark" })).toMatchSnapshot("dark");
   });
 
+  it("an SVG cover, which has no raster variants, is still painted on the cover", () => {
+    const drawing = { id: "s", width: null, height: null, isCover: true, variants: { svg: "https://media.test/d.svg" } };
+    render(<CelebrationRenderer theme={themeFromTemplate(TEMPLATES[0], VIEW.enabledSections)} view={VIEW} gallery={[drawing]} t={t} now={NOW} />);
+    expect(document.querySelector("img.celebration-hero-image")?.getAttribute("src")).toBe("https://media.test/d.svg");
+    expect(document.querySelector(".celebration-hero")?.getAttribute("data-has-image")).toBe("true");
+  });
+
   it("REQ-F09-05 · a brand-new template row changes the site without touching code", () => {
     const before = renderWith(TEMPLATES[0]);
     const inserted: TemplateDocument = { ...TEMPLATES[0], id: "t-new", name: "Nuevo", layout: "festive", theme: { palette: { canvas: "#000000", surface: "#111111", text: "#FAFAFA", accent: "#FFD700", muted: "#AAAAAA" }, typography: { heading: "Georgia, serif", body: "Arial, sans-serif" }, sectionStyle: "cards" }, sectionOrder: ["faq", "story"] };

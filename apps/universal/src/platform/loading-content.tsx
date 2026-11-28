@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
 import { View, useWindowDimensions } from "react-native";
 import { radius, spacing } from "@rsvp/design-tokens";
-import { Skeleton, SkeletonList, SkeletonRow, useColors } from "@rsvp/ui";
+import { MOTION, Skeleton, SkeletonList, SkeletonRow, useColors } from "@rsvp/ui";
 import { Row, RowList } from "../host/gifts/offer-row";
 import { useT } from "./providers";
+import { useAfterDelay } from "./use-after-delay";
 
 const ROWS = [0, 1, 2, 3] as const;
 const FORM_WIDTH = 720;
@@ -170,10 +171,15 @@ const layouts = {
 
 export type LoadingKind = keyof typeof layouts;
 
-/** Decorative shapes with one localized announcement, reused for code and data loading. */
-export function LoadingContent({ kind }: { readonly kind: LoadingKind }): ReactNode {
+/**
+ * Decorative shapes with one localized announcement, reused for code and data loading. Nothing is drawn for the first
+ * `MOTION.loadingDelayMs`: a load that ends sooner (cached chunk, cached query) never flashes a skeleton. `delayMs={0}` draws it at once.
+ */
+export function LoadingContent({ kind, delayMs = MOTION.loadingDelayMs }: { readonly kind: LoadingKind; readonly delayMs?: number }): ReactNode {
   const t = useT();
   const Layout = layouts[kind];
+  const visible = useAfterDelay(delayMs);
+  if (!visible) return null;
   return (
     <View testID={`loading-${kind}`}>
       <SkeletonList label={t("common.loading")}><Layout /></SkeletonList>
