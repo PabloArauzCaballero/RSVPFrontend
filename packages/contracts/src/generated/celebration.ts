@@ -695,7 +695,7 @@ export interface components {
             userId: string;
         };
         CreateCelebration: {
-            /** @description Free content keyed by field. `eventDate` and keys ending in `At` are instants: send an offset (stored as is) or a wall clock YYYY-MM-DDTHH:mm (read in the celebration timeZone). Optional `hostContact` {email?, phone? (E.164), consentPublic: true} is validated; see info.description (1.1.0). */
+            /** @description Free content keyed by field. `eventDate` and keys ending in `At` are instants: send an offset (stored as is) or a wall clock YYYY-MM-DDTHH:mm (read in the celebration timeZone). Optional `hostContact` {email?, phone? (E.164), consentPublic: true} is validated; see info.description (1.1.0). Optional `locations` (points of the venues) is validated; see info.description (1.9.0). */
             content?: {
                 [key: string]: unknown;
             };
@@ -728,7 +728,7 @@ export interface components {
             version: number;
         };
         EditCelebration: {
-            /** @description Merged by key; null removes a key Optional `hostContact` {email?, phone? (E.164), consentPublic: true} is validated; see info.description (1.1.0). */
+            /** @description Merged by key; null removes a key Optional `hostContact` {email?, phone? (E.164), consentPublic: true} is validated; see info.description (1.1.0). Optional `locations` (points of the venues) is validated; see info.description (1.9.0). */
             content?: {
                 [key: string]: unknown;
             };
@@ -842,7 +842,7 @@ export interface components {
             availableLocales?: string[];
             /** Format: uuid */
             celebrationId?: string;
-            /** @description Free content keyed by field. `eventDate` and keys ending in `At` are instants: send an offset (stored as is) or a wall clock YYYY-MM-DDTHH:mm (read in the celebration timeZone). Optional `hostContact` {email?, phone? (E.164), consentPublic: true} is validated; see info.description (1.1.0). */
+            /** @description Free content keyed by field. `eventDate` and keys ending in `At` are instants: send an offset (stored as is) or a wall clock YYYY-MM-DDTHH:mm (read in the celebration timeZone). Optional `hostContact` {email?, phone? (E.164), consentPublic: true} is validated; see info.description (1.1.0). Optional `locations` (points of the venues) is validated; see info.description (1.9.0). */
             content?: {
                 [key: string]: unknown;
             };
