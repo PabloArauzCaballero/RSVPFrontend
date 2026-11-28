@@ -7,7 +7,9 @@ const escapeHtml = (text: string): string => text.replace(/[&<>"']/g, (char) => 
 
 /**
  * The failure page is served at `/r/{id}?…&ctx=…`: the lead context is a bearer, so it is removed from the visible URL (history, copy, share).
- * Inline on purpose: a route handler has no layout, and the site CSP allows inline scripts (`script-src 'self' 'unsafe-inline'`).
+ * Inline on purpose: a route handler has no layout, and the site CSP allows inline scripts (`script-src 'self' 'unsafe-inline'`). The route also answers
+ * `Referrer-Policy: no-referrer`, so the URL does not leave through Referer before the script runs. If the CSP is ever enforced without `'unsafe-inline'`,
+ * this script must get a nonce or hash: a test fails while the page has an inline script and the CSP does not allow it.
  */
 const STRIP_CTX = `try{var u=new URL(location.href);if(u.searchParams.has("ctx")){u.searchParams.delete("ctx");history.replaceState(null,"",u.pathname+u.search+u.hash)}}catch(e){}`;
 

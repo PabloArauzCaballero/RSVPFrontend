@@ -2,8 +2,8 @@ import type { ReactNode } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Chip, SwitchRow, useColors } from "@rsvp/ui";
 import { radius, spacing } from "@rsvp/design-tokens";
-import { GROUP_GIFT_SUGGESTED_MINOR, MAX_GIFT_QUANTITY, isOrderable, suggestGroupGift, unitPriceOf, type GiftRecommendation, type RecommendedProductCard } from "@rsvp/query-hooks";
-import { giftQuantityEnabled } from "../../../platform/gift-flags";
+import { GROUP_GIFT_SUGGESTED_MINOR, MAX_GIFT_QUANTITY, isOrderable, listingPriceOf, suggestGroupGift, type GiftRecommendation, type RecommendedProductCard } from "@rsvp/query-hooks";
+import { giftGroupEnabled, giftQuantityEnabled } from "../../../platform/gift-flags";
 import { formatBs } from "./money";
 import { useLocale, useT } from "../../../platform/providers";
 import { useStyles } from "../../ui";
@@ -20,7 +20,7 @@ export interface Pick {
   readonly groupTouched: boolean;
 }
 
-function Stepper({ value, onChange, idea }: { readonly value: number; readonly onChange: (next: number) => void; readonly idea: string }): ReactNode {
+function Stepper({ value, onChange, idea, title }: { readonly value: number; readonly onChange: (next: number) => void; /** The idea code: only for test ids. */ readonly idea: string; /** The product title: what a reader hears. */ readonly title: string }): ReactNode {
   const palette = useColors();
   const styles = useStyles();
   const t = useT();
@@ -32,7 +32,7 @@ function Stepper({ value, onChange, idea }: { readonly value: number; readonly o
     </View>
   );
   const button = (label: string, next: number, disabled: boolean, testID: string, plus: boolean): ReactNode => (
-    <Pressable role="button" accessibilityRole="button" accessibilityLabel={`${label} · ${idea}`} aria-disabled={disabled} disabled={disabled} onPress={() => onChange(next)} testID={testID}
+    <Pressable role="button" accessibilityRole="button" accessibilityLabel={`${label} · ${title}`} aria-disabled={disabled} disabled={disabled} onPress={() => onChange(next)} testID={testID}
       style={[styles.choice, { minWidth: TOUCH, minHeight: TOUCH, alignItems: "center" }, disabled && styles.buttonDisabled]}>
       {sign(plus)}
     </Pressable>
@@ -50,17 +50,16 @@ function Stepper({ value, onChange, idea }: { readonly value: number; readonly o
   );
 }
 
-/** Version radios (a sold-out version is listed and cannot be chosen), quantity (behind the build flag) and the coordinated-gift switch. */
+/** Version radios (a sold-out version is listed and cannot be chosen), quantity and the coordinated-gift switch (both behind the build flag, see gift-flags). A version's price is information only: the list keeps the listing price. */
 function Options({ idea, product, pick, onChange }: { readonly idea: string; readonly product: RecommendedProductCard; readonly pick: Pick; readonly onChange: (next: Pick) => void }): ReactNode {
   const styles = useStyles();
   const t = useT();
   const locale = useLocale();
-  const unit = unitPriceOf(product, pick.variantId);
-  const suggested = suggestGroupGift(unit, pick.quantity);
-  // Until the host touches the switch it follows the price (§5.6: on when the price times the quantity passes Bs 1 000).
-  const apply = (next: Pick): void => onChange(next.groupTouched ? next : { ...next, group: suggestGroupGift(unitPriceOf(product, next.variantId), next.quantity) });
+  const suggested = suggestGroupGift(listingPriceOf(product), pick.quantity);
+  // Until the host touches the switch it follows the price (§5.6: on when the price times the quantity passes Bs 1 000), and only where the switch exists.
+  const apply = (next: Pick): void => onChange(next.groupTouched ? next : { ...next, group: giftGroupEnabled() && suggestGroupGift(listingPriceOf(product), next.quantity) });
   return (
-    <View style={{ gap: spacing[4], paddingLeft: spacing[2] }} testID={`options-${idea}`}>
+    <View role="group" accessibilityRole="none" accessibilityLabel={t("gifts.host.wizard.products.optionsFor", { title: product.title })} style={{ gap: spacing[4], paddingLeft: spacing[2] }} testID={`options-${idea}`}>
       {product.variants.length > 0 ? (
         <View role="radiogroup" accessibilityRole="radiogroup" accessibilityLabel={`${t("gifts.host.wizard.products.version")} · ${product.title}`} style={{ gap: spacing[2] }}>
           <Text style={styles.label}>{t("gifts.host.wizard.products.version")}</Text>
@@ -79,11 +78,13 @@ function Options({ idea, product, pick, onChange }: { readonly idea: string; rea
           </View>
         </View>
       ) : null}
-      {giftQuantityEnabled() ? <Stepper idea={idea} value={pick.quantity} onChange={(quantity) => apply({ ...pick, quantity })} /> : null}
+      {giftQuantityEnabled() ? <Stepper idea={idea} title={product.title} value={pick.quantity} onChange={(quantity) => apply({ ...pick, quantity })} /> : null}
+      {giftGroupEnabled() ? (
       <View style={{ gap: spacing[1] }}>
         <SwitchRow label={t("gifts.host.wizard.products.group")} hint={t("gifts.host.wizard.products.groupHelp", { price: formatBs(GROUP_GIFT_SUGGESTED_MINOR, locale) })} value={pick.group} onChange={(group) => onChange({ ...pick, group, groupTouched: true })} testID={`group-${idea}`} />
         {suggested && pick.group && !pick.groupTouched ? <View style={{ alignSelf: "flex-start" }}><Chip tone="wait">{t("gifts.host.wizard.products.groupSuggested")}</Chip></View> : null}
       </View>
+      ) : null}
     </View>
   );
 }
@@ -110,16 +111,17 @@ export function ProductsStep({ ideas, picks, showDelivery, problems, onPick, onC
         const chosen = pick ? entry.products.find((product) => product.listingId === pick.listingId) : undefined;
         const available = entry.products.some((product) => isOrderable(product.stock));
         return (
-          <View key={code} role="radiogroup" accessibilityRole="radiogroup" accessibilityLabel={t("gifts.host.wizard.products.ideaGroup", { idea: entry.idea.name })} testID={`idea-products-${code}`} style={{ gap: spacing[3] }}>
+          <View key={code} role="group" accessibilityRole="none" accessibilityLabel={entry.idea.name} testID={`idea-products-${code}`} style={{ gap: spacing[3] }}>
             <Text accessibilityRole="header" aria-level={3} style={styles.itemTitle}>{entry.idea.name}</Text>
             {entry.productCount > entry.products.length ? <Text style={styles.muted}>{t("gifts.host.wizard.products.shown", { shown: entry.products.length, total: entry.productCount })}</Text> : null}
             {available ? null : <Text style={styles.body} testID={`idea-empty-${code}`}>{t("gifts.host.wizard.products.emptyIdea")}</Text>}
-            {entry.products.map((product) => (
-              <View key={product.listingId} style={{ gap: spacing[3] }}>
-                <ProductTile product={product} selected={pick?.listingId === product.listingId} showDelivery={showDelivery} {...(pick?.listingId === product.listingId && problems[code] ? { problem: problems[code] } : {})} onChoose={() => onPick(code, product)} />
-                {chosen && pick && pick.listingId === product.listingId ? <Options idea={code} product={chosen} pick={pick} onChange={(next) => onChange(code, next)} /> : null}
-              </View>
-            ))}
+            {/* ONE product per idea (decision 5): the radiogroup holds only the product radios; the chosen one's options are their own group right after it. */}
+            <View role="radiogroup" accessibilityRole="radiogroup" accessibilityLabel={t("gifts.host.wizard.products.ideaGroup", { idea: entry.idea.name })} style={{ gap: spacing[3] }}>
+              {entry.products.map((product) => (
+                <ProductTile key={product.listingId} product={product} selected={pick?.listingId === product.listingId} showDelivery={showDelivery} {...(pick?.listingId === product.listingId && problems[code] ? { problem: problems[code] } : {})} onChoose={() => onPick(code, product)} />
+              ))}
+            </View>
+            {chosen && pick ? <Options idea={code} product={chosen} pick={pick} onChange={(next) => onChange(code, next)} /> : null}
           </View>
         );
       })}

@@ -19,7 +19,13 @@ const UTM_PREFIX = "utm_";
  * into the partner URL (`withAttribution` only carries utm_* and correlationId). A click always redirects: an empty, oversized or malformed `ctx` is
  * dropped here (an oversized one would be a 422 INVALID_LEAD_CONTEXT), so the click is evaluated as an ordinary visitor's and still redirects.
  */
-const CONTEXT_KEYS = ["surface", "celebrationId", "guestId", "locale", "country", "city"] as const;
+const CONTEXT_KEYS = ["celebrationId", "guestId", "locale", "country", "city"] as const;
+/**
+ * Where a link was shown (provider-catalog `surface`, 3.8.0). The backend answers 422 to any other value, which would turn a click into an error page,
+ * so an unknown one falls back to the public site: a click always redirects. A test compares this list with the vendored contract.
+ */
+export const SURFACES = ["PUBLIC_SITE", "SEARCH", "CELEBRATION_SITE", "GIFT_LIST", "EMAIL", "APP", "QUOTE_FORM", "PREVIEW"] as const;
+const DEFAULT_SURFACE = "PUBLIC_SITE";
 /**
  * R5 (Provider Catalog 3.8.0): what the redirector reads to resolve the WhatsApp message on the server. Each one has a shape; a value that does not
  * have it is dropped here instead of sent, because the backend answers 422 to a `quantity` that is not a positive integer and a click must always
@@ -39,7 +45,7 @@ const GIFT_CONTEXT: Readonly<Record<string, RegExp>> = {
  * value it cannot verify is ignored (the click is billed as a visitor's). The same code is shared by sessionId, surface, celebrationId, guestId, country,
  * city and referrer, so a 422 is not evidence of a bad `ctx` and the call is NOT retried: the oversized `ctx` is filtered here, before calling.
  */
-const MAX_CTX_LENGTH = 512;
+export const MAX_CTX_LENGTH = 512;
 /** A signed token is printable ASCII without spaces; anything else (control characters, spaces) is not one and is not worth a 422. */
 const CTX_SHAPE = /^[\x21-\x7e]+$/;
 
@@ -107,22 +113,24 @@ export async function resolveRedirect(request: RedirectRequest): Promise<Redirec
 
   const rawCtx = request.searchParams.get("ctx");
   const ctx = rawCtx !== null && rawCtx.length <= MAX_CTX_LENGTH && CTX_SHAPE.test(rawCtx) ? rawCtx : null;
+  // A ctx the click carried but this route cannot use is dropped (the member's click is then billed as a visitor's). Without a trace a regression of
+  // the frontend or of the backend would be invisible, so one structured line is logged: the reason and the correlation id, never the value.
+  if (rawCtx !== null && rawCtx !== "" && ctx === null) console.warn(JSON.stringify({ event: "partner-redirect.ctx-dropped", reason: rawCtx.length > MAX_CTX_LENGTH ? "too-long" : "malformed", correlationId }));
 
-  const upstreamUrl = (withCtx: string | null): URL => {
-    const url = new URL(`${apiBaseUrl()}/r/${request.listingId}`);
-    if (destination) url.searchParams.set("destination", destination);
-    for (const key of CONTEXT_KEYS) {
-      const value = request.searchParams.get(key);
-      if (value) url.searchParams.set(key, value);
-    }
-    for (const [key, shape] of Object.entries(GIFT_CONTEXT)) {
-      const value = request.searchParams.get(key);
-      if (value && shape.test(value)) url.searchParams.set(key, value);
-    }
-    if (withCtx) url.searchParams.set("ctx", withCtx);
-    if (!url.searchParams.has("surface")) url.searchParams.set("surface", "PUBLIC_SITE");
-    return url;
-  };
+  const requestedSurface = request.searchParams.get("surface");
+  const surface = requestedSurface !== null && (SURFACES as readonly string[]).includes(requestedSurface) ? requestedSurface : DEFAULT_SURFACE;
+  const upstream = new URL(`${apiBaseUrl()}/r/${request.listingId}`);
+  if (destination) upstream.searchParams.set("destination", destination);
+  upstream.searchParams.set("surface", surface);
+  for (const key of CONTEXT_KEYS) {
+    const value = request.searchParams.get(key);
+    if (value) upstream.searchParams.set(key, value);
+  }
+  for (const [key, shape] of Object.entries(GIFT_CONTEXT)) {
+    const value = request.searchParams.get(key);
+    if (value && shape.test(value)) upstream.searchParams.set(key, value);
+  }
+  if (ctx) upstream.searchParams.set("ctx", ctx);
 
   const headers: Record<string, string> = { [CORRELATION_HEADER]: correlationId, ...forwardedFor(request.clientAddress) };
   if (request.userAgent) headers["user-agent"] = request.userAgent;
@@ -131,7 +139,7 @@ export async function resolveRedirect(request: RedirectRequest): Promise<Redirec
 
   try {
     // redirect: "manual" so the 302 (and its Location) is read here and never followed server-side.
-    const response = await (request.fetchFn ?? fetch)(upstreamUrl(ctx), { method: "GET", headers, redirect: "manual", cache: "no-store" });
+    const response = await (request.fetchFn ?? fetch)(upstream, { method: "GET", headers, redirect: "manual", cache: "no-store" });
     const location = response.headers.get("location");
     if (REDIRECT_STATUSES.has(response.status) && location) return { kind: "redirect", location: withAttribution(location, request.searchParams, correlationId), correlationId };
     return { kind: "failure", ...failureOf(response.status), correlationId };

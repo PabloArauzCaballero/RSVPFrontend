@@ -4635,6 +4635,7 @@ __metadata:
     "@rsvp/config-ts": "workspace:*"
     "@rsvp/design-editor": "workspace:*"
     "@rsvp/design-tokens": "workspace:*"
+    "@rsvp/forms": "workspace:*"
     "@rsvp/i18n": "workspace:*"
     "@rsvp/query-hooks": "workspace:*"
     "@rsvp/telemetry": "workspace:*"
