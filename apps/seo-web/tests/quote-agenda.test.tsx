@@ -168,7 +168,7 @@ describe("REQ-F25-04 · fulfillment is visible: who is responsible, coverage, tr
   it("renders every field and a gentle fallback when the provider reported none", () => {
     const t = createTranslator("es-BO");
     const html = renderToStaticMarkup(<FulfillmentNotice t={t} locale="es-BO" currency="BOB" fulfillment={{ responsible: "PROVIDER", coverageZones: ["la-paz", "el-alto"], transportCostMinor: 5000, leadTimeDays: 3, conditions: "Montaje incluido", disclaimer: "Deslinde" }} />);
-    for (const text of ["El proveedor", "la-paz, el-alto", "50", "3 días de anticipación", "Montaje incluido", "Deslinde"]) expect(html).toContain(text);
+    for (const text of ["El proveedor", "La Paz, el-alto", "50", "3 días de anticipación", "Montaje incluido", "Deslinde"]) expect(html).toContain(text);
     expect(renderToStaticMarkup(<FulfillmentNotice t={t} locale="es-BO" currency="BOB" fulfillment={undefined} />)).toContain("aún no informó");
   });
 });

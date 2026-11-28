@@ -7,6 +7,8 @@ export * as design from "./design/index.js";
 export * from "./types.js";
 export * from "./theme.js";
 export * from "./content.js";
+export * from "./location.js";
+export * from "./map/picker-bridge.js";
 export * from "./format.js";
 export * from "./preview-protocol.js";
 export * from "./media/embed.js";

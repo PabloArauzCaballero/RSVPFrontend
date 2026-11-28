@@ -212,6 +212,7 @@ export function useUploadDocument(client: ApiClient, providerId: string) {
 }
 
 export * from "./directory.js";
+export * from "./marketplace.js";
 export * from "./partner.js";
 
 /** GET /providers for the directory (search, category and city pages), public; keyed by the exact query path. */
@@ -224,3 +225,5 @@ export * from "./product-sheet.js";
 export * from "./lead-report.js";
 export * from "./recommendations.js";
 export * from "./product-sheet-hooks.js";
+export * from "./provider-media.js";
+export * from "./provider-media-hooks.js";

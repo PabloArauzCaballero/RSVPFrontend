@@ -6,7 +6,7 @@ import type { MapPlace } from "@rsvp/api-client";
 import type { MapPoint } from "@rsvp/celebration-theme/model";
 import { Button, overlayAnimation, useColors } from "@rsvp/ui";
 import { colors, radius, spacing } from "@rsvp/design-tokens";
-import { mapTileUrl } from "../platform/map-tiles";
+import { useMapConfigState } from "../platform/map-config";
 import { useT } from "../platform/providers";
 import { PlaceSearch } from "./place-search";
 import { ActionButton, Notice, useStyles } from "./ui";
@@ -24,11 +24,14 @@ export interface MapPickerProps {
   readonly initial: MapPoint | null;
   /** Text the search starts with: the venue as the host wrote it. */
   readonly query: string;
-  readonly onPick: (point: MapPoint) => void;
+  /** The point at the pin; `place` is the search result the pin still sits on (within ~100 m), so its address is kept. */
+  readonly onPick: (point: MapPoint, place?: MapPlace) => void;
   readonly onClose: () => void;
 }
 
-const ATTRIBUTION = "&copy; <a href=\"https://www.openstreetmap.org/copyright\" target=\"_blank\" rel=\"noopener noreferrer\">OpenStreetMap</a>";
+const COPYRIGHT = "https://www.openstreetmap.org/copyright";
+const escapeHtml = (value: string): string => value.replace(/[&<>"']/g, (char) => `&#${char.charCodeAt(0)};`);
+const SAME_PLACE = 0.001;
 /** Nothing marked yet: Bolivia whole, so the first move is a search or "my location". */
 const COUNTRY: MapPoint = { lat: -16.7, lng: -64.9 };
 const ZOOM_COUNTRY = 5;
@@ -56,11 +59,16 @@ export function MapPicker({ initial, query, onPick, onClose }: MapPickerProps): 
   const holder = useRef<HTMLDivElement | null>(null);
   const map = useRef<LeafletMap | null>(null);
   const startPoint = useRef(initial);
+  const { config, settled } = useMapConfigState();
+  const configRef = useRef(config);
+  configRef.current = config;
+  const shownPlace = useRef<MapPlace | null>(null);
   const [text, setText] = useState(query);
   const [locating, setLocating] = useState(false);
   const [locateFailed, setLocateFailed] = useState(false);
 
   useEffect(() => {
+    if (!settled) return undefined;
     let disposed = false;
     void import("leaflet").then((leaflet) => {
       const element = holder.current;
@@ -68,21 +76,22 @@ export function MapPicker({ initial, query, onPick, onClose }: MapPickerProps): 
       const point = startPoint.current ?? COUNTRY;
       const created = leaflet.map(element, { center: [point.lat, point.lng], zoom: startPoint.current ? ZOOM_PLACE : ZOOM_COUNTRY, maxZoom: ZOOM_MAX });
       // Only the tiles in view are requested, with the browser's own cache: no prefetch and no offline copy (OSM tile policy).
-      leaflet.tileLayer(mapTileUrl(), { maxZoom: ZOOM_MAX, attribution: ATTRIBUTION, referrerPolicy: TILE_REFERRER_POLICY }).addTo(created);
+      const { tileUrl, attribution, maxZoom } = configRef.current;
+      leaflet.tileLayer(tileUrl, { maxZoom: Math.min(maxZoom, ZOOM_MAX), attribution: `&copy; <a href="${COPYRIGHT}" target="_blank" rel="noopener noreferrer">${escapeHtml(attribution.replace(/^©\s*/, ""))}</a>`, referrerPolicy: TILE_REFERRER_POLICY }).addTo(created);
       created.attributionControl.setPrefix(false);
       map.current = created;
       // The dialog has just been laid out: measure again once it has its size.
       requestAnimationFrame(() => created.invalidateSize());
     });
     return () => { disposed = true; map.current?.remove(); map.current = null; };
-    // Created once per opening on purpose: `initial` only says where the map starts, it never moves it afterwards.
-  }, []);
+    // Created once per opening, as soon as the map settings are known: `initial` only says where the map starts, it never moves it afterwards.
+  }, [settled]);
 
   const show = useCallback((point: MapPoint): void => {
     startPoint.current = point;
     map.current?.setView([point.lat, point.lng], ZOOM_PLACE);
   }, []);
-  const showPlace = useCallback((place: MapPlace): void => { setLocateFailed(false); show(place.point); }, [show]);
+  const showPlace = useCallback((place: MapPlace): void => { setLocateFailed(false); shownPlace.current = place; show(place.point); }, [show]);
   const locate = (): void => {
     if (!("geolocation" in navigator)) { setLocateFailed(true); return; }
     setLocating(true); setLocateFailed(false);
@@ -95,7 +104,10 @@ export function MapPicker({ initial, query, onPick, onClose }: MapPickerProps): 
   const confirm = (): void => {
     const center = map.current?.getCenter();
     if (!center) return;
-    onPick({ lat: center.lat, lng: center.wrap().lng });
+    const point = { lat: center.lat, lng: center.wrap().lng };
+    const place = shownPlace.current;
+    const onPlace = place !== null && Math.abs(place.point.lat - point.lat) <= SAME_PLACE && Math.abs(place.point.lng - point.lng) <= SAME_PLACE;
+    onPick(point, ...(onPlace ? [place] : []));
   };
   const mapHeight = Math.max(MAP_MIN, Math.min(MAP_MAX, height - CHROME));
 

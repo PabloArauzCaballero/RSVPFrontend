@@ -1,33 +1,36 @@
+import type { ApiClient } from "../types.js";
+
+/**
+ * Place search for the host's venue (MAP-03). It goes through the backend (`GET /providers/geo/search`), never straight to
+ * Nominatim: the backend keeps the one-request-per-second budget of the whole app, caches, identifies us and can switch the
+ * search off without publishing the apps. Call it only for a query the host explicitly submitted (never while typing).
+ */
 export interface MapPlace {
   readonly id: string;
   readonly name: string;
   readonly label: string;
   readonly point: { readonly lat: number; readonly lng: number };
+  readonly osm?: { readonly type: "node" | "way" | "relation"; readonly id: number };
 }
 
-const PLACE_SEARCH = 'https://nominatim.openstreetmap.org/search';
+export interface MapPlaceSearch { readonly places: readonly MapPlace[]; readonly attribution: string }
+
 const MAX_RESULTS = 5;
 
 function toPlace(entry: unknown): MapPlace[] {
-  if (!entry || typeof entry !== 'object') return [];
+  if (!entry || typeof entry !== "object") return [];
   const row = entry as Record<string, unknown>;
-  const label = typeof row['display_name'] === 'string' ? row['display_name'].trim() : '';
-  const name = (typeof row['name'] === 'string' && row['name'].trim()) || label.split(',')[0]?.trim() || label;
-  const coordinate = (value: unknown): number => typeof value === 'number' || (typeof value === 'string' && value.trim()) ? Number(value) : NaN;
-  const lat = coordinate(row['lat']);
-  const lng = coordinate(row['lon']);
-  const id = row['place_id'];
-  return label && name && (typeof id === 'number' || typeof id === 'string') && Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180
-    ? [{ id: String(id), name, label, point: { lat, lng } }]
-    : [];
+  const { id, name, label, lat, lng, osmType, osmId } = row;
+  if (typeof id !== "string" || typeof name !== "string" || typeof label !== "string" || !name || !label) return [];
+  if (typeof lat !== "number" || typeof lng !== "number" || !Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return [];
+  const kind = (["node", "way", "relation"] as const).find((candidate) => candidate === osmType);
+  const osm = kind && typeof osmId === "number" && Number.isSafeInteger(osmId) && osmId > 0 ? { type: kind, id: osmId } : undefined;
+  return [{ id, name, label, point: { lat, lng }, ...(osm ? { osm } : {}) }];
 }
 
-/** The map's existing provider. Call only for a place or address explicitly submitted by the host. */
-export async function searchMapPlaces(query: string, locale: string, signal?: AbortSignal): Promise<readonly MapPlace[]> {
-  const params = new URLSearchParams({ format: 'jsonv2', limit: String(MAX_RESULTS), 'accept-language': locale, q: query });
-  const response = await fetch(`${PLACE_SEARCH}?${params}`, { headers: { Accept: 'application/json' }, ...(signal ? { signal } : {}) });
-  if (!response.ok) throw new Error(`MAP_SEARCH_HTTP_${response.status}`);
-  const rows: unknown = await response.json();
-  if (!Array.isArray(rows)) throw new Error('MAP_SEARCH_INVALID_RESPONSE');
-  return rows.slice(0, MAX_RESULTS).flatMap(toPlace);
+export async function searchMapPlaces(client: ApiClient, query: string, locale: string, signal?: AbortSignal): Promise<MapPlaceSearch> {
+  const params = new URLSearchParams({ q: query, lang: locale === "en-US" ? "en-US" : "es-BO" });
+  const body = await client.request<{ readonly items?: unknown; readonly attribution?: unknown }>(`/providers/geo/search?${params}`, { ...(signal ? { signal } : {}) });
+  const items = Array.isArray(body?.items) ? body.items.slice(0, MAX_RESULTS).flatMap(toPlace) : [];
+  return { places: items, attribution: typeof body?.attribution === "string" && body.attribution ? body.attribution : "© OpenStreetMap contributors" };
 }

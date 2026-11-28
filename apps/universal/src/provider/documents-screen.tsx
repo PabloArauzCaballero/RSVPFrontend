@@ -6,6 +6,7 @@ import { DOCUMENT_KINDS, DOCUMENT_TYPES, MAX_DOCUMENT_BYTES, useDeleteDocument, 
 import { useApiClient, useT } from "../platform/providers";
 import { pickDocument, type PickedImage } from "../platform/pick-document";
 import { ActionButton, ConfirmDialog, EmptyState, FilterSelect, Notice, OverflowMenu, PageIntro, useStyles } from "../host/ui";
+import { DocumentDrop } from "../host/media/document-drop";
 import { PortalErrorNotice as ErrorNotice, PortalErrorState } from "./errors";
 import { PortalScreen, usePortalHeader } from "./frame";
 import { RowsSkeleton } from "./parts";
@@ -19,9 +20,17 @@ export function documentKindLabel(t: (key: string, values?: Readonly<Record<stri
   return (DOCUMENT_KINDS as readonly string[]).includes(kind) ? t(`portal.documents.kinds.${kind}`) : t("portal.documents.kindUnknown", { kind });
 }
 
-/** Validates the chosen file before any request: type and size follow the contract (`DocumentInput`). Returns an i18n key or null. */
-export function documentProblem(file: Pick<PickedImage, "type" | "size"> | null): "portal.documents.none" | "portal.documents.badType" | "portal.documents.tooBig" | null {
+const HEIC = /\.(heic|heif)$/i;
+
+/**
+ * Validates the chosen file before any request: type and size follow the contract (`DocumentInput`). Returns an i18n key or null.
+ * HEIC (the iPhone photo format) is refused with its own message instead of the generic one: the verification store takes PDF, JPG,
+ * PNG and WebP only, and a browser cannot turn HEIC into JPG here without shipping a converter, so the person is told how to send it
+ * (documented choice, not a silent failure).
+ */
+export function documentProblem(file: (Pick<PickedImage, "type" | "size"> & { readonly name?: string }) | null): "portal.documents.none" | "portal.documents.badType" | "portal.documents.heic" | "portal.documents.tooBig" | null {
   if (!file) return "portal.documents.none";
+  if (/^image\/(heic|heif)$/i.test(file.type) || (file.name !== undefined && HEIC.test(file.name))) return "portal.documents.heic";
   if (!DOCUMENT_TYPES.includes(file.type as DocumentContentType)) return "portal.documents.badType";
   if (file.size < 1 || file.size > MAX_DOCUMENT_BYTES) return "portal.documents.tooBig";
   return null;
@@ -48,7 +57,8 @@ function Documents({ provider }: { readonly provider: Provider }): ReactNode {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [removed, setRemoved] = useState(false);
 
-  const choose = async (): Promise<void> => { setDone(false); const picked = await pickDocument(); if (picked) { setFile(picked); setProblem(null); } };
+  const take = (picked: PickedImage): void => { setDone(false); setFile(picked); setProblem(null); };
+  const choose = async (): Promise<void> => { const picked = await pickDocument(); if (picked) take(picked); };
   const send = (): void => {
     const issue = documentProblem(file);
     setDone(false); setPutFailed(false);
@@ -70,8 +80,10 @@ function Documents({ provider }: { readonly provider: Provider }): ReactNode {
       <PageIntro>{t("portal.documents.intro")}</PageIntro>
       <View style={{ gap: spacing[3] }}>
         <View style={{ gap: spacing[1], maxWidth: 360 }}><Text style={styles.label}>{t("portal.documents.kind")}</Text><FilterSelect<DocumentKind> label={t("portal.documents.kind")} value={kind} onChange={setKind} options={KINDS.map((value) => ({ value, label: t(`portal.documents.kinds.${value}`) }))} testID="document-kind" /></View>
-        <View style={styles.row}>
+        <DocumentDrop onPick={take} disabled={upload.isPending} testID="document-drop">
           <ActionButton variant="secondary" label={t("portal.documents.choose")} onPress={() => { void choose(); }} testID="document-choose" />
+        </DocumentDrop>
+        <View style={styles.row}>
           {file ? <Text style={styles.muted} testID="document-chosen">{file.name} · {t("portal.documents.size", { kb: Math.max(1, Math.round(file.size / BYTES_PER_KB)) })}</Text> : null}
         </View>
         {problem ? <Notice kind="error">{problem}</Notice> : null}

@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
-import { daysUntil, giftsPath, hasSectionContent, readContent, sectionTitleKey, type GalleryImage, type GiftsStatus, type PublicCelebrationView } from "./content.js";
+import { daysUntil, giftsPath, hasSectionContent, isPhotoImage, readContent, sectionTitleKey, type GalleryImage, type GiftsStatus, type PublicCelebrationView } from "./content.js";
 import { drawingById, InvitationArt, ornamentSetById, OrnamentSeparator } from "./art/index.js";
 import { formatDate } from "./format.js";
 import { SECTION_ART } from "./hero-art.js";
@@ -28,6 +28,8 @@ export interface CelebrationRendererProps {
   readonly rsvpAdaptive?: boolean;
   /** What the gift list holds (rsvp-f1's `gifts.status`); absent means OPEN. Only the gifts button's label changes. */
   readonly giftsStatus?: GiftsStatus;
+  /** Backend `GET /providers/geo/map-config` (tile server and attribution at run time); absent, OpenStreetMap's own public server. */
+  readonly mapConfigUrl?: string;
   /** Injected for deterministic rendering in tests and previews. */
   readonly now?: Date;
   readonly colorScheme?: ColorScheme;
@@ -80,7 +82,7 @@ export function CelebrationRenderer(props: CelebrationRendererProps): ReactNode 
   const { theme, view, t } = props;
   // F4 b: a design document v2 is drawn from its pages and canvases; v1 templates keep the layout engine below.
   if (theme.design) return <DesignRenderer {...props} design={theme.design} />;
-  const gallery = props.gallery ?? [];
+  const gallery = (props.gallery ?? []).filter(isPhotoImage);
   const content = readContent(view);
   const layout = layoutOf(theme);
   const available = theme.sections.filter((section) => hasSectionContent(section, content, gallery));
@@ -103,7 +105,7 @@ export function CelebrationRenderer(props: CelebrationRendererProps): ReactNode 
               {layout.sectionArt && !props.only && SECTION_ART[section] ? <SectionDrawing id={SECTION_ART[section]} /> : null}
               <h2 id={headingId} className={props.only ? "celebration-visually-hidden" : undefined}>{t(sectionTitleKey(section))}</h2>
               <Body content={content} gallery={gallery} timeZone={view.timeZone} locale={view.locale} t={t} rsvpHref={props.rsvpHref} rsvpHelpHref={props.rsvpHelpHref} rsvpAdaptive={props.rsvpAdaptive}
-                giftsHref={giftsPath(view.slug)} giftsStatus={props.giftsStatus} />
+                giftsHref={giftsPath(view.slug)} giftsStatus={props.giftsStatus} {...(props.mapConfigUrl ? { mapConfigUrl: props.mapConfigUrl } : {})} />
             </section>
           );
         })}

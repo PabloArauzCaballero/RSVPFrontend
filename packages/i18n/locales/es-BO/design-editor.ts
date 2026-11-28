@@ -52,6 +52,7 @@ export const designEditorEsBO = {
     photos: {
       title: "Fotos", loading: "Cargando tus fotos…", failed: "No pudimos cargar tus fotos. Revisa tu conexión e inténtalo otra vez.", empty: "Todavía no tienes fotos subidas.",
       cover: "Foto de portada", placeholder: "Elige una foto", remove: "Quitar la foto de portada",
+      upload: "Subir una foto", uploaded: "Listo: «{{name}}» ya es la foto de portada.",
       unavailable: "Elegir y quitar la foto de portada estará aquí cuando termine la subida de fotos. Todavía no está disponible.",
       gallery: "Las fotos de la galería son las de tu celebración y se cambian con sus datos."
     },
@@ -122,6 +123,8 @@ export const designEditorEsBO = {
     restoreInvalid: "Esa versión ya no cumple las reglas del diseño, así que no se puede restaurar. Tu borrador no cambió."
   },
   customCode: {
+    insertImage: "Insertar una imagen", insertHelp: "Sube o elige una foto: no hace falta escribir ninguna dirección.", insertHtml: "Insertar en el HTML", insertCss: "Insertar como fondo en el CSS",
+    inserted: { html: "Imagen insertada al final del HTML con alt vacío (decorativa). Si cuenta algo, escribe su descripción dentro de alt=\"\".", css: "Regla «.{{name}}» agregada al CSS: úsala como clase de un elemento." },
     title: "Código propio",
     html: "HTML",
     css: "CSS",
@@ -150,6 +153,19 @@ export const designEditorEsBO = {
       TOO_MANY_RULES: "Hay demasiadas reglas; ignoramos las del final.",
       MEDIA_REJECTED: "Quitamos una consulta @media no permitida ({{detail}})."
     }
+  },
+  photoPicker: {
+    audio: { loading: "Cargando tu música…", failed: "No pudimos cargar tu música. Revisa tu conexión e inténtalo otra vez.", empty: "Todavía no tienes música subida. Sube tu archivo MP3 arriba.", choose: "Tu música", help: "Elige una canción con el teclado (flechas) o tocándola.", selected: "Elegiste «{{name}}»." },
+    loading: "Cargando tus fotos…", failed: "No pudimos cargar tus fotos. Revisa tu conexión e inténtalo otra vez.", empty: "Todavía no tienes fotos subidas. Sube la primera arriba.",
+    choose: "Tus fotos", help: "Elige una foto con el teclado (flechas) o tocándola.", selected: "Elegiste «{{name}}»."
+  },
+  images: {
+    music: { title: "Música", help: "Sube un MP3 tuyo (hasta 15 MB). Al subirlo confirmas que tienes derecho a usarlo.", add: "Agregar como música de la página", added: "la música" },
+    use: { title: "¿Para qué es la foto?", image: "Una imagen dentro de la página", background: "El fondo de la página" },
+    title: "Imágenes de la invitación", page: "En la página", alt: "Descripción de la imagen (para quien no la ve)", altHelp: "Una frase corta. Déjala vacía si es solo decorativa.",
+    defaultText: "Escribe aquí tu mensaje.", added: "Agregaste: {{what}}.", note: "Los fondos y las imágenes se agregan al final de la página; muévelos en el lienzo.",
+    kind: { image: "Agregar como imagen", imageText: "Agregar imagen con texto", monogram: "Agregar como monograma", background: "Usar de fondo de «{{page}}»" },
+    removeBackground: "Quitar el fondo de «{{page}}»", backgroundRemoved: "Quitaste el fondo de «{{page}}»."
   },
   canvasEditor: {
     stage: "Lienzo",

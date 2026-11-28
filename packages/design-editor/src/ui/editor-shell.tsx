@@ -10,6 +10,7 @@ import { PublishPanel, type VersionsApi, type VersionsList } from "./publish-pan
 import type { PublishOutcome, VersionsGateway } from "../save/versions.js";
 import { EditorProvider, type FocusTarget, type Translate } from "./editor-context.js";
 import { CustomCodePanel } from "./custom-code-panel.js";
+import { ImagePanel } from "./image-panel.js";
 import { useNarrow } from "./use-narrow.js";
 import { AlertIcon, CheckIcon, ClockIcon, DesktopIcon, DotIcon, LayersIcon, LockIcon, PhoneIcon, RedoIcon, SlidersIcon, SpinnerIcon, UndoIcon } from "./icons.js";
 
@@ -574,7 +575,7 @@ export function EditorShell({ design: source, gateway, t, onReload, signInHref, 
           <p className="de-hint">{t(key("basic.hint"))}</p>
           <ContrastPanel server={serverWarnings} fresh={status.kind === "saved"} />
           {versionsGateway ? <PublishPanel versions={versionsApi} timeZone={timeZone} locale={locale} /> : null}
-          {state.mode === "advanced" ? <><ElementInspector /><ComponentPalette /><CustomCodePanel /></> : null}
+          {state.mode === "advanced" ? <><ElementInspector /><ComponentPalette />{media ? <ImagePanel media={media} /> : null}<CustomCodePanel {...(media ? { media } : {})} /></> : null}
           {children}
           </div>
         </aside>

@@ -1,3 +1,4 @@
+import type { ProviderCatalogComponents } from "@rsvp/contracts";
 import type { ApiClient } from "@rsvp/api-client";
 
 /**
@@ -82,12 +83,16 @@ export interface DirectoryCard {
   readonly summary?: string;
   readonly priceFrom?: { readonly amountMinor: number; readonly currency: string };
   readonly imageUrl?: string;
+  /** Provider Catalog 3.14.0: the provider's logo (published microsite), uploaded as a file. */
+  readonly logoUrl?: string;
   /** Destinations enabled for the listing (WHATSAPP, PHONE, EMAIL, INSTAGRAM, OFFICIAL_SITE, LANDING, PRODUCT_PAGE); each is reached through /r/{listingId}. */
   readonly destinations?: readonly string[];
   /** Cities or areas the provider serves (F25 coverage zone). */
   readonly coverage?: readonly string[];
-  readonly address?: string;
-  readonly hours?: readonly string[];
+  /** A line of text or, as the catalogue really sends it, an object `{ line, city, reference, latitude, longitude }` (see `addressText`, `addressPoint`). */
+  readonly address?: string | { readonly line?: string; readonly city?: string; readonly reference?: string; readonly latitude?: number; readonly longitude?: number };
+  /** The business hours as the catalogue sends them (contract `BusinessHours`: `{ weekly: [{ weekdays, opens, closes }], note? }`); read with `hoursLines`. Older mocks sent a list of lines, which `hoursLines` also accepts. */
+  readonly hours?: ProviderCatalogComponents["schemas"]["BusinessHours"] | readonly string[];
   /** Present in the Provider Catalog 2.0.0 card: who fulfils, coverage zones, transport cost and lead time (F25-04). */
   readonly fulfillment?: { readonly responsible: string; readonly coverageZones: readonly string[]; readonly transportCostMinor?: number; readonly leadTimeDays: number; readonly conditions: string; readonly disclaimer: string };
   /** Not in the public card today; resolved through the listing when absent (apps/seo-web/lib/catalog.ts). */

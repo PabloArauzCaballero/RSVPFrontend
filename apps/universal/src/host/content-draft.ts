@@ -1,3 +1,4 @@
+import { LOCATIONS_KEY, MAIN_LOCATION, legacyLink, withLocation, type CelebrationLocation } from "@rsvp/celebration-theme/model";
 import type { Celebration } from "@rsvp/query-hooks";
 
 /**
@@ -55,13 +56,14 @@ export const asText = (value: unknown): string => (typeof value === "string" ? v
 export const asRecords = (value: unknown): Unknown[] => (Array.isArray(value) ? value.filter(isRecord) : []);
 export const asRecord = (value: unknown): Unknown => (isRecord(value) ? value : {});
 
-export interface ScheduleDraft { readonly id: string; readonly title: string; readonly description: string; readonly date: string; readonly time: string }
+export interface ScheduleDraft { readonly id: string; readonly title: string; readonly description: string; readonly date: string; readonly time: string; /** `key` of a venue of the list; empty when the item has no place. Kept as the API stores it so editing the programme never drops it. */ readonly venueKey: string }
 
 export function scheduleDraft(celebration: Pick<Celebration, "content" | "localTimes">): ScheduleDraft[] {
   return asRecords(celebration.content["schedule"]).map((item, index) => ({
     id: asText(item["id"]) || `item-${index}`,
     title: asText(item["title"]),
     description: asText(item["description"]),
+    venueKey: asText(item["venueKey"]),
     ...wallClockAt(celebration, `schedule.${index}.startsAt`)
   }));
 }
@@ -75,7 +77,7 @@ export function scheduleContent(items: readonly ScheduleDraft[]): { readonly ok:
     ok: true,
     value: items.filter((item) => item.title.trim()).map((item, index) => {
       const result = converted[index];
-      return { id: item.id, title: item.title.trim(), ...(item.description.trim() ? { description: item.description.trim() } : {}), startsAt: result?.ok ? result.value : null };
+      return { id: item.id, title: item.title.trim(), ...(item.description.trim() ? { description: item.description.trim() } : {}), ...(item.venueKey ? { venueKey: item.venueKey } : {}), startsAt: result?.ok ? result.value : null };
     })
   };
 }
@@ -102,4 +104,33 @@ const EDGE_HYPHENS = /^-+|-+$/g;
 /** Proposes a slug from the celebration name: "Ana & Luis" → "ana-luis". */
 export function slugify(title: string): string {
   return title.normalize("NFKD").replace(DIACRITICS, "").toLowerCase().replace(NOT_SLUG, SLUG_SEPARATOR).replace(EDGE_HYPHENS, "").slice(0, MAX_SLUG);
+}
+
+/** Keys of the venues of a draft (`content.venues[].key`): the only places, besides the main one, that may hold a point. */
+export function venueKeys(draft: Readonly<Record<string, unknown>>): string[] {
+  return asRecords(draft["venues"]).map((venue) => asText(venue["key"])).filter(Boolean);
+}
+
+/**
+ * The draft with one place's point set or removed (`content.locations[key]`, a top-level key so apps that do not know it keep it
+ * when they save something else). The main venue also mirrors its point as an OpenStreetMap link in `venueMapUrl`, so apps that
+ * only know the old field keep a pin until they update; removing the point removes the mirror. Never writes a Google link.
+ */
+export function withPlaceLocation(draft: Readonly<Record<string, unknown>>, key: string, location: CelebrationLocation | null): Record<string, unknown> {
+  const locations = withLocation(draft[LOCATIONS_KEY], key, location, venueKeys(draft));
+  const next: Record<string, unknown> = { ...draft };
+  if (locations) next[LOCATIONS_KEY] = locations; else delete next[LOCATIONS_KEY];
+  if (key === MAIN_LOCATION) { if (location) next["venueMapUrl"] = legacyLink(location); else delete next["venueMapUrl"]; }
+  return next;
+}
+
+/** The draft without points of venues that no longer exist (a removed row must not leave its point behind). */
+export function prunedLocations(draft: Readonly<Record<string, unknown>>): Record<string, unknown> {
+  const raw = draft[LOCATIONS_KEY];
+  if (!isRecord(raw)) return { ...draft };
+  const allowed = new Set([MAIN_LOCATION, ...venueKeys(draft)]);
+  const kept = Object.fromEntries(Object.entries(raw).filter(([key]) => allowed.has(key)));
+  const next: Record<string, unknown> = { ...draft };
+  if (Object.keys(kept).length) next[LOCATIONS_KEY] = kept; else delete next[LOCATIONS_KEY];
+  return next;
 }

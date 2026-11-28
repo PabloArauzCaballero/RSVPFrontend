@@ -5,7 +5,8 @@ import { radius, spacing } from "@rsvp/design-tokens";
 import { Chip, PressFeedback, useColors } from "@rsvp/ui";
 import { useAdminCategories, useAdminGeography, useUpsertCategory, useUpsertGeoEntry, type GeoEntry, type GeoKind, type ProviderCategory } from "@rsvp/query-hooks/admin";
 import { useApiClient, useLocale, useT } from "../platform/providers";
-import { ChoiceGroup, Field, FilterSelect, Notice, PageIntro, useStyles } from "../host/ui";
+import { ActionButton, ChoiceGroup, Field, FilterSelect, Notice, PageIntro, useStyles } from "../host/ui";
+import { MapPicker } from "../host/map-picker";
 import { AdminScreen, adminOnly, useHeaderSlot } from "./admin-screen";
 import { AdminErrorNotice, QueryBoundary, Stack } from "./shared";
 import { EditorDialog } from "./editor-dialog";
@@ -178,6 +179,7 @@ export function GeoEditor({ initial, places, onClose, onSaved }: { readonly init
   const [latitude, setLatitude] = useState(initial?.latitude === undefined ? "" : String(initial.latitude));
   const [longitude, setLongitude] = useState(initial?.longitude === undefined ? "" : String(initial.longitude));
   const [invalid, setInvalid] = useState(false);
+  const [picking, setPicking] = useState(false);
   const readOnly = initial?.kind === "COUNTRY";
   const isCity = kind === "CITY";
   const cleanCode = isCity ? code.trim().toLowerCase() : code.trim().toUpperCase();
@@ -208,6 +210,13 @@ export function GeoEditor({ initial, places, onClose, onSaved }: { readonly init
         </View>
       )}
       {isCity ? (
+        <View style={{ gap: spacing[2], alignItems: "flex-start" }}>
+          {/* The pin is the quick way; the two numbers stay as the exact, keyboard-and-screen-reader way. */}
+          <ActionButton variant="secondary" icon="pin" label={t("admin.geography.markOnMap")} onPress={() => setPicking(true)} testID="geo-map" />
+          <Text style={styles.muted}>{t("admin.geography.markOnMapHelp")}</Text>
+        </View>
+      ) : null}
+      {isCity ? (
         <View style={[styles.row, { alignItems: "flex-start" }]}>
           <View style={{ flexGrow: 1, flexBasis: 160 }}><Field label={t("admin.geography.latitude")} value={latitude} onChange={setLatitude} keyboardType="decimal-pad" testID="geo-latitude" /></View>
           <View style={{ flexGrow: 1, flexBasis: 160 }}><Field label={t("admin.geography.longitude")} value={longitude} onChange={setLongitude} keyboardType="decimal-pad" testID="geo-longitude" {...(invalid && !coordsOk ? { error: t("admin.geography.coordsRequired") } : {})} /></View>
@@ -215,6 +224,7 @@ export function GeoEditor({ initial, places, onClose, onSaved }: { readonly init
       ) : null}
       {readOnly ? null : <ActiveChoice value={active} onChange={setActive} />}
       <AdminErrorNotice error={save.error} onRetry={submit} />
+      {picking ? <MapPicker initial={inRange(latitude, MAX_LAT) && inRange(longitude, MAX_LNG) ? { lat: Number(latitude), lng: Number(longitude) } : null} query={display(names, "")} onClose={() => setPicking(false)} onPick={(point) => { setLatitude(point.lat.toFixed(6)); setLongitude(point.lng.toFixed(6)); setPicking(false); }} /> : null}
     </EditorDialog>
   );
 }

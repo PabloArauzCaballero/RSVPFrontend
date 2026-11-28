@@ -10,7 +10,7 @@ const path = require('node:path');
  * Privacy-enhanced hosts only
  * (youtube-nocookie, Vimeo with dnt). Nothing else may be framed, and `frame-ancestors 'none'` still forbids framing this site.
  */
-const frameHosts = ['www.youtube-nocookie.com', 'player.vimeo.com', 'open.spotify.com', 'www.google.com'];
+const frameHosts = ['www.youtube-nocookie.com', 'player.vimeo.com', 'open.spotify.com'];
 const frameSrc = `frame-src ${frameHosts.map((host) => `https://${host}`).join(' ')}`;
 
 const securityHeaders = [
@@ -58,7 +58,18 @@ const nextConfig = {
       { key: 'Referrer-Policy', value: 'no-referrer' },
       { key: 'X-Robots-Tag', value: 'noindex, nofollow' }
     ];
-    return [{ source: '/((?!vista-previa$).*)', headers: securityHeaders }, { source: '/vista-previa', headers: previewHeaders }, { source: '/c/:slug/rsvp/:path*', headers: privateHeaders }, { source: '/c/:slug/rsvp', headers: privateHeaders }, { source: '/rsvp/:path*', headers: privateHeaders }];
+    // MAP · `/mapa/incrustado` is the second (and last) page that may be framed: the app's map views load it in an iframe (web) or a web
+    // view (native). It holds no form and no action (a map and a pin), so framing it by the site itself and by the app's origin gives no
+    // clickjacking surface. X-Frame-Options cannot name a second origin, so it is dropped and `frame-ancestors` says who may frame it.
+    // Every other path keeps DENY / frame-ancestors 'none'.
+    const mapHeaders = [
+      ...previewHeaders.filter((header) => header.key !== 'Content-Security-Policy' && header.key !== 'Cache-Control' && header.key !== 'Referrer-Policy'),
+      { key: 'Content-Security-Policy', value: `frame-ancestors 'self' ${appOrigin === "'none'" ? '' : appOrigin}`.trim() },
+      { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' }
+    ];
+    // The tab's art is versioned by folder (/marketplace/v1): the files never change, so they are cached for a year.
+    const immutable = [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }];
+    return [{ source: '/marketplace/v1/:file', headers: immutable }, { source: '/((?!vista-previa$|mapa/incrustado$).*)', headers: securityHeaders }, { source: '/vista-previa', headers: previewHeaders }, { source: '/mapa/incrustado', headers: mapHeaders }, { source: '/c/:slug/rsvp/:path*', headers: privateHeaders }, { source: '/c/:slug/proveedores', headers: privateHeaders }, { source: '/c/:slug/rsvp', headers: privateHeaders }, { source: '/rsvp/:path*', headers: privateHeaders }];
   },
   webpack: (config) => {
     // Workspace packages use NodeNext-style "./x.js" imports that point to .ts sources.
