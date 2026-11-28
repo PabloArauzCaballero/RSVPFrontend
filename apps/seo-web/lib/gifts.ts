@@ -1,5 +1,4 @@
 import { ApiError, type ApiClient } from "@rsvp/api-client";
-import type { GiftItem } from "@rsvp/query-hooks";
 import { publicClient } from "./api";
 
 /**
@@ -19,9 +18,4 @@ export async function loadGiftPage(slug: string, client: ApiClient = publicClien
     if (error instanceof ApiError && error.status === 404) return { state: "not-found" };
     throw error;
   }
-}
-
-/** Opens the partner product through the redirector (F27); never the partner URL itself. */
-export function partnerGiftHref(item: Pick<GiftItem, "productListingId">, celebrationId: string): string | null {
-  return item.productListingId ? `/r/${encodeURIComponent(item.productListingId)}?surface=GIFT_LIST&celebrationId=${encodeURIComponent(celebrationId)}` : null;
 }

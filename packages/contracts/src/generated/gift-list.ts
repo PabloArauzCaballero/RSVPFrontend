@@ -1296,6 +1296,8 @@ export interface components {
                  */
                 availability: "AVAILABLE" | "UNAVAILABLE";
             }[];
+            /** @description Since 1.16.0 (R6a): signed lead context of this viewer, or null. Present for an account that is a member of the celebration; append it unchanged as ctx to every /r/{listingId} link of this list. Opaque and short-lived (re-read the list to refresh it); never shown and never stored. */
+            leadContext?: string | null;
             /** @description Pass it as cursor to get the next page; null on the last page. */
             nextCursor: string | null;
         };

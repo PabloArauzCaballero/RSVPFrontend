@@ -5,7 +5,7 @@ import type { PublicCelebrationView } from "@rsvp/celebration-theme/model";
 import { spacing } from "@rsvp/design-tokens";
 import { formatMinor } from "@rsvp/i18n";
 import { Checkbox, Chip, EmptyState, Illustration, Skeleton, Stagger, SuccessNote, useColors } from "@rsvp/ui";
-import { activeReservationsByItem, arrangeGifts, giftContactDestinations, giftListBlocker, isGiftTaken, isReservationNotActive, isReserveRetryable, maxPriceMinor, MESSAGE_MAX, NAME_MAX, newIdempotencyKey, reserveFailureKind, reserveFailureMessage, reserveFieldErrors, useCancelGiftReservation, useCelebrationBySlug, useGiftList, useMyGiftReservations, usePublicListing, useReserveGiftItem, type GiftItem, type GiftReservation, type GiftSourceFilter, type ListingSummary } from "@rsvp/query-hooks";
+import { activeReservationsByItem, arrangeGifts, giftContactDestinations, giftListBlocker, isGiftTaken, isReservationNotActive, isReserveRetryable, maxPriceMinor, MESSAGE_MAX, NAME_MAX, newIdempotencyKey, reserveFailureKind, reserveFailureMessage, reserveFieldErrors, useCancelGiftReservation, useCelebrationBySlug, leadContextOf, useGiftList, useMyGiftReservations, usePublicListing, useReserveGiftItem, type GiftItem, type GiftReservation, type GiftSourceFilter, type ListingSummary } from "@rsvp/query-hooks";
 import { GuestFrame, type GuestFrameProps } from "./frame";
 import { LinkState, OfflineState } from "./link-states";
 import { ActionButton, ChoiceGroup, ConfirmDialog, Field, Notice, useStyles } from "../host/ui";
@@ -66,6 +66,9 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
   const celebration = useCelebrationBySlug<PublicCelebrationView>(client, slug);
   const celebrationId = celebration.data?.celebrationId;
   const list = useGiftList(client, celebrationId, credential);
+  // R6a: this list is read with the guest's link credential (never the session), and Gift List answers leadContext null to a guest, so
+  // today no ctx is added here. It is wired so a member read (host list, once it shows partner links) uses the same link builder.
+  const leadCtx = leadContextOf(list.data);
   const reserve = useReserveGiftItem(client, celebrationId ?? "", credential);
   const [maxPrice, setMaxPrice] = useState("");
   const [source, setSource] = useState<GiftSourceFilter>("all");
@@ -271,7 +274,7 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
             {listingId ? contact.map((destination) => (
               <ActionButton key={destination} icon="arrow" variant="secondary"
                 label={t(destination === "WHATSAPP" ? "gifts.card.viaWhatsApp" : "gifts.guest.viaPartner")}
-                onPress={() => { void Linking.openURL(partnerRedirectUrl(listingId, { destination, surface: "GIFT_LIST", ...(celebrationId ? { celebrationId } : {}) })); }}
+                onPress={() => { void Linking.openURL((celebrationId ? partnerRedirectUrl(listingId, { destination, surface: "GIFT_LIST", celebrationId, ctx: leadCtx }) : partnerRedirectUrl(listingId, { destination, surface: "GIFT_LIST" }))); }}
                 testID={`${destination === "WHATSAPP" ? "whatsapp" : "partner"}-${item.id}`} />
             )) : null}
             {viaOther ? <ActionButton icon="arrow" variant="secondary" label={t("gifts.card.viaOther")} onPress={() => { void Linking.openURL(viaOther); }} testID={`store-${item.id}`} /> : null}
