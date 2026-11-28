@@ -9,13 +9,32 @@ import { forwardedFor } from "./client-address";
 
 export const REDIRECT_STATUS = 302;
 export const DESTINATIONS = ["OFFICIAL_SITE", "LANDING", "WHATSAPP", "PHONE", "EMAIL", "INSTAGRAM", "PRODUCT_PAGE"] as const;
-export const SURFACES = ["PUBLIC_SITE", "SEARCH", "CELEBRATION_SITE", "GIFT_LIST", "EMAIL", "APP", "QUOTE_FORM"] as const;
 export const CORRELATION_HEADER = "x-correlation-id";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const UTM_PREFIX = "utm_";
-/** Context the backend validates and stores with the lead (RawLeadContext). */
-const CONTEXT_KEYS = ["surface", "celebrationId", "guestId", "locale", "country", "city"] as const;
+/**
+ * Context the backend validates and stores with the lead (RawLeadContext). `ctx` (R6a) is the signed lead context Gift Lists gives
+ * a celebration member: it is forwarded to Provider Catalog unchanged so the member's own click is not billed, and it is never copied
+ * into the partner URL (`withAttribution` only carries utm_* and correlationId). A click always redirects: an empty, oversized or malformed `ctx` is
+ * dropped here (an oversized one would be a 422 INVALID_LEAD_CONTEXT), so the click is evaluated as an ordinary visitor's and still redirects.
+ */
+const CONTEXT_KEYS = ["celebrationId", "guestId", "locale", "country", "city"] as const;
+/**
+ * Where a link was shown (provider-catalog `surface`, 3.8.0). The backend answers 422 to any other value, which would turn a click into an error page,
+ * so an unknown one falls back to the public site: a click always redirects. A test compares this list with the vendored contract.
+ */
+export const SURFACES = ["PUBLIC_SITE", "SEARCH", "CELEBRATION_SITE", "GIFT_LIST", "EMAIL", "APP", "QUOTE_FORM", "PREVIEW"] as const;
+const DEFAULT_SURFACE = "PUBLIC_SITE";
+/**
+ * Provider Catalog (feat/regalos-r6a-leads-v2, server.ts GET /r/:lid) rejects with 422 INVALID_LEAD_CONTEXT only a `ctx` longer than this; any other
+ * value it cannot verify is ignored (the click is billed as a visitor's). The same code is shared by sessionId, surface, celebrationId, guestId, country,
+ * city and referrer, so a 422 is not evidence of a bad `ctx` and the call is NOT retried: the oversized `ctx` is filtered here, before calling.
+ */
+export const MAX_CTX_LENGTH = 512;
+/** A signed token is printable ASCII without spaces; anything else (control characters, spaces) is not one and is not worth a 422. */
+const CTX_SHAPE = /^[\x21-\x7e]+$/;
+
 const BAD_REQUEST = 400;
 const NOT_FOUND = 404;
 const UNPROCESSABLE = 422;
@@ -71,13 +90,22 @@ export async function resolveRedirect(request: RedirectRequest): Promise<Redirec
   const requested = request.searchParams.get("destination");
   const destination = requested !== null && (DESTINATIONS as readonly string[]).includes(requested) ? requested : null;
 
+  const rawCtx = request.searchParams.get("ctx");
+  const ctx = rawCtx !== null && rawCtx.length <= MAX_CTX_LENGTH && CTX_SHAPE.test(rawCtx) ? rawCtx : null;
+  // A ctx the click carried but this route cannot use is dropped (the member's click is then billed as a visitor's). Without a trace a regression of
+  // the frontend or of the backend would be invisible, so one structured line is logged: the reason and the correlation id, never the value.
+  if (rawCtx !== null && rawCtx !== "" && ctx === null) console.warn(JSON.stringify({ event: "partner-redirect.ctx-dropped", reason: rawCtx.length > MAX_CTX_LENGTH ? "too-long" : "malformed", correlationId }));
+
+  const requestedSurface = request.searchParams.get("surface");
+  const surface = requestedSurface !== null && (SURFACES as readonly string[]).includes(requestedSurface) ? requestedSurface : DEFAULT_SURFACE;
   const upstream = new URL(`${apiBaseUrl()}/r/${request.listingId}`);
   if (destination) upstream.searchParams.set("destination", destination);
+  upstream.searchParams.set("surface", surface);
   for (const key of CONTEXT_KEYS) {
     const value = request.searchParams.get(key);
     if (value) upstream.searchParams.set(key, value);
   }
-  if (!upstream.searchParams.has("surface")) upstream.searchParams.set("surface", "PUBLIC_SITE");
+  if (ctx) upstream.searchParams.set("ctx", ctx);
 
   const headers: Record<string, string> = { [CORRELATION_HEADER]: correlationId, ...forwardedFor(request.clientAddress) };
   if (request.userAgent) headers["user-agent"] = request.userAgent;

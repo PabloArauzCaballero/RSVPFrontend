@@ -45,6 +45,8 @@ function GiftRow({ item, first, currencyLocale, onApprove, onReject, approving, 
         <View style={{ flex: 1, minWidth: 0, gap: spacing[1] }}>
           <Text style={styles.itemTitle} numberOfLines={2}>{item.title}</Text>
           <Text style={styles.muted} numberOfLines={1}>{origin}{narrow ? ` · ${price}` : ""}</Text>
+          {(item.quantity ?? 1) > 1 ? <Text style={styles.muted} testID={`gift-quantity-${item.id}`}>{t("gifts.host.wizard.list.quantity", { count: item.quantity ?? 1 })}</Text> : null}
+          {item.groupGiftEnabled ? <Text style={styles.muted} testID={`gift-group-${item.id}`}>{t("gifts.host.wizard.list.group")}</Text> : null}
           {isGiftUnavailable(item) ? <Text style={styles.muted} testID={`gift-unavailable-${item.id}`}>{t("gifts.host.list.unavailableNote")}</Text> : null}
           {item.reservedByName ? <Text style={styles.muted} testID={`gift-by-${item.id}`}>{t("gifts.host.list.reservedBy", { name: item.reservedByName })}</Text> : null}
           {narrow ? <View testID={`gift-status-${item.id}`} style={{ alignSelf: "flex-start", paddingTop: spacing[1] }}><Chip tone={STATUS_TONE[shownStatus(item)]}>{t(`gifts.host.status.${shownStatus(item)}`)}</Chip></View> : null}
@@ -174,6 +176,7 @@ function GiftsBody({ celebrationId, onNavigate }: { readonly celebrationId: stri
       ) : (
         <>
           <GiftFigures items={items} />
+          {list.data?.deliveryNotes ? <Text style={styles.body} testID="gift-delivery-notes">{t("gifts.host.wizard.list.delivery", { notes: list.data.deliveryNotes })}</Text> : null}
           <RequesterVisibility celebrationId={celebrationId} />
           {items.length > 0 ? (
             <View testID="gift-list">
