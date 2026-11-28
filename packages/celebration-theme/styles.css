@@ -272,6 +272,11 @@ body:has(.cdesign-dock) { padding-bottom: 5.5rem; }
 .celebration-design .cdesign-el[data-sized] :is(.celebration-date, .celebration-hosts) { font-size: max(1.1rem, calc(var(--cd-size, 16px) * .3)); }
 .celebration-design .cdesign-el[data-sized] .celebration-venue { font-size: max(1rem, calc(var(--cd-size, 16px) * .22)); }
 
+/* A script face (Allura) is for the title only (PL-FE143-V1): at 15 to 21 px its x-height is 5 to 7 px, so the date, the place, the countdown, the times and the venue names (the facts a guest
+   comes for) keep the body face. Headings at 32 px and up keep the script. */
+.celebration-design[data-heading-face="script"] :is(.celebration-hosts, .celebration-date, .celebration-venue, .celebration-countdown, p, li, time, strong, dt, dd, summary, label, small, a, button, .cdesign-el, .cdesign-cover) { font-family: var(--celebration-body-font); }
+.celebration-design[data-heading-face="script"] :is(h1, h2, h3, .cdesign-monogram) { font-family: var(--celebration-heading-font); }
+
 /* Cover block. The photo and the copy are one block; where the block sits and how wide it is is the document's call. */
 .celebration-design .cdesign-cover { display: grid; gap: 1rem; justify-items: start; align-content: start; }
 /* The photo comes wrapped in a <picture> (AVIF and WebP sources), which would be the grid item instead of the <img>: every rule keyed to `.cdesign-cover-photo`
@@ -290,6 +295,11 @@ body:has(.cdesign-dock) { padding-bottom: 5.5rem; }
   .cdesign-cover[data-variant="classic"] { justify-items: start; text-align: start; }
   .cdesign-cover[data-variant="classic"] .cdesign-cover-copy { justify-items: start; }
 }
+/* The document centres the cover text: the photo (inside its <picture>) and the copy share that axis, also from 34 rem up (PL-FE143-V2). */
+.celebration-design .cdesign-cover[data-align="center"] { justify-items: center; text-align: center; }
+.celebration-design .cdesign-cover[data-align="center"] .cdesign-cover-copy { justify-items: center; }
+.celebration-design .cdesign-cover[data-align="center"][data-variant="classic"] { row-gap: 1.25rem; } /* the arch's ring is 7 px outside the photo: the names do not touch it */
+.celebration-design .cdesign-cover[data-align="center"] picture { display: flex; justify-content: center; width: 100%; }
 .celebration-design .cdesign-intro { width: min(100%, var(--celebration-max-width)); margin: 0 auto .5rem; padding-inline: var(--celebration-space); box-sizing: border-box; }
 .celebration-design .cdesign-intro p { max-width: 40rem; }
 .celebration-design .cdesign-page[data-section="gifts"] .celebration-cta, .celebration-design .cdesign-page[data-section="rsvp"] .celebration-cta { width: 100%; max-width: 22rem; }
