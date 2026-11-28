@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { createApiClient } from "@rsvp/api-client";
-import { IdentityClient, classifyAuthError, fieldErrorsOf, isInvalidLink, loginSchema, passwordResetSchema, recoverySchema, registerSchema, validate, validateRegistration } from "../src/index.js";
+import { IdentityClient, classifyAuthError, fieldErrorsOf, isInvalidLink, loginSchema, passwordResetSchema, recoverySchema, registerSchema, registrationAccountSchema, registrationCodeSchema, registrationContactSchema, registrationEmailSchema, registrationPasswordSchema, validate, validateRegistration, validateRegistrationAccount } from "../src/index.js";
 import { tokens } from "./helpers.js";
 
 const json = (status: number, body: unknown, type = "application/json"): Response => new Response(status === 204 ? null : JSON.stringify(body), { status, headers: { "content-type": type } });
@@ -50,7 +50,7 @@ describe("schemas", () => {
     expect(validate(loginSchema, { email: " a@b.co ", password: "x" })).toMatchObject({ ok: true, value: { email: "a@b.co" } });
   });
   it("register enforces the 12-character and 72-byte password policy and excludes ADMIN", () => {
-    const base = { role: "HOST", givenName: "Ana", familyName: "Rojas", phone: "+591 7123 4567", city: "La Paz", passwordConfirmation: "x" };
+    const base = { role: "HOST", givenName: "Ana", familyName: "Rojas", phone: "+591 7123 4567", city: "La Paz" };
     expect(validate(registerSchema, { ...base, email: "", password: "" })).toEqual({ ok: false, errors: { email: "required", password: "required" } });
     expect(validate(registerSchema, { ...base, email: "a@b.co", password: "short" })).toEqual({ ok: false, errors: { password: "passwordShort" } });
     expect(validate(registerSchema, { ...base, email: "a@b.co", password: "ñ".repeat(40) })).toEqual({ ok: false, errors: { password: "passwordBytes" } });
@@ -58,7 +58,7 @@ describe("schemas", () => {
     expect(validate(registerSchema, { ...base, email: "a@b.co", password: "correct-horse-battery", role: "PROVIDER" }).ok).toBe(true);
   });
   it("register requires the profile and normalises the phone to E.164", () => {
-    const access = { email: "a@b.co", password: "correct-horse-battery", passwordConfirmation: "correct-horse-battery" };
+    const access = { email: "a@b.co", password: "correct-horse-battery" };
     const empty = validateRegistration({ role: "HOST", givenName: " ", familyName: "", phone: "+591 ", city: "", ...access });
     expect(empty).toEqual({ ok: false, errors: { givenName: "required", familyName: "required", phone: "required", city: "required" } });
     const ok = validateRegistration({ role: "HOST", givenName: " Ana ", familyName: "Rojas", phone: "+591 (7) 123-4567", city: "Sucre", ...access });
@@ -66,12 +66,51 @@ describe("schemas", () => {
     expect(validateRegistration({ role: "HOST", givenName: "A", familyName: "R", phone: "71234567", city: "Sucre", ...access })).toEqual({ ok: false, errors: { phone: "invalidPhone" } });
     expect(validateRegistration({ role: "HOST", givenName: "x".repeat(81), familyName: "R", phone: "+59171234567", city: "Sucre", ...access })).toEqual({ ok: false, errors: { givenName: "tooLong" } });
   });
-  it("register reports cross-field rules together with field errors (a planner needs the company; passwords must match)", () => {
-    const result = validateRegistration({ role: "PLANNER", organizationName: " ", givenName: "", familyName: "R", phone: "+59171234567", city: "Sucre", email: "a@b.co", password: "correct-horse-battery", passwordConfirmation: "other-horse-battery" });
-    expect(result).toEqual({ ok: false, errors: { organizationName: "required", passwordConfirmation: "passwordMismatch", givenName: "required" } });
-    const filled = { givenName: "A", familyName: "R", phone: "+59171234567", city: "Sucre", email: "a@b.co", password: "correct-horse-battery", passwordConfirmation: "correct-horse-battery" };
+  it("register reports the cross-field rule together with field errors (a planner needs the company); there is one password and no confirmation", () => {
+    const result = validateRegistration({ role: "PLANNER", organizationName: " ", givenName: "", familyName: "R", phone: "+59171234567", city: "Sucre", email: "a@b.co", password: "correct-horse-battery" });
+    expect(result).toEqual({ ok: false, errors: { organizationName: "required", givenName: "required" } });
+    const filled = { givenName: "A", familyName: "R", phone: "+59171234567", city: "Sucre", email: "a@b.co", password: "correct-horse-battery" };
+    expect("passwordConfirmation" in registerSchema.shape).toBe(false);
     expect(validateRegistration({ role: "HOST", organizationName: "", ...filled }).ok).toBe(true);
     expect(validateRegistration({ role: "PROVIDER", organizationName: "", ...filled }).ok).toBe(true);
+  });
+  it("MV-D2: every sign-up step has its own schema, so a step is checked when the person leaves it", () => {
+    expect(validate(registrationEmailSchema, { email: " ana@example.com " })).toMatchObject({ ok: true, value: { email: "ana@example.com" } });
+    expect(validate(registrationEmailSchema, { email: "nope" })).toEqual({ ok: false, errors: { email: "invalidEmail" } });
+    expect(validate(registrationCodeSchema, { code: "" })).toEqual({ ok: false, errors: { code: "required" } });
+    expect(validate(registrationCodeSchema, { code: "12345" })).toEqual({ ok: false, errors: { code: "invalidCode" } });
+    expect(validate(registrationCodeSchema, { code: "1234567" })).toEqual({ ok: false, errors: { code: "invalidCode" } });
+    expect(validate(registrationCodeSchema, { code: "12a456" })).toEqual({ ok: false, errors: { code: "invalidCode" } });
+    expect(validate(registrationCodeSchema, { code: "123 456" })).toMatchObject({ ok: true, value: { code: "123456" } });
+    expect(validate(registrationAccountSchema, { role: "ADMIN", givenName: "A", familyName: "R" }).ok).toBe(false);
+    expect(validate(registrationAccountSchema, { role: "PROVIDER", givenName: "A", familyName: "R" })).toMatchObject({ ok: true, value: { organizationName: "" } });
+    expect(validateRegistrationAccount({ role: "PLANNER", organizationName: " ", givenName: "A", familyName: "R" })).toEqual({ ok: false, errors: { organizationName: "required" } });
+    expect(validate(registrationContactSchema, { phone: "+591 ", city: "" })).toEqual({ ok: false, errors: { phone: "required", city: "required" } });
+    expect(validate(registrationContactSchema, { phone: "+591 7123 4567", city: "Sucre" })).toMatchObject({ ok: true, value: { phone: "+59171234567", country: "BO" } });
+    expect(validate(registrationPasswordSchema, { password: "short" })).toEqual({ ok: false, errors: { password: "passwordShort" } });
+    expect(validate(registrationPasswordSchema, { password: "correct-horse-battery" })).toMatchObject({ ok: true, value: { marketingOptIn: false } });
+  });
+  it("2.3.0: asking for a code and checking it call the documented endpoints; the proof travels in the body of register and never in a URL", async () => {
+    const fetchFn = vi.fn(async (url: string) => (url.endsWith("/verify") ? json(200, { proof: "p".repeat(43), expiresIn: 1800 }) : url.endsWith("/register") ? json(201, { id: "i", email: "a@b.co", roles: ["HOST"], ...tokens(), tokenType: "Bearer" }) : new Response(null, { status: 202 }))) as unknown as typeof fetch;
+    const client = clientWith(fetchFn);
+    await expect(client.requestRegistrationEmailCode("a@b.co", "es-BO")).resolves.toBeUndefined();
+    await expect(client.verifyRegistrationEmailCode("a@b.co", "123456")).resolves.toEqual({ proof: "p".repeat(43), expiresIn: 1800 });
+    await client.register({ email: "a@b.co", password: "correct-horse-battery", role: "HOST", registrationProof: "p".repeat(43) });
+    const [ask, verify, register] = [0, 1, 2].map((index) => (fetchFn as unknown as ReturnType<typeof vi.fn>).mock.calls[index] as [string, RequestInit]);
+    expect(ask[0]).toBe("http://gw/identity/auth/registration/email-code");
+    expect(JSON.parse(String(ask[1].body))).toEqual({ email: "a@b.co" });
+    expect(new Headers(ask[1].headers).get("accept-language")).toBe("es-BO");
+    expect(verify[0]).toBe("http://gw/identity/auth/registration/email-code/verify");
+    expect(JSON.parse(String(verify[1].body))).toEqual({ email: "a@b.co", code: "123456" });
+    expect(register[0]).toBe("http://gw/identity/auth/register");
+    expect(JSON.parse(String(register[1].body))).toMatchObject({ registrationProof: "p".repeat(43) });
+    for (const [url] of [ask, verify, register]) expect(url).not.toMatch(/[?]|a@b\.co|p{10}/);
+  });
+  it("2.3.0: a wrong or expired code is the same 422 on `code`, and a spent or expired proof is a 422 on `registrationProof`", async () => {
+    const wrong = await clientWith((async () => json(422, { title: "Invalid", status: 422, errors: [{ field: "code", message: "invalid" }] }, "application/problem+json")) as unknown as typeof fetch).verifyRegistrationEmailCode("a@b.co", "000000").catch((e: unknown) => e);
+    expect(fieldErrorsOf(wrong)).toEqual({ code: "invalid" });
+    const spent = await clientWith((async () => json(422, { title: "Invalid", status: 422, errors: [{ field: "registrationProof", message: "invalid" }] }, "application/problem+json")) as unknown as typeof fetch).register({ email: "a@b.co", password: "correct-horse-battery", role: "HOST", registrationProof: "x" }).catch((e: unknown) => e);
+    expect("registrationProof" in fieldErrorsOf(spent)).toBe(true);
   });
   it("recovery only needs an e-mail", () => { expect(validate(recoverySchema, { email: "a@b.co" }).ok).toBe(true); });
 

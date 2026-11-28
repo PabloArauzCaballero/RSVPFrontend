@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useSyncExternalStore, type PropsWithChildren, type ReactNode } from "react";
-import { IdentityClient, type SessionManager, type AuthState, type LoginInput, type PasswordRecoveryInput, type PasswordResetInput, type RegisterInput, type Session } from "@rsvp/auth";
+import { IdentityClient, type SessionManager, type AuthState, type LoginInput, type PasswordRecoveryInput, type PasswordResetInput, type RegisterInput, type RegistrationLocale, type RegistrationProof, type Session } from "@rsvp/auth";
 import type { ApiClient } from "@rsvp/api-client";
 import { claimsOf, type SessionClaims } from "../platform/session";
 
@@ -9,6 +9,10 @@ export interface AuthApi {
   readonly claims: SessionClaims;
   signIn(input: LoginInput): Promise<Session>;
   register(input: RegisterInput, prepare?: (session: Session) => Promise<void>): Promise<Session>;
+  /** Sign-up step 1 (Identity 2.3.0): always resolves for a well-formed address, whether or not it has an account. */
+  requestRegistrationEmailCode(email: string, locale?: RegistrationLocale): Promise<void>;
+  /** Sign-up step 1: the right 6-digit code answers a single-use proof; every other case is one identical 422. */
+  verifyRegistrationEmailCode(email: string, code: string): Promise<RegistrationProof>;
   requestRecovery(input: PasswordRecoveryInput): Promise<void>;
   /** Sets the new password from a recovery link. Identity ends every session, so this one is closed too. */
   resetPassword(input: PasswordResetInput): Promise<void>;
@@ -38,6 +42,8 @@ export function AuthProvider({ manager, identityClient, children }: PropsWithChi
       state, claims: claimsOf(state.session),
       signIn: (input) => manager.signIn(input),
       register: (input, prepare) => manager.register(input, prepare),
+      requestRegistrationEmailCode: (email, locale) => identity.requestRegistrationEmailCode(email, locale),
+      verifyRegistrationEmailCode: (email, code) => identity.verifyRegistrationEmailCode(email, code),
       requestRecovery: (input) => identity.requestPasswordRecovery(input),
       resetPassword: async (input) => { await identity.resetPassword(input); await manager.logout().catch(() => undefined); },
       confirmEmail: async (token) => { await identity.confirmEmail(token); if (manager.getState().session) await manager.refresh().catch(() => undefined); },
@@ -60,6 +66,8 @@ export function StaticAuthProvider({ claims, children }: PropsWithChildren<{ rea
     claims,
     signIn: async () => { throw new Error("Static session"); },
     register: async () => { throw new Error("Static session"); },
+    requestRegistrationEmailCode: async () => { throw new Error("Static session"); },
+    verifyRegistrationEmailCode: async () => { throw new Error("Static session"); },
     requestRecovery: async () => undefined,
     resetPassword: async () => undefined,
     confirmEmail: async () => undefined,

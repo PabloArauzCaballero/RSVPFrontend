@@ -119,7 +119,7 @@ function authPastel(name: IllustrationName): "blue" | undefined {
 }
 
 /** Wide: a quiet editorial column (logo, serif pitch, one line illustration) beside the form. Narrow: a plain header with the logo, then the form. */
-export function AuthLayout({ title, intro, illustration = "invitation", children }: PropsWithChildren<{ readonly title: string; readonly intro: string; /** Line illustration, decorative: large in the editorial column on wide screens and small beside the logo on a phone (MV-D4). */ readonly illustration?: IllustrationName }>): ReactNode {
+export function AuthLayout({ title, intro, illustration = "invitation", progress, children }: PropsWithChildren<{ readonly title: string; readonly intro: string; /** Line illustration, decorative: large in the editorial column on wide screens and small beside the logo on a phone (MV-D4). */ readonly illustration?: IllustrationName; /** A progress bar kept above the title (the sign-up steps, MV-D2). */ readonly progress?: ReactNode }>): ReactNode {
   const authStyles = useAuthStyles();
   const t = useT();
   const { width } = useWindowDimensions();
@@ -141,6 +141,7 @@ export function AuthLayout({ title, intro, illustration = "invitation", children
       <ScrollView role="main" tabIndex={0} style={[authStyles.panel, !wide && authStyles.panelNarrow, wide && Platform.OS === "web" && authStyles.panelWide]} contentContainerStyle={[authStyles.panelContent, wide ? authStyles.panelContentWide : authStyles.panelContentNarrow]} keyboardShouldPersistTaps="handled">
         {wide ? null : <View style={[authStyles.column, authStyles.narrowHead]}><Logo tone="auto" height={28} /><Illustration name={illustration} tone="auto" size="sm" pastel={authPastel(illustration)} /></View>}
         <View style={authStyles.column}>
+          {progress}
           <Enter from="down"><View style={{ gap: spacing[3] }}>
             <Text accessibilityRole="header" aria-level={1} style={authStyles.title}>{title}</Text>
             <Text style={authStyles.intro}>{intro}</Text>

@@ -14,7 +14,15 @@ export interface RegisterInput extends LoginInput {
    */
   givenName?: string; familyName?: string; phone?: string; country?: string; city?: string;
   locale?: "es-BO" | "en-US"; timeZone?: string; marketingOptIn?: boolean;
+  /**
+   * Identity 2.3.0: the `proof` of {@link IdentityClient.verifyRegistrationEmailCode} for this same e-mail. With it the account is born
+   * with its e-mail verified. Single use: never put it in a URL, a log or storage.
+   */
+  registrationProof?: string;
 }
+/** Answer of the code check: a single-use proof (30 minutes by default) bound to the verified address. */
+export interface RegistrationProof { proof: string; expiresIn: number; }
+export type RegistrationLocale = "es-BO" | "en-US";
 export interface PasswordRecoveryInput { email: string; }
 /** `token` is the `token` query parameter of the e-mail link. */
 export interface PasswordResetInput { token: string; newPassword: string; }
@@ -36,6 +44,17 @@ export class IdentityClient {
   async login(input: LoginInput): Promise<Session> { return sessionFromTokens(await this.api.request<TokenPair, LoginInput>("/identity/auth/login", { method: "POST", body: input, auth: false, headers: this.headers })); }
   /** 201 returns the account (`id`, `email`, `roles`) plus a ready session. */
   async register(input: RegisterInput): Promise<Session> { return sessionFromTokens(await this.api.request<TokenPair, RegisterInput>("/identity/auth/register", { method: "POST", body: input, auth: false, headers: this.headers })); }
+  /**
+   * First step of sign-up (2.3.0). Identity answers 202 with an empty body for a well-formed address whether or not it has an account,
+   * and also when a send limit applies: nothing here may depend on which. `locale` picks the language of the e-mail (Accept-Language).
+   */
+  async requestRegistrationEmailCode(email: string, locale?: RegistrationLocale): Promise<void> {
+    await this.api.request<void, { email: string }>("/identity/auth/registration/email-code", { method: "POST", body: { email }, auth: false, ...(locale ? { headers: { "accept-language": locale } } : {}) });
+  }
+  /** Second step (2.3.0): 200 with the proof for the right code; one identical 422 on `code` for every other case. */
+  async verifyRegistrationEmailCode(email: string, code: string): Promise<RegistrationProof> {
+    return this.api.request<RegistrationProof, { email: string; code: string }>("/identity/auth/registration/email-code/verify", { method: "POST", body: { email, code }, auth: false });
+  }
   async refresh(refreshToken: string, correlationId: string): Promise<TokenPair> {
     const headers = { ...this.headers, "x-correlation-id": correlationId };
     if (this.transport === "cookie") return this.api.request<TokenPair>("/identity/auth/refresh", { method: "POST", auth: false, headers });
