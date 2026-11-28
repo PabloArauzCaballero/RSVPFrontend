@@ -1,6 +1,6 @@
 # MV-B1 · Paso 3 del flujo móvil vacío
 
-Corrige (parcialmente, ver «Límites»): MV-B1. Rama `fix/mv-b1-paso3-vacio`, apilada sobre `fix/mv-b1-pantalla-opacidad-cero` (FE #159, 27bc0121). No abre PR; espera la decisión de Pablo sobre `useNativeDriver`.
+Corrige (parcialmente, ver «Límites»): MV-B1. Rama `fix/mv-b1-paso3-vacio`, apilada sobre `fix/mv-b1-pantalla-opacidad-cero` (FE #159, 27bc0121). Va en FE #177 (junto a otros cambios móviles). No está probado en dispositivo. La decisión de `useNativeDriver:false` sigue siendo de Pablo, y el dueño decide si este arreglo cuenta como el «paso 3» de DECISIONES-2026-11-28.
 
 ## Causa raíz (lo que se demostró y lo que no)
 
