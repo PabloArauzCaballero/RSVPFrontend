@@ -47,3 +47,9 @@ iOS/Android y dispositivo real; teclado virtual móvil; VoiceOver/TalkBack; Kong
 ## Reversión
 
 Revertir el PR: el backend sigue aceptando el registro sin prueba mientras `IDENTITY_REGISTER_REQUIRES_EMAIL_PROOF=false`. Si ya estuviera en `true`, ponerla en `false` antes de desplegar el frontend anterior.
+
+## Revisión independiente (correcciones del 28-11)
+
+- Los scripts vivos que llenaban el formulario de una página (`live/auth-buttons.mjs`, `live/responsive/auth.mjs`, `auth-e2e.mjs`, `auth-e2e-kong.mjs`) ahora usan `live/register-steps.mjs` (necesitan `MAIL_URL`) y ya no dan por bueno el 409 en pantalla. **Solo se comprobó su sintaxis (`node --check`); NO se reejecutaron** (necesitan Kong/mundo de prueba que este entorno no tiene).
+- La prueba jsdom de «idéntico nuevo/existente» es estructural (tautológica con un doble de prueba); la prueba real es L2 en Chromium contra el servicio real.
+- `registro-backend-local.mjs` ya no tiene contraseña por omisión: exige `IDENTITY_DB_PASSWORD`.

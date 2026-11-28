@@ -4,6 +4,7 @@
 // The app must be exported with EXPO_PUBLIC_API_URL=$API and served on an origin the gateway CORS allows (3200).
 // Faults the real backend cannot produce on demand (429 + Retry-After, 500, 403, dead network) are injected at the
 // browser boundary with page.route; everything else (401, 409, 422, 202, tokens, roles) is decided by Identity.
+import { registerThroughSteps } from "./register-steps.mjs";
 import assert from "node:assert/strict";
 import { chromium } from "playwright";
 
@@ -241,95 +242,19 @@ console.log("\n== Login links ==");
 }
 
 // ---------------------------------------------------------------- REGISTER
-console.log("\n== Register ==");
-{
-  const h = await open(); const { page } = h;
-  await go(page, "/registro");
-  await byId(page, "register-submit").waitFor();
-  const existing = uniq("dup"); await registerApi(existing);
-
-  await check("register-submit · ERROR 409 existing email: tells the person what to do, form intact", async () => {
-    await fillId(page, "register-email", existing); await fillId(page, "register-password", PASSWORD);
-    await byId(page, "register-submit").click();
-    await text(page, MSG.taken).waitFor();
-    assert.equal(await byId(page, "register-email").inputValue(), existing);
-    assert.equal(await byId(page, "register-submit").isEnabled(), true);
+// MV-D2: the sign-up has four steps and proves the e-mail with a code first, so the one-page form's buttons (and its 409 "e-mail taken"
+// answer, which the screen no longer shows) are gone. The steps, the neutral step 1, the code errors and the final submit are checked by
+// `registro-4-pasos.mjs`. Here: one valid sign-up per role through the steps, with the account and its roles confirmed by Identity.
+console.log("\n== Register (4 steps) ==");
+for (const [role, path] of [["HOST", /\/onboarding\/1/], ["PLANNER", /\/onboarding\/1/], ["PROVIDER", /\/portal/]]) {
+  await check(`register · VALID ${role} through the four steps lands on its first screen; token roles match`, async () => {
+    const hh = await open(); const email = uniq(role.toLowerCase());
+    await registerThroughSteps(hh.page, { app: APP, email, password: PASSWORD, role, organization: role === "PLANNER" ? "Eventos Illimani" : "" });
+    await waitPath(hh.page, path);
+    const direct = await apiJson("POST", "/identity/auth/login", { email, password: PASSWORD });
+    assert.equal(direct.status, 200); assert.deepEqual(rolesOf(direct.body.accessToken), [role]);
+    await hh.context.close();
   });
-  await check("register-submit · ERROR 409 differing only in case/padding is the same account", async () => {
-    await fillId(page, "register-email", ` ${existing.toUpperCase()} `);
-    await byId(page, "register-submit").click(); await text(page, MSG.taken).waitFor();
-  });
-  await check("register-submit · ERROR 422 from server surfaces a retryable validation message", async () => {
-    h.state.faults.push({ match: "POST /identity/auth/register", status: 422 });
-    await fillId(page, "register-email", uniq("v422"));
-    await byId(page, "register-submit").click(); await text(page, /Algunos datos no son válidos/).waitFor();
-  });
-  await check("register-submit · ERROR 429 + Retry-After blocks and recovers", async () => {
-    h.state.faults.push({ match: "POST /identity/auth/register", status: 429, headers: { "retry-after": "2" } });
-    await byId(page, "register-submit").click();
-    await text(page, /Hubo muchos intentos/).waitFor();
-    await page.waitForFunction(() => [...document.querySelectorAll('[data-testid="register-submit"]')].some((e) => e.offsetParent && e.getAttribute("aria-disabled") !== "true"), null, { timeout: 8000 });
-  });
-  await check("register-submit · ERROR network down shows offline message", async () => {
-    h.state.faults.push({ match: "POST /identity/auth/register", abort: true });
-    await byId(page, "register-submit").click(); await text(page, MSG.offline).waitFor();
-  });
-  await check("register-submit · LIMIT password 11 chars rejected, 12 accepted by the rule (server agrees at 12)", async () => {
-    await fillId(page, "register-password", "a".repeat(11));
-    await byId(page, "register-submit").click(); await text(page, MSG.short).waitFor();
-    const direct = await apiJson("POST", "/identity/auth/register", { email: uniq("p11"), password: "a".repeat(11), role: "HOST" });
-    assert.equal(direct.status, 422, "server rejects 11 too");
-  });
-  await check("register-submit · LIMIT password 73 bytes rejected client-side (server also 422), 37 x 2-byte unicode = 74 bytes rejected", async () => {
-    await fillId(page, "register-password", "b".repeat(73));
-    await byId(page, "register-submit").click(); await text(page, MSG.bytes).waitFor();
-    await fillId(page, "register-password", "ñ".repeat(37));
-    await byId(page, "register-submit").click(); await text(page, MSG.bytes).waitFor();
-    assert.equal((await apiJson("POST", "/identity/auth/register", { email: uniq("p73"), password: "b".repeat(73), role: "HOST" })).status, 422);
-  });
-  await check("register-submit · LIMIT empty form: required + short errors, no request", async () => {
-    await fillId(page, "register-email", ""); await fillId(page, "register-password", "");
-    const before = h.count("/identity/auth/register");
-    await byId(page, "register-submit").click(); await text(page, MSG.required).waitFor();
-    assert.equal(h.count("/identity/auth/register"), before);
-  });
-  await check("register-submit · LIMIT double click with request in flight creates exactly one account", async () => {
-    h.state.delayMs = 1200;
-    const email = uniq("dbl");
-    await fillId(page, "register-email", email); await fillId(page, "register-password", "a".repeat(72));
-    const before = h.count("POST /identity/auth/register");
-    await byId(page, "register-submit").dblclick();
-    await waitPath(page, /\/onboarding\/1/);
-    h.state.delayMs = 0;
-    assert.equal(h.count("POST /identity/auth/register") - before, 1);
-    assert.equal((await apiJson("POST", "/identity/auth/login", { email, password: "a".repeat(72) })).status, 200, "72-byte password works for login");
-  });
-  await h.context.close();
-}
-{
-  const h = await open(); const { page } = h;
-  await go(page, "/registro"); await byId(page, "register-submit").waitFor();
-  await check("role radios · only HOST, PLANNER, PROVIDER offered (ADMIN never self-service); exactly one selected", async () => {
-    const rows = await page.locator('[role="radio"]').evaluateAll((els) => els.filter((e) => e.offsetParent).map((e) => [e.getAttribute("aria-label") ?? "", e.getAttribute("aria-checked")]));
-    const roles = rows.filter(([name]) => /Organizo una celebración|Ayudo a organizar|Ofrezco servicios|Administrador/.test(name));
-    assert.equal(roles.length, 3, JSON.stringify(rows)); assert.ok(!roles.some(([name]) => /Administrador/.test(name)));
-    assert.equal(roles.filter(([, checked]) => checked === "true").length, 1);
-  });
-  await check("register-submit · VALID per role: HOST/PLANNER → /onboarding/1 (first step of the invitation), PROVIDER → /portal; token roles match; Enter submits", async () => {
-    for (const [role, label, path] of [["PLANNER", /Ayudo a organizar/, /\/onboarding\/1/], ["PROVIDER", /Ofrezco servicios/, /\/portal/]]) {
-      const hh = await open(); await go(hh.page, "/registro");
-      const email = uniq(role.toLowerCase());
-      await fillId(hh.page, "register-email", email); await fillId(hh.page, "register-password", PASSWORD);
-      await hh.page.getByRole("radio", { name: label }).filter({ visible: true }).click();
-      assert.equal(await hh.page.getByRole("radio", { name: label }).filter({ visible: true }).getAttribute("aria-checked"), "true");
-      await byId(hh.page, "register-password").press("Enter");
-      await waitPath(hh.page, path);
-      const direct = await apiJson("POST", "/identity/auth/login", { email, password: PASSWORD });
-      assert.equal(direct.status, 200); assert.deepEqual(rolesOf(direct.body.accessToken), [role]);
-      await hh.context.close();
-    }
-  });
-  await h.context.close();
 }
 
 // ---------------------------------------------------------------- RECOVERY

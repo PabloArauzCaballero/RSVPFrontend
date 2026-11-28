@@ -19,7 +19,7 @@ export const enUS = {
       progress: "Your sign-up", step: "Step {{step}} of 4", back: "Back", next: "Next",
       stepLabels: { email: "Your email", account: "Your account", contact: "How to reach you", access: "Your sign-in" },
       email: { title: "Let's start with your email", intro: "We send you a 6-digit code to check the email is yours.", send: "Send code", sending: "Sending…" },
-      code: { title: "Check your email", intro: "If the email is valid, we sent you a 6-digit code. Type it here; it lasts 10 minutes.", forEmail: "Email: {{email}}", label: "6-digit code", verify: "Verify code", verifying: "Verifying…", invalid: "Wrong or expired code. Ask for a new one.", resend: "Send another code", resendIn: "Send another code in {{seconds}} s", resent: "Done. If the email is valid, we sent you another code.", change: "Change the email", proofExpired: "The email check expired. Ask for a new code to continue." },
+      code: { title: "Check your email", intro: "If the email is valid, we sent you a 6-digit code. Type it here.", forEmail: "Email: {{email}}", label: "6-digit code", verify: "Verify code", verifying: "Verifying…", invalid: "Wrong or expired code. Ask for a new one.", resend: "Send another code", resendIn: "Send another code in {{seconds}} s", resent: "Done. If the email is valid, we sent you another code.", change: "Change the email", proofExpired: "The email check expired. Ask for a new code to continue." },
       haveAccount: "I already have an account, sign in",
       account: { title: "Tell us who you are", intro: "Choose how you will use DOne and tell us your name." },
       contact: { title: "How can we reach you?", intro: "We only ask for your mobile phone and your city." },

@@ -5,11 +5,12 @@
 // the way a person reads it in their mailbox.
 //
 //   BACKEND_DIR=<RSVPBackend clone, built: identity jar + notification dist + node_modules> \
-//   PG_ADMIN_URL=postgresql://<admin>:<password>@127.0.0.1:5432/postgres \
+//   PG_ADMIN_URL=postgresql://<admin>:<password>@127.0.0.1:5432/postgres IDENTITY_DB_PASSWORD=<password of the identity role> \
 //   ALLOW_ORIGIN=http://localhost:18101 PORT=18100 node apps/universal/scripts/live/registro-backend-local.mjs
 //
 // Prints "READY <api origin>" when the stack accepts requests and stops cleanly on SIGINT/SIGTERM (drops its databases and queues).
-// Nothing here is a credential: every secret is generated per run; the admin URL comes from the environment and is never printed.
+// Every secret of the run is generated per run; the Postgres admin URL and the password of Identity's database role come from the environment
+// (PG_ADMIN_URL, IDENTITY_DB_PASSWORD) and are never printed or defaulted: the run stops if either is missing.
 import { createRequire } from "node:module";
 import { createServer, request as httpRequest } from "node:http";
 import { spawn } from "node:child_process";
@@ -17,7 +18,8 @@ import { randomBytes, randomUUID } from "node:crypto";
 
 const backend = process.env.BACKEND_DIR;
 const adminUrl = process.env.PG_ADMIN_URL;
-if (!backend || !adminUrl) throw new Error("Set BACKEND_DIR and PG_ADMIN_URL");
+const identityPassword = process.env.IDENTITY_DB_PASSWORD;
+if (!backend || !adminUrl || !identityPassword) throw new Error("Set BACKEND_DIR, PG_ADMIN_URL and IDENTITY_DB_PASSWORD");
 const port = Number(process.env.PORT ?? 18100);
 const identityPort = Number(process.env.IDENTITY_PORT ?? port + 80);
 const allowedOrigin = process.env.ALLOW_ORIGIN ?? "http://localhost:18101";
@@ -61,7 +63,7 @@ const bus = await NotificationBus.connect(rabbit, store, { queue: `${queue}.busi
 const jar = `${backend}/apps/identity-service/build/libs/identity-service.jar`;
 const identity = spawn("java", ["-jar", jar], {
   env: { ...process.env, PORT: String(identityPort), IDENTITY_ENVIRONMENT: "local", IDENTITY_DATABASE_URL: `jdbc:postgresql://127.0.0.1:5432/${identityDb}`, IDENTITY_DATABASE_USER: identityRole,
-    IDENTITY_DATABASE_PASSWORD: process.env.IDENTITY_DB_PASSWORD ?? "local-identity-password", IDENTITY_REDIS_URL: redis, IDENTITY_RABBITMQ_URL: rabbit,
+    IDENTITY_DATABASE_PASSWORD: identityPassword, IDENTITY_REDIS_URL: redis, IDENTITY_RABBITMQ_URL: rabbit,
     IDENTITY_PROFILE_ENCRYPTION_KEY: randomBytes(32).toString("base64"), IDENTITY_REGISTRATION_CODE_PEPPER: randomBytes(32).toString("hex"),
     IDENTITY_BCRYPT_STRENGTH: "4", IDENTITY_COOKIE_SECURE: "false", IDENTITY_OUTBOX_POLL_MS: "200", IDENTITY_PUBLIC_APP_URL: allowedOrigin }, stdio: ["ignore", "ignore", "ignore"]
 });

@@ -2,11 +2,11 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testi
 import { QueryClient } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { IdentityClient, SessionManager, createMemorySessionStore, type Role } from "@rsvp/auth";
-import { ILLUSTRATIONS, illustrationColors } from "../../../packages/ui/src/illustrations";
+import { ILLUSTRATIONS, ILLUSTRATION_GROUPS, ILLUSTRATION_PASTEL } from "../../../packages/ui/src/illustrations";
 import { tones } from "@rsvp/design-tokens";
 import { LoginScreen, RegisterScreen } from "../src/auth/screens";
 import { AppProviders, type AppRuntime } from "../src/platform/providers";
-import { clearLoginEmail, clearRegistrationDraft, readRegistrationDraft } from "../src/auth/registration-draft";
+import { EMPTY_REGISTRATION_DRAFT, clearLoginEmail, clearRegistrationDraft, readRegistrationDraft, writeRegistrationDraft } from "../src/auth/registration-draft";
 import { resetSecureStore } from "./stubs/expo-secure-store";
 import { fakeClient, HttpFailure, type Handler } from "./support";
 
@@ -82,12 +82,12 @@ describe("MV-D2 · step 1: e-mail, then the 6-digit code", () => {
     expect(calls).toHaveLength(1);
     expect(calls[0]).toMatchObject({ method: "POST", path: "/identity/auth/registration/email-code", body: { email: EMAIL } });
     expect(calls[0]?.headers.get("accept-language")).toBe("es-BO");
-    expect(screen.getByText("Si el correo es válido, te enviamos un código de 6 dígitos. Escríbelo aquí; dura 10 minutos.")).toBeTruthy();
+    expect(screen.getByText("Si el correo es válido, te enviamos un código de 6 dígitos. Escríbelo aquí.")).toBeTruthy();
     const field = screen.getByLabelText("Código de 6 dígitos") as HTMLInputElement;
     expect(field.getAttribute("autocomplete")).toBe("one-time-code");
     expect(field.getAttribute("inputmode")).toBe("numeric");
   });
-  it("MV-D3: the screen after asking for a code is identical for a new and for an existing address (same text, same controls)", async () => {
+  it("MV-D3 (structural only): the code screen has no branch on the answer, so two renders with the same 202 are identical. This does NOT prove Identity answers alike: that is L2 in registro-4-pasos.mjs, in Chrome against the real service", async () => {
     // Identity answers the same bare 202 for both; the screen has nothing else to go on. The live run repeats this against the real service.
     const snapshotFor = async (email: string): Promise<string> => {
       const { view } = setup();
@@ -331,11 +331,13 @@ describe("MV-D2 · the draft lives in memory only (R6, PF-1)", () => {
     expect(window.location.href).not.toMatch(/@|123456|p{20}/);
     setItem.mockRestore();
   });
-  it("a draft that has no proof never starts past step 1", () => {
-    setup(undefined);
-    cleanup();
-    const stored = readRegistrationDraft();
-    expect(stored?.step).toBe(1);
+  it("a restored draft past step 1 without a proof degrades to step 1 and keeps what was typed (it cannot reach the last button without a verified e-mail)", () => {
+    writeRegistrationDraft({ ...EMPTY_REGISTRATION_DRAFT, step: 3, proof: null, email: EMAIL, givenName: "Ana", familyName: "Rojas", city: "La Paz" });
+    setup();
+    expect(step()).toBe("1");
+    expect((screen.getByLabelText("Correo") as HTMLInputElement).value).toBe(EMAIL);
+    expect(screen.getByRole("button", { name: "Enviar código" })).toBeTruthy();
+    expect(readRegistrationDraft()).toMatchObject({ step: 1, givenName: "Ana" });
   });
 });
 
@@ -402,12 +404,16 @@ describe("MV-D2 · accessibility, focus and the figure of each step", () => {
     expect(html).not.toContain(tones.light.yellow.bg.toUpperCase());
     expect(html).not.toContain(tones.dark.yellow.bg.toUpperCase());
   });
-  it("the four new drawings follow the scene grammar, use the blue pastel and have no eye-and-mouth marks", () => {
+  it("the four new drawings follow the scene grammar, carry exactly ONE pastel piece, use the blue group and contain no eye-sized dots (no faces)", () => {
+    const smallCircle = /a(\d+(?:\.\d+)?) \1 0 1 0/g;
     for (const name of ["emailCode", "nameBadge", "cityPin", "accessKey"] as const) {
-      const layers = ILLUSTRATIONS[name].map((shape) => shape.layer);
-      expect(layers.slice(0, 2)).toEqual(["ground", "shadow"]);
-      expect(layers.filter((layer) => layer === "soft").length).toBeGreaterThanOrEqual(1);
-      expect(illustrationColors("ink", "blue").soft).toBe(tones.light.blue.bg);
+      const shapes = ILLUSTRATIONS[name];
+      expect(shapes.slice(0, 2).map((shape) => shape.layer)).toEqual(["ground", "shadow"]);
+      expect(shapes.filter((shape) => shape.layer === "soft")).toHaveLength(1);
+      expect(ILLUSTRATION_PASTEL[ILLUSTRATION_GROUPS[name]]).toBe("blue");
+      // A face needs two eye-sized dots: none of these has a circle of radius 4 or less (the ground and the shadow are not dots).
+      const dots = shapes.flatMap((shape) => [...shape.d.matchAll(smallCircle)].map((match) => Number(match[1]))).filter((radius) => radius <= 4);
+      expect(dots, `${name} has eye-sized dots`).toEqual([]);
     }
   });
   it("the page works at the width of a phone and of a desktop (the action follows the layout, never disappears)", async () => {
