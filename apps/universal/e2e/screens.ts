@@ -51,6 +51,13 @@ export const AUTHED_SCREENS: readonly VisualScreen[] = [
   { name: "portal-metricas", path: "/portal/metricas" },
   { name: "portal-perfil", path: "/portal/perfil" },
   { name: "portal-documentos", path: "/portal/documentos" },
+  // R2 · the product sheet: new draft, its photos, versions, delivery, contact with the WhatsApp preview, and the guest's card.
+  { name: "portal-producto-nuevo", path: "/portal/productos/nuevo" },
+  { name: "portal-producto-fotos", path: "/portal/productos/22222222-2222-4222-8222-222222222222?paso=fotos" },
+  { name: "portal-producto-precio", path: "/portal/productos/22222222-2222-4222-8222-222222222222?paso=precio" },
+  { name: "portal-producto-entrega", path: "/portal/productos/22222222-2222-4222-8222-222222222222?paso=entrega" },
+  { name: "portal-producto-contacto", path: "/portal/productos/22222222-2222-4222-8222-222222222222?paso=contacto" },
+  { name: "portal-producto-resumen", path: "/portal/productos/22222222-2222-4222-8222-222222222222?paso=resumen" },
   { name: "guest-rsvp", path: `/c/${MOCK_SLUG}/rsvp/${MOCK_VALID_TOKEN}` },
   { name: "guest-regalos", path: `/c/${MOCK_SLUG}/regalos/${MOCK_VALID_TOKEN}` }
 ];
@@ -70,6 +77,6 @@ export const WIDTHS = [390, 768, 1440] as const;
  * sign-in), not every route; the light gate above already walks them all. Two widths: phone and desktop.
  */
 const pick = (screens: readonly VisualScreen[], names: readonly string[]): readonly VisualScreen[] => names.map((name) => screens.find((screen) => screen.name === name) ?? (() => { throw new Error(`Unknown visual screen ${name}`); })());
-export const DARK_AUTHED_SCREENS = pick(AUTHED_SCREENS, ["host-resumen", "host-invitados", "host-regalos", "host-editor-general", "host-publicar", "host-configuracion", "portal-inicio", "portal-servicios", "admin-resumen", "admin-verificacion", "guest-rsvp", "guest-regalos"]);
+export const DARK_AUTHED_SCREENS = pick(AUTHED_SCREENS, ["host-resumen", "host-invitados", "host-regalos", "host-editor-general", "host-publicar", "host-configuracion", "portal-inicio", "portal-servicios", "portal-producto-resumen", "admin-resumen", "admin-verificacion", "guest-rsvp", "guest-regalos"]);
 export const DARK_ANON_SCREENS = pick(ANON_SCREENS, ["auth-login", "auth-registro", "guest-rsvp-publico"]);
 export const DARK_WIDTHS = [390, 1440] as const;

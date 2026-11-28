@@ -40,12 +40,12 @@ export const FileDropArea = forwardRef<View, PropsWithChildren<FileDropAreaProps
       if (!takes(event)) return;
       event.preventDefault();
       depth += 1;
-      latest.current.onDragState(dragState(event, latest.current.accept));
+      latest.current.onDragState(latest.current.disabled ? "idle" : dragState(event, latest.current.accept));
     };
     const over = (event: DragEvent): void => {
       if (!takes(event)) return;
       event.preventDefault();
-      if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+      if (event.dataTransfer) event.dataTransfer.dropEffect = latest.current.disabled ? "none" : "copy";
     };
     const leave = (event: DragEvent): void => {
       if (!takes(event)) return;
@@ -57,6 +57,7 @@ export const FileDropArea = forwardRef<View, PropsWithChildren<FileDropAreaProps
       event.preventDefault();
       depth = 0;
       latest.current.onDragState("idle");
+      if (latest.current.disabled) return;
       const files = Array.from(event.dataTransfer?.files ?? []);
       if (!files.length) latest.current.onNoFiles();
       else latest.current.onFiles(latest.current.multiple ? files : files.slice(0, 1));

@@ -8,6 +8,7 @@ import { PortalErrorNotice as ErrorNotice } from "./errors";
 import { PortalScreen, usePortalHeader } from "./frame";
 import { useSingleMutation } from "../platform/single-flight";
 import { MoreToggle } from "./parts";
+import { BusinessTemplateSection } from "./business-template-section";
 
 const DESTINATIONS: readonly Destination[] = ["OFFICIAL_SITE", "LANDING", "WHATSAPP", "PHONE", "EMAIL", "INSTAGRAM", "PRODUCT_PAGE"];
 const UTM = /^[A-Za-z0-9_.-]{1,64}$/;
@@ -71,6 +72,7 @@ function Destinations({ provider }: { readonly provider: Provider }): ReactNode 
       {errors.length ? <Notice kind="error">{errors.map((message) => <Text key={message} style={styles.body}>{message}</Text>)}</Notice> : null}
       {save.isSuccess ? <Notice kind="success">{t("portal.destinations.saved")}</Notice> : null}
       <ErrorNotice error={save.error} onRetry={submit} />
+      <BusinessTemplateSection provider={provider} />
     </View>
   );
 }
