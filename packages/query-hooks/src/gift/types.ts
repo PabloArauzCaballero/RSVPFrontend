@@ -1,5 +1,5 @@
 import type { GiftListComponents } from "@rsvp/contracts";
-/** Gift List (gift-list.openapi.json; vendored version in packages/contracts/backend.lock.json, 1.14.0). Money is integer minor units, never a float. */
+/** Gift List (gift-list.openapi.json; vendored version in packages/contracts/backend.lock.json, 1.15.0). Money is integer minor units, never a float. */
 export interface Money { readonly amountMinor: number; readonly currency: string }
 export type GiftSource = "CATALOGED" | "EXTERNAL";
 /**
@@ -18,7 +18,7 @@ export interface GiftItem {
   /** Present only when the host lets this viewer see who reserved (gift-settings). */
   readonly reservedByName?: string;
 }
-export interface GiftItemList { readonly items: readonly GiftItem[]; readonly partnerPriorityEnabled: boolean; /** L4 (1.12.0): next page, null on the last one. */ readonly nextCursor?: string | null }
+export interface GiftItemList { readonly items: readonly GiftItem[]; readonly partnerPriorityEnabled: boolean; /** L4 (1.12.0): next page, null on the last one. */ readonly nextCursor?: string | null; /** R8a (1.13.0): the host or the organizer closed the list by hand; since 1.15.0 no new reservation is accepted (409 LIST_CLOSED). Absent on older servers. */ readonly closed?: boolean }
 export interface GiftReservation {
   readonly id: string; readonly itemId: string; readonly celebrationId: string; readonly guestId?: string | null; readonly guestDisplayName?: string | null;
   readonly message?: string | null; readonly status: ReservationStatus; readonly requestedAt: string; readonly resolvedAt?: string | null; readonly resolvedBy?: string | null;

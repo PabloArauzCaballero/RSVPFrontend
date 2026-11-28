@@ -4,6 +4,8 @@ import type { NavItem } from "../host/shell";
 /** The (provider) route group guards all portal paths. */
 export const PORTAL_ROUTES = { home: "/portal", onboarding: "/portal/alta", services: "/portal/servicios", products: "/portal/productos", delivery: "/portal/entrega", destinations: "/portal/destinos", agenda: "/portal/agenda", quotes: "/portal/cotizaciones", leads: "/portal/leads", metrics: "/portal/metricas", microsite: "/portal/perfil", documents: "/portal/documentos" } as const;
 export type PortalRoute = keyof typeof PORTAL_ROUTES;
+/** R2 · the product sheet editor: inside «Ofertas», not a tab of its own. Its routes are `/portal/productos/nuevo` and `/portal/productos/{id}`. */
+export const PRODUCT_NEW_ROUTE = "/portal/productos/nuevo";
 
 const NAV: readonly { readonly key: string; readonly tabs: readonly PortalRoute[] }[] = [
   { key: "overview", tabs: ["home"] },

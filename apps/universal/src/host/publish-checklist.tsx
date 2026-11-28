@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Image, Platform, Share, Text, View } from "react-native";
-import { isPublicPageInTransition, missingFieldsOf, useEditCelebration, useMediaAssets, usePublicationAction, usePublicPageStatus, usePublishCheck, type Celebration, type TranslatedEventType } from "@rsvp/query-hooks";
+import { isGalleryAsset, isPublicPageInTransition, missingFieldsOf, useEditCelebration, useMediaAssets, usePublicationAction, usePublicPageStatus, usePublishCheck, type Celebration, type TranslatedEventType } from "@rsvp/query-hooks";
 import type { Translate } from "@rsvp/i18n";
 import { formatDate } from "@rsvp/celebration-theme/model";
 import { useApiClient, useT } from "../platform/providers";
@@ -71,7 +71,9 @@ function Checklist({ celebration, eventType, onNavigate, refetch }: { readonly c
   const title = asText(celebration.content["title"]);
   const eventDate = asText(celebration.content["eventDate"]);
   const description = [eventType?.name, eventDate ? formatDate(eventDate, celebration.timeZone, celebration.defaultLocale) : "", asText(celebration.content["venueName"])].filter(Boolean).join(" · ");
-  const cover = media.data?.items.find((asset) => asset.isCover)?.variants.medium;
+  // The card previews the shared link: the cover or, when it has no raster variant (SVG), the first gallery photo that has one.
+  const photos = (media.data?.items ?? []).filter(isGalleryAsset);
+  const cover = [...photos.filter((asset) => asset.isCover), ...photos].map((asset) => asset.variants.medium ?? asset.variants.full).find(Boolean);
 
   const reasonExcess = overLimit(reason, LIMITS.reason);
   const run = (kind: Exclude<Dialog, null>): void => {
@@ -89,7 +91,9 @@ function Checklist({ celebration, eventType, onNavigate, refetch }: { readonly c
   const draft = celebration.status === "DRAFT";
   const ready = draft && check.isSuccess && !missing.length;
   const live = celebration.status === "PUBLISHED" && pageState === "LIVE";
-  const publishing = celebration.status === "PUBLISHED" && !live;
+  // F7: moderation hides the published page; it is not on its way, so never «Publicando…».
+  const hiddenByModeration = celebration.status === "PUBLISHED" && pageState === "HIDDEN";
+  const publishing = celebration.status === "PUBLISHED" && !live && !hiddenByModeration;
   const justPublished = live && action.isSuccess && action.variables?.action.kind === "publish";
   // One action per state, top right (a fixed bar on a phone): publish a draft, copy the link of a published page. The rest is in «⋯».
   const menuItems = [
@@ -115,6 +119,7 @@ function Checklist({ celebration, eventType, onNavigate, refetch }: { readonly c
       ) : celebration.status !== "PUBLISHED" ? (
         <Notice kind="info">{t(`host.publish.status.${celebration.status}`)}</Notice>
       ) : null}
+      {hiddenByModeration ? <View testID="public-page-hidden"><Notice kind="error">{t("host.publish.live.HIDDEN")}</Notice></View> : null}
       {(publishing && !page.isError) || pageState === "UNPUBLISHING" ? (
         <View testID="public-page-pending" accessibilityLiveRegion="polite" style={{ gap: spacing[2] }}>
           <Notice kind="info">{t(`host.publish.live.${pageState === "UNPUBLISHING" ? "UNPUBLISHING" : "PUBLISHING"}`)}</Notice>

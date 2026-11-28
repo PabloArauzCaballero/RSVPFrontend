@@ -68,9 +68,10 @@ function isSafeHttps(value: string): boolean {
 export const arrange = (items: readonly GiftItem[], filters: GiftFilters): { readonly partner: GiftItem[]; readonly other: GiftItem[] } => arrangeGifts(items, filters);
 
 /** An inline confirmation that takes focus when it appears (the form it replaces is gone), like the app's `SuccessNote`. */
-function FocusNote({ children, testId, tone = 'ok' }: { readonly children: ReactNode; readonly testId?: string; readonly tone?: 'ok' | 'warn' | 'info' }) {
+function FocusNote({ children, testId, tone = 'ok', takeFocus = true }: { readonly children: ReactNode; readonly testId?: string; readonly tone?: 'ok' | 'warn' | 'info'; /** False for a note that is already there when the page opens. */ readonly takeFocus?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => { ref.current?.focus(); }, []);
+  const focusOnMount = useRef(takeFocus);
+  useEffect(() => { if (focusOnMount.current) ref.current?.focus(); }, []);
   return <div ref={ref} tabIndex={-1} role="status" className={`gift-note gift-note--${tone}`} data-testid={testId}>{children}</div>;
 }
 
@@ -106,6 +107,10 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
   const inFlight = useRef(false);
   const filterId = useId();
 
+  // REG-01 · the host closed the list by hand: say so and offer no reservation. What the guest already holds stays, and they can still cancel it.
+  const listClosed = list.data?.closed === true;
+  useEffect(() => { if (listClosed) { setTarget(null); setFieldErrors({}); } }, [listClosed]);
+
   const all = list.data?.items ?? [];
   const scoped = onlyItemId ? all.filter((item) => item.id === onlyItemId) : all;
   const maxMinor = maxPriceMinor(maxPrice);
@@ -124,7 +129,7 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
   const open = (item: GiftItem): void => { setOutcome(null); setCancelled(null); reserve.reset(); setFieldErrors({}); setTarget(item); };
   const close = (): void => { setTarget(null); setFieldErrors({}); reserve.reset(); };
   const submit = (): void => {
-    if (!target || inFlight.current) return; // anti double click: a ref, because state has not re-rendered yet when the second click lands
+    if (!target || listClosed || inFlight.current) return; // anti double click: a ref, because state has not re-rendered yet when the second click lands
     const invalid = reserveFieldErrors({ name, message });
     setFieldErrors(invalid);
     if (invalid.name || invalid.message) return;
@@ -229,7 +234,7 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
     const listingId = item.productListingId;
     const contact = giftContactDestinations(listing?.destinationTypes);
     const viaOther = !listingId && item.externalUrl && isSafeHttps(item.externalUrl) ? item.externalUrl : null;
-    const opened = target?.id === item.id;
+    const opened = !listClosed && target?.id === item.id;
     const held = mine.get(item.id);
     return (
       <li key={item.id} className="gift-row" data-gift-id={item.id} data-source={item.source}>
@@ -248,7 +253,7 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
           </div>
         ) : null}
         {outcome?.kind === 'reserved' && outcome.item.id === item.id ? reservedNote(outcome) : null}
-        {outcome?.kind === 'taken' && outcome.item.id === item.id ? (
+        {!listClosed && outcome?.kind === 'taken' && outcome.item.id === item.id ? (
           <div className="gift-taken" data-testid="gift-taken">
             <FocusNote tone="warn"><h3>{t('gifts.guest.taken.title')}</h3><p>{t('gifts.guest.taken.body', { title: item.title })}</p></FocusNote>
             {alternatives.length === 0 ? <p className="rsvp-hint">{t('gifts.guest.taken.none')}</p> : (
@@ -261,7 +266,7 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
         ) : null}
         {opened ? form(item) : (
           <div className="gift-actions">
-            {item.status === 'AVAILABLE' ? <button type="button" className="rsvp-button" onClick={() => open(item)} aria-label={t('gifts.guest.reserveFor', { title: item.title })} data-testid={`reserve-${item.id}`}>{t('gifts.guest.reserve')}</button> : null}
+            {item.status === 'AVAILABLE' && !listClosed ? <button type="button" className="rsvp-button" onClick={() => open(item)} aria-label={t('gifts.guest.reserveFor', { title: item.title })} data-testid={`reserve-${item.id}`}>{t('gifts.guest.reserve')}</button> : null}
             {listingId ? contact.map((destination) => (
               <PartnerLink key={destination} listingId={listingId} destination={destination} surface="GIFT_LIST" celebrationId={celebrationId} disclaimer={false} className="gift-partner-link">
                 {t(destination === 'WHATSAPP' ? 'gifts.card.viaWhatsApp' : 'gifts.guest.viaPartner')}
@@ -280,14 +285,22 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
     <main className="rsvp-shell gifts">
       <GuestSheet cover={cover}>
         <div className="guest-intro">
-          {onlyItemId ? null : <p>{t('gifts.guest.intro')}</p>}
-          {onlyItemId ? null : <p className="rsvp-hint">{t('gifts.guest.rule')}</p>}
+          {onlyItemId || listClosed ? null : <p>{t('gifts.guest.intro')}</p>}
+          {onlyItemId || listClosed ? null : <p className="rsvp-hint">{t('gifts.guest.rule')}</p>}
           <nav className="gift-links" aria-label={t('gifts.guest.title')}>
             {onlyItemId ? <a className="gift-link" href={listHref} data-testid="gifts-list">{t('gifts.detail.back')}</a> : null}
             {credential ? <a className="gift-link" href={rsvpHref} data-testid="gifts-back">{t('gifts.guest.backToRsvp')}</a> : null}
             <a className="gift-link" href={invitationHref} data-testid="gifts-invitation">{t('gifts.back')}</a>
           </nav>
         </div>
+        {listClosed ? (
+          // A refused tap removes the form that had focus: the note takes it, so the guest sees (and hears) why.
+          <FocusNote tone="info" testId="gift-list-closed" takeFocus={target !== null}>
+            <h2>{t('gifts.guest.closed.title')}</h2>
+            <p>{t('gifts.guest.closed.body')}</p>
+            {mine.size > 0 ? <p>{t('gifts.guest.closed.keepsMine')}</p> : null}
+          </FocusNote>
+        ) : null}
         {outcome?.kind === 'reserved' && !reservedInList ? reservedNote(outcome) : null}
         {cancelled ? <FocusNote testId="reservation-cancelled"><p>{t('gifts.guest.mine.done', { title: cancelled })}</p></FocusNote> : null}
         {cancel.isError && isReservationNotActive(cancel.error) ? <FocusNote tone="info" testId="reservation-not-active"><p>{t('gifts.guest.mine.notActive')}</p></FocusNote> : null}
@@ -315,13 +328,13 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
           </form>
         ) : null}
 
-        {onlyItemId && scoped.length === 0 ? <EmptyNote art={<NoGiftsArt className="state__art" />} title={t('gifts.detail.notFound')} body={t('gifts.detail.notFoundBody')} /> : null}
-        {!onlyItemId && visibleCount === 0 ? <EmptyNote art={<NoGiftsArt className="state__art" />} title={t('gifts.guest.empty.title')} body={t('gifts.guest.empty.body')} /> : null}
+        {onlyItemId && scoped.length === 0 ? <EmptyNote art={<NoGiftsArt className="state__art" />} title={t('gifts.detail.notFound')} body={t(listClosed ? 'gifts.detail.notFoundBodyClosed' : 'gifts.detail.notFoundBody')} /> : null}
+        {!onlyItemId && !listClosed && visibleCount === 0 ? <EmptyNote art={<NoGiftsArt className="state__art" />} title={t('gifts.guest.empty.title')} body={t('gifts.guest.empty.body')} /> : null}
         {visibleCount > 0 && items.length === 0 ? <EmptyNote art={<EmptyArt className="state__art" />} title={t('gifts.empty.filtered')} body={t('gifts.empty.filteredBody')} /> : null}
         {partner.length ? <section aria-labelledby="gifts-partner"><h2 id="gifts-partner" className="gift-group">{t('gifts.guest.groupPartner')}</h2><ul className="gift-rows" data-group="partner">{partner.map(renderRow)}</ul></section> : null}
         {other.length ? <section aria-labelledby="gifts-other"><h2 id="gifts-other" className="gift-group">{t('gifts.guest.groupOther')}</h2><ul className="gift-rows" data-group="other">{other.map(renderRow)}</ul></section> : null}
       </GuestSheet>
-      <CancelReservationDialog item={cancelTarget?.item ?? null} t={t} pending={cancel.isPending} failure={cancelFailure} onKeep={() => { setCancelTarget(null); cancel.reset(); }} onConfirm={confirmCancel} />
+      <CancelReservationDialog listClosed={listClosed} item={cancelTarget?.item ?? null} t={t} pending={cancel.isPending} failure={cancelFailure} onKeep={() => { setCancelTarget(null); cancel.reset(); }} onConfirm={confirmCancel} />
     </main>
   );
 }

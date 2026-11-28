@@ -5,7 +5,7 @@ export type { PickedImage };
 const ACCEPT = "image/jpeg,image/png,image/webp";
 
 /** Web: a hidden file input. Resolves null when the dialog closes without a file. */
-export async function pickImage(): Promise<PickedImage | null> {
+export async function pickImage(_options: { readonly throwOnDenied?: boolean } = {}): Promise<PickedImage | null> {
   return new Promise((resolve) => {
     const input = document.createElement("input");
     input.type = "file";
