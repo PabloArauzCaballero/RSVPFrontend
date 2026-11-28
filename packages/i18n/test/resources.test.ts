@@ -74,3 +74,16 @@ describe("B6 · legal texts", () => {
     expect(t("celebration.media.playShort")).not.toBe(t("celebration.media.openMusic"));
   });
 });
+
+describe("R5 · WCAG 2.5.3 on the guest's gift card", () => {
+  it.each(["es-BO", "en-US"] as const)("%s: the accessible name of each card button contains the text the button shows", (locale) => {
+    const t = createTranslator(locale);
+    const title = "Vajilla de porcelana";
+    const pairs: ReadonlyArray<readonly [string, string]> = [
+      ["gifts.guest.reserve", "gifts.guest.reserveFor"], ["gifts.guest.group.start", "gifts.guest.group.startFor"], ["gifts.guest.group.join", "gifts.guest.group.joinFor"],
+      ["gifts.guest.group.leave", "gifts.guest.group.leaveFor"], ["gifts.guest.mine.cancel", "gifts.guest.mine.cancelFor"], ["gifts.guest.prompt.yes", "gifts.guest.prompt.yesFor"],
+      ["gifts.guest.prompt.later", "gifts.guest.prompt.laterFor"], ["gifts.guest.prompt.no", "gifts.guest.prompt.noFor"], ["gifts.guest.prompt.ack", "gifts.guest.prompt.ackFor"]
+    ];
+    for (const [visible, name] of pairs) expect(new RegExp(`(^|[^\\p{L}])${t(visible).replace(/[.:]$/, "")}([^\\p{L}]|$)`, "iu").test(t(name, { title })), `${locale} ${name}`).toBe(true);
+  });
+});
