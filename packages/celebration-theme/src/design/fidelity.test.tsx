@@ -244,6 +244,33 @@ describe("render · the graded veil", () => {
   });
 
   /**
+   * The contract bounds the veil twice: a document asks for 0..0.8 (`scrim`) and the renderer paints at most the graded level behind the text (`x-rsvp-veil.gradedBehindText`, .85).
+   * Nothing above that is valid: a larger value is neither read from a document nor painted (PL-155-R1: `clampVeil` and `gradedVeil` used to admit .95).
+   */
+  it("a veil above the contract's own is neither read from a document nor painted, in either mode", () => {
+    const strongest = Math.round(GRADED_TEXT_VEIL * 100);
+    for (const veil of ["graded", "even"] as const) {
+      for (const scrim of [0.8, 0.81, 0.95, 5, Number.NaN]) {
+        const page = cover(veil, scrim).container.querySelector('[data-page-kind="cover"]') as HTMLElement;
+        const backdrop = page.querySelector(".celebration-media-backdrop") as HTMLElement;
+        const painted = ["--cd-veil-l", "--cd-veil-d"].map((name) => Number.parseInt(backdrop.style.getPropertyValue(name), 10)).concat(["--cd-tv-l", "--cd-tv-d"].map((name) => Number.parseInt(page.style.getPropertyValue(name), 10)).filter((n) => !Number.isNaN(n)));
+        for (const value of painted) expect(value, `${veil} scrim ${scrim}`).toBeLessThanOrEqual(strongest);
+      }
+    }
+    const read = (scrim: unknown): unknown => documentWith([], (doc) => { ((doc["pages"] as Json[])[0] as Json)["background"] = { kind: "media", mediaId: BG, fit: "cover", scrim }; }).pages[0]?.background;
+    expect(read(0.8)).toMatchObject({ scrim: 0.8 });
+    for (const scrim of [0.81, 0.95, 1, 5]) expect(read(scrim), String(scrim)).not.toHaveProperty("scrim");
+  });
+
+  it("the strongest graded veil is the contract's .85 for every palette and every veil a document can ask for", () => {
+    for (const own of [0, 0.35, 0.8, 0.95, 5]) {
+      for (const palette of [{ canvas: "#FFFFFF", text: "#000000" }, { canvas: "#F4EFE6", text: "#2B2B2B" }, { canvas: "#000000", text: "#FFFFFF" }, { canvas: "#14161A", text: "#E6E1D8" }, { canvas: "#777777", text: "#808080" }]) {
+        expect(gradedVeil(palette, own).text, `${palette.canvas}/${palette.text} ${own}`).toBeLessThanOrEqual(GRADED_TEXT_VEIL);
+      }
+    }
+  });
+
+  /**
    * Measured in the worst case, for every seeded document and both schemes: the text sits on a panel of the canvas colour at the strong level over a picture that already
    * carries the light veil, so the picture reaches it at 1 - (1 - elsewhere)(1 - text). The worst pictures are pure black and pure white (every other pixel lies between).
    */

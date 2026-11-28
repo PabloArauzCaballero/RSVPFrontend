@@ -126,7 +126,10 @@ export const GRADED_ELSEWHERE_VEIL = 0.2;
  * The two levels of the graded veil for a palette. Behind the text it is never lighter than .85 nor than what the palette needs for AA over the worst
  * picture (`requiredScrim`), and a veil the document sets (`own`) can only raise it; elsewhere it is .2 or the document's own. The text sits on the
  * canvas colour at `text` over a picture already under `elsewhere`, so the picture reaches it at `1 - (1 - elsewhere)(1 - text)`, never less than `text`.
+ * Nothing is stronger than the contract allows: `own` is held to the 0..0.8 a document may ask for and `requiredScrim` never exceeds it, so behind the text
+ * the veil is the contract's .85 (`x-rsvp-veil`) and never more (PL-155-R1: it used to admit .95).
  */
 export function gradedVeil(palette: { readonly canvas: string; readonly text: string }, own = 0): { readonly text: number; readonly elsewhere: number } {
-  return { text: Math.min(0.95, Math.max(GRADED_TEXT_VEIL, own, requiredScrim(palette))), elsewhere: Math.max(own, GRADED_ELSEWHERE_VEIL) };
+  const asked = Number.isFinite(own) ? Math.min(SCRIM_MAX, Math.max(0, own)) : 0;
+  return { text: Math.max(GRADED_TEXT_VEIL, asked, requiredScrim(palette)), elsewhere: Math.max(asked, GRADED_ELSEWHERE_VEIL) };
 }
