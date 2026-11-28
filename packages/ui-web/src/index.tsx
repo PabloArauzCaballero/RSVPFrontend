@@ -57,8 +57,9 @@ const EVENT_TYPE_SHAPE = /^[A-Z][A-Z0-9_]{1,59}$/;
 const LISTING_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export type PartnerDestination = 'OFFICIAL_SITE' | 'LANDING' | 'WHATSAPP' | 'PHONE' | 'EMAIL' | 'INSTAGRAM' | 'PRODUCT_PAGE';
 /**
- * Surface of a click. `PREVIEW` (the provider portal or moderation previewing a page) only means something with the signed `ctx` of the
- * portal or of moderation: without a token the click is evaluated as a normal one (decision M-2), so a PREVIEW link without `ctx` is a plain click.
+ * Surface of a click. `PREVIEW` (the provider portal or moderation previewing a page): per provider-catalog 3.8.0 the click is recorded as an
+ * invalid (non-billable) lead with reason `PREVIEW`, with or without `ctx`. Restricting PREVIEW to the portal's own signed `ctx` is not in this
+ * contract (it arrives with BE R6b, #166), so today anyone can append `surface=PREVIEW` to a link and the click is not billed.
  */
 export type PartnerSurface = 'PUBLIC_SITE' | 'SEARCH' | 'CELEBRATION_SITE' | 'GIFT_LIST' | 'EMAIL' | 'APP' | 'QUOTE_FORM' | 'PREVIEW';
 /**

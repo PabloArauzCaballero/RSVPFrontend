@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AppState, Platform } from "react-native";
-import { PURCHASE_STORE_KEY, usePurchasePrompt, type PurchasePrompt, type PurchasePromptEnv } from "@rsvp/query-hooks";
+import { PURCHASE_STORAGE_SLOT, usePurchasePrompt, type PurchasePrompt, type PurchasePromptEnv } from "@rsvp/query-hooks";
 import { readLocal, writeLocal } from "../platform/local-store";
 
 /**
@@ -30,11 +30,11 @@ export function useGuestPurchasePrompt(enabled: boolean): PurchasePrompt {
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
     let alive = true;
-    void readLocal(PURCHASE_STORE_KEY).then((value) => { if (alive) { memory.current = value; setHydrated(true); } });
+    void readLocal(PURCHASE_STORAGE_SLOT).then((value) => { if (alive) { memory.current = value; setHydrated(true); } });
     return () => { alive = false; };
   }, []);
   const env = useMemo<PurchasePromptEnv>(() => ({
-    store: { read: () => memory.current, write: (value) => { memory.current = value; void writeLocal(PURCHASE_STORE_KEY, value); } },
+    store: { read: () => memory.current, write: (value) => { memory.current = value; void writeLocal(PURCHASE_STORAGE_SLOT, value); } },
     onReturn: (listener) => subscribeReturn(listener)
   }), []);
   return usePurchasePrompt(env, enabled && hydrated);

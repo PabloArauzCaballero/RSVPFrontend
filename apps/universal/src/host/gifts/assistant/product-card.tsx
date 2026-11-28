@@ -15,11 +15,13 @@ export function ProductPhoto({ product, size = PHOTO }: { readonly product: Reco
   const palette = useColors();
   const styles = useStyles();
   const t = useT();
-  const [failed, setFailed] = useState(false);
   const photo = product.photo;
+  // A failure belongs to ONE url: another photo (another city, another product in the same tile) is tried again.
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const failed = photo !== undefined && photo !== null && failedUrl === photo.card;
   const box = { width: size, height: size, borderRadius: radius.md };
   if (!photo || failed) return <View style={[box, { backgroundColor: palette.surfaceMuted, borderWidth: 1, borderColor: palette.border, alignItems: "center", justifyContent: "center", padding: spacing[1] }]}><Text style={[styles.muted, { textAlign: "center" }]}>{t("gifts.host.wizard.products.noPhoto")}</Text></View>;
-  return <Image source={{ uri: photo.card }} accessible accessibilityRole="image" accessibilityLabel={photo.altText ?? t("gifts.host.wizard.products.photo", { title: product.title })} onError={() => setFailed(true)} resizeMode="cover" style={box} />;
+  return <Image source={{ uri: photo.card }} accessible accessibilityRole="image" accessibilityLabel={photo.altText ?? t("gifts.host.wizard.products.photo", { title: product.title })} onError={() => setFailedUrl(photo.card)} resizeMode="cover" style={box} />;
 }
 
 /** «Entrega en 3 días», «Entrega el mismo día». */

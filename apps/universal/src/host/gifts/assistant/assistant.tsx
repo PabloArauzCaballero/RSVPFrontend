@@ -3,10 +3,12 @@ import { Text, View } from "react-native";
 import { Enter } from "@rsvp/ui";
 import { spacing } from "@rsvp/design-tokens";
 import {
-  DELIVERY_NOTES_MAX, MAX_GIFT_QUANTITY, deliveryNotesProblem, notesLength, balanceOf, batchFailures, defaultVariant, isGiftListMissing, isIdempotencyReused, isNoAnswer, isOrderable, mayHaveBeenApplied, problemCode, suggestGroupGift, toBatchEntry, unitPriceOf,
+  MAX_GIFT_QUANTITY, balanceOf, batchFailures, defaultVariant, isGiftListMissing, isGiftUnavailable, isIdempotencyReused, isNoAnswer, isOrderable, listingPriceOf, mayHaveBeenApplied, problemCode, suggestGroupGift, toBatchEntry,
   useAddGiftBatch, useSetDeliveryNotes, useGiftList, useGiftRecommendations, useGuestSummary, useProviderGeo,
   type BalanceBandId, type BatchFailure, type Celebration, type GiftBatchRequest, type GiftRecommendation, type RecommendedProductCard
 } from "@rsvp/query-hooks";
+import { DELIVERY_NOTES_MAX, deliveryNotesProblem, notesLength } from "@rsvp/forms";
+import { giftGroupEnabled } from "../../../platform/gift-flags";
 import { useApiClient, useLocale, useT } from "../../../platform/providers";
 import { useSingleFlightGate } from "../../../platform/single-flight";
 import { ActionButton, Field, Notice, useStyles } from "../../ui";
@@ -22,8 +24,13 @@ type Step = "ideas" | "products" | "summary" | "done";
 const STEPS: readonly Exclude<Step, "done">[] = ["ideas", "products", "summary"];
 /** Codes the batch gives for one entry that have their own wording; anything else uses the generic line. */
 const ENTRY_CODES: ReadonlySet<string> = new Set(["GIFT_LISTING_NOT_ELIGIBLE", "CATALOG_PRODUCT_UNAVAILABLE", "GIFT_LISTING_NOT_PRODUCT", "INVALID_QUANTITY", "INVALID_GIFT_IDEA", "INVALID_VARIANT", "DUPLICATE_GIFT_IDEA"]);
-/** An idea that already has a live gift cannot take another (DUPLICATE_GIFT_IDEA); REJECTED and UNAVAILABLE ones are free again. */
+/**
+ * An idea that already has a live gift cannot take another (DUPLICATE_GIFT_IDEA). A gift is live when its status is not REJECTED and the catalog still
+ * offers it: the wire keeps the status of an UNAVAILABLE gift (AVAILABLE) and says so in `availability`, so both are read. A rejected or unavailable one
+ * is free again, as the backend accepts a new gift for the idea.
+ */
 const LIVE_STATUS: ReadonlySet<string> = new Set(["AVAILABLE", "PROPOSED", "PENDING_REVIEW", "COMMITTED"]);
+const isLive = (item: { readonly status: string; readonly availability?: string }): boolean => LIVE_STATUS.has(item.status) && !isGiftUnavailable(item);
 
 /**
  * «Agregar regalo · Del catálogo» (D-10 §5.6, R4): the host's and the planner's assistant in three steps. 1 · ideas (recommended for the event type and the
@@ -75,7 +82,7 @@ export function GiftAssistant({ celebration, eventTypeName, onSeeList, onStore }
   const add = useAddGiftBatch(client, celebration.id);
   const putNotes = useSetDeliveryNotes(client, celebration.id);
 
-  const listItems = useMemo(() => (list.data?.items ?? []).filter((item) => LIVE_STATUS.has(item.status)), [list.data]);
+  const listItems = useMemo(() => (list.data?.items ?? []).filter(isLive), [list.data]);
   const listed = useMemo(() => new Set(listItems.flatMap((item) => (item.giftIdeaCode ? [item.giftIdeaCode] : []))), [listItems]);
   // While a lost request is pending its ideas are not «already on the list» even if the server applied it: the lines stay as the host saw them until the replay answers.
   const settled = useMemo(() => (pending ? new Set([...listed].filter((code) => !pending.order.includes(code))) : listed), [listed, pending]);
@@ -93,7 +100,7 @@ export function GiftAssistant({ celebration, eventTypeName, onSeeList, onStore }
     if (!product || !pick) return [];
     const variant = product.variants.find((item) => item.id === pick.variantId);
     const code = failed[entry.idea.code];
-    return [{ ideaCode: entry.idea.code, idea: entry.idea.name, title: product.title, version: variant?.label ?? null, quantity: pick.quantity, unitMinor: unitPriceOf(product, pick.variantId), group: pick.group, ...(code ? { problem: problemText(code) } : {}) }];
+    return [{ ideaCode: entry.idea.code, idea: entry.idea.name, title: product.title, version: variant?.label ?? null, quantity: pick.quantity, unitMinor: listingPriceOf(product), group: pick.group, ...(code ? { problem: problemText(code) } : {}) }];
   });
   const lines: readonly SummaryLine[] = frozen ? pending.lines : liveLines;
   function problemText(code: string): string { return ENTRY_CODES.has(code) ? t(`gifts.host.wizard.errors.codes.${code}`, { max: MAX_GIFT_QUANTITY }) : t("gifts.host.wizard.errors.entryFallback"); }
@@ -114,12 +121,12 @@ export function GiftAssistant({ celebration, eventTypeName, onSeeList, onStore }
     if (sending || picks[code]?.listingId === product.listingId) return;
     clearFailure(code);
     touch();
-    setPicks((current) => ({ ...current, [code]: { listingId: product.listingId, variantId: defaultVariant(product), quantity: 1, group: suggestGroupGift(unitPriceOf(product, defaultVariant(product)), 1), groupTouched: false } }));
+    setPicks((current) => ({ ...current, [code]: { listingId: product.listingId, variantId: defaultVariant(product), quantity: 1, group: giftGroupEnabled() && suggestGroupGift(listingPriceOf(product), 1), groupTouched: false } }));
   };
   const change = (code: string, next: Pick): void => { if (sending) return; clearFailure(code); touch(); setPicks((current) => ({ ...current, [code]: next })); };
 
   const bodyOf = (entries: readonly GiftRecommendation[]): GiftBatchRequest => ({
-    items: entries.flatMap((entry) => { const pick = picks[entry.idea.code]; return pick ? [toBatchEntry({ ideaCode: entry.idea.code, listingId: pick.listingId, variantId: pick.variantId, quantity: pick.quantity, groupGift: pick.group })] : []; })
+    items: entries.flatMap((entry) => { const pick = picks[entry.idea.code]; return pick ? [toBatchEntry({ ideaCode: entry.idea.code, listingId: pick.listingId, variantId: pick.variantId, quantity: pick.quantity, groupGift: giftGroupEnabled() && pick.group })] : []; })
   });
   const finish = (count: number): void => { setPending(null); setFailed({}); setAdded(count); setTicked([]); setPicks({}); setNotes(null); setBand(null); setUnsaved(null); setStep("done"); };
   const batchFailed = (error: unknown, batch: { readonly body: GiftBatchRequest; readonly order: readonly string[]; readonly lines: readonly SummaryLine[] }, alreadyApplied: number): void => {
@@ -157,7 +164,7 @@ export function GiftAssistant({ celebration, eventTypeName, onSeeList, onStore }
         // The earlier request may have been applied: read the list. No list yet (404) means nothing was applied; any other failure keeps everything and shows the retry.
         const read = await list.refetch();
         if (read.isError && !isGiftListMissing(read.error)) return;
-        const live = new Set((read.data?.items ?? []).filter((item) => LIVE_STATUS.has(item.status)).flatMap((item) => (item.giftIdeaCode ? [item.giftIdeaCode] : [])));
+        const live = new Set((read.data?.items ?? []).filter(isLive).flatMap((item) => (item.giftIdeaCode ? [item.giftIdeaCode] : [])));
         serverNotes = read.data?.deliveryNotes ?? "";
         applied += pending.order.filter((code) => live.has(code)).length;
         const rest = active.filter((entry) => !live.has(entry.idea.code));
@@ -194,7 +201,8 @@ export function GiftAssistant({ celebration, eventTypeName, onSeeList, onStore }
   const itemLevel = failures.length > 0;
   const name = t(`gifts.host.wizard.stepName.${step === "done" ? "summary" : step}`);
   const title = step === "ideas" ? t("gifts.host.wizard.ideas.title") : step === "products" ? t("gifts.host.wizard.products.title") : t("gifts.host.wizard.summary.title");
-  const headline = eventTypeName ? (cityName ? t("gifts.host.wizard.ideas.recommended", { event: eventTypeName, city: cityName }) : t("gifts.host.wizard.ideas.recommendedNoCity", { event: eventTypeName })) : t("gifts.host.wizard.ideas.title");
+  // The backend answers every idea (scope ALL_IDEAS) for an event type it does not know or that has no ideas yet: then «recommended for your celebration» would be false.
+  const headline = recs.data && recs.data.scope !== "EVENT_TYPE" ? t("gifts.host.wizard.ideas.allIdeas") : eventTypeName ? (cityName ? t("gifts.host.wizard.ideas.recommended", { event: eventTypeName, city: cityName }) : t("gifts.host.wizard.ideas.recommendedNoCity", { event: eventTypeName })) : t("gifts.host.wizard.ideas.title");
   const index = Math.max(0, STEPS.indexOf(step === "done" ? "summary" : step));
 
   if (unsaved) {
@@ -241,7 +249,7 @@ export function GiftAssistant({ celebration, eventTypeName, onSeeList, onStore }
       <Enter key={step} from="none">
         <View style={{ gap: spacing[4] }}>
           <StepHeading focusOnMount={moved} testID="wizard-step-title">{title}</StepHeading>
-          {celebration.currency !== "BOB" && step !== "ideas" ? <Text style={styles.muted}>{t("gifts.host.wizard.products.currencyNote")}</Text> : null}
+          {celebration.currency !== "BOB" ? <Text style={styles.muted}>{t("gifts.host.wizard.products.currencyNote")}</Text> : null}
           {step === "ideas" ? (
             <IdeasStep ideas={ideas} ticked={ticked} listed={settled} headline={headline} cities={cities} city={city} onCity={(slug) => { if (sending) return; touch(); setChosenCity(slug); }} band={band} onClearBand={() => { if (!sending) setBand(null); }} onToggle={toggle} onStore={onStore} onSeeList={onSeeList}
               loading={recs.isPending} error={recs.isError} offline={isNoAnswer(recs.error)} onRetry={() => { void recs.refetch(); }} />

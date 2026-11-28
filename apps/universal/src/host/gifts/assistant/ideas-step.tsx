@@ -89,7 +89,7 @@ export function IdeasStep({ ideas, ticked, listed, headline, cities, city, onCit
       ) : null}
       {band !== null && hasIdeas && shown.length === 0 ? <Text style={styles.body} testID="wizard-band-none">{t("gifts.host.wizard.ideas.filterNone")}</Text> : null}
       <View role="group" accessibilityRole="none" accessibilityLabel={headline} style={{ gap: spacing[3] }}>
-        <Stagger>{shown.map((entry) => {
+        <Stagger from="none">{shown.map((entry) => {
           const code = entry.idea.code;
           const isListed = listed.has(code);
           const on = ticked.includes(code);

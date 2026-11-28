@@ -1,10 +1,13 @@
-import { describe, expect, it, vi } from "vitest";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { GET } from "../app/r/[listingId]/route";
-import { correlationIdOf, resolveRedirect, withAttribution } from "../lib/redirect";
+import { correlationIdOf, MAX_CTX_LENGTH, resolveRedirect, SURFACES, withAttribution } from "../lib/redirect";
 import robots from "../app/robots";
 
 const LISTING = "7d1c1a34-5d4c-4a39-9a2e-0f4f2d3d7b11";
 const CID = "11111111-2222-4333-8444-555555555555";
+afterEach(() => vi.restoreAllMocks());
 const ctx = { params: Promise.resolve({ listingId: LISTING }) };
 
 /** Stands in for Kong → Provider Catalog GET /r/{listingId}: answers 302 + Location like the contract. */
@@ -65,6 +68,17 @@ describe("REQ-F27-02/03 · /r/{listingId} redirector", () => {
     expect(correlationIdOf(null, CID)).toBe(CID);
   });
 
+  it("m6 · the error page speaks the visitor's language (the `locale` of the link) and falls back to es-BO", async () => {
+    gateway(() => new Response("{}", { status: 503 }));
+    const english = await (await GET(new Request(`http://site.test/r/${LISTING}?destination=WHATSAPP&locale=en-US`), ctx)).text();
+    expect(english).toContain('<html lang="en-US">');
+    expect(english).toContain("We could not open the link");
+    expect(english).toContain("Go back");
+    const other = await (await GET(new Request(`http://site.test/r/${LISTING}?destination=WHATSAPP&locale=xx`), ctx)).text();
+    expect(other).toContain('<html lang="es-BO">');
+    expect(other).toContain("No pudimos abrir el enlace");
+  });
+
   it("backend not answering: clear error page with a link back, not a redirect", async () => {
     gateway(() => new Response('{"message":"name resolution failed"}', { status: 503 }));
     const response = await GET(new Request(`http://site.test/r/${LISTING}?destination=PHONE`, { headers: { referer: "http://site.test/p/hotel-andino" } }), ctx);
@@ -95,6 +109,14 @@ describe("REQ-F27-02/03 · /r/{listingId} redirector", () => {
     gateway(() => new Response("{}", { status: 503 }));
     const response = await GET(new Request(`http://site.test/r/${LISTING}`, { headers: { referer: "https://evil.example/phish" } }), ctx);
     expect(await response.text()).toContain('href="/proveedores"');
+  });
+
+  it("a same-origin referer whose path starts with several slashes never becomes a protocol-relative back link", async () => {
+    gateway(() => new Response("{}", { status: 503 }));
+    const response = await GET(new Request(`http://site.test/r/${LISTING}`, { headers: { referer: "http://site.test//evil.example/x?a=1" } }), ctx);
+    const html = await response.text();
+    expect(html).toContain('href="/evil.example/x?a=1"');
+    expect(html).not.toContain('href="//');
   });
 
   it("A23 · a link without destination (gift items) asks Provider Catalog for the listing's primary destination, never a fixed OFFICIAL_SITE", async () => {
@@ -191,6 +213,7 @@ describe("REQ-F27-02/03 · /r/{listingId} redirector", () => {
   });
 
   it("R6a · a ctx longer than 512 characters, with spaces or with control characters is dropped before calling the backend, and the click still redirects", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
     for (const bad of ["a".repeat(513), "con espacio", "tab%09", "salto%0Ade-linea", "acentuaci%C3%B3n"]) {
       const fetchFn = gateway(upstream302());
       const response = await GET(new Request(`http://site.test/r/${LISTING}?surface=GIFT_LIST&celebrationId=22222222-3333-4444-8555-666666666666&ctx=${bad}`), ctx);
@@ -213,9 +236,55 @@ describe("REQ-F27-02/03 · /r/{listingId} redirector", () => {
   it("R6a · a 422 INVALID_LEAD_CONTEXT is NOT retried (the code is shared by sessionId, surface, celebrationId…): one backend call and the failure is reported", async () => {
     const fetchFn = vi.fn(async () => new Response(JSON.stringify({ code: "INVALID_LEAD_CONTEXT" }), { status: 422 }));
     vi.stubGlobal("fetch", fetchFn);
-    const response = await GET(new Request(`http://site.test/r/${LISTING}?surface=NO_EXISTE&ctx=token`), ctx);
+    const response = await GET(new Request(`http://site.test/r/${LISTING}?surface=GIFT_LIST&ctx=token`), ctx);
     expect(response.status).toBe(400);
     expect(fetchFn).toHaveBeenCalledTimes(1);
+  });
+
+  it("an unknown surface falls back to PUBLIC_SITE and the click still redirects (a made-up value would be a 422 page)", async () => {
+    const fetchFn = gateway(upstream302());
+    const response = await GET(new Request(`http://site.test/r/${LISTING}?surface=NO_EXISTE`), ctx);
+    expect(response.status).toBe(302);
+    const [url] = fetchFn.mock.calls[0] as unknown as [URL];
+    expect(url.searchParams.get("surface")).toBe("PUBLIC_SITE");
+  });
+
+  it("every surface of the contract is forwarded as sent", async () => {
+    for (const surface of SURFACES) {
+      const fetchFn = gateway(upstream302());
+      await GET(new Request(`http://site.test/r/${LISTING}?surface=${surface}`), ctx);
+      expect((fetchFn.mock.calls[0] as unknown as [URL])[0].searchParams.get("surface")).toBe(surface);
+    }
+  });
+
+  it("the surfaces and the ctx limit are the ones of the vendored contract (fails when the contract moves)", () => {
+    type Spec = {
+      paths: Record<string, { get: { parameters: { name: string; schema: { enum?: string[]; maxLength?: number } }[] } }>;
+      components: { schemas: Record<string, { allOf: { properties?: { leadContext?: { maxLength?: number } } }[] }> };
+    };
+    const read = (name: string) => JSON.parse(readFileSync(resolve(__dirname, `../../../packages/contracts/specs/${name}.openapi.json`), "utf8")) as Spec;
+    const parameters = read("provider-catalog").paths["/r/{listingId}"]!.get.parameters;
+    expect([...SURFACES]).toEqual(parameters.find((p) => p.name === "surface")?.schema.enum);
+    expect(parameters.find((p) => p.name === "ctx")?.schema.maxLength).toBe(MAX_CTX_LENGTH);
+    expect(read("gift-list").components.schemas["PagedGiftItemPage"]?.allOf[1]?.properties?.leadContext?.maxLength).toBe(MAX_CTX_LENGTH);
+  });
+
+  it("a dropped ctx leaves one structured trace with the reason and the correlation id, never the value", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    try {
+      gateway(upstream302());
+      await GET(new Request(`http://site.test/r/${LISTING}?surface=GIFT_LIST&ctx=${"a".repeat(513)}`, { headers: { "x-correlation-id": CID } }), ctx);
+      await GET(new Request(`http://site.test/r/${LISTING}?surface=GIFT_LIST&ctx=con%20espacio`), ctx);
+      await GET(new Request(`http://site.test/r/${LISTING}?surface=GIFT_LIST&ctx=`), ctx);
+      await GET(new Request(`http://site.test/r/${LISTING}?surface=GIFT_LIST&ctx=valido-123`), ctx);
+      expect(warn).toHaveBeenCalledTimes(2);
+      const first = JSON.parse(warn.mock.calls[0]?.[0] as string) as Record<string, unknown>;
+      expect(first).toEqual({ event: "partner-redirect.ctx-dropped", reason: "too-long", correlationId: CID });
+      expect(JSON.parse(warn.mock.calls[1]?.[0] as string)).toMatchObject({ reason: "malformed" });
+      expect(JSON.stringify(warn.mock.calls)).not.toContain("espacio");
+    } finally {
+      warn.mockRestore();
+    }
   });
 
   it("/r/ is not indexable", () => {
@@ -277,6 +346,15 @@ describe("R5 · /r resolves the WhatsApp message on the server", () => {
     await GET(new Request(`http://site.test/r/${LISTING}?destination=WHATSAPP&surface=GIFT_LIST&celebrationId=${celebration}&celebrationSlug=ana-y-luis&giftItemId=${ITEM}&variant=${VARIANT}&quantity=2&locale=es-BO`), ctx);
     const [url] = fetchFn.mock.calls[0] as unknown as [URL];
     expect(Object.fromEntries(url.searchParams)).toEqual({ destination: "WHATSAPP", surface: "GIFT_LIST", celebrationId: celebration, celebrationSlug: "ana-y-luis", giftItemId: ITEM, variant: VARIANT, quantity: "2", locale: "es-BO" });
+  });
+
+  it("m7 · a version code that is not a UUID travels (the contract's variantCode); a malformed one is dropped", async () => {
+    const fetchFn = gateway(upstream302(WA));
+    await GET(new Request(`http://site.test/r/${LISTING}?destination=WHATSAPP&variant=blue_L-2`), ctx);
+    expect((fetchFn.mock.calls[0] as unknown as [URL])[0].searchParams.get("variant")).toBe("blue_L-2");
+    fetchFn.mockClear();
+    await GET(new Request(`http://site.test/r/${LISTING}?destination=WHATSAPP&variant=-bad`), ctx);
+    expect((fetchFn.mock.calls[0] as unknown as [URL])[0].searchParams.has("variant")).toBe(false);
   });
 
   it("the answer is exactly the wa.me link of the backend: no utm_* and no correlationId added, the text untouched", async () => {

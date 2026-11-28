@@ -1,5 +1,6 @@
 import axe from "axe-core";
 import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { QueryClient } from "@tanstack/react-query";
 import { Linking } from "react-native";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MOCK_VALID_TOKEN } from "@rsvp/testing/contract-mock";
@@ -21,18 +22,19 @@ const viewer = (role: "SOLE" | "COORDINATOR" | "CONTRIBUTOR", units = 1) => ({ r
 
 let items: unknown[] = [];
 let mine: unknown[] = [];
+let closed = false;
 let reserve: Handler = () => ({ id: "r-1", itemId: ID, celebrationId: "c-1", status: "COMMITTED", requestedAt: "2026-11-01T00:00:00Z", units: 2, role: "SOLE", showName: false });
 
-function show(extra: Readonly<Record<string, Handler>> = {}) {
+function show(extra: Readonly<Record<string, Handler>> = {}, locale: "es-BO" | "en-US" = "es-BO", queryClient?: QueryClient) {
   const { client, calls } = fakeClient({
     "GET /celebrations/public/ana-luis": () => ({ celebrationId: "c-1", slug: "ana-luis", content: { title: "Ana y Luis" } }),
-    "GET /gifts/celebrations/c-1/items": () => ({ items, partnerPriorityEnabled: true }),
+    "GET /gifts/celebrations/c-1/items": () => ({ items, partnerPriorityEnabled: true, closed }),
     "GET /gifts/celebrations/c-1/my-reservations": () => ({ items: mine }),
     [`GET /listings/${LISTING}`]: () => ({ id: LISTING, destinationTypes: ["PRODUCT_PAGE", "WHATSAPP"] }),
     [`POST /gifts/celebrations/c-1/items/${ID}/reservations`]: (call) => reserve(call),
     ...extra
   });
-  renderApp(<GuestGiftsScreen slug="ana-luis" token={TOKEN} onNavigate={vi.fn()} />, client, GUEST);
+  renderApp(<GuestGiftsScreen slug="ana-luis" token={TOKEN} onNavigate={vi.fn()} />, client, GUEST, locale, queryClient);
   return { calls };
 }
 const row = async (): Promise<ReturnType<typeof within>> => within(await screen.findByTestId(`gift-${ID}`));
@@ -40,7 +42,7 @@ const lastLaunch = (launch: ReturnType<typeof vi.spyOn>): Record<string, string>
 const leaveAndReturn = () => { act(() => { Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "hidden" }); document.dispatchEvent(new Event("visibilitychange")); }); act(() => { Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "visible" }); document.dispatchEvent(new Event("visibilitychange")); }); };
 
 beforeEach(() => {
-  items = []; mine = [];
+  items = []; mine = []; closed = false;
   reserve = () => ({ id: "r-1", itemId: ID, celebrationId: "c-1", status: "COMMITTED", requestedAt: "2026-11-01T00:00:00Z", units: 2, role: "SOLE", showName: false });
   clearGiftCredential("ana-luis"); saveGiftCredential("ana-luis", TOKEN);
   resetSecureStore();
@@ -54,7 +56,7 @@ describe("R5 · units", () => {
       const r = await row();
       expect(r.getByTestId(`gift-units-${ID}`).textContent).toBe("Faltan 8 de 12");
       fireEvent.click(r.getByTestId(`units-${ID}-more`)); fireEvent.click(r.getByTestId(`units-${ID}-more`));
-      expect(r.getByTestId(`units-${ID}-value`).textContent).toBe("3");
+      expect(r.getByTestId(`units-${ID}-value`).textContent).toBe("3 unidades");
       fireEvent.click(await r.findByRole("button", { name: "Pedir por WhatsApp" }));
       expect(lastLaunch(launch)).toEqual({ destination: "WHATSAPP", surface: "GIFT_LIST", celebrationId: "c-1", celebrationSlug: "ana-luis", giftItemId: ID, variant: VARIANT, quantity: "3", locale: "es-BO" });
       fireEvent.click(r.getByRole("button", { name: "Ver en la tienda" }));
@@ -189,7 +191,7 @@ describe("R5 · «¿Compraste?»", () => {
       expect(calls.slice(before).some((call) => call.method === "POST")).toBe(false);
       fireEvent.click(screen.getByTestId(`prompt-yes-${ID}`));
       expect(screen.queryByTestId(`gift-prompt-${ID}`)).toBeNull();
-      expect(screen.getByTestId(`units-${ID}-value`).textContent).toBe("2");
+      expect(screen.getByTestId(`units-${ID}-value`).textContent).toBe("2 unidades");
       fireEvent.click(screen.getByTestId("reserve-confirm"));
       await screen.findByTestId("gift-reserved");
       expect(calls.find((call) => call.method === "POST")?.body).toEqual({ units: 2 });
@@ -261,7 +263,7 @@ describe("R5 · accessibility of the card (structure; contrast and screen reader
     items = [gift({ quantity: 12, unitsLeft: 8 })]; show();
     const card = await screen.findByTestId(`gift-prompt-${ID}`);
     expect(card.getAttribute("aria-label")).toBe("¿Compraste Vajilla?");
-    expect(within(card).getByRole("button", { name: "Sí, compré Vajilla" })).toBeTruthy();
+    expect(within(card).getByRole("button", { name: "Sí, ya lo compré: Vajilla" })).toBeTruthy();
     expect(within(card).getByRole("button", { name: "Todavía no compré Vajilla" })).toBeTruthy();
     expect(within(card).getByRole("button", { name: "No compré Vajilla" })).toBeTruthy();
     expect(announce).toHaveBeenCalledWith("¿Compraste Vajilla?");
@@ -323,5 +325,79 @@ describe("R6b · the type of event travels in the partner link", () => {
       expect(lastLaunch(launch)).not.toHaveProperty("eventType");
       expect(new URL(String(launch.mock.calls.at(-1)?.[0])).pathname).toBe(`/r/${LISTING}`);
     } finally { launch.mockRestore(); }
+  });
+});
+
+describe("R5 B1/M1/M2 · closed list: the purchase prompt never dead-ends and the provider is not offered to someone who cannot reserve", () => {
+  const away = async (units = 2) => { await import("./stubs/expo-secure-store").then((store) => store.setItemAsync("rsvp.gift.purchase.v1", JSON.stringify({ [ID]: { giftItemId: ID, destination: "WHATSAPP", units, at: Date.now(), phase: "away" } }))); };
+
+  it("a list that arrives closed with an attempt «away» shows the closed card; «Entendido» leaves a note, no form, and forgets the attempt (es-BO)", async () => {
+    closed = true; items = [gift({ quantity: 12, unitsLeft: 8 })]; await away(); show();
+    const card = await screen.findByTestId(`gift-prompt-${ID}`);
+    expect(card.textContent).toContain("La lista está cerrada y ya no se pueden reservar regalos");
+    expect(within(card).queryByTestId(`prompt-yes-${ID}`)).toBeNull();
+    expect(within(card).queryByTestId(`prompt-later-${ID}`)).toBeNull();
+    fireEvent.click(within(card).getByRole("button", { name: "Entendido: Vajilla" }));
+    expect((await screen.findByTestId(`gift-prompt-note-${ID}`)).textContent).toBe("Gracias por avisar. La lista está cerrada, así que no podemos anotar tu compra. Si ya lo compraste, avísale a quienes te invitan.");
+    expect(screen.queryByTestId("reserve-confirm")).toBeNull();
+    expect(screen.queryByTestId(`gift-prompt-${ID}`)).toBeNull();
+    await waitFor(() => expect(JSON.parse(secureStoreSnapshot().get("rsvp.gift.purchase.v1") ?? "{}")).toEqual({}));
+  });
+
+  it("the same in en-US", async () => {
+    closed = true; items = [gift({ quantity: 12, unitsLeft: 8 })]; await away(); show({}, "en-US");
+    const card = await screen.findByTestId(`gift-prompt-${ID}`);
+    expect(card.textContent).toContain("The list is closed and gifts can no longer be reserved, so we cannot record your purchase here.");
+    fireEvent.click(within(card).getByRole("button", { name: "Got it: Vajilla" }));
+    expect((await screen.findByTestId(`gift-prompt-note-${ID}`)).textContent).toBe("Thanks for letting us know. The list is closed, so we cannot record your purchase. If you already bought it, let your hosts know.");
+    expect(screen.queryByTestId("reserve-confirm")).toBeNull();
+  });
+
+  it("no phantom form: after the closed answer, a refetch that reopens the list does not open the reservation form by itself", async () => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+    closed = true; items = [gift({ quantity: 12, unitsLeft: 8 })]; await away(); show({}, "es-BO", queryClient);
+    fireEvent.click(await screen.findByRole("button", { name: "Entendido: Vajilla" }));
+    await screen.findByTestId(`gift-prompt-note-${ID}`);
+    closed = false;
+    await act(async () => { await queryClient.invalidateQueries({ queryKey: ["gifts"] }); });
+    await waitFor(() => expect(screen.queryByTestId("gift-list-closed")).toBeNull());
+    expect(screen.queryByTestId("reserve-confirm")).toBeNull();
+    expect(screen.getByTestId(`reserve-${ID}`)).toBeTruthy();
+  });
+
+  it("closed and holding nothing: no unit chooser, no reserve button and no provider buttons", async () => {
+    closed = true; items = [gift({ quantity: 12, unitsLeft: 8 })]; show();
+    const r = await row();
+    await screen.findByTestId("gift-list-closed");
+    expect(r.queryByTestId(`units-${ID}`)).toBeNull();
+    expect(r.queryByTestId(`reserve-${ID}`)).toBeNull();
+    expect(r.queryByRole("button", { name: "Pedir por WhatsApp" })).toBeNull();
+    expect(r.queryByRole("button", { name: "Ver en la tienda" })).toBeNull();
+  });
+
+  it("closed and holding a reservation: keeps the provider buttons and the way to cancel", async () => {
+    closed = true; items = [gift({ quantity: 12, unitsLeft: 8, viewer: viewer("SOLE", 2) })]; mine = [{ id: "r-1", itemId: ID, status: "PENDING_REVIEW", units: 2, role: "SOLE" }]; show();
+    const r = await row();
+    expect(await r.findByRole("button", { name: "Pedir por WhatsApp" })).toBeTruthy();
+    expect(r.getByTestId(`cancel-reservation-${ID}`)).toBeTruthy();
+    expect(r.queryByTestId(`units-${ID}`)).toBeNull();
+  });
+});
+
+
+describe("R5 m11/m4 · contributor words and the stepper value", () => {
+  it("a contributor leaving a group gift reads «salirte», and the confirmation says they left", async () => {
+    items = [gift({ groupGiftEnabled: true, status: "PENDING_REVIEW", participants: 2, contributors: 1, coordinatorName: "Marta", viewer: viewer("CONTRIBUTOR", 0) })];
+    mine = [{ id: "r-1", itemId: ID, status: "PENDING_REVIEW", units: 0, role: "CONTRIBUTOR" }];
+    show({ "POST /gifts/celebrations/c-1/reservations/r-1/cancel": () => ({ id: "r-1", itemId: ID, celebrationId: "c-1", status: "CANCELLED", requestedAt: "2026-11-01T00:00:00Z" }) });
+    fireEvent.click(await screen.findByTestId(`cancel-reservation-${ID}`));
+    expect((await screen.findByText("¿Salirte del regalo?"))).toBeTruthy();
+    expect(screen.getByText("Dejas de aportar a «Vajilla». Si cambias de idea, podrás sumarte otra vez mientras siga libre.")).toBeTruthy();
+    expect(screen.getByTestId("cancel-reservation-confirm").textContent).toContain("Sí, salirme");
+  });
+
+  it("the stepper value is visible text with its unit", async () => {
+    items = [gift({ quantity: 12, unitsLeft: 8 })]; show();
+    expect((await (await row()).findByTestId(`units-${ID}-value`)).textContent).toBe("1 unidad");
   });
 });

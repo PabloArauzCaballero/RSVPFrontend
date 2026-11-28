@@ -21,18 +21,25 @@ const UTM_PREFIX = "utm_";
  * Since 3.9.0 the portal's own ctx (PROVIDER_OWNER, PREVIEW) travels the same way. `eventType` (the celebration's type, from the link) is forwarded for the
  * provider's report only when it is a type code; `sessionId` is no longer sent (M34): the visitor is the server's hash of address and user agent.
  */
-const CONTEXT_KEYS = ["surface", "celebrationId", "guestId", "locale", "country", "city", "eventType"] as const;
+const CONTEXT_KEYS = ["celebrationId", "guestId", "locale", "country", "city", "eventType"] as const;
+/**
+ * Where a link was shown (provider-catalog `surface`, 3.8.0). The backend answers 422 to any other value, which would turn a click into an error page,
+ * so an unknown one falls back to the public site: a click always redirects. A test compares this list with the vendored contract.
+ */
+export const SURFACES = ["PUBLIC_SITE", "SEARCH", "CELEBRATION_SITE", "GIFT_LIST", "EMAIL", "APP", "QUOTE_FORM", "PREVIEW"] as const;
+const DEFAULT_SURFACE = "PUBLIC_SITE";
 /**
  * R5 (Provider Catalog 3.8.0): what the redirector reads to resolve the WhatsApp message on the server. Each one has a shape; a value that does not
  * have it is dropped here instead of sent, because the backend answers 422 to a `quantity` that is not a positive integer and a click must always
- * redirect. `giftItemId` and `variant` are ids; `celebrationSlug` only counts next to `celebrationId`. None of them can carry text into the message:
+ * redirect. `giftItemId` is a UUID and `variant` the contract's version code; the backend only honors `celebrationSlug` together with `celebrationId` (it is not enforced here). None of them can carry text into the message:
  * the guest's name, phone or `text` never reach it (PF-1), and the backend ignores any other key.
  */
 const GIFT_CONTEXT: Readonly<Record<string, RegExp>> = {
   // The contract's own slug: lowercase words joined by single hyphens, at most 100 characters (anything else is a 422 INVALID_LEAD_CONTEXT).
   celebrationSlug: /^(?=.{1,100}$)[a-z0-9]+(?:-[a-z0-9]+)*$/,
   giftItemId: UUID,
-  variant: UUID,
+  // The contract's `variantCode` (provider-catalog /r and GiftBatchEntry): not necessarily a UUID.
+  variant: /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/,
   quantity: /^[1-9][0-9]{0,5}$/
 };
 /**
@@ -40,7 +47,7 @@ const GIFT_CONTEXT: Readonly<Record<string, RegExp>> = {
  * value it cannot verify is ignored (the click is billed as a visitor's). The same code is shared by sessionId, surface, celebrationId, guestId, country,
  * city and referrer, so a 422 is not evidence of a bad `ctx` and the call is NOT retried: the oversized `ctx` is filtered here, before calling.
  */
-const MAX_CTX_LENGTH = 512;
+export const MAX_CTX_LENGTH = 512;
 /** A signed token is printable ASCII without spaces; anything else (control characters, spaces) is not one and is not worth a 422. */
 const CTX_SHAPE = /^[\x21-\x7e]+$/;
 /** An event type code (WEDDING, BABY_SHOWER): anything else is dropped so the click still redirects instead of failing upstream. */
@@ -108,23 +115,25 @@ export async function resolveRedirect(request: RedirectRequest): Promise<Redirec
 
   const rawCtx = request.searchParams.get("ctx");
   const ctx = rawCtx !== null && rawCtx.length <= MAX_CTX_LENGTH && CTX_SHAPE.test(rawCtx) ? rawCtx : null;
+  // A ctx the click carried but this route cannot use is dropped (the member's click is then billed as a visitor's). Without a trace a regression of
+  // the frontend or of the backend would be invisible, so one structured line is logged: the reason and the correlation id, never the value.
+  if (rawCtx !== null && rawCtx !== "" && ctx === null) console.warn(JSON.stringify({ event: "partner-redirect.ctx-dropped", reason: rawCtx.length > MAX_CTX_LENGTH ? "too-long" : "malformed", correlationId }));
 
-  const upstreamUrl = (withCtx: string | null): URL => {
-    const url = new URL(`${apiBaseUrl()}/r/${request.listingId}`);
-    if (destination) url.searchParams.set("destination", destination);
-    for (const key of CONTEXT_KEYS) {
-      const value = request.searchParams.get(key);
-      if (!value || (key === "eventType" && !EVENT_TYPE_SHAPE.test(value))) continue;
-      url.searchParams.set(key, value);
-    }
-    for (const [key, shape] of Object.entries(GIFT_CONTEXT)) {
-      const value = request.searchParams.get(key);
-      if (value && shape.test(value)) url.searchParams.set(key, value);
-    }
-    if (withCtx) url.searchParams.set("ctx", withCtx);
-    if (!url.searchParams.has("surface")) url.searchParams.set("surface", "PUBLIC_SITE");
-    return url;
-  };
+  const requestedSurface = request.searchParams.get("surface");
+  const surface = requestedSurface !== null && (SURFACES as readonly string[]).includes(requestedSurface) ? requestedSurface : DEFAULT_SURFACE;
+  const upstream = new URL(`${apiBaseUrl()}/r/${request.listingId}`);
+  if (destination) upstream.searchParams.set("destination", destination);
+  upstream.searchParams.set("surface", surface);
+  for (const key of CONTEXT_KEYS) {
+    const value = request.searchParams.get(key);
+    if (!value || (key === "eventType" && !EVENT_TYPE_SHAPE.test(value))) continue;
+    upstream.searchParams.set(key, value);
+  }
+  for (const [key, shape] of Object.entries(GIFT_CONTEXT)) {
+    const value = request.searchParams.get(key);
+    if (value && shape.test(value)) upstream.searchParams.set(key, value);
+  }
+  if (ctx) upstream.searchParams.set("ctx", ctx);
 
   const headers: Record<string, string> = { [CORRELATION_HEADER]: correlationId, ...forwardedFor(request.clientAddress) };
   if (request.userAgent) headers["user-agent"] = request.userAgent;
@@ -132,7 +141,7 @@ export async function resolveRedirect(request: RedirectRequest): Promise<Redirec
 
   try {
     // redirect: "manual" so the 302 (and its Location) is read here and never followed server-side.
-    const response = await (request.fetchFn ?? fetch)(upstreamUrl(ctx), { method: "GET", headers, redirect: "manual", cache: "no-store" });
+    const response = await (request.fetchFn ?? fetch)(upstream, { method: "GET", headers, redirect: "manual", cache: "no-store" });
     const location = response.headers.get("location");
     if (REDIRECT_STATUSES.has(response.status) && location) return { kind: "redirect", location: withAttribution(location, request.searchParams, correlationId), correlationId };
     return { kind: "failure", ...failureOf(response.status), correlationId };

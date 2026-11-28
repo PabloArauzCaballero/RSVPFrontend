@@ -12,7 +12,12 @@ const token = (roles, sub = randomUUID()) => {
   const p = Buffer.from(JSON.stringify({ sub, roles, iss: 'walk-issuer', iat: now, exp: now + 3000 })).toString('base64url');
   return `${h}.${p}.${createSign('RSA-SHA256').update(`${h}.${p}`).sign(privateKey).toString('base64url')}`;
 };
-const psql = (db, q) => execFileSync('docker', ['exec', '-e', 'PGPASSWORD=local-postgres-password', 'fe-r5-pg', 'psql', '-U', 'postgres', '-d', db, '-Atc', q], { encoding: 'utf8' }).trim();
+// The database container and its password come from the environment (this repo is public: nothing fixed here).
+//   WALK_DB_CONTAINER  name of the Postgres container of the local walk
+//   WALK_DB_PASSWORD   its superuser password (read from the environment by `docker exec -e PGPASSWORD`, so it never appears in the argument list)
+//   WALK_DB_USER       optional, default `postgres`
+for (const name of ['WALK_DB_CONTAINER', 'WALK_DB_PASSWORD']) if (!process.env[name]) throw new Error(`Set ${name} (see the comment above)`);
+const psql = (db, q) => execFileSync('docker', ['exec', '-e', 'PGPASSWORD', process.env.WALK_DB_CONTAINER, 'psql', '-U', process.env.WALK_DB_USER ?? 'postgres', '-d', db, '-Atc', q], { encoding: 'utf8', env: { ...process.env, PGPASSWORD: process.env.WALK_DB_PASSWORD } }).trim();
 async function call(method, path, { auth, body, expect, headers = {} } = {}) {
   const r = await fetch(GW + path, { method, headers: { 'user-agent': 'Mozilla/5.0 Chrome/130', ...(auth ? { authorization: `Bearer ${auth}` } : {}), ...(body ? { 'content-type': 'application/json' } : {}), ...headers }, body: body ? JSON.stringify(body) : undefined });
   const text = await r.text(); const json = text ? JSON.parse(text) : undefined;

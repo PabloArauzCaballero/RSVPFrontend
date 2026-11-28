@@ -19,20 +19,22 @@ export const giftsEsBO = {
     groupPartner: "De nuestros aliados", groupOther: "Ideas de quienes te invitan",
     status: { AVAILABLE: "Disponible", PENDING_REVIEW: "Esperando aprobación", COMMITTED: "Reservado" },
     /** R5 · tarjeta del invitado: cantidad por unidades, aporte coordinado, precio vigente y «¿lo compraste?». */
-    units: { left_one: "Falta {{count}} de {{total}}", left_other: "Faltan {{count}} de {{total}}", choose: "Cuántos quieres regalar", less: "Menos unidades", more: "Más unidades", value_one: "{{count}} unidad", value_other: "{{count}} unidades", help: "Quedan {{left}}. Reservas solo las que vas a regalar.", mine_one: "Reservaste {{count}} unidad", mine_other: "Reservaste {{count}} unidades" },
+    units: { left_one: "Falta {{count}} de {{total}}", left_other: "Faltan {{count}} de {{total}}", choose: "Cuántos quieres regalar", less: "Menos unidades", more: "Más unidades", value_one: "{{count}} unidad", value_other: "{{count}} unidades", help_one: "Queda {{count}}. Reservas solo las que vas a regalar.", help_other: "Quedan {{count}}. Reservas solo las que vas a regalar.", mine_one: "Reservaste {{count}} unidad", mine_other: "Reservaste {{count}} unidades" },
     group: {
       badge: "Entre varios", contributorsNone: "Todavía nadie se sumó", contributors_one: "1 persona aporta", contributors_other: "{{count}} personas aportan",
       noCoordinator: "Sé quien coordina: reservas el regalo y compras en la tienda; los demás se suman con su parte.",
       coordinatorNamed: "{{name}} lo comprará", coordinatorAnonymous: "Alguien del grupo lo comprará",
       join: "Sumarme", joinFor: "Sumarme a {{title}}", start: "Coordinar este regalo", startFor: "Coordinar {{title}}",
       youCoordinate: "Tú coordinas este regalo", youCoordinateHelp: "Eres quien compra. Usa los botones de abajo y los demás aportan su parte.", namesShown: "Se sumaron: {{names}}",
-      youContribute: "Te sumaste a este regalo", youContributeHelp: "Otra persona lo compra; tú aportas tu parte con ella.", leave: "Salirme del regalo",
+      youContribute: "Te sumaste a este regalo", youContributeHelp: "Otra persona lo compra; tú aportas tu parte con ella.", leave: "Salirme del regalo", leaveFor: "Salirme del regalo {{title}}",
+      leaveTitle: "¿Salirte del regalo?", leaveBody: "Dejas de aportar a «{{title}}». Si cambias de idea, podrás sumarte otra vez mientras siga libre.", leaveBodyClosed: "La lista está cerrada: si sales de «{{title}}», no podrás volver a sumarte mientras siga cerrada.", leaveConfirm: "Sí, salirme", leaveKeep: "No, quedarme", leaveBusy: "Saliendo…", leaveDone: "Saliste del regalo «{{title}}». Ya no aportas a él.",
       lead: "Este regalo se compra entre varios. Quien se anota primero lo coordina y compra; la app no cobra ni mueve dinero.", leadContributor: "Te sumas a la compra de otra persona. La app no cobra: acuerden el aporte entre ustedes."
     },
     prompt: {
       title: "¿Compraste {{title}}?", titleUnits: "¿Compraste {{units}} × {{title}}?", body: "Cuéntanos para reservarlo y que nadie más lo regale. Tu respuesta no sale de este dispositivo hasta que lo reserves.", reminder: "Te lo recordamos una sola vez.",
-      yes: "Sí, ya lo compré", later: "Todavía no", no: "No", yesCoordinator: "Gracias. Tu reserva sigue activa.", closed: "Listo. No te lo volveremos a preguntar.", laterDone: "Te lo recordaremos una vez cuando abras la lista.",
-      yesFor: "Sí, compré {{title}}", laterFor: "Todavía no compré {{title}}", noFor: "No compré {{title}}"
+      yes: "Sí, ya lo compré", later: "Todavía no", no: "No", yesCoordinator: "Gracias. Tu reserva sigue activa.", dismissed: "Listo. No te lo volveremos a preguntar.",
+      bodyClosed: "La lista está cerrada y ya no se pueden reservar regalos, así que no podemos anotar tu compra aquí. Si ya lo compraste, avísale a quienes te invitan para que nadie lo repita.", ack: "Entendido", ackFor: "Entendido: {{title}}", yesClosed: "Gracias por avisar. La lista está cerrada, así que no podemos anotar tu compra. Si ya lo compraste, avísale a quienes te invitan.", laterDone: "Te lo recordaremos una vez cuando abras la lista.",
+      yesFor: "Sí, ya lo compré: {{title}}", laterFor: "Todavía no compré {{title}}", noFor: "No compré {{title}}"
     },
     reserve: "Reservar", reserveFor: "Reservar {{title}}", viaPartner: "Ver en la tienda", partnerNote: "Lo ofrece un aliado de DOne. Al abrir el enlace sales de DOne.", reservedBy: "Reservado por {{name}}",
     form: { title: "Reservar «{{title}}»", lead: "Si quieres, deja tu nombre y un mensaje para quienes te invitan. Los dos son opcionales.", name: "Tu nombre (opcional)", nameHelp: "Lo ven quienes te invitan junto a tu reserva.", message: "Mensaje (opcional)", messageHelp: "Hasta 500 caracteres.", submit: "Confirmar reserva", submitting: "Reservando…", cancel: "Ahora no", showName: "Mostrar mi nombre a los demás invitados", showNameHelp: "Solo si escribiste tu nombre arriba. Tu teléfono y tu correo nunca se muestran.", coordinatorNote: "Quedarás como quien coordina la compra de todo el regalo." },
@@ -86,7 +88,7 @@ export const giftsEsBO = {
       hint: { catalog: "Productos de proveedores verificados, listos para agregar.", store: "Un enlace de cualquier tienda. Antes te mostramos opciones de aliados." },
       seeList: "Ver mi lista"
     },
-    catalog: { photo: "Foto de {{title}}", alreadyListed: "Ya está en tu lista.", prompt: "Escribe qué buscas, por ejemplo una torta o una vajilla.", search: "Buscar", searchLabel: "Buscar en el catálogo", searchPlaceholder: "Torta, vajilla, flores…", add: "Agregar a mi lista", adding: "Agregando…", added: "Agregado: {{title}}", none: "No encontramos productos con esa búsqueda o categoría. Prueba con otra palabra o elige «Todas».", empty: "Todavía no hay productos de proveedores verificados. Cuando un proveedor publique uno, lo verás aquí.", error: "No pudimos cargar los productos del catálogo.", offline: "Sin conexión por ahora: no pudimos cargar los productos del catálogo. Revisa tu internet y vuelve a intentarlo.", categoriesOffline: "Sin conexión por ahora: no pudimos cargar las categorías. Revisa tu internet; puedes buscar igual.", category: "Categoría", allCategories: "Todas", categoriesError: "No pudimos cargar las categorías; puedes buscar igual.", disclaimer: "DOne te conecta con el proveedor; no vende ni garantiza el producto. Acuerda precio, entrega y plazos con él.", unavailable: "Producto no disponible", unavailableBody: "Ese producto ya no está en el catálogo. Elige otro.", priceFrom: "Desde {{price}}" },
+    catalog: { added: "Agregado: {{title}}" },
     store: {
       ruleTitle: "Primero los aliados", ruleOn: "Antes de agregar un regalo de tienda te mostramos productos parecidos de aliados. Si ninguno te sirve, lo agregas igual.", ruleOff: "Puedes agregar regalos de cualquier tienda sin pasos previos.", ruleChange: "Cambiar en Modos de control",
       modeAUTO_ACCEPT: "Tus regalos de tienda aparecen en la lista al instante.", modeRESTRICTED: "Tus regalos de tienda quedan por revisar: los apruebas desde Mi lista.",

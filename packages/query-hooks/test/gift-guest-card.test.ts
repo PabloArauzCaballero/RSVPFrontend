@@ -74,6 +74,26 @@ describe("R5 · guestGiftState: what the guest's card says and offers", () => {
   });
 });
 
+describe("R5 B1/M1 · a closed list in the card state", () => {
+  const plain = (over: Partial<GiftItem> = {}): GiftItem => ({ ...item(), quantity: 12, unitsLeft: 8, ...over });
+
+  it("holding nothing: nothing to reserve, no unit chooser and no provider buttons", () => {
+    const state = guestGiftState(plain(), undefined, { listClosed: true });
+    expect(state).toMatchObject({ closed: true, role: null, canReserve: false, chooseUnits: false, showProviderButtons: false });
+    expect(guestGiftState(plain(), undefined)).toMatchObject({ closed: false, canReserve: true, chooseUnits: true, showProviderButtons: true });
+  });
+
+  it("a group gift is the same: nobody joins, and a coordinator-less viewer gets no buttons", () => {
+    expect(guestGiftState(plain({ groupGiftEnabled: true }), undefined, { listClosed: true })).toMatchObject({ canReserve: false, showProviderButtons: false });
+  });
+
+  it("holding a reservation keeps the provider buttons (a sole buyer and a group coordinator), never a contributor", () => {
+    expect(guestGiftState(plain(), { role: "SOLE", units: 2 }, { listClosed: true })).toMatchObject({ canReserve: false, chooseUnits: false, showProviderButtons: true });
+    expect(guestGiftState(plain({ groupGiftEnabled: true }), { role: "COORDINATOR", units: 12 }, { listClosed: true })).toMatchObject({ showProviderButtons: true });
+    expect(guestGiftState(plain({ groupGiftEnabled: true }), { role: "CONTRIBUTOR", units: 0 }, { listClosed: true })).toMatchObject({ showProviderButtons: false });
+  });
+});
+
 describe("R5 · price, units and the quantity the buttons carry", () => {
   it("shows the provider's current price when Gift could read it, otherwise the stored one", () => {
     expect(effectivePrice(item({ currentPrice: { amountMinor: 52000, currency: "BOB" } }))).toEqual({ amountMinor: 52000, currency: "BOB" });
@@ -102,6 +122,17 @@ describe("R5 · price, units and the quantity the buttons carry", () => {
     expect(buttonQuantity({ group: false, quantity: 12, unitsLeft: 8, role: null, heldUnits: 0 }, 2)).toBe(2);
     expect(buttonQuantity({ group: false, quantity: 12, unitsLeft: 3, role: null, heldUnits: 0 }, 9)).toBe(3);
     expect(buttonQuantity({ group: true, quantity: 12, unitsLeft: 12, role: "COORDINATOR", heldUnits: 12 }, 2)).toBe(12);
+  });
+});
+
+describe("R5 m2 · the price filter compares what the guest reads", () => {
+  it("a current price of 0 (ignored by the screen) does not make a gift pass or fail the filter: the stored price decides", () => {
+    const zero = item({ price: { amountMinor: 45000, currency: "BOB" }, currentPrice: { amountMinor: 0, currency: "BOB" } });
+    expect(effectivePrice(zero).amountMinor).toBe(45000);
+    expect(arrangeGifts([zero], { maxMinor: 10000, source: "all", onlyAvailable: false }).partner).toHaveLength(0);
+    expect(arrangeGifts([zero], { maxMinor: 50000, source: "all", onlyAvailable: false }).partner).toHaveLength(1);
+    const cheaper = item({ currentPrice: { amountMinor: 9000, currency: "BOB" } });
+    expect(arrangeGifts([cheaper], { maxMinor: 10000, source: "all", onlyAvailable: false }).partner).toHaveLength(1);
   });
 });
 

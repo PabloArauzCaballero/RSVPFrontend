@@ -99,7 +99,7 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, eventType, in
   const mine = activeReservationsByItem(mineQuery.data?.items);
   const cancel = useCancelGiftReservation(client, celebrationId, credential ?? null);
   const [cancelTarget, setCancelTarget] = useState<{ readonly item: GiftItem; readonly reservation: GiftReservation } | null>(null);
-  const [cancelled, setCancelled] = useState<string | null>(null);
+  const [cancelled, setCancelled] = useState<{ readonly title: string; readonly left: boolean } | null>(null);
   const cancelKeys = useRef(new Map<string, string>());
 
   const [maxPrice, setMaxPrice] = useState('');
@@ -121,7 +121,8 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, eventType, in
 
   // REG-01 · the host closed the list by hand: say so and offer no reservation. What the guest already holds stays, and they can still cancel it.
   const listClosed = list.data?.closed === true;
-  useEffect(() => { if (listClosed) { setTarget(null); setFieldErrors({}); } }, [listClosed]);
+  // Depends on `target` too: a form must never stay (or come back, when a refetch reopens the list) behind a list that was already closed.
+  useEffect(() => { if (listClosed && target) { setTarget(null); setFieldErrors({}); } }, [listClosed, target]);
 
   const all = list.data?.items ?? [];
   const scoped = onlyItemId ? all.filter((item) => item.id === onlyItemId) : all;
@@ -139,8 +140,8 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, eventType, in
 
   // One Idempotency-Key per (gift, units, name choice): the same body replays, another body is another request (a key reused with other units is a 422).
   const keyFor = (slot: string): string => { let key = keys.current.get(slot); if (!key) { key = newIdempotencyKey(); keys.current.set(slot, key); } return key; };
-  const unitsOf = (item: GiftItem): number => clampUnits(units[item.id] ?? 1, guestGiftState(item, mine.get(item.id)).unitsLeft);
-  const open = (item: GiftItem): void => { setOutcome(null); setCancelled(null); setPromptNote(null); reserve.reset(); setFieldErrors({}); setShowName(false); setTarget(item); };
+  const unitsOf = (item: GiftItem): number => clampUnits(units[item.id] ?? 1, guestGiftState(item, mine.get(item.id), { listClosed }).unitsLeft);
+  const open = (item: GiftItem): void => { if (listClosed) return; setOutcome(null); setCancelled(null); setPromptNote(null); reserve.reset(); setFieldErrors({}); setShowName(false); setTarget(item); };
   const close = (): void => { setTarget(null); setFieldErrors({}); reserve.reset(); };
   const submit = (): void => {
     if (!target || listClosed || inFlight.current) return; // anti double click: a ref, because state has not re-rendered yet when the second click lands
@@ -149,7 +150,7 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, eventType, in
     if (invalid.name || invalid.message) return;
     inFlight.current = true;
     const item = target;
-    const state = guestGiftState(item, mine.get(item.id));
+    const state = guestGiftState(item, mine.get(item.id), { listClosed });
     // A group gift decides the units on the server (coordinator: the whole quantity; contributor: none), so only a plain gift sends them.
     const taken = state.group ? undefined : unitsOf(item);
     const consent = showName && name.trim() !== '';
@@ -163,9 +164,11 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, eventType, in
   /** The answer to «¿Compraste …?»: Sí reserves (the usual form, with the units the guest meant), the others close the card. */
   const answerPrompt = (item: GiftItem, answer: 'yes' | 'later' | 'no'): void => {
     const attempt = prompt.answer(item.id, answer);
-    const state = guestGiftState(item, mine.get(item.id));
+    const state = guestGiftState(item, mine.get(item.id), { listClosed });
+    // A closed list takes no reservation: whatever the guest answered, say the purchase was not recorded (never a dead end).
+    if (listClosed && state.role === null) { setPromptNote({ itemId: item.id, key: 'gifts.guest.prompt.yesClosed' }); return; }
     if (answer === 'later') { setPromptNote({ itemId: item.id, key: 'gifts.guest.prompt.laterDone' }); return; }
-    if (answer === 'no') { setPromptNote({ itemId: item.id, key: 'gifts.guest.prompt.closed' }); return; }
+    if (answer === 'no') { setPromptNote({ itemId: item.id, key: 'gifts.guest.prompt.dismissed' }); return; }
     if (state.role !== null) { setPromptNote({ itemId: item.id, key: 'gifts.guest.prompt.yesCoordinator' }); return; }
     if (!state.canReserve) { setOutcome({ kind: 'taken', item }); return; }
     if (attempt) setUnits((current) => ({ ...current, [item.id]: clampUnits(attempt.units, state.unitsLeft) }));
@@ -177,7 +180,7 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, eventType, in
     let key = cancelKeys.current.get(reservation.id);
     if (!key) { key = newIdempotencyKey(); cancelKeys.current.set(reservation.id, key); }
     cancel.mutate({ reservationId: reservation.id, idempotencyKey: key }, {
-      onSuccess: () => { setCancelTarget(null); setOutcome(null); setCancelled(item.title); },
+      onSuccess: () => { setCancelTarget(null); setOutcome(null); setCancelled({ title: item.title, left: reservation.role === 'CONTRIBUTOR' }); },
       onError: (failure) => { if (isReservationNotActive(failure)) setCancelTarget(null); }
     });
   };
@@ -241,7 +244,7 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, eventType, in
   );
 
   const form = (item: GiftItem): ReactNode => {
-    const state = guestGiftState(item, mine.get(item.id));
+    const state = guestGiftState(item, mine.get(item.id), { listClosed });
     return (
     <form className="gift-form" noValidate aria-labelledby={`reserve-${item.id}-title`} onSubmit={(event) => { event.preventDefault(); submit(); }}>
       <h3 id={`reserve-${item.id}-title`} className="gift-form__title">{t('gifts.guest.form.title', { title: item.title })}</h3>
@@ -273,7 +276,7 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, eventType, in
   const row = (item: GiftItem, listing: ListingSummary | undefined): ReactNode => {
     const listingId = item.productListingId;
     const held = mine.get(item.id);
-    const state = guestGiftState(item, held);
+    const state = guestGiftState(item, held, { listClosed });
     const contact = giftContactDestinations(listing?.destinationTypes);
     const viaOther = !listingId && item.externalUrl && isSafeHttps(item.externalUrl) ? item.externalUrl : null;
     const opened = !listClosed && target?.id === item.id;
@@ -299,7 +302,7 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, eventType, in
             {state.role === 'COORDINATOR' ? <p className="rsvp-hint">{t('gifts.guest.group.youCoordinateHelp')}</p> : null}
             {state.role === 'CONTRIBUTOR' ? <p className="rsvp-hint">{t('gifts.guest.group.youContributeHelp')}</p> : null}
             {state.role === 'SOLE' && state.heldUnits > 0 && state.showUnits ? <p className="rsvp-hint">{t('gifts.guest.units.mine', { count: state.heldUnits })}</p> : null}
-            {held ? <button type="button" className="rsvp-button rsvp-button--secondary" disabled={cancel.isPending} onClick={() => { setCancelled(null); cancel.reset(); setCancelTarget({ item, reservation: held }); }} aria-label={t('gifts.guest.mine.cancelFor', { title: item.title })}>{state.role === 'CONTRIBUTOR' ? t('gifts.guest.group.leave') : t('gifts.guest.mine.cancel')}</button> : null}
+            {held ? <button type="button" className="rsvp-button rsvp-button--secondary" disabled={cancel.isPending} onClick={() => { setCancelled(null); cancel.reset(); setCancelTarget({ item, reservation: held }); }} aria-label={t(state.role === 'CONTRIBUTOR' ? 'gifts.guest.group.leaveFor' : 'gifts.guest.mine.cancelFor', { title: item.title })}>{state.role === 'CONTRIBUTOR' ? t('gifts.guest.group.leave') : t('gifts.guest.mine.cancel')}</button> : null}
           </div>
         ) : null}
         {outcome?.kind === 'reserved' && outcome.item.id === item.id ? reservedNote(outcome) : null}
@@ -314,7 +317,7 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, eventType, in
             )}
           </div>
         ) : null}
-        {asked && !opened ? <PurchasePromptCard id={item.id} title={item.title} units={asked.units} reminder={asked.phase === 'reminder'} t={t} onAnswer={(answer) => answerPrompt(item, answer)} claimAnnouncement={() => prompt.claimAnnouncement(item.id)} /> : null}
+        {asked && !opened ? <PurchasePromptCard id={item.id} title={item.title} units={asked.units} reminder={asked.phase === 'reminder'} closed={listClosed && state.role === null} t={t} onAnswer={(answer) => answerPrompt(item, answer)} claimAnnouncement={() => prompt.claimAnnouncement(item.id)} /> : null}
         {note ? <FocusNote tone="info" testId={`gift-prompt-note-${item.id}`}><p>{t(note)}</p></FocusNote> : null}
         {opened ? form(item) : (
           <>
@@ -358,7 +361,7 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, eventType, in
           </FocusNote>
         ) : null}
         {outcome?.kind === 'reserved' && !reservedInList ? reservedNote(outcome) : null}
-        {cancelled ? <FocusNote testId="reservation-cancelled"><p>{t('gifts.guest.mine.done', { title: cancelled })}</p></FocusNote> : null}
+        {cancelled ? <FocusNote testId="reservation-cancelled"><p>{t(cancelled.left ? 'gifts.guest.group.leaveDone' : 'gifts.guest.mine.done', { title: cancelled.title })}</p></FocusNote> : null}
         {cancel.isError && isReservationNotActive(cancel.error) ? <FocusNote tone="info" testId="reservation-not-active"><p>{t('gifts.guest.mine.notActive')}</p></FocusNote> : null}
 
         {!onlyItemId && visibleCount > 0 ? (
@@ -390,7 +393,7 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, eventType, in
         {partner.length ? <section aria-labelledby="gifts-partner"><h2 id="gifts-partner" className="gift-group">{t('gifts.guest.groupPartner')}</h2><ul className="gift-rows" data-group="partner">{partner.map(renderRow)}</ul></section> : null}
         {other.length ? <section aria-labelledby="gifts-other"><h2 id="gifts-other" className="gift-group">{t('gifts.guest.groupOther')}</h2><ul className="gift-rows" data-group="other">{other.map(renderRow)}</ul></section> : null}
       </GuestSheet>
-      <CancelReservationDialog listClosed={listClosed} item={cancelTarget?.item ?? null} t={t} pending={cancel.isPending} failure={cancelFailure} onKeep={() => { setCancelTarget(null); cancel.reset(); }} onConfirm={confirmCancel} />
+      <CancelReservationDialog listClosed={listClosed} contributor={cancelTarget?.reservation.role === 'CONTRIBUTOR'} item={cancelTarget?.item ?? null} t={t} pending={cancel.isPending} failure={cancelFailure} onKeep={() => { setCancelTarget(null); cancel.reset(); }} onConfirm={confirmCancel} />
     </main>
   );
 }
