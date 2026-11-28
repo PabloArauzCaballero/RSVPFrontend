@@ -31,7 +31,15 @@ export interface BookingPage { readonly items: readonly Booking[]; readonly next
 export interface BookingRequestInput { readonly date?: string; readonly startsAt?: string; readonly time?: string; readonly listingId?: string }
 export interface QuoteInput { readonly listingIds: readonly string[]; readonly eventDate: string; readonly guestCount: number; readonly budgetMinor?: number; readonly eventCity?: string; readonly contact: { readonly name: string; readonly email: string; readonly phone?: string }; readonly message?: string; readonly locale?: string;
   /** Anonymous requests only: the captcha token (when the deployment runs PROVIDER_ANON_QUOTES=captcha) and the honeypot, which must stay empty. */
-  readonly captchaToken?: string; readonly website?: string }
+  readonly captchaToken?: string; readonly website?: string;
+  /** Provider Catalog 3.12.0: where the guest came from (statistics only; the service never lets it decide a lead). Never a guest id, a token or a slug. */
+  readonly origin?: QuoteOrigin;
+  /** Anonymous requests when the deployment runs PROVIDER_ANON_QUOTES=proof: the solved challenge of GET /providers/quote-access. */
+  readonly proof?: QuoteProofAnswer }
+export interface QuoteOrigin { readonly surface: "CELEBRATION_SITE" | "PUBLIC_SITE" | "SEARCH" | "GIFT_LIST" | "EMAIL" | "APP"; readonly celebrationId?: string; readonly eventType?: string }
+export interface QuoteProofAnswer { readonly challenge: string; readonly nonce: string }
+/** GET /providers/quote-access (3.12.0): whether anonymous quotes are open here and, in proof mode, a fresh challenge. */
+export interface QuoteAccess { readonly anonymousQuotes: "off" | "captcha" | "proof" | "open"; readonly proof?: { readonly challenge: string; readonly difficulty: number; readonly expiresAt: string } }
 /** Provider Catalog 2.5.0 (B11): the provider's quote inbox. The list carries no e-mail or phone; the detail does. */
 export interface ProviderQuoteSummary { readonly id: string; readonly providerId: string; readonly status: "REQUESTED"; readonly eventDate: string; readonly guestCount: number; readonly budget: { readonly amountMinor: number; readonly currency: string } | null; readonly eventCity: string | null; readonly listingIds: readonly string[]; readonly locale: string; readonly contactName: string; readonly hasMessage: boolean; readonly createdAt: string }
 export interface ProviderQuote extends ProviderQuoteSummary { readonly contact: { readonly name: string; readonly email: string; readonly phone: string | null }; readonly message: string | null; readonly leadId: string | null }

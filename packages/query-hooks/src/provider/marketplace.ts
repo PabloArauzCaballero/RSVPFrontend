@@ -115,7 +115,7 @@ export const marketplacePath = (celebrationSlug: string): string => `/c/${encode
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** The origin of a click the guest made on the marketplace, kept for the tab only (sessionStorage) so the partner page can attribute it. */
-export interface MarketplaceOrigin { readonly celebrationId: string; readonly at: number }
+export interface MarketplaceOrigin { readonly celebrationId: string; readonly at: number; /** Type code of the celebration of origin (statistics). */ readonly eventType?: string }
 export const MARKETPLACE_ORIGIN_KEY = "rsvp.marketplace.origin";
 export const MARKETPLACE_ORIGIN_TTL_MS = 2 * 60 * 60 * 1000;
 export function parseMarketplaceOrigin(raw: string | null, now: number): MarketplaceOrigin | undefined {
@@ -124,6 +124,15 @@ export function parseMarketplaceOrigin(raw: string | null, now: number): Marketp
     const value = JSON.parse(raw) as Partial<MarketplaceOrigin>;
     if (typeof value.celebrationId !== "string" || !UUID.test(value.celebrationId) || typeof value.at !== "number") return undefined;
     if (!(now >= value.at && now - value.at <= MARKETPLACE_ORIGIN_TTL_MS)) return undefined;
-    return { celebrationId: value.celebrationId.toLowerCase(), at: value.at };
+    const eventType = typeof value.eventType === "string" && EVENT_TYPE.test(value.eventType) ? value.eventType : undefined;
+    return { celebrationId: value.celebrationId.toLowerCase(), at: value.at, ...(eventType ? { eventType } : {}) };
   } catch { return undefined; }
+}
+
+/**
+ * What /cotizar sends as `origin` when the guest came from the tab (Provider Catalog 3.12.0): the surface, the celebration's own public id and the type of
+ * the celebration. It comes from sessionStorage, never from the address bar: the URL of the quote carries no celebration, no slug, no guest and no token.
+ */
+export function quoteOriginFrom(origin: MarketplaceOrigin | undefined): { readonly surface: "CELEBRATION_SITE"; readonly celebrationId: string; readonly eventType?: string } | undefined {
+  return origin ? { surface: "CELEBRATION_SITE", celebrationId: origin.celebrationId, ...(origin.eventType ? { eventType: origin.eventType } : {}) } : undefined;
 }

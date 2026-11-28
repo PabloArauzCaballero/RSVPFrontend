@@ -121,7 +121,7 @@ export function quoteFailureMessage(status: number | undefined, code: string | u
     if (code === "QUOTE_LIMIT_REACHED") return { key: "quote.errors.limitContact" };
     return retryAfter ? { key: "quote.errors.rateLimitedWait", values: { minutes: Math.max(1, Math.ceil(retryAfter / 60)) } } : { key: "quote.errors.rateLimited" };
   }
-  if (status === 403) return { key: "quote.errors.captcha" };
+  if (status === 403) return { key: code === "PROOF_FAILED" ? "quote.errors.proof" : "quote.errors.captcha" };
   if (status === 422) return { key: code === "QUOTE_REJECTED" ? "quote.errors.rejected" : "quote.errors.validation" };
   if (status === 404) return { key: "quote.errors.notFound" };
   return { key: "quote.errors.generic" };

@@ -94,6 +94,12 @@ describe("guest marketplace · loading (/c/{slug}/proveedores)", () => {
     expect(celebrationDown.state).toBe("unavailable");
   });
 
+  it("the catalogue's own switch off (404 MARKETPLACE_DISABLED) is the same as this site's switch off: the tab does not exist, it is not an error page", async () => {
+    const off = () => new Response(JSON.stringify({ code: "MARKETPLACE_DISABLED" }), { status: 404, headers: { "content-type": "application/problem+json" } });
+    expect(await loadMarketplace({ slug: "ana-y-luis", locale: "es-BO", env: ON, client: client({ "/providers/categories": off }).client })).toEqual({ state: "disabled" });
+    expect(await loadMarketplace({ slug: "ana-y-luis", locale: "es-BO", env: ON, client: client({ "/providers": off }).client })).toEqual({ state: "disabled" });
+  });
+
   it("the entry is offered only when the deployment turned the tab on and the catalogue has providers (and one failed check hides it)", async () => {
     const empty = client({ "/providers/categories": () => new Response(JSON.stringify({ items: [] }), { status: 200, headers: { "content-type": "application/json" } }) });
     expect(await showMarketplaceEntry({}, empty.client)).toBe(false);

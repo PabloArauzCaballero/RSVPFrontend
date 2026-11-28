@@ -138,7 +138,7 @@ export function GuestMarketplace({ data, t, locale, lang }: { readonly data: Rea
   const cityChosen = data.city === undefined && data.celebration.cityHint !== undefined;
   return (
     <Shell slug={slug} title={data.celebration.title} t={t} lang={lang}>
-      <OriginRemember celebrationId={data.celebration.celebrationId} />
+      <OriginRemember celebrationId={data.celebration.celebrationId} eventType={data.celebration.eventType} />
       {noCatalog ? (
         <div role="status" className="mkt-state">
           <EmptyArt className="mkt-state__art" />

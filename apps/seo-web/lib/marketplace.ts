@@ -67,7 +67,9 @@ export async function loadMarketplace(request: MarketplaceRequest): Promise<Mark
     const category = request.category && SLUG.test(request.category) ? request.category : undefined;
     const page = await client.request<MarketplacePage>(marketplaceSearchPath({ ...(category ? { category } : {}), ...(city ? { city } : {}), ...(celebration.eventType ? { eventType: celebration.eventType } : {}), page: request.page ?? 1 }), { auth: false });
     return { state: "ready", celebration: withHint, cities, categories: items, page, ...(city ? { city } : {}), ...(category ? { category } : {}) };
-  } catch {
+  } catch (error) {
+    // The catalogue answers 404 MARKETPLACE_DISABLED while its own GUEST_MARKETPLACE is off: the tab does not exist, as when this site's switch is off.
+    if (error instanceof ApiError && error.status === 404) return { state: "disabled" };
     return { state: "unavailable", celebration: withHint };
   }
 }
