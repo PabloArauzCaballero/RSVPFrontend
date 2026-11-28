@@ -52,6 +52,13 @@ export interface GalleryImage {
   readonly variants: Readonly<Partial<Record<"thumb" | "medium" | "full" | "webp" | "thumb_avif" | "medium_avif" | "full_avif" | "svg" | "audio", string>>>;
 }
 
+/**
+ * Whether a file is one of the host's photos (gallery or cover). Backgrounds, logos, monograms and illustrations of the design are
+ * files of the same celebration, but they are not photos: the gallery, the previews and the share card must never show them.
+ * A server that sends no purpose only had photos.
+ */
+export const isPhotoImage = (image: Pick<GalleryImage, "purpose">): boolean => image.purpose === undefined || image.purpose === "gallery" || image.purpose === "cover";
+
 export interface CelebrationContent {
   readonly title: string;
   readonly subtitle: string;

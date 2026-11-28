@@ -1,8 +1,8 @@
 import { useState, type ReactNode } from "react";
 import { Modal, ScrollView, Text, View, useWindowDimensions } from "react-native";
-import { LOCATIONS_KEY, MAIN_LOCATION, readLocations, resolveLocation, pointOf, themeFromTemplate, type CelebrationLocation } from "@rsvp/celebration-theme/model";
+import { LOCATIONS_KEY, MAIN_LOCATION, readLocations, resolveLocation, pointOf, type CelebrationLocation } from "@rsvp/celebration-theme/model";
 import { spacing } from "@rsvp/design-tokens";
-import { useEditCelebration, useMediaAssets, useTemplate, type Celebration, type TranslatedEventType } from "@rsvp/query-hooks";
+import { useEditCelebration, useMediaAssets, type Celebration, type TranslatedEventType } from "@rsvp/query-hooks";
 import type { Translate } from "@rsvp/i18n";
 import { useApiClient, useLocale, useT } from "../platform/providers";
 import { CelebrationScreen, type Loaded, type ScreenProps } from "./gate";
@@ -15,7 +15,7 @@ import { useSaveHeader } from "./save-bar";
 import { EditorProgress, readyCount, SectionRow, sectionStates } from "./editor-sections";
 import { previewView } from "./preview-model";
 import { PreviewStage } from "./preview-stage";
-import { asTemplateDocument } from "./template-gallery";
+import { usePreviewTheme } from "./preview-theme";
 import { useSingleFlight } from "../platform/single-flight";
 import { contentOverLimit, LIMITS, overLimit, slugProblem } from "./limits";
 import { Enter } from "@rsvp/ui";
@@ -129,10 +129,9 @@ function DraftPreview({ celebration, eventType, content, slug, onClose }: { read
   const styles = useStyles();
   const client = useApiClient();
   const locale = useLocale();
-  const template = useTemplate(client, celebration.templateId);
   const media = useMediaAssets(client, celebration.id);
-  const theme = themeFromTemplate(template.data ? asTemplateDocument(template.data) : null, eventType?.enabledSections ?? []);
-  const images = (media.data?.items ?? []).filter((asset) => asset.status === "PROCESSED").map((asset) => ({ id: asset.id, width: asset.width, height: asset.height, isCover: asset.isCover, variants: asset.variants }));
+  const theme = usePreviewTheme(celebration, eventType);
+  const images = (media.data?.items ?? []).filter((asset) => asset.status === "PROCESSED").map((asset) => ({ id: asset.id, width: asset.width, height: asset.height, isCover: asset.isCover, ...(asset.purpose ? { purpose: asset.purpose } : {}), variants: asset.variants }));
   return (
     <Modal visible transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>

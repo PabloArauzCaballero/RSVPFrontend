@@ -133,6 +133,7 @@ function PartnerBody({ partner, onNavigate }: { readonly partner: Partner } & Di
     <Page testID="partner-screen">
       <PageTop items={[...(categorySlug ? [{ label: category, href: `/proveedores/${categorySlug}` }] : []), { label: partner.name }]} title={partner.name} onNavigate={onNavigate} />
       {partner.imageUrl ? <Image source={{ uri: partner.imageUrl }} accessibilityLabel={t("partner.imageAlt", { name: partner.name, category, city: partner.city })} style={{ width: "100%", aspectRatio: 16 / 9, borderRadius: radius.lg }} resizeMode="cover" /> : null}
+      {partner.logoUrl ? <Image source={{ uri: partner.logoUrl }} accessibilityLabel={t("partner.logoAlt", { name: partner.name })} style={{ width: 72, height: 72, borderRadius: radius.md }} resizeMode="contain" testID="partner-logo" /> : null}
       <Text style={s.lead}>{category} · {partner.city}</Text>
       <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[2] }}><CheckMark size={16} /><Text style={{ color: s.palette.text, fontFamily: fonts.sans, fontWeight: "600" }}>{t("directory.verified")}</Text></View>
       <View style={{ gap: spacing[2] }}>
@@ -157,6 +158,13 @@ function PartnerBody({ partner, onNavigate }: { readonly partner: Partner } & Di
         <Text style={s.lead}>{partner.listings.length ? t(FACT_LEAD_KEY[offerKind(partner.listings, categories)], { ...facts, count: partner.listings.length }) : t("partner.factLeadNone", facts)}</Text>
         <Text style={s.lead}>{partner.summary ?? t("partner.noSummary")}</Text>
       </View>
+
+      {partner.gallery?.length ? (
+        <View style={{ gap: spacing[2] }} testID="partner-gallery">
+          <Text accessibilityRole="header" aria-level={2} style={s.h2}>{t("partner.gallery")}</Text>
+          {partner.gallery.map((picture) => <Image key={picture.url} source={{ uri: picture.url }} accessibilityLabel={picture.alt} style={{ width: "100%", aspectRatio: 4 / 3, borderRadius: radius.md }} resizeMode="cover" />)}
+        </View>
+      ) : null}
 
       <View style={{ gap: spacing[2] }} testID="partner-coverage">
         <Text accessibilityRole="header" aria-level={2} style={s.h2}>{t("partner.coverage")}</Text>

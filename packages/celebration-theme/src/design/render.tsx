@@ -1,7 +1,7 @@
 import { Fragment, type CSSProperties, type ReactNode } from "react";
 import { artPalette, artVariables } from "../art/palette.js";
 import { drawingById, InvitationArt, ornamentSetById, OrnamentCorner, OrnamentFrame, OrnamentSeparator } from "../art/index.js";
-import { daysUntil, giftsPath, hasSectionContent, partnerHref, readContent, SECTION_PATHS, sectionTitleKey, shownVenues, venueLines, type CelebrationContent, type GalleryImage, type PublicCelebrationView } from "../content.js";
+import { daysUntil, giftsPath, hasSectionContent, isPhotoImage, partnerHref, readContent, SECTION_PATHS, sectionTitleKey, shownVenues, venueLines, type CelebrationContent, type GalleryImage, type PublicCelebrationView } from "../content.js";
 import { Dock } from "../dock.js";
 import { Flourish } from "../flourish.js";
 import { formatDate } from "../format.js";
@@ -58,8 +58,6 @@ const ROLE_VAR: Readonly<Record<PaletteRole, string>> = {
 const role = (value: PaletteRole | undefined): string | undefined => (value && Object.hasOwn(ROLE_VAR, value) ? ROLE_VAR[value] : undefined);
 const FONT_VAR = { heading: "var(--celebration-heading-font)", body: "var(--celebration-body-font)", monogram: "var(--celebration-monogram-font)" } as const;
 const BIG_TEXT = 40;
-const PHOTO_PURPOSES: readonly (string | undefined)[] = [undefined, "gallery", "cover"];
-const isPhoto = (item: GalleryImage): boolean => PHOTO_PURPOSES.includes(item.purpose);
 /** A public file as the media components read it. */
 const asMedia = (item: GalleryImage): PublicMedia => ({ id: item.id, width: item.width, height: item.height, variants: item.variants });
 const COVER_SIZES = "(min-width: 56.25rem) 40rem, 100vw";
@@ -332,7 +330,7 @@ function PageBlock({ page, context, only }: { readonly page: DesignPage; readonl
 export function DesignRenderer(props: DesignRendererProps): ReactNode {
   const { theme, view, design, t } = props;
   const media = props.gallery ?? [];
-  const gallery = media.filter(isPhoto);
+  const gallery = media.filter(isPhotoImage);
   const content = readContent(view);
   const layout = layoutOf(theme);
   const scheme = props.colorScheme;

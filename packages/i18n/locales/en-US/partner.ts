@@ -12,6 +12,8 @@ export const partnerEnUS: DeepStrings<typeof partnerEsBO> = {
   factLeadOffer_one: "{{name}} is a {{category}} vendor in {{city}}, verified by DOne. It lists {{count}} offer.",
   factLeadOffer_other: "{{name}} is a {{category}} vendor in {{city}}, verified by DOne. It lists {{count}} offers.",
   factLeadNone: "{{name}} is a {{category}} vendor in {{city}}, verified by DOne.",
+  logoAlt: "{{name}} logo",
+  gallery: "Photos",
   imageAlt: "{{name}}, {{category}} in {{city}}",
   noSummary: "This vendor has not added a description yet.",
   coverage: "Coverage area",

@@ -1,7 +1,7 @@
 import type { ApiClient } from "@rsvp/api-client";
 import { publicClient } from "./api";
 import { resolveProviderId } from "./catalog";
-import { partnerFromListings, type Partner, type PartnerLookup } from "@rsvp/query-hooks";
+import { partnerFromListings, withMicrositePictures, type Partner, type PartnerLookup } from "@rsvp/query-hooks";
 import { searchProviders, type ProviderCard } from "./providers";
 
 /**
@@ -42,7 +42,9 @@ async function withBusinessName(partner: Partner, client: ApiClient): Promise<Pa
     const providerId = await resolveProviderId(partner);
     if (!providerId) return partner;
     const profile = await client.request<{ readonly name?: string }>(`/providers/${providerId}`, { auth: false });
-    return { ...partner, providerId, ...(profile.name ? { name: profile.name } : {}) };
+    const named = { ...partner, providerId, ...(profile.name ? { name: profile.name } : {}) };
+    // The logo and the photos the provider uploaded for its page (a microsite that cannot be read leaves the page without them).
+    return await withMicrositePictures(client, named, providerId);
   } catch {
     return partner;
   }

@@ -265,3 +265,16 @@ export const setCoverPhoto = (mediaId: string | null): DocumentOp => (doc) => {
     return { ...page, background: { kind: "media", mediaId, fit: "cover", scrim: 0.35 } };
   });
 };
+
+/** A photo as the background of any page (the cover has `setCoverPhoto`), or none; a scrim keeps the text on top readable. */
+export const setPageBackgroundPhoto = (pageId: string, mediaId: string | null): DocumentOp => (doc) => {
+  const page = doc.pages.find((candidate) => candidate.id === pageId);
+  if (!page) return doc;
+  const current = page.background?.kind === "media" ? page.background.mediaId : null;
+  if (current === mediaId) return doc;
+  return mapPages(doc, (candidate) => {
+    if (candidate.id !== pageId) return candidate;
+    if (mediaId === null) { const { background: _removed, ...rest } = candidate; return rest; }
+    return { ...candidate, background: { kind: "media", mediaId, fit: "cover", scrim: 0.35 } };
+  });
+};

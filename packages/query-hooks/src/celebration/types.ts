@@ -178,6 +178,8 @@ export interface MediaAsset {
   readonly durationMs?: number | null;
   readonly rightsNoticeVersion?: string | null;
   readonly rightsAcknowledgedAt?: string | null;
+  /** Template/Media 1.5.0: hidden by moderation. The listing still returns it, without variant URLs, so the host can delete it. */
+  readonly hidden?: boolean;
   readonly variants: Readonly<Partial<Record<MediaVariantName, string>>>;
 }
 

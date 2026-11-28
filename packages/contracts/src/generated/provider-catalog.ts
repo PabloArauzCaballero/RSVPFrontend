@@ -677,7 +677,7 @@ export interface paths {
         put?: never;
         /**
          * Step 1 of 3: register a product photo and get a presigned PUT URL (owner/admin)
-         * @description R2 (A30). Flow: (1) this call; (2) PUT the image bytes to upload.url with upload.headers directly against the object store, no bearer token; the URL also signs Content-Length, so the body must be exactly `bytes` long (declare the file's real size; the store answers 403 to any other length); (3) POST .../photos/{photoId}/complete. Only a marketplace PRODUCT takes photos (not SERVICE, not the SNAPSHOT_V1 gift catalog). JPEG, PNG, WebP or HEIC up to 5 MB; at most 5 photos per product and 3 per variant; a per-provider storage quota (PROVIDER_MEDIA_MAX_BYTES_PER_PROVIDER, 200 MB by default) reserves the declared size until the upload completes or is abandoned (1 hour). The object key is built from ids only. With Idempotency-Key, repeating the same request returns the same photo (200), with a fresh upload link while it is still PENDING_UPLOAD and upload null afterwards; the same key with another listing, type, size, variantId or altText is 409 IDEMPOTENCY_KEY_REUSED. Another provider gets 403 whether the listing exists or not.
+         * @description R2 (A30). Flow: (1) this call; (2) PUT the image bytes to upload.url with upload.headers directly against the object store, no bearer token; the URL also signs Content-Length, so the body must be exactly `bytes` long (declare the file's real size; the store answers 403 to any other length); (3) POST .../photos/{photoId}/complete. A marketplace PRODUCT or a SERVICE takes photos (not the SNAPSHOT_V1 gift catalog). JPEG, PNG, WebP or HEIC up to 5 MB; at most 5 photos per product or service and 3 per variant; a per-provider storage quota (PROVIDER_MEDIA_MAX_BYTES_PER_PROVIDER, 200 MB by default) reserves the declared size until the upload completes or is abandoned (1 hour). The object key is built from ids only. With Idempotency-Key, repeating the same request returns the same photo (200), with a fresh upload link while it is still PENDING_UPLOAD and upload null afterwards; the same key with another listing, type, size, variantId or altText is 409 IDEMPOTENCY_KEY_REUSED. Another provider gets 403 whether the listing exists or not.
          */
         post: operations["requestListingPhotoUpload"];
         delete?: never;
@@ -700,6 +700,77 @@ export interface paths {
          * @description 422 CATEGORY_TYPE_MISMATCH when the listing type differs from the category's listingType (R1, 3.4.0). R2 (3.5.0): idempotent (publishing again returns the listing and emits nothing). A marketplace PRODUCT must be COMPLETE: 422 LISTING_INCOMPLETE with details.missing (MissingCode[]), 409 LISTING_HIDDEN when an administrator hid it, plus CONTACT_IN_TEXT and DESCRIPTION_REPEATS_TITLE.
          */
         post: operations["publishListing"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/{providerId}/media": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Photos of the provider itself: microsite gallery and logo (owner/admin) */
+        get: operations["listProviderMedia"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/{providerId}/media/{photoId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a gallery or logo photo (owner/admin) */
+        delete: operations["deleteProviderMedia"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/{providerId}/media/{photoId}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Step 3 of 3: the object was uploaded; queue it for processing (owner/admin) */
+        post: operations["completeProviderMedia"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/{providerId}/media/uploads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Step 1 of 3: register a gallery or logo photo and get a presigned PUT URL (owner/admin)
+         * @description Same flow, limits (JPEG, PNG, WebP or HEIC up to 5 MB, exact Content-Length signed), quota and Idempotency-Key as the photos of an offer. purpose GALLERY (at most 12 active photos per provider) or LOGO (at most 2). The photo is shown publicly only once the owner puts its id in the microsite (PUT /providers/{providerId}/microsite), which goes through moderation.
+         */
+        post: operations["requestProviderMediaUpload"];
         delete?: never;
         options?: never;
         head?: never;
@@ -771,7 +842,7 @@ export interface paths {
         put?: never;
         /**
          * Persist a quote request, create a form lead and emit QuoteRequested (signed in, or anonymous where enabled)
-         * @description Decision (DECISIONS.md 2026-11-05): quotes may be anonymous only when PROVIDER_ANON_QUOTES is `captcha` (default when a captcha verifier is configured) or `open` (local development). Anonymous requests need contact.email, are limited to 5 per hour per client address (429 + Retry-After) and 3 per day per contact e-mail and provider (429 QUOTE_LIMIT_REACHED), reject a filled honeypot `website` (422 QUOTE_REJECTED) and, in captcha mode, a valid captchaToken (403 CAPTCHA_FAILED). With mode `off` (default without a verifier) anonymous requests answer 401 ANONYMOUS_QUOTES_DISABLED. Date requests (bookings) always require an account.
+         * @description Decision (DECISIONS.md 2026-11-05): quotes may be anonymous only when PROVIDER_ANON_QUOTES is `captcha` (default when a captcha verifier is configured) or `open` (local development). Anonymous requests need contact.email, are limited to 5 per hour per client address (429 + Retry-After) and 3 per day per contact e-mail and provider (429 QUOTE_LIMIT_REACHED), reject a filled honeypot `website` (422 QUOTE_REJECTED) and, in captcha mode, a valid captchaToken (403 CAPTCHA_FAILED). With mode `off` (default without a verifier) anonymous requests answer 401 ANONYMOUS_QUOTES_DISABLED. Date requests (bookings) always require an account. 3.15.0: mode `proof` (self-hosted proof of work, 403 PROOF_FAILED) joins captcha and open; origin, proof and the lead rules of the 24 h window are described in info.description. Anonymous requests are also limited per device.
          */
         post: operations["requestQuote"];
         delete?: never;
@@ -1800,6 +1871,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/providers/quote-access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Whether anonymous quote requests are open, and a proof-of-work challenge (public, not cacheable) */
+        get: operations["getQuoteAccess"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/providers/ready": {
         parameters: {
             query?: never;
@@ -2121,6 +2209,11 @@ export interface components {
             imageUrl?: string;
             /** Format: uuid */
             listingId: string;
+            /**
+             * @description Type of the offer shown (additive in 3.15.0).
+             * @enum {string}
+             */
+            listingType?: "SERVICE" | "PRODUCT";
             name: string | null;
             priceFrom?: components["schemas"]["DevCompatMoney"];
             /**
@@ -2132,6 +2225,8 @@ export interface components {
             providerName: string | null;
             providerSlug: string | null;
             score?: number;
+            /** @description True when the provider plan (FEATURED or PREMIUM) raised this card in the ranking; clients must say so (additive in 3.15.0). */
+            sponsored?: boolean;
             summary?: string;
             verified: boolean;
         };
@@ -2576,6 +2671,8 @@ export interface components {
         CategoryList: {
             items?: {
                 code?: string;
+                /** @description Only with view=marketplace: providers with an eligible offer in the category. */
+                count?: number;
                 /**
                  * @description Offer type for this category. Null means that services and products can use it.
                  * @enum {string|null}
@@ -2585,6 +2682,8 @@ export interface components {
                 names?: {
                     [key: string]: string;
                 };
+                /** @description Only with view=marketplace: position for the requested event type. */
+                order?: number;
                 slug?: string;
             }[];
         };
@@ -3862,6 +3961,12 @@ export interface components {
                 url: string;
             }[];
             hours: components["schemas"]["BusinessHours"];
+            /** @description The provider's logo: an uploaded photo (card rendition address), null when it has none. */
+            logo?: {
+                /** Format: uuid */
+                mediaId: string;
+                url: string;
+            } | null;
             /** @description Owner and administrators only (A20): last moderation of the microsite. A REJECTED microsite is not public (published false) until an administrator approves a newer version; the public read then answers version 0 with empty fields. */
             moderation?: {
                 published: boolean;
@@ -3892,13 +3997,22 @@ export interface components {
                 };
                 /**
                  * Format: uuid
-                 * @description Media asset id in Template-Media
+                 * @description Id of a READY GALLERY photo of this provider (POST /providers/{providerId}/media/uploads). A mediaId that is no uploaded photo is accepted only for an entry already stored, sent back unchanged.
                  */
                 mediaId: string;
-                /** @description https URL or a /media/ path; never javascript: or data: */
-                url: string;
+                /** @description Ignored when mediaId is an uploaded photo (the server derives the address). Only for an entry stored before uploads existed, sent back unchanged: https URL or a /media/ path. */
+                url?: string;
             }[];
             hours?: components["schemas"]["BusinessHours"];
+            logo?: {
+                /**
+                 * Format: uuid
+                 * @description Id of a READY LOGO photo of this provider
+                 */
+                mediaId: string;
+                /** @description Ignored */
+                url?: string;
+            } | null;
             social?: {
                 /** Format: uri */
                 facebook?: string;
@@ -4566,9 +4680,17 @@ export interface components {
             destinations: components["schemas"]["Destination"][];
             fulfillment?: components["schemas"]["FulfillmentView"];
             hours?: components["schemas"]["BusinessHours"];
+            /** @description The offer's uploaded cover photo (card rendition); the address stored before uploads existed only as fallback. */
             imageUrl?: string;
             /** Format: uuid */
             listingId: string;
+            /**
+             * @description Type of the offer shown (additive in 3.15.0).
+             * @enum {string}
+             */
+            listingType?: "SERVICE" | "PRODUCT";
+            /** @description The provider's logo (published microsite), when it has one. */
+            logoUrl?: string;
             name: string;
             priceFrom?: components["schemas"]["Money"];
             /**
@@ -4580,6 +4702,8 @@ export interface components {
             providerName: string;
             providerSlug: string;
             score?: number;
+            /** @description True when the provider plan (FEATURED or PREMIUM) raised this card in the ranking; clients must say so (additive in 3.15.0). */
+            sponsored?: boolean;
             summary?: string;
             verified: boolean;
         };
@@ -4600,6 +4724,90 @@ export interface components {
             status: "PENDING_UPLOAD" | "UPLOADED";
             /** Format: date-time */
             uploadedAt?: string;
+        };
+        ProviderMedia: {
+            altText: string | null;
+            /**
+             * @description Type of the uploaded original; renditions are always WebP.
+             * @enum {unknown}
+             */
+            contentType: "image/jpeg" | "image/png" | "image/webp" | "image/heic";
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @description Order among the provider's photos of the same purpose. */
+            position: number;
+            /**
+             * @description What the photo is for: an image of the microsite gallery or the provider's logo.
+             * @enum {unknown}
+             */
+            purpose: "GALLERY" | "LOGO";
+            /**
+             * @description Only with REJECTED. REJECTED photos are removed after 7 days.
+             * @enum {unknown}
+             */
+            rejectReason: "UNREADABLE" | "HEIC_UNSUPPORTED" | "TOO_MANY_PIXELS" | "PROCESSING_FAILED" | null;
+            /** @description WebP renditions without EXIF/GPS; present only when READY. */
+            renditions: null | {
+                card: {
+                    height: number;
+                    /**
+                     * Format: uri
+                     * @description Anonymous URL: <object-store public origin>/provider-media/public/providers/{providerId}/media/{photoId}/{size}.webp, immutable.
+                     */
+                    url: string;
+                    width: number;
+                };
+                full: {
+                    height: number;
+                    /**
+                     * Format: uri
+                     * @description Anonymous URL: <object-store public origin>/provider-media/public/providers/{providerId}/media/{photoId}/{size}.webp, immutable.
+                     */
+                    url: string;
+                    width: number;
+                };
+                thumb: {
+                    height: number;
+                    /**
+                     * Format: uri
+                     * @description Anonymous URL: <object-store public origin>/provider-media/public/providers/{providerId}/media/{photoId}/{size}.webp, immutable.
+                     */
+                    url: string;
+                    width: number;
+                };
+            };
+            /** @enum {unknown} */
+            status: "PENDING_UPLOAD" | "QUEUED" | "PROCESSING" | "READY" | "REJECTED" | "DELETING";
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        ProviderMediaUpload: components["schemas"]["ProviderMedia"] & {
+            /** @description Null on an idempotent replay once the photo left PENDING_UPLOAD. */
+            upload: null | {
+                /** Format: date-time */
+                expiresAt: string;
+                headers: {
+                    [key: string]: string;
+                };
+                /** @constant */
+                method: "PUT";
+                /**
+                 * Format: uri
+                 * @description Presigned (AWS SigV4, 10 minutes). PUT the raw image bytes from the browser, sending exactly `headers`.
+                 */
+                url: string;
+            };
+        };
+        ProviderMediaUploadInput: {
+            altText?: string | null;
+            /** @description The file's real size: the presigned PUT signs it. */
+            bytes: number;
+            /** @enum {unknown} */
+            contentType: "image/jpeg" | "image/png" | "image/webp" | "image/heic";
+            /** @enum {unknown} */
+            purpose: "GALLERY" | "LOGO";
         };
         ProviderNotificationSettings: {
             /** @enum {string|null} */
@@ -4690,6 +4898,20 @@ export interface components {
             };
             quotes: number;
         };
+        QuoteAccess: {
+            /**
+             * @description How anonymous visitors may request quotes in this deployment (off: they must sign in).
+             * @enum {string}
+             */
+            anonymousQuotes: "off" | "captcha" | "proof" | "open";
+            /** @description Present in proof mode: a fresh challenge. Find a nonce so that SHA-256(challenge + ':' + nonce) starts with `difficulty` zero bits. */
+            proof?: {
+                challenge: string;
+                difficulty: number;
+                /** Format: date-time */
+                expiresAt: string;
+            };
+        };
         QuoteInput: {
             budgetMinor?: number;
             /** @description Anonymous requests only, when the deployment runs PROVIDER_ANON_QUOTES=captcha */
@@ -4707,6 +4929,20 @@ export interface components {
             listingIds: string[];
             locale?: string;
             message?: string;
+            /** @description Where the guest was before the form (statistics only; see 3.15.0). Unknown keys (guestId, token, slug) are ignored. */
+            origin?: {
+                /** Format: uuid */
+                celebrationId?: string;
+                /** @description Type of the celebration of origin, not of the event the guest wants to hire. */
+                eventType?: string;
+                /** @enum {string} */
+                surface: "PUBLIC_SITE" | "SEARCH" | "CELEBRATION_SITE" | "GIFT_LIST" | "EMAIL" | "APP";
+            };
+            /** @description Anonymous requests when PROVIDER_ANON_QUOTES=proof: the challenge of GET /providers/quote-access and the nonce that solves it (accepted once). */
+            proof?: {
+                challenge: string;
+                nonce: string;
+            };
             /** @description Honeypot for anonymous requests: must be empty or absent (a filled value is rejected as a bot). */
             website?: string;
         };
@@ -6753,6 +6989,14 @@ export interface operations {
                 city?: string;
                 /** @description Coverage zone declared in fulfillment. */
                 coverage?: string;
+                /** @description Event type code of celebration-site (WEDDING, QUINCEANERA...). Breaks ties between equal scores using the category order of that event type; never filters. */
+                eventType?: string;
+                /** @description One card per provider (its best offer); total counts providers. */
+                groupBy?: "provider";
+                /** @description Latitude of the point; send with lng. More than 8 decimals are truncated. Outside view=marketplace a malformed value is ignored. */
+                lat?: number;
+                /** @description Longitude of the point; send with lat. More than 8 decimals are truncated. Outside view=marketplace a malformed value is ignored. */
+                lng?: number;
                 /** @description Overrides Accept-Language. */
                 locale?: "es-BO" | "en-US";
                 maxPriceMinor?: number;
@@ -6760,10 +7004,16 @@ export interface operations {
                 near?: string;
                 page?: number;
                 pageSize?: number;
+                /** @description Radius around lat/lng; only with lat and lng. */
+                radiusKm?: number;
                 /** @description Provider slug; returns only that provider's published listings (empty page when unknown or not VERIFIED). */
                 slug?: string;
+                /** @description Keeps only offers of this type. */
+                type?: "SERVICE" | "PRODUCT";
                 /** @description Accepted for compatibility; every result is verified. */
                 verified?: boolean;
+                /** @description Guest marketplace rules (see 3.15.0 in info.description). Another value is 422 INVALID_QUERY. */
+                view?: "marketplace";
             };
             header?: never;
             path?: never;
@@ -6780,6 +7030,7 @@ export interface operations {
                     "application/json": components["schemas"]["CanonicalCompatProviderPage"];
                 };
             };
+            404: components["responses"]["NotFound"];
             422: components["responses"]["Validation"];
         };
     };
@@ -7833,6 +8084,210 @@ export interface operations {
                 };
             };
             422: components["responses"]["Validation"];
+        };
+    };
+    listProviderMedia: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                providerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Gallery photos then logos, not DELETING */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["ProviderMedia"][];
+                    };
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            /** @description PROVIDER_NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description MEDIA_STORAGE_NOT_CONFIGURED */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    deleteProviderMedia: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                photoId: string;
+                providerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted (also when it does not exist) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            /** @description MEDIA_IN_USE: the microsite still uses this photo as a gallery image or as the logo (details.usedBy MICROSITE) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    completeProviderMedia: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                photoId: string;
+                providerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description QUEUED (or the current state when it was already completed) */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderMedia"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            /** @description PHOTO_NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description UPLOAD_NOT_FOUND */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description PHOTO_MISMATCH: the first bytes are not the declared type or the object is larger than declared; it was discarded */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    requestProviderMediaUpload: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                providerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProviderMediaUploadInput"];
+            };
+        };
+        responses: {
+            /** @description Idempotent replay */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderMediaUpload"];
+                };
+            };
+            /** @description PENDING_UPLOAD */
+            201: {
+                headers: {
+                    Location?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderMediaUpload"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            /** @description PROVIDER_NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description PHOTO_LIMIT_REACHED (details.scope GALLERY or LOGO), MEDIA_QUOTA_EXCEEDED or IDEMPOTENCY_KEY_REUSED */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description UNSUPPORTED_MEDIA_TYPE, PHOTO_TOO_LARGE, CONTACT_IN_TEXT or VALIDATION_FAILED (purpose, bytes, variantId) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description MEDIA_STORAGE_NOT_CONFIGURED */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     getMetrics: {
@@ -9694,10 +10149,16 @@ export interface operations {
     listCategories: {
         parameters: {
             query?: {
+                /** @description With view=marketplace: count only providers with an offer in this city (slug). */
+                city?: string;
+                /** @description With view=marketplace: order of the categories for this event type. */
+                eventType?: string;
                 /** @description Overrides Accept-Language. */
                 locale?: "es-BO" | "en-US";
                 /** @description Keeps the categories that accept this listing type: listingType equal to it or null (null accepts both). Another value is 422 INVALID_QUERY. */
                 type?: "PRODUCT" | "SERVICE";
+                /** @description Categories of the guest marketplace with order and count; cannot be combined with type. */
+                view?: "marketplace";
             };
             header?: never;
             path?: never;
@@ -9714,6 +10175,7 @@ export interface operations {
                     "application/json": components["schemas"]["CategoryList"];
                 };
             };
+            404: components["responses"]["NotFound"];
             422: components["responses"]["Validation"];
         };
     };
@@ -10061,6 +10523,27 @@ export interface operations {
                 };
             };
             401: components["responses"]["Unauthorized"];
+        };
+    };
+    getQuoteAccess: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Quote access */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuoteAccess"];
+                };
+            };
+            429: components["responses"]["RateLimited"];
         };
     };
     ready: {
@@ -10455,13 +10938,13 @@ export interface operations {
                 eventType?: string;
                 /** @description Since 3.9.0 (R5): the gift of the guest's list the click comes from. Stored with the lead; never shown to the provider. */
                 giftItemId?: string;
-                /** @description Requires celebrationId. */
+                /** @description Deprecated and ignored since 3.15.0 (PF-1): accepted so old clients do not fail, never stored and never the actor of the lead event. */
                 guestId?: string;
                 /** @description es-BO or en-US (or an Accept-Language value). Since 3.9.0 it picks the template language and the formats of price and date of the WhatsApp message. */
                 locale?: string;
                 /** @description Since 3.9.0 (R5): units the guest wants; {cantidad} of the WhatsApp message (default 1). A value above 200 (the most a gift can hold) is cut to 200, so the redirect always lands; 422 INVALID_QUANTITY only when it is not a positive integer. */
                 quantity?: number;
-                /** @description Referrer; defaults to the Referer header. */
+                /** @description Referrer; defaults to the Referer header. Only the origin is kept when the path is under /c/ (invitation and guest pages). */
                 ref?: string;
                 /** @description Ignored since 3.10.0 (M34). The visitor is always the server's hash of the client address and user agent, never a value the client sends; with the listing and the destination it is the deduplication key of billable leads (24 h on GIFT_LIST). Old links that still carry it keep working. */
                 sessionId?: string;

@@ -390,6 +390,9 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 /* ===== Partner microsite ===== */
 .partner-top .top__inner { padding-bottom: clamp(2.5rem, 6vw, 4rem); }
 .partner-hero { display: grid; gap: 2rem; align-items: center; }
+.partner-logo { width: 4.5rem; height: 4.5rem; object-fit: contain; border-radius: var(--radius-cell); border: 1px solid var(--border); background: var(--surface); padding: .25rem; display: block; }
+.partner-gallery { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); gap: .75rem; }
+.partner-gallery img { width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; display: block; border-radius: var(--radius-cell); border: 1px solid var(--border); background: var(--surface-muted); }
 .partner-hero__media { border-radius: var(--radius-cell); overflow: hidden; border: 1px solid var(--border); background: var(--surface-muted); aspect-ratio: 16 / 10; }
 .partner-hero__media .monogram { font-size: clamp(3.5rem, 12vw, 6rem); }
 .partner-hero__text { display: grid; gap: .75rem; justify-items: start; }

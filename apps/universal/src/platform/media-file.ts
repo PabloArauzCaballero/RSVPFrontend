@@ -18,7 +18,7 @@ export const ACCEPT: Readonly<Record<MediaKind, string>> = {
 };
 const EXTENSION_TYPES: Readonly<Record<string, string>> = {
   jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", gif: "image/gif",
-  heic: "image/heic", heif: "image/heif", mp3: "audio/mpeg", avif: "image/avif", svg: "image/svg+xml"
+  heic: "image/heic", heif: "image/heif", pdf: "application/pdf", mp3: "audio/mpeg", avif: "image/avif", svg: "image/svg+xml"
 };
 
 /** The declared type; when there is none (HEIC in some browsers), the one the extension says. The server checks the bytes. */

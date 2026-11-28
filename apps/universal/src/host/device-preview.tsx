@@ -1,6 +1,5 @@
 import { useState, type ReactNode } from "react";
 import { Linking, Text, View } from "react-native";
-import { themeFromTemplate } from "@rsvp/celebration-theme/model";
 import { spacing } from "@rsvp/design-tokens";
 import { useMediaAssets, useTemplate, type Celebration, type MediaAsset, type TranslatedEventType } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../platform/providers";
@@ -8,7 +7,7 @@ import { publicSiteOrigin } from "../platform/site-origin";
 import { CelebrationScreen, useScreenHeader, type ScreenProps } from "./gate";
 import { previewView } from "./preview-model";
 import { PreviewStage, DEVICE_WIDTHS, type Device } from "./preview-stage";
-import { asTemplateDocument } from "./template-gallery";
+import { usePreviewTheme } from "./preview-theme";
 import { HOST_ROUTES, withCelebration } from "./routes";
 import { Enter } from "@rsvp/ui";
 import { ActionButton, Notice, OverflowMenu, useStyles } from "./ui";
@@ -39,8 +38,8 @@ function Preview({ celebration, eventType, device, setDevice, gallery, locale, o
   const styles = useStyles();
   const client = useApiClient();
   const template = useTemplate(client, celebration.templateId);
-  const theme = themeFromTemplate(template.data ? asTemplateDocument(template.data) : null, eventType?.enabledSections ?? []);
-  const images = gallery.filter((asset) => asset.status === "PROCESSED").map((asset) => ({ id: asset.id, width: asset.width, height: asset.height, isCover: asset.isCover, variants: asset.variants }));
+  const theme = usePreviewTheme(celebration, eventType);
+  const images = gallery.filter((asset) => asset.status === "PROCESSED").map((asset) => ({ id: asset.id, width: asset.width, height: asset.height, isCover: asset.isCover, ...(asset.purpose ? { purpose: asset.purpose } : {}), variants: asset.variants }));
   const published = celebration.status === "PUBLISHED";
   // One action: open the public page once it exists, otherwise go and publish. Changing the style is secondary.
   useScreenHeader({
