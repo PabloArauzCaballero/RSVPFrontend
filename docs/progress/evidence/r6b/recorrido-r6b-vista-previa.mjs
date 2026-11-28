@@ -1,7 +1,7 @@
 // Recorrido R6b FE (ronda 3): vista previa real → seo-web /r → Kong → lead PREVIEW; clic con eventType por seo-web; viewports, claro/oscuro, en-US y axe.
 // Arranque (ver docs/progress/R6b-FE-reportes.md): BE en Docker + Kong, Expo web en 8081 (proveedor) y 8100 (admin) con EXPO_PUBLIC_DEV_ACCESS_TOKEN de un login real, seo-web `next dev -p 3100`.
-import { chromium } from '/home/user/RSVPFrontend/node_modules/playwright/index.mjs';
-import AxeBuilder from '/home/user/RSVPFrontend/node_modules/@axe-core/playwright/dist/index.mjs';
+import { chromium } from 'playwright';
+import AxeBuilder from '@axe-core/playwright';
 import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 const DIR = process.env.R6B_DIR ?? '/var/tmp/r6b';
