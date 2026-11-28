@@ -98,7 +98,9 @@ export function PartnerMicrosite({ partner, t, locale, categories = [] }: { read
             <h2 id="partner-coverage">{t("partner.coverage")}</h2>
             {partner.coverage.length ? <ul className="directory-links directory-links--cities">{partner.coverage.map((area) => <li key={area}><span>{zoneName(area)}</span></li>)}</ul> : <p>{t("partner.noCoverage", { city: partner.city })}</p>}
             {partner.point ? (
+              <div className="partner-location">
               <LocationView name={partner.name} lines={partner.address ? [partner.address] : []} location={{ lat: partner.point.lat, lng: partner.point.lng, source: "pin" }} labels={locationLabels(t, partner.name)} mapConfigUrl={`${guestApiBase().replace(/\/$/, "")}/providers/geo/map-config`} />
+              </div>
             ) : partner.address ? <p>{partner.address}</p> : null}
             {partner.hours.length ? <ul className="partner-hours">{partner.hours.map((line) => <li key={line}>{line}</li>)}</ul> : null}
           </section>

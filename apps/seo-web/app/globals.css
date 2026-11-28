@@ -565,3 +565,6 @@ body:has([data-quiet-chrome]) .site-nav, body:has([data-quiet-chrome]) .site-foo
 .map-embed-canvas { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; border-radius: 0; }
 .map-embed-pin { position: absolute; left: 50%; top: 50%; z-index: 1000; width: 26px; height: 26px; margin: -40px 0 0 -13px; border-radius: 50%; background: #302c28; border: 2px solid #fffbf4; pointer-events: none; }
 .map-embed-pin::after { content: ""; position: absolute; left: 50%; top: 100%; width: 3px; height: 14px; margin-left: -1.5px; background: #302c28; border-radius: 0 0 2px 2px; }
+
+/* The place of a partner is drawn by the invitation's LocationView, which reads --celebration-* tokens; outside an invitation they come from the site's own. */
+.partner-location { --celebration-accent: var(--text); --celebration-surface: var(--surface); --celebration-text: var(--text); --celebration-muted: var(--text-muted); --celebration-radius: var(--radius-cell, 12px); }
