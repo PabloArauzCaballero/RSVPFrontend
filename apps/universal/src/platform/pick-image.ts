@@ -1,4 +1,5 @@
 import * as ImagePicker from "expo-image-picker";
+import { ImagePermissionError } from "./image-permission-error";
 
 /** A chosen image as bytes plus the name and type the upload needs. Null when the person cancels. */
 export interface PickedImage { readonly file: Blob; readonly name: string; readonly type: string; readonly size: number }
@@ -6,11 +7,17 @@ export interface PickedImage { readonly file: Blob; readonly name: string; reado
 const DEFAULT_TYPE = "image/jpeg";
 const DEFAULT_NAME = "photo.jpg";
 
-/** iOS and Android: the system photo library (asks for permission the first time). */
-export async function pickImage(): Promise<PickedImage | null> {
+/**
+ * iOS and Android: the system photo library (asks for permission the first time). `Compatible` makes iOS hand over a JPEG instead of the
+ * HEIC original, which the catalog rejects (decision 1). Not yet verified on a device.
+ */
+export async function pickImage(options: { readonly throwOnDenied?: boolean } = {}): Promise<PickedImage | null> {
   const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (!permission.granted) return null;
-  const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 1, exif: false });
+  if (!permission.granted) {
+    if (options.throwOnDenied) throw new ImagePermissionError();
+    return null;
+  }
+  const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 1, exif: false, preferredAssetRepresentationMode: ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible });
   const asset = result.canceled ? undefined : result.assets[0];
   if (!asset) return null;
   const blob = await (await fetch(asset.uri)).blob();

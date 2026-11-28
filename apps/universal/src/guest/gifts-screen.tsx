@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Image, Linking, Pressable, Text, View } from "react-native";
+import { AccessibilityInfo, Image, Linking, Platform, Pressable, Text, View, type ScrollView } from "react-native";
 import { ApiError } from "@rsvp/api-client";
 import type { PublicCelebrationView } from "@rsvp/celebration-theme/model";
 import { spacing } from "@rsvp/design-tokens";
@@ -91,6 +91,22 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
   const [cancelled, setCancelled] = useState<string | null>(null);
   const cancelKeys = useRef(new Map<string, string>());
 
+  // REG-01 · the host closed the list by hand: say so and offer no reservation. What the guest already holds stays, and they can still cancel it.
+  const listClosed = list.data?.closed === true;
+  const scroller = useRef<ScrollView>(null);
+  const closedNote = useRef<View>(null);
+  // The closure took away the form the guest was filling in (typically a refused tap, far down the list): bring them to the
+  // notice and say it. Web moves focus to it (react-native-web does not announce); native announces it to VoiceOver/TalkBack.
+  // A list that was already closed when the page opened interrupts nothing.
+  useEffect(() => {
+    if (!listClosed || !target) return;
+    setTarget(null);
+    setFieldErrors({});
+    scroller.current?.scrollTo({ y: 0, animated: false });
+    if (Platform.OS === "web") (closedNote.current as unknown as HTMLElement | null)?.focus({ preventScroll: true });
+    AccessibilityInfo.announceForAccessibility(`${t("gifts.guest.closed.title")}. ${t("gifts.guest.closed.body")}`);
+  }, [listClosed, target, t]);
+
   const all = useMemo(() => list.data?.items ?? [], [list.data]);
   const scoped = onlyItemId ? all.filter((item) => item.id === onlyItemId) : all;
   const maxMinor = maxPriceMinor(maxPrice);
@@ -116,7 +132,7 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
     });
   };
   const submit = (): void => {
-    if (!target || inFlight.current) return;
+    if (!target || listClosed || inFlight.current) return;
     const invalid = reserveFieldErrors({ name, message });
     setFieldErrors(invalid);
     if (invalid.name || invalid.message) return;
@@ -131,7 +147,8 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
 
   if (celebration.isPending || (celebrationId && list.isPending)) {
     return (
-      <GuestFrame>
+      // The same ref as the list: this frame's scroller stays mounted, and react-native-web only hands it over when it mounts.
+      <GuestFrame scrollRef={scroller}>
         <View accessibilityLiveRegion="polite" style={{ gap: spacing[4] }}>
           {[0, 1, 2].map((n) => <View key={n} style={{ gap: spacing[2], minHeight: 112 }}><Skeleton width="60%" height={18} /><Skeleton width="90%" height={14} /><Skeleton width={140} height={44} radius={12} /></View>)}
           <Text style={styles.muted}>{t("gifts.guest.loading")}</Text>
@@ -215,7 +232,7 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
     const listingId = item.productListingId;
     const contact = giftContactDestinations(listing?.destinationTypes);
     const viaOther = !listingId && item.externalUrl && isSafeHttps(item.externalUrl) ? item.externalUrl : null;
-    const opened = target?.id === item.id;
+    const opened = !listClosed && target?.id === item.id;
     return (
       <View key={item.id} testID={`gift-${item.id}`} style={{ gap: spacing[2], paddingVertical: spacing[4], borderBottomWidth: 1, borderBottomColor: palette.border }}>
         <GiftPhoto item={item} url={listing?.imageUrl} />
@@ -237,7 +254,7 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
           </View>
         ) : null}
         {outcome?.kind === "reserved" && outcome.item.id === item.id ? reservedNote(outcome) : null}
-        {outcome?.kind === "taken" && outcome.item.id === item.id ? (
+        {!listClosed && outcome?.kind === "taken" && outcome.item.id === item.id ? (
           <View testID="gift-taken" style={{ gap: spacing[2] }}>
             <Notice kind="error"><Text style={styles.subtitle}>{t("gifts.guest.taken.title")}</Text><Text style={styles.body}>{t("gifts.guest.taken.body", { title: item.title })}</Text></Notice>
             {alternatives.length === 0 ? <Text style={styles.muted}>{t("gifts.guest.taken.none")}</Text> : (
@@ -250,7 +267,7 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
         ) : null}
         {opened ? form(item) : (
           <View style={styles.row}>
-            {item.status === "AVAILABLE" ? <ActionButton icon="check" label={t("gifts.guest.reserve")} onPress={() => open(item)} testID={`reserve-${item.id}`} /> : null}
+            {item.status === "AVAILABLE" && !listClosed ? <ActionButton icon="check" label={t("gifts.guest.reserve")} onPress={() => open(item)} testID={`reserve-${item.id}`} /> : null}
             {listingId ? contact.map((destination) => (
               <ActionButton key={destination} icon="arrow" variant="secondary"
                 label={t(destination === "WHATSAPP" ? "gifts.card.viaWhatsApp" : "gifts.guest.viaPartner")}
@@ -273,10 +290,19 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
   );
 
   return (
-    <GuestFrame {...cover}>
+    <GuestFrame {...cover} scrollRef={scroller}>
+      {listClosed ? (
+        <View ref={closedNote} tabIndex={-1} testID="gift-list-closed">
+          <Notice kind="info">
+            <Text accessibilityRole="header" aria-level={2} style={styles.subtitle}>{t("gifts.guest.closed.title")}</Text>
+            <Text style={styles.body}>{t("gifts.guest.closed.body")}</Text>
+            {mine.size > 0 ? <Text style={styles.body}>{t("gifts.guest.closed.keepsMine")}</Text> : null}
+          </Notice>
+        </View>
+      ) : null}
       <View style={{ gap: spacing[2] }}>
-        {onlyItemId ? null : <Text style={styles.body}>{t("gifts.guest.intro")}</Text>}
-        {onlyItemId ? null : <Text style={styles.muted}>{t("gifts.guest.rule")}</Text>}
+        {onlyItemId || listClosed ? null : <Text style={styles.body}>{t("gifts.guest.intro")}</Text>}
+        {onlyItemId || listClosed ? null : <Text style={styles.muted}>{t("gifts.guest.rule")}</Text>}
         {onlyItemId ? link(t("gifts.detail.back"), listPath, "gifts-list") : null}
         {credential ? link(t("gifts.guest.backToRsvp"), rsvpPath, "gifts-back") : null}
         {link(t("gifts.back"), `/c/${encodeURIComponent(slug)}`, "gifts-invitation")}
@@ -293,12 +319,12 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
           <Text accessibilityLiveRegion="polite" role="status" style={styles.muted} testID="gift-count">{t("gifts.filters.count", { count: items.length })}</Text>
         </View>
       ) : null}
-      {list.data && onlyItemId && scoped.length === 0 ? <EmptyState illustration="noGifts" title={t("gifts.detail.notFound")} body={t("gifts.detail.notFoundBody")} /> : null}
-      {list.data && !onlyItemId && visibleCount === 0 ? <EmptyState illustration="noGifts" title={t("gifts.guest.empty.title")} body={t("gifts.guest.empty.body")} /> : null}
+      {list.data && onlyItemId && scoped.length === 0 ? <EmptyState illustration="noGifts" title={t("gifts.detail.notFound")} body={t(listClosed ? "gifts.detail.notFoundBodyClosed" : "gifts.detail.notFoundBody")} /> : null}
+      {list.data && !onlyItemId && !listClosed && visibleCount === 0 ? <EmptyState illustration="noGifts" title={t("gifts.guest.empty.title")} body={t("gifts.guest.empty.body")} /> : null}
       {list.data && visibleCount > 0 && items.length === 0 ? <EmptyState illustration="emptySearch" title={t("gifts.empty.filtered")} body={t("gifts.empty.filteredBody")} /> : null}
       {partner.length ? <View><Text accessibilityRole="header" aria-level={2} style={styles.subtitle}>{t("gifts.guest.groupPartner")}</Text><Stagger>{partner.map(renderGift)}</Stagger></View> : null}
       {other.length ? <View><Text accessibilityRole="header" aria-level={2} style={styles.subtitle}>{t("gifts.guest.groupOther")}</Text><Stagger>{other.map(renderGift)}</Stagger></View> : null}
-      <ConfirmDialog visible={cancelTarget !== null} danger busy={cancel.isPending} title={t("gifts.guest.mine.confirmTitle")} body={cancelTarget ? t("gifts.guest.mine.confirmBody", { title: cancelTarget.item.title }) : ""}
+      <ConfirmDialog visible={cancelTarget !== null} danger busy={cancel.isPending} title={t("gifts.guest.mine.confirmTitle")} body={cancelTarget ? t(listClosed ? "gifts.guest.mine.confirmBodyClosed" : "gifts.guest.mine.confirmBody", { title: cancelTarget.item.title }) : ""}
         confirmLabel={cancel.isPending ? t("gifts.guest.mine.cancelling") : t("gifts.guest.mine.confirm")} cancelLabel={t("gifts.guest.mine.keep")} confirmTestID="cancel-reservation-confirm" cancelTestID="cancel-reservation-keep"
         onCancel={() => { setCancelTarget(null); cancel.reset(); }} onConfirm={confirmCancel}>
         {cancelFailure ? <Notice kind="error"><Text testID="cancel-reservation-error" style={styles.body}>{cancelFailure}</Text></Notice> : null}

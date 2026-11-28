@@ -1,4 +1,6 @@
-/** Provider Catalog contract 2.0.0 (provider-catalog.openapi.json). */
+import type { ProviderCatalogComponents } from "@rsvp/contracts";
+
+/** Provider Catalog (provider-catalog.openapi.json; vendored version in packages/contracts/backend.lock.json). */
 export type ProviderStatus = "DRAFT" | "PENDING_VERIFICATION" | "VERIFIED" | "REJECTED" | "SUSPENDED";
 export type Destination = "OFFICIAL_SITE" | "LANDING" | "WHATSAPP" | "PHONE" | "EMAIL" | "INSTAGRAM" | "PRODUCT_PAGE";
 export type BookingStatus = "REQUESTED" | "CONFIRMED" | "REJECTED" | "CANCELLED" | "EXPIRED";
@@ -9,7 +11,11 @@ export interface Provider { readonly id: string; readonly slug: string; readonly
   /** Provider Catalog 3.0.0 (A20), owner and admin only: the administrator's reason of the last reject or suspend, and when it was decided. */
   readonly statusReason?: string | null; readonly statusChangedAt?: string | null }
 export interface ListingSummary { readonly id: string; readonly providerId: string; readonly providerStatus: ProviderStatus; readonly published: boolean; readonly type?: string; readonly category?: string; readonly title: string; readonly imageUrl?: string; readonly destinationTypes?: readonly Destination[] }
-export interface OwnListing { readonly id: string; readonly providerId: string; readonly type: string; readonly category: string; readonly city: string; readonly title: string; readonly published: boolean; readonly priceFromMinor?: number; readonly imageUrl?: string; readonly destinations?: readonly Destination[]; readonly fulfillment?: FulfillmentView }
+/** Provider Catalog 3.4.0: why the platform hid a listing (CATEGORY_TYPE_MISMATCH: its type does not match its category's type); null or absent when it is not hidden. */
+export type ListingHiddenReason = "CATEGORY_TYPE_MISMATCH";
+export interface OwnListing { readonly hiddenReason?: ListingHiddenReason | null; readonly id: string; readonly providerId: string; readonly type: string; readonly category: string; readonly city: string; readonly title: string; readonly published: boolean; readonly priceFromMinor?: number; readonly imageUrl?: string; readonly destinations?: readonly Destination[]; readonly fulfillment?: FulfillmentView;
+  /** Provider Catalog 3.5.0 (R2): optimistic-lock version, completeness of a PRODUCT (null for a SERVICE) and what it still lacks, in fixed order. */
+  readonly version?: number; readonly completeness?: "COMPLETE" | "INCOMPLETE" | "HIDDEN_BY_ADMIN" | null; readonly incompleteReason?: "OWN_CATALOG_NO_SHEET"; readonly missing?: readonly ("TITLE" | "DESCRIPTION" | "CATEGORY" | "GIFT_IDEA" | "PHOTO" | "PRICE" | "STOCK" | "COVERAGE" | "DELIVERY" | "DESTINATION")[] }
 export interface CreateListingInput { readonly type: "SERVICE" | "PRODUCT"; readonly category: string; readonly city: string; readonly titles: Readonly<Record<string, string>>; readonly descriptions?: Readonly<Record<string, string>>; readonly destinations: Readonly<Record<string, string>>; readonly fulfillment?: Fulfillment; readonly priceFromMinor?: number; readonly imageUrl?: string }
 export interface Lead { readonly id: string; readonly listingId: string; readonly kind: "REDIRECT" | "FORM"; readonly destination?: string; readonly category?: string; readonly valid: boolean; readonly billable?: boolean; readonly invalidReason?: "dup" | "bot"; readonly occurredAt: string; readonly context?: Readonly<Record<string, unknown>> }
 export interface MetricTotals { readonly impressions: number; readonly clicks: number; readonly validLeads: number; readonly invalidLeads: number; readonly ctr: number }
@@ -31,7 +37,8 @@ export interface ProviderQuoteSummary { readonly id: string; readonly providerId
 export interface ProviderQuote extends ProviderQuoteSummary { readonly contact: { readonly name: string; readonly email: string; readonly phone: string | null }; readonly message: string | null; readonly leadId: string | null }
 export interface ProviderQuotePage { readonly items: readonly ProviderQuoteSummary[]; readonly nextCursor: string | null }
 export interface QuoteReceipt { readonly id: string; readonly providerId?: string; readonly status: "REQUESTED"; readonly leadId: string; readonly disclaimer: string; readonly listings: readonly { readonly listingId: string; readonly fulfillment?: FulfillmentView }[] }
-export interface ListingHit { readonly id: string; readonly providerId: string; readonly title: string; readonly type?: string; readonly category?: string; readonly published?: boolean; readonly providerStatus?: ProviderStatus; readonly priceFromMinor?: number; readonly currency?: string; readonly imageUrl?: string }
+/** A GET /listings hit for the gift picker. `type` comes from the contract (ListingSummary, required since 3.4.0). */
+export interface ListingHit { readonly id: string; readonly providerId: string; readonly title: string; readonly type: ProviderCatalogComponents["schemas"]["ListingSummary"]["type"]; readonly category?: string; readonly published?: boolean; readonly providerStatus?: ProviderStatus; readonly priceFromMinor?: number; readonly currency?: string; readonly imageUrl?: string }
 export interface OfferCategory { readonly code: string; readonly name: string; readonly listingType?: CreateListingInput["type"] | null }
 /** PATCH /providers/{id}: the owner renames; the plan is admin-only and not offered here. */
 export interface UpdateProviderInput { readonly name: string }

@@ -17,6 +17,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/celebrations/{celebrationId}/gift-list/closure": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Close or reopen the gift list by hand (host or organizer)
+         * @description Since 1.13.0 (R8a; decisión de Pablo 2026-11-24). Requires Celebration access MANAGE (the owner, a CO_HOST or a PLANNER of the owning organization): a READ account or a guest link credential answers 403 HOST_REQUIRED, no or an invalid bearer 401, a celebration the caller cannot see (or a token bound to another celebration) 404 NOT_FOUND. PUT semantics, idempotent (PF-4): the body states the wanted state, so sending it again changes nothing and returns the same list (closedAt keeps the first close); concurrent requests serialize on the list row. While the list is closed, getPublicGiftsSummary answers CLOSED (which wins over EMPTY). It does not block reservations or new gifts in 1.13.0. No event is published. 404 GIFT_LIST_NOT_FOUND when the celebration has no gift list yet.
+         */
+        put: operations["putGiftListClosure"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/celebrations/{celebrationId}/gift-settings": {
         parameters: {
             query?: never;
@@ -639,6 +659,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/public/celebrations/{slug}/gifts/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * State of the gift list for the public invitation (OPEN, EMPTY or CLOSED) and how many gifts a guest sees
+         * @description M28 / R8a (1.13.0). Public: no JWT and no guest credential; an Authorization header is ignored. Served by the canonical v2 surface; the gateway route gifts-public-summary forwards it without the /gifts prefix and limits it per client address. Every request resolves the published celebration through Celebration GET /celebrations/public/{slug} (no positive cache): a malformed, unknown or unpublished slug, or a celebration with the gifts section disabled, answers the same 404 CELEBRATION_NOT_FOUND, so existence is never disclosed. itemCount counts the gifts a guest sees in the list (every status except PROPOSED and REJECTED, the same visibility as listGiftItems for non-hosts); a published celebration without a gift list counts 0. status: CLOSED when the host or the organizer closed the list by hand (putGiftListClosure) or when the celebration is over, that is, today in the celebration timeZone is after the local day of content.eventDate (the event day itself is still OPEN; without an event date it is never CLOSED by date); otherwise EMPTY when itemCount is 0 and OPEN when it is not. CLOSED takes precedence over EMPTY. No personal data. HEAD is served like GET without a body.
+         */
+        get: operations["getPublicGiftsSummary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/public/celebrations/{slug}/items": {
         parameters: {
             query?: never;
@@ -842,7 +882,7 @@ export interface components {
             title: string;
         };
         DevCompatProblem: {
-            /** @description Stable machine code, for example GIFT_NOT_AVAILABLE, HOST_REQUIRED, GIFT_LIST_EXISTS, INVALID_GIFT_TRANSITION, CATALOG_PRODUCT_UNAVAILABLE, INVALID_EXTERNAL_URL, INVALID_MONEY, PARTNER_CATALOG_FIRST, RESERVATION_NOT_PENDING */
+            /** @description Stable machine code, for example GIFT_NOT_AVAILABLE, HOST_REQUIRED, GIFT_LIST_EXISTS, INVALID_GIFT_TRANSITION, CATALOG_PRODUCT_UNAVAILABLE, INVALID_EXTERNAL_URL, INVALID_MONEY, PARTNER_CATALOG_FIRST, RESERVATION_NOT_PENDING; since 1.14.0 also GIFT_LISTING_NOT_PRODUCT (422 of addGiftItem: the CATALOGED listing is a SERVICE, only products can be gifts); since 1.15.0 also LIST_CLOSED (409 of reserveGift: the gift list is closed by hand) */
             code?: string;
             correlationId?: string;
             detail?: string;
@@ -888,6 +928,11 @@ export interface components {
             publishedAt?: string;
         });
         GiftCatalogedItem: {
+            /**
+             * @description Since 1.14.0 (M-6, R1). Present only when the gift's Provider Catalog listing is no longer a PRODUCT, so it can no longer be reserved; absent means available (the response of an unmarked gift is unchanged). Separate from status, which never says UNAVAILABLE. Only the owner's private lists carry it: the public guest page never has an UNAVAILABLE gift.
+             * @enum {string}
+             */
+            availability?: "UNAVAILABLE";
             catalog: components["schemas"]["GiftCatalogSnapshot"];
             external: null;
             /** Format: uuid */
@@ -1034,6 +1079,11 @@ export interface components {
             suggestions: components["schemas"]["GiftCatalogSuggestion"][];
         };
         GiftLegacyCatalogedItem: {
+            /**
+             * @description Since 1.14.0 (M-6, R1). Present only when the gift's Provider Catalog listing is no longer a PRODUCT, so it can no longer be reserved; absent means available (the response of an unmarked gift is unchanged). Separate from status, which never says UNAVAILABLE. Only the owner's private lists carry it: the public guest page never has an UNAVAILABLE gift.
+             * @enum {string}
+             */
+            availability?: "UNAVAILABLE";
             catalog: null;
             external: null;
             /** Format: uuid */
@@ -1049,6 +1099,20 @@ export interface components {
             status: "AVAILABLE" | "PENDING_REVIEW" | "COMMITTED" | "REJECTED";
             title: string;
             version: number;
+        };
+        /** @description Since 1.13.0 (R8a). The wanted state: true closes the list, false reopens it. */
+        GiftListClosureRequest: {
+            closed: boolean;
+        };
+        /** @description Since 1.13.0 (R8a): DevCompatGiftList plus its manual closure state. */
+        GiftListView: components["schemas"]["DevCompatGiftList"] & {
+            /** @description Since 1.13.0 (R8a): the host or the organizer closed the list by hand (putGiftListClosure). The event-date closure is not reflected here; it is reported by getPublicGiftsSummary. */
+            closed: boolean;
+            /**
+             * Format: date-time
+             * @description Since 1.13.0 (R8a): when the list was closed by hand; null while it is open. Closing an already closed list keeps the first instant.
+             */
+            closedAt: string | null;
         };
         GiftMixedExternalItem: {
             catalog: null;
@@ -1222,6 +1286,16 @@ export interface components {
         };
         /** @description One page of CanonicalCompatGiftItemPage (since 1.12.0). */
         PagedGiftItemPage: components["schemas"]["CanonicalCompatGiftItemPage"] & {
+            /** @description Since 1.13.0 (R8a): the host or the organizer closed the list by hand (putGiftListClosure). Informative; it does not block reservations in 1.13.0. */
+            closed: boolean;
+            /** @description Each item of the page also carries availability (since 1.14.0). */
+            items: {
+                /**
+                 * @description Since 1.14.0 (M-6, R1; decisión de Pablo 2026-11-26). UNAVAILABLE: the gift's Provider Catalog listing is no longer a PRODUCT, so it cannot be reserved. It is a field of its own: the frozen status (DevCompatGiftItemStatus) never answers UNAVAILABLE and keeps the value the gift had. Only the host (MANAGE) receives an UNAVAILABLE gift; guest lists, the public summary and READ-only guests leave it out.
+                 * @enum {string}
+                 */
+                availability: "AVAILABLE" | "UNAVAILABLE";
+            }[];
             /** @description Pass it as cursor to get the next page; null on the last page. */
             nextCursor: string | null;
         };
@@ -1266,6 +1340,11 @@ export interface components {
             listId: string;
         };
         PrivateLegacyCatalogGiftItem: {
+            /**
+             * @description Since 1.14.0 (M-6, R1). Present only when the gift's Provider Catalog listing is no longer a PRODUCT, so it can no longer be reserved; absent means available (the response of an unmarked gift is unchanged). Separate from status, which never says UNAVAILABLE. Only the owner's private lists carry it: the public guest page never has an UNAVAILABLE gift.
+             * @enum {string}
+             */
+            availability?: "UNAVAILABLE";
             catalog: {
                 /** Format: uuid */
                 productListingId: string;
@@ -1347,6 +1426,13 @@ export interface components {
             celebrationId: string;
             items: components["schemas"]["PublicExternalGiftItem"][];
             nextCursor: string | null;
+        };
+        /** @description Since 1.13.0 (M28). What the invitation shows on its gifts button: OPEN -> gifts.guest.cta.open, EMPTY -> gifts.guest.cta.empty, CLOSED -> gifts.guest.cta.closed. */
+        PublicGiftsSummary: {
+            /** @description Gifts a guest sees in the list (statuses other than PROPOSED and REJECTED); reserved gifts (PENDING_REVIEW, COMMITTED) count. */
+            itemCount: number;
+            /** @enum {string} */
+            status: "OPEN" | "EMPTY" | "CLOSED";
         };
         ReservationProblem: {
             code: string;
@@ -1545,7 +1631,7 @@ export interface components {
                 "application/problem+json": components["schemas"]["DevCompatProblem"];
             };
         };
-        /** @description The gift is no longer available */
+        /** @description The gift is no longer available (GIFT_NOT_AVAILABLE; since 1.15.0 also LIST_CLOSED from reserveGift when the host or the organizer closed the gift list by hand) */
         DevCompatGiftNotAvailable: {
             headers: {
                 [name: string]: unknown;
@@ -1595,7 +1681,7 @@ export interface components {
                 "application/problem+json": components["schemas"]["DevCompatProblem"];
             };
         };
-        /** @description Invalid request (INVALID_MONEY, INVALID_EXTERNAL_URL, CATALOG_PRODUCT_UNAVAILABLE, VALIDATION_FAILED, INVALID_TITLE) */
+        /** @description Invalid request (INVALID_MONEY, INVALID_EXTERNAL_URL, CATALOG_PRODUCT_UNAVAILABLE, VALIDATION_FAILED, INVALID_TITLE; since 1.14.0 also GIFT_LISTING_NOT_PRODUCT from addGiftItem when the CATALOGED listing is a SERVICE) */
         DevCompatValidation: {
             headers: {
                 [name: string]: unknown;
@@ -1702,6 +1788,40 @@ export interface operations {
                     "application/problem+json": components["schemas"]["DevCompatProblem"];
                 };
             };
+            503: components["responses"]["DevCompatDependencyUnavailable"];
+        };
+    };
+    putGiftListClosure: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Echoed in the response header and in problem.correlationId; generated when absent. */
+                "X-Correlation-Id"?: components["parameters"]["DevCompatCorrelationId"];
+            };
+            path: {
+                celebrationId: components["parameters"]["DevCompatCelebrationId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GiftListClosureRequest"];
+            };
+        };
+        responses: {
+            /** @description The list with its closure state (same answer for a repeated request) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GiftListView"];
+                };
+            };
+            401: components["responses"]["DevCompatUnauthorized"];
+            403: components["responses"]["DevCompatForbidden"];
+            404: components["responses"]["DevCompatNotFound"];
+            422: components["responses"]["DevCompatValidation"];
             503: components["responses"]["DevCompatDependencyUnavailable"];
         };
     };
@@ -6630,7 +6750,7 @@ export interface operations {
                     };
                 };
             };
-            /** @description GiftNotAvailable */
+            /** @description GiftNotAvailable, or LIST_CLOSED while the host holds the gift list closed (since 1.15.0; new reservations are refused, existing ones are untouched) */
             409: {
                 headers: {
                     /** @description Responses are never stored. */
@@ -6642,7 +6762,7 @@ export interface operations {
                 content: {
                     "application/problem+json": components["schemas"]["ReservationProblem"] & {
                         /** @enum {unknown} */
-                        code?: "GiftNotAvailable";
+                        code?: "GiftNotAvailable" | "LIST_CLOSED";
                         /** @constant */
                         status?: 409;
                         /** @constant */
@@ -6869,7 +6989,7 @@ export interface operations {
                     };
                 };
             };
-            /** @description GiftNotAvailable */
+            /** @description GiftNotAvailable, or LIST_CLOSED while the host holds the gift list closed (since 1.15.0; new reservations are refused, existing ones are untouched) */
             409: {
                 headers: {
                     /** @description Responses are never stored. */
@@ -6881,7 +7001,7 @@ export interface operations {
                 content: {
                     "application/problem+json": components["schemas"]["ReservationProblem"] & {
                         /** @enum {unknown} */
-                        code?: "GiftNotAvailable";
+                        code?: "GiftNotAvailable" | "LIST_CLOSED";
                         /** @constant */
                         status?: 409;
                         /** @constant */
@@ -7624,6 +7744,67 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    getPublicGiftsSummary: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Echoed in the response header and in problem.correlationId; generated when absent. */
+                "X-Correlation-Id"?: components["parameters"]["DevCompatCorrelationId"];
+            };
+            path: {
+                /** @description Published Celebration slug. Anything that is not a published slug with gifts enabled answers 404 (never 422), so callers cannot probe slugs. */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Gifts summary */
+            200: {
+                headers: {
+                    /** @description Same as the other public gift views: never stored by browsers or shared caches. */
+                    "Cache-Control": "no-store";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicGiftsSummary"];
+                };
+            };
+            /** @description CELEBRATION_NOT_FOUND: unknown, unpublished or gifts disabled (indistinguishable) */
+            404: {
+                headers: {
+                    /** @description Same as the other public gift views: never stored by browsers or shared caches. */
+                    "Cache-Control": "no-store";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["DevCompatProblem"];
+                };
+            };
+            /** @description VALIDATION_FAILED: the operation takes no query parameters */
+            422: {
+                headers: {
+                    /** @description Same as the other public gift views: never stored by browsers or shared caches. */
+                    "Cache-Control": "no-store";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["DevCompatProblem"];
+                };
+            };
+            /** @description DEPENDENCY_UNAVAILABLE: Celebration or the Gift database is unavailable (fail closed) */
+            503: {
+                headers: {
+                    /** @description Same as the other public gift views: never stored by browsers or shared caches. */
+                    "Cache-Control": "no-store";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["DevCompatProblem"];
+                };
             };
         };
     };
