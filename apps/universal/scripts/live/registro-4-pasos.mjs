@@ -48,7 +48,8 @@ async function open({ width, scheme = "light", reducedMotion = "no-preference", 
   return { context, page, requests };
 }
 const typeIn = (page, testId, value) => page.getByTestId(testId).fill(value);
-const shot = (page, name) => page.screenshot({ path: `${OUT}/${name}.png` });
+// The step slides in (420 ms): the picture is taken once it has arrived.
+const shot = async (page, name) => { await page.waitForTimeout(700); await page.screenshot({ path: `${OUT}/${name}.png` }); };
 /** The visible body of the form: the text and the structure with the address masked and the animation's inline style removed. */
 const screenOf = (page, address) => page.evaluate((mask) => {
   const main = document.querySelector("[role=main]");
