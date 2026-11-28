@@ -22,6 +22,11 @@ export interface StickyActionsProps {
    * Default 1; the screen shell's own header action uses 0 so a form's "Save" replaces it while the form is open.
    */
   priority?: number;
+  /**
+   * Colour behind the in-flow bar: `surface` when it sits inside a card (a form `Section`), so it does not draw a darker band across it.
+   * A docked bar lives outside the cards, on the page `canvas`, and ignores it.
+   */
+  ground?: 'canvas' | 'surface';
 }
 
 /** Widest a docked bar's content grows (a tablet): the buttons keep a phone-like width instead of spanning the screen. */
@@ -40,7 +45,7 @@ const DOCKED_MAX_WIDTH = 560;
  * The docked bar is rebuilt from this component's props on every render, so state used by its buttons stays current; React
  * contexts provided between the dock and this component are not visible to the buttons, only those above the dock.
  */
-export function StickyActions({ children, summary, testID, bleed = spacing[4], priority = 1 }: StickyActionsProps) {
+export function StickyActions({ children, summary, testID, bleed = spacing[4], priority = 1, ground = 'canvas' }: StickyActionsProps) {
   const { palette } = useTheme();
   const dock = useContext(ActionDockContext);
   const [slot] = useState(() => dock?.claim() ?? 0);
@@ -68,7 +73,7 @@ export function StickyActions({ children, summary, testID, bleed = spacing[4], p
     <View
       role="group"
       testID={testID}
-      style={[{ backgroundColor: Platform.OS === 'web' ? `${palette.canvas}E6` : palette.canvas, borderTopWidth: 1, borderTopColor: palette.border, paddingTop: spacing[3], paddingHorizontal: bleed, gap: spacing[2], marginHorizontal: -bleed }, stick]}
+      style={[{ backgroundColor: Platform.OS === 'web' ? `${palette[ground]}E6` : palette[ground], borderTopWidth: 1, borderTopColor: palette.border, paddingTop: spacing[3], paddingHorizontal: bleed, gap: spacing[2], marginHorizontal: -bleed }, stick]}
     >
       {summary}
       {buttons}

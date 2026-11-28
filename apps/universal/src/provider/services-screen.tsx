@@ -147,7 +147,7 @@ function NewOffer({ providerId, onClose, onCreated }: { readonly providerId: str
     <Section title={t("portal.services.new.title")}>
       {kindChoice}
       <Text style={styles.body}>{t("portal.product.newOffer.productHint")}</Text>
-      <StickyActions>
+      <StickyActions ground="surface">
         <ActionButton icon="arrow" label={t("portal.product.newOffer.productStart")} onPress={() => router.push(PRODUCT_NEW_ROUTE as Href)} testID="product-start" />
         <ActionButton icon="close" variant="secondary" label={t("portal.services.new.cancel")} onPress={onClose} testID="offer-new-close" />
       </StickyActions>

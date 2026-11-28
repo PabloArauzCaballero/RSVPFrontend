@@ -161,3 +161,18 @@ describe('MV-A2 native ActionDock draws the bar under the scroll area', () => {
     } finally { delete (Keyboard as unknown as { metrics?: unknown }).metrics; }
   });
 });
+
+describe('StickyActions ground (bar inside a card)', () => {
+  const colorOf = (ground?: 'canvas' | 'surface'): string => {
+    render(<UiProvider scheme="dark"><StickyActions testID="bar" {...(ground ? { ground } : {})}><Button>Ok</Button></StickyActions></UiProvider>);
+    const color = getComputedStyle(screen.getByTestId('bar')).backgroundColor;
+    cleanup();
+    return color;
+  };
+  it('in the flow it paints the colour of the card it sits in, canvas by default', () => {
+    const canvas = colorOf();
+    const surface = colorOf('surface');
+    expect(colorOf('canvas')).toBe(canvas);
+    expect(surface).not.toBe(canvas);
+  });
+});
