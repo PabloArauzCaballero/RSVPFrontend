@@ -32,7 +32,7 @@ Fecha: 2026-11-24. Corrige PL-A1 y PL-M7 (`PLAN-PLANTILLAS.md`, rama `bugs/catal
 | Baby shower y revelación | biberon, sonajero, globo-pregunta, chupete, cochecito |
 | Comunión y confirmación | caliz, rosario, biblia, vela, paloma |
 | Despedidas y reuniones | maleta, postal, mesa-larga, brujula |
-| Fiesta patronal | mascara-morenada (abstracta: corona, escudo y rayos; **sin cuencas, ojos, dientes ni boca**), matraca, banderines, bombo |
+| Fiesta patronal | mascara-morenada (silueta con cuernos y corona; su ornamento es **una sola banda continua de calado** (greca de 8 escalones cuadrados, 4 dientes, trazo 2,5, sin segundo color) que cruza el huevo de borde a borde en lo alto de la frente, como una cinta de diadema bajo la corona; el resto del huevo es tinta lisa: **sin cuencas, ojos, cejas, dientes ni boca**, ni anillo, punto, par de aberturas, «W» ni «V» (PL-116-R5-1, PL-138-1); ver `mascara-morenada-claro.png` y `-oscuro.png` a 48, 104 y 240 px), matraca, banderines, bombo |
 | Inauguración | tijera-cinta, llave, cartel («Abierto» colgado), puerta, cohete |
 | Pedida y compromiso | caja-anillo, solitario, rosa, botella |
 | Despedida de soltero/a | antifaz, coctel, pajarita, sombrero-copa |
@@ -48,6 +48,7 @@ Ornamentos (un solo trazo de 1,8, tinta + un acento): laurel, art déco, filete,
 
 - `art-palette.test.ts`: las 16 plantillas sembradas (copiadas de BE `seeds/templates/data`, verificadas el 2026-11-24) en claro y oscuro, sobre lienzo, tarjeta, bloque de acento y foto. Disco ≥ 1,1 en claro y entre 1,16 y 1,25 en oscuro (el de DOne ronda 1,15); sombra siempre más oscura que el disco, ≥ 1,2 del fondo en claro, un paso bajo la página en oscuro (L16: nunca el color de la página) y ≥ 1,08 contra el disco; secundario y acento ≥ 3:1 contra fondo y disco; en `accent`/`photo` el disco es el lienzo.
 - `art-library.test.tsx` (por dibujo): solo roles (sin hex ni color literal); **un solo acento: un trazado con un solo subtrazado**; **tinta rellena sin trazo como figura principal**; **calado obligatorio salvo la lista `NO_CUTOUT`** (hoy solo `cifra-25`, justificada); **trazo mínimo 2,5**; **≤ 13 subtrazados**; **figura de a lo sumo 96 × 96 dentro de la cuadrícula**; nombres es-BO y en-US con `label`, decorativo por defecto; tamaño intrínseco; **un golden por dibujo y por ornamento**. De conjunto: ≥ 4 dibujos por cada uno de los 18 tipos; ornamentos con las líneas de la esquina continuadas en el lateral; pasos de la entrada (≤ 8, calado con su tinta); IntersectionObserver simulado (arma antes de pintar, revela una vez, estado final con movimiento reducido o sin observador); `art.css` con los números de DOne y `styles.css` que lo importa.
+- `art-library.test.tsx`, «dibujos sin cara» (PL-138-2): el ornamento es la única pieza de calado de la máscara y es una banda de 4+ dientes que cruza el huevo; **ninguna pieza suelta de ningún tamaño en el huevo** (frente incluida); nada alcanza el rostro bajo la banda; los detectores atrapan los diseños anteriores (anillo y punto, par de aberturas en los ojos o en la frente, línea corta, «W», «V», segunda franja, línea larga).
 - `apps/universal/test/invitation-art-sync.test.ts`: la geometría es la de `packages/ui`.
 - Chrome real: con `prefers-reduced-motion: reduce` `animation-name` es `none`; sin preferencia, `celebration-art-trace` / `celebration-art-in`, 1 iteración.
 
@@ -61,3 +62,7 @@ Ornamentos (un solo trazo de 1,8, tinta + un acento): laurel, art déco, filete,
 - El oscuro de la plantilla (`paletteFor(..., "dark")`) vive en la rama `fix/plantillas-fase0-contraste-oscuro`, que aún no está en la base. `test/dark-palette.ts` copia esa composición y `art-palette.test.ts` la fija; al entrar esa rama se borra y se importa `paletteFor`.
 - Pendiente de F4: conectar los dibujos a las plantillas, elegir el set por tipo de evento y el ornamento por plantilla, y el sobre que se abre.
 - No se probó en iOS/Android nativos ni en el backend real: el módulo no toca ni contratos ni API.
+
+## Ronda 2 (PL-138-R2-1)
+
+La greca de la máscara de morenada mide ahora 44,4 de ancho (x 37,8 a 82,2) y el huevo mide 42,3 a 48,5 entre y 49 y 54 (45,7 a media banda): antes medía 38 (x 41 a 79) y quedaba flotante. La prueba compara el ancho de la banda con el ancho real del huevo a su altura (±2) y exige que cada extremo caiga a ±2 del contorno. Capturas de la invitación `/c/fiesta-patronal` a 360, 768 y 1280 px, con y sin foto, en claro y oscuro: `invitacion-r2/` (evidencia Linux, no líneas base).

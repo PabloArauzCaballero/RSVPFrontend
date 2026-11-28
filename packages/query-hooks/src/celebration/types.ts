@@ -81,7 +81,7 @@ export interface PublishCheck { readonly ready: boolean; readonly missingFields:
  * GET /celebrations/{id}/public-page (A18): whether the public page agrees with the publication
  * decision. Only LIVE means a guest opening the link sees the invitation.
  */
-/** HIDDEN (F7): published, but moderation hides the whole page (guests get 404). */
+/** HIDDEN (F7, Celebration 1.8.0): published, but moderation hides the whole page (guests get 404); `moderation` says why. */
 export type PublicPageState = "LIVE" | "PUBLISHING" | "UNPUBLISHING" | "OFFLINE" | "HIDDEN";
 export interface PublicPageStatus {
   readonly celebrationId: string;
@@ -89,6 +89,8 @@ export interface PublicPageStatus {
   readonly state: PublicPageState;
   readonly version: number;
   readonly publicVersion: number | null;
+  /** The active decision that hides the whole page; it stays reported while unpublished, because republishing does not lift it. */
+  readonly moderation?: { readonly takedownId: string; readonly reason: string; readonly guidance: string | null; readonly hiddenAt: string } | null;
 }
 
 export interface AuditEntry { readonly id: string; readonly action: string; readonly actorId: string | null; readonly at: string; readonly details: Readonly<Record<string, unknown>> }
@@ -179,6 +181,8 @@ export interface MediaAsset {
   readonly rightsNoticeVersion?: string | null;
   readonly rightsAcknowledgedAt?: string | null;
   readonly variants: Readonly<Partial<Record<MediaVariantName, string>>>;
+  /** F7: moderation hides this file (the page, the gallery section or the file itself). `variants` is empty while true. */
+  readonly hidden?: boolean;
 }
 
 /** GET /celebrations/{id}/assets: the files and, since 1.4.0 of the contract, what the celebration has used of its quota. */

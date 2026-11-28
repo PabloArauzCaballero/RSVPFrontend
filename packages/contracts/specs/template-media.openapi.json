@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "RSVP Template and Media API",
-    "version": "1.9.1",
-    "description": "Template/Media Service (lane 16, Django + DRF). Behind Kong at /media (prefix stripped). Errors are RFC 9457 problems. 1.2.0 (F1, additive; the unmerged 1.1.0 of the same change set is superseded): a template theme is either the v1 theme (unchanged) or the invitation design document v2 (DesignDocumentV2, schemaVersion 2), validated against this contract. A v2 without the gifts block is 422 GIFTS_BLOCK_REQUIRED; the mandatory gifts button cannot be redirected, hidden, shrunk below 44 px, moved out of the canvas, covered or left unreadable (GIFTS_BLOCK_LOCKED, GIFTS_BLOCK_HIDDEN, GIFTS_BLOCK_OUT_OF_CANVAS, GIFTS_BLOCK_TOO_SMALL, GIFTS_BLOCK_COVERED, GIFTS_BLOCK_LOW_CONTRAST). History of 1.2.0 and 1.3.0, superseded in F4 b (see 1.4.1; DESIGN_NOT_PUBLISHABLE no longer exists): until F4/F5 the admin and the renderer could not read a v2: POST/PATCH with a v2 theme was 422 DESIGN_V2_NOT_AVAILABLE, the admin list left v2 rows out and publishing one was 422 DESIGN_NOT_PUBLISHABLE. The gifts button keeps 44 px of useful height after padding and border and a label of at most 32 px. Poppins and IBM Plex leave the font catalogue. Custom HTML/CSS is 422 CUSTOM_CODE_UNAVAILABLE until the F5 sanitiser exists. A JSON body over 1 MB is 413 PAYLOAD_TOO_LARGE. Low-contrast colour pairs come back as non-blocking warnings (P19). 1.3.0 (F1, additive): per-celebration design storage. A design has a working draft, immutable published versions that can be restored into the draft (P15) and may be a host's private template (P21). Endpoints under /designs; publishing a celebration design emits template.design.published.v1 (AsyncAPI 1.23.0). 1.4.0 (F6, additive): more image types (gif, avif, svg, heic), MP3 music, `purpose`, per-celebration quota (409 MEDIA_QUOTA_*), AVIF variants, `POST /embeds/resolve` and `GET /celebrations/{celebrationId}/media-usage`. Nothing was removed or renamed. 1.4.1 (documentation only, no behaviour change): since F4 b the v2 gate DESIGN_V2_ACCEPTED is on by default and DESIGN_NOT_PUBLISHABLE is gone, so POST /templates/{id}/publish no longer lists a 422 and the descriptions that said \"until F4/F5\" now say what the service does. 1.4.2 (F6, narrowing, no endpoint removed): SoundCloud leaves the embeds resolver by product decision; `POST /embeds/resolve` no longer accepts soundcloud.com URLs (they are rejected like any host outside the allowlist) and `provider` loses the `soundcloud` value. The music kind is YouTube, Spotify or an own MP3. 1.5.0 (F7 / PL-142-R4, additive; the storage follow-up of F1 moves to 1.6.0): Template/Media stops serving what an administrator hid in Celebration/Site (decision of 2026-11-25) and serves it again when the hiding is lifted. It consumes celebration.moderation.content-hidden.v1, content-restored.v1 and appeal-decided.v1 (AsyncAPI 1.24.0). A page hidden (scope PAGE) hides every file of the celebration; the `gallery` section hidden hides the gallery photos (purposes gallery and cover, also the ones uploaded afterwards); an element whose id is the id of a file hides that file. A hidden file is no longer in the public gallery, `GET /public/assets/{assetId}/{variant}` answers the same 404 as a file that does not exist, and the host listing returns it with `hidden: true` and no variant URLs, so the editor can explain it and let the host delete it. The new boolean `MediaAsset.hidden` is the only schema change. Presigned URLs issued before the hiding keep working until they expire (MEDIA_PRESIGN_SECONDS, 3600 s by default). 1.6.0 (F1, additive, decisions of 2026-11-25; 1.5.0 belongs to F7): `POST /designs/{designId}/unpublish` withdraws the published version of a design (the invitation goes back to the base template; the draft and the versions stay) and emits template.design.unpublished.v1 (AsyncAPI 1.30.0); a later publish gets a higher version number. Only drafts are deleted: a published design (of a celebration or a private template) is 409 DESIGN_PUBLISHED until it is unpublished. Saving a private template (`POST /designs` with kind PRIVATE_TEMPLATE) no longer fails when the source has photos: photos, personal text and personal links are taken out, and the response reports how many in `stripped`. The newest 100 published versions of a design are kept. The reference that Celebration holds is reconciled by the service on its own. 1.8.0 (plantillas, contrato v2 de fidelidad; additive, nothing removed or renamed, every existing document stays valid): (a) `DesignAnimation.name`, a curated list of named animations (aparecer, mecerse, revelar-telon, abrir-puertas) for elements and, through the new `animation` of a cover or section page, for sections; their duration comes from the renderer's motion tokens, so `durationMs` is refused beside a `name`, and every one is off under prefers-reduced-motion, and the gifts and reply buttons take none (they would move, hide or cover the protected layer); (b) `DesignElement.mask` (arch, deco-doors, chamfer, circle, rounded, stamp) and `DesignElement.frame` (double, deco, hairline), refused on the gifts and reply buttons and on blocks that carry text; (c) `CoverVariant` gains arch, hanging, deco and poster; (d) `DesignMediaBackground.veil`: `graded` (explicit) puts the strong veil only behind the text and a light one elsewhere, `even` (what an absent value means: documents saved before 1.8.0 keep their look) keeps one veil over the whole photo; text stays AA either way; (e) `video.posterMediaId`, the cover photo the host picks (a photo of the celebration, checked like every mediaId; it must be an image and, when publishing, one that moderation has not hidden). Rule violations are 422 DESIGN_DECORATION_INVALID. 1.9.0 (additive, F7 / PL-142-R4, decisions of Pablo of 2026-11-26): (1) immediate cut: when a file is hidden its objects (original and variants) are MOVED to a quarantine prefix of the bucket, so no link signed before the hiding works any more, and they are moved back on restore; the public variants are served with short-lived signed links (MEDIA_PUBLIC_PRESIGN_SECONDS, 120 s by default) and `GET /public/assets/{assetId}/{variant}` is cached for less than that (MEDIA_PUBLIC_REDIRECT_CACHE_SECONDS, 60 s), which replaces the 3600 s / 600 s window declared in 1.5.0 for public variants (the host listing keeps MEDIA_PRESIGN_SECONDS). (2) The own music (MP3) is reported and hidden on its own: Template/Media treats the SECTION `music` of the moderation events (Celebration 1.8.0) as hiding only the files with purpose music, also the ones uploaded afterwards; the invitation and its photos stay visible. (3) An administrator previews a hidden file with a single-use signed link: `POST /admin/assets/{assetId}/preview-links` (ADMIN only, 403 otherwise) returns a link to `GET /public/previews/{token}`, which answers 302 once to a storage link of 30 s for the file in quarantine; used, expired, forged, malformed, unknown, no longer hidden or gone is the same 404 as a file that does not exist. Issuing and opening are written to the moderation audit (`GET /admin/assets/{assetId}/preview-audit`, ADMIN only). (4) The direct URL of a hidden file keeps answering the same 404 as a file that does not exist (unchanged from 1.5.0). New configuration: MEDIA_PREVIEW_SIGNING_KEY (at least 32 characters; the service does not start without it outside a local run). 1.9.1 (PL-167-RR-4, no endpoint added or removed, no field changed): the contract and the service now say the same. `variant` of `POST /admin/assets/{assetId}/preview-links` was already an enum here but the service accepted any string up to 20 characters and answered 404; a value outside the enum is now 400 BAD_REQUEST (declared), while a variant inside the enum that this file does not have (for example `audio` of a photo) stays 404. `/public/previews/{token}` now declares the HEAD 405 it always answered (HEAD never redeems the link)."
+    "version": "1.11.0",
+    "description": "Template/Media Service (lane 16, Django + DRF). Behind Kong at /media (prefix stripped). Errors are RFC 9457 problems. 1.2.0 (F1, additive; the unmerged 1.1.0 of the same change set is superseded): a template theme is either the v1 theme (unchanged) or the invitation design document v2 (DesignDocumentV2, schemaVersion 2), validated against this contract. A v2 without the gifts block is 422 GIFTS_BLOCK_REQUIRED; the mandatory gifts button cannot be redirected, hidden, shrunk below 44 px, moved out of the canvas, covered or left unreadable (GIFTS_BLOCK_LOCKED, GIFTS_BLOCK_HIDDEN, GIFTS_BLOCK_OUT_OF_CANVAS, GIFTS_BLOCK_TOO_SMALL, GIFTS_BLOCK_COVERED, GIFTS_BLOCK_LOW_CONTRAST). History of 1.2.0 and 1.3.0, superseded in F4 b (see 1.4.1; DESIGN_NOT_PUBLISHABLE no longer exists): until F4/F5 the admin and the renderer could not read a v2: POST/PATCH with a v2 theme was 422 DESIGN_V2_NOT_AVAILABLE, the admin list left v2 rows out and publishing one was 422 DESIGN_NOT_PUBLISHABLE. The gifts button keeps 44 px of useful height after padding and border and a label of at most 32 px. Poppins and IBM Plex leave the font catalogue. Custom HTML/CSS is 422 CUSTOM_CODE_UNAVAILABLE until the F5 sanitiser exists. A JSON body over 1 MB is 413 PAYLOAD_TOO_LARGE. Low-contrast colour pairs come back as non-blocking warnings (P19). 1.3.0 (F1, additive): per-celebration design storage. A design has a working draft, immutable published versions that can be restored into the draft (P15) and may be a host's private template (P21). Endpoints under /designs; publishing a celebration design emits template.design.published.v1 (AsyncAPI 1.23.0). 1.4.0 (F6, additive): more image types (gif, avif, svg, heic), MP3 music, `purpose`, per-celebration quota (409 MEDIA_QUOTA_*), AVIF variants, `POST /embeds/resolve` and `GET /celebrations/{celebrationId}/media-usage`. Nothing was removed or renamed. 1.4.1 (documentation only, no behaviour change): since F4 b the v2 gate DESIGN_V2_ACCEPTED is on by default and DESIGN_NOT_PUBLISHABLE is gone, so POST /templates/{id}/publish no longer lists a 422 and the descriptions that said \"until F4/F5\" now say what the service does. 1.4.2 (F6, narrowing, no endpoint removed): SoundCloud leaves the embeds resolver by product decision; `POST /embeds/resolve` no longer accepts soundcloud.com URLs (they are rejected like any host outside the allowlist) and `provider` loses the `soundcloud` value. The music kind is YouTube, Spotify or an own MP3. 1.5.0 (F7 / PL-142-R4, additive; the storage follow-up of F1 moves to 1.6.0): Template/Media stops serving what an administrator hid in Celebration/Site (decision of 2026-11-25) and serves it again when the hiding is lifted. It consumes celebration.moderation.content-hidden.v1, content-restored.v1 and appeal-decided.v1 (AsyncAPI 1.24.0). A page hidden (scope PAGE) hides every file of the celebration; the `gallery` section hidden hides the gallery photos (purposes gallery and cover, also the ones uploaded afterwards); an element whose id is the id of a file hides that file. A hidden file is no longer in the public gallery, `GET /public/assets/{assetId}/{variant}` answers the same 404 as a file that does not exist, and the host listing returns it with `hidden: true` and no variant URLs, so the editor can explain it and let the host delete it. The new boolean `MediaAsset.hidden` is the only schema change. Presigned URLs issued before the hiding keep working until they expire (MEDIA_PRESIGN_SECONDS, 3600 s by default). 1.6.0 (F1, additive, decisions of 2026-11-25; 1.5.0 belongs to F7): `POST /designs/{designId}/unpublish` withdraws the published version of a design (the invitation goes back to the base template; the draft and the versions stay) and emits template.design.unpublished.v1 (AsyncAPI 1.30.0); a later publish gets a higher version number. Only drafts are deleted: a published design (of a celebration or a private template) is 409 DESIGN_PUBLISHED until it is unpublished. Saving a private template (`POST /designs` with kind PRIVATE_TEMPLATE) no longer fails when the source has photos: photos, personal text and personal links are taken out, and the response reports how many in `stripped`. The newest 100 published versions of a design are kept. The reference that Celebration holds is reconciled by the service on its own. 1.8.0 (plantillas, contrato v2 de fidelidad; additive, nothing removed or renamed, every existing document stays valid): (a) `DesignAnimation.name`, a curated list of named animations (aparecer, mecerse, revelar-telon, abrir-puertas) for elements and, through the new `animation` of a cover or section page, for sections; their duration comes from the renderer's motion tokens, so `durationMs` is refused beside a `name`, and every one is off under prefers-reduced-motion, and the gifts and reply buttons take none (they would move, hide or cover the protected layer); (b) `DesignElement.mask` (arch, deco-doors, chamfer, circle, rounded, stamp) and `DesignElement.frame` (double, deco, hairline), refused on the gifts and reply buttons and on blocks that carry text; (c) `CoverVariant` gains arch, hanging, deco and poster; (d) `DesignMediaBackground.veil`: `graded` (explicit) puts the strong veil only behind the text and a light one elsewhere, `even` (what an absent value means: documents saved before 1.8.0 keep their look) keeps one veil over the whole photo; text stays AA either way; (e) `video.posterMediaId`, the cover photo the host picks (a photo of the celebration, checked like every mediaId; it must be an image and, when publishing, one that moderation has not hidden). Rule violations are 422 DESIGN_DECORATION_INVALID. 1.9.0 (additive, F7 / PL-142-R4, decisions of Pablo of 2026-11-26): (1) immediate cut: when a file is hidden its objects (original and variants) are MOVED to a quarantine prefix of the bucket, so no link signed before the hiding works any more, and they are moved back on restore; the public variants are served with short-lived signed links (MEDIA_PUBLIC_PRESIGN_SECONDS, 120 s by default) and `GET /public/assets/{assetId}/{variant}` is cached for less than that (MEDIA_PUBLIC_REDIRECT_CACHE_SECONDS, 60 s), which replaces the 3600 s / 600 s window declared in 1.5.0 for public variants (the host listing keeps MEDIA_PRESIGN_SECONDS). (2) The own music (MP3) is reported and hidden on its own: Template/Media treats the SECTION `music` of the moderation events (Celebration 1.8.0) as hiding only the files with purpose music, also the ones uploaded afterwards; the invitation and its photos stay visible. (3) An administrator previews a hidden file with a single-use signed link: `POST /admin/assets/{assetId}/preview-links` (ADMIN only, 403 otherwise) returns a link to `GET /public/previews/{token}`, which answers 302 once to a storage link of 30 s for the file in quarantine; used, expired, forged, malformed, unknown, no longer hidden or gone is the same 404 as a file that does not exist. Issuing and opening are written to the moderation audit (`GET /admin/assets/{assetId}/preview-audit`, ADMIN only). (4) The direct URL of a hidden file keeps answering the same 404 as a file that does not exist (unchanged from 1.5.0). New configuration: MEDIA_PREVIEW_SIGNING_KEY (at least 32 characters; the service does not start without it outside a local run). 1.9.1 (PL-167-RR-4, no endpoint added or removed, no field changed): the contract and the service now say the same. `variant` of `POST /admin/assets/{assetId}/preview-links` was already an enum here but the service accepted any string up to 20 characters and answered 404; a value outside the enum is now 400 BAD_REQUEST (declared), while a variant inside the enum that this file does not have (for example `audio` of a photo) stays 404. `/public/previews/{token}` now declares the HEAD 405 it always answered (HEAD never redeems the link). 1.10.0 (MAP-B3, mapas OpenStreetMap; behaviour change, no schema change): maps are no longer pasted. POST /embeds/resolve with intent `map`, or with any link of a map service (Google Maps, maps.app.goo.gl, goo.gl/maps, g.co/kgs, Apple Maps, Waze, OpenStreetMap), answers 422 EMBED_MAP_RETIRED; the enum value `map` and the provider `google_maps` stay in the schemas so older clients get a clear problem and not a schema error, and are removed in the next major version. A design whose element carries `link {kind: url}` to a map service is refused with 422 DESIGN_MAP_LINK_NOT_ALLOWED (the places of an invitation are marked on its own map: blocks `map` and `venues`); only a NEW or CHANGED map link is refused: a design that already holds one keeps rendering as published and can still be saved and published with the same link unchanged (the response carries a warning), until its host replaces it. The read-only command `inventory_map_links` lists the stored designs, versions and templates that hold map links or `google_maps` embeds. Nothing is fetched and no redirect is followed: a link is recognised by its host and path. 1.11.0 (additive; the number follows 1.10.0 of the maps series, the storage follow-up still named 1.6.0 above is not this change): `GET /public/celebrations/{celebrationId}/design` returns the PUBLISHED version of a published celebration's design without a token, so the invitation page renders what the host published and not only the template. It never returns the draft, an older version, a private template or the owner; a celebration that is not published, is archived, has no published design or is hidden entirely by moderation is the same 404. Nothing was removed or renamed. Also in 1.11.0: `DELETE /assets/{assetId}` answers 409 MEDIA_IN_USE (with `designIds`) while a design still uses the file."
   },
   "servers": [
     {
@@ -560,8 +560,8 @@
               }
             }
           },
-          "422": {
-            "description": "Unsupported MIME type, purpose, or size; RIGHTS_NOTICE_REQUIRED / RIGHTS_NOTICE_OUTDATED for music; checked before signing",
+          "409": {
+            "description": "MEDIA_QUOTA_ASSETS_EXCEEDED or MEDIA_QUOTA_BYTES_EXCEEDED: the celebration reached its quota (100 files / 500 MiB by default). The problem carries `quota`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -570,8 +570,8 @@
               }
             }
           },
-          "409": {
-            "description": "MEDIA_QUOTA_ASSETS_EXCEEDED or MEDIA_QUOTA_BYTES_EXCEEDED: the celebration reached its quota (100 files / 500 MiB by default). The problem carries `quota`.",
+          "422": {
+            "description": "Unsupported MIME type, purpose, or size; RIGHTS_NOTICE_REQUIRED / RIGHTS_NOTICE_OUTDATED for music; checked before signing",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -592,6 +592,16 @@
           }
         ],
         "responses": {
+          "202": {
+            "description": "Upload verified and queued. The asset is PROCESSING; a worker builds the thumb, medium, full and webp variants outside this request. Poll GET /celebrations/{celebrationId}/assets until status is PROCESSED (or REJECTED); template.media-variants.generated.v1 is published when done.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaAsset"
+                }
+              }
+            }
+          },
           "409": {
             "description": "Nothing uploaded yet, or already completed",
             "content": {
@@ -608,16 +618,6 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "202": {
-            "description": "Upload verified and queued. The asset is PROCESSING; a worker builds the thumb, medium, full and webp variants outside this request. Poll GET /celebrations/{celebrationId}/assets until status is PROCESSED (or REJECTED); template.media-variants.generated.v1 is published when done.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MediaAsset"
                 }
               }
             }
@@ -639,6 +639,16 @@
           },
           "404": {
             "description": "Unknown or not yours",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "MEDIA_IN_USE: the invitation design (the draft or the published version, by mediaId or by an address inside its HTML/CSS) still uses the file. `designIds` lists the designs; remove the file from the design first.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -881,6 +891,16 @@
               }
             }
           },
+          "400": {
+            "description": "Malformed request: a body or parameter that is not valid (BAD_REQUEST), or JSON nested too deeply to parse",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Missing or invalid bearer token",
             "content": {
@@ -893,16 +913,6 @@
           },
           "422": {
             "description": "kind is not PRIVATE_TEMPLATE",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Malformed request: a body or parameter that is not valid (BAD_REQUEST), or JSON nested too deeply to parse",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1009,22 +1019,22 @@
               }
             }
           },
-          "422": {
-            "description": "Invalid document",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DesignProblem"
-                }
-              }
-            }
-          },
           "413": {
             "description": "The JSON body is larger than 1 MB (PAYLOAD_TOO_LARGE)",
             "content": {
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid document",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DesignProblem"
                 }
               }
             }
@@ -1070,6 +1080,16 @@
               }
             }
           },
+          "400": {
+            "description": "Malformed request: a body or parameter that is not valid (BAD_REQUEST), or JSON nested too deeply to parse",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Missing or invalid bearer token",
             "content": {
@@ -1082,16 +1102,6 @@
           },
           "404": {
             "description": "Unknown, or not visible to the caller (never 403 for what the caller cannot see)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Malformed request: a body or parameter that is not valid (BAD_REQUEST), or JSON nested too deeply to parse",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1140,6 +1150,16 @@
               }
             }
           },
+          "400": {
+            "description": "Malformed request: a body or parameter that is not valid (BAD_REQUEST), or JSON nested too deeply to parse",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Missing or invalid bearer token",
             "content": {
@@ -1152,16 +1172,6 @@
           },
           "404": {
             "description": "Unknown, or not visible to the caller (never 403 for what the caller cannot see)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Malformed request: a body or parameter that is not valid (BAD_REQUEST), or JSON nested too deeply to parse",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1195,6 +1205,16 @@
           "204": {
             "description": "Deleted"
           },
+          "400": {
+            "description": "Malformed request: a body or parameter that is not valid (BAD_REQUEST), or JSON nested too deeply to parse",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Missing or invalid bearer token",
             "content": {
@@ -1227,16 +1247,6 @@
           },
           "409": {
             "description": "DESIGN_PUBLISHED: a published design is unpublished first, then deleted",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Malformed request: a body or parameter that is not valid (BAD_REQUEST), or JSON nested too deeply to parse",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1349,8 +1359,8 @@
               }
             }
           },
-          "428": {
-            "description": "If-Match required",
+          "413": {
+            "description": "The JSON body is larger than 1 MB (PAYLOAD_TOO_LARGE)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1369,8 +1379,8 @@
               }
             }
           },
-          "413": {
-            "description": "The JSON body is larger than 1 MB (PAYLOAD_TOO_LARGE)",
+          "428": {
+            "description": "If-Match required",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1415,8 +1425,8 @@
           }
         },
         "responses": {
-          "201": {
-            "description": "New version published",
+          "200": {
+            "description": "Already the latest published version; nothing emitted",
             "content": {
               "application/json": {
                 "schema": {
@@ -1433,8 +1443,8 @@
               }
             }
           },
-          "200": {
-            "description": "Already the latest published version; nothing emitted",
+          "201": {
+            "description": "New version published",
             "content": {
               "application/json": {
                 "schema": {
@@ -1501,8 +1511,8 @@
               }
             }
           },
-          "428": {
-            "description": "If-Match required",
+          "413": {
+            "description": "The JSON body is larger than 1 MB (PAYLOAD_TOO_LARGE)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1521,8 +1531,8 @@
               }
             }
           },
-          "413": {
-            "description": "The JSON body is larger than 1 MB (PAYLOAD_TOO_LARGE)",
+          "428": {
+            "description": "If-Match required",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1604,6 +1614,16 @@
               }
             }
           },
+          "400": {
+            "description": "limit or before is not an integer in range (BAD_REQUEST, field)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Missing or invalid bearer token",
             "content": {
@@ -1616,16 +1636,6 @@
           },
           "404": {
             "description": "Unknown, or not visible to the caller (never 403 for what the caller cannot see)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "limit or before is not an integer in range (BAD_REQUEST, field)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1670,6 +1680,16 @@
               }
             }
           },
+          "400": {
+            "description": "Malformed request: a body or parameter that is not valid (BAD_REQUEST), or JSON nested too deeply to parse",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Missing or invalid bearer token",
             "content": {
@@ -1682,16 +1702,6 @@
           },
           "404": {
             "description": "Unknown, or not visible to the caller (never 403 for what the caller cannot see)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Malformed request: a body or parameter that is not valid (BAD_REQUEST), or JSON nested too deeply to parse",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1747,6 +1757,16 @@
               }
             }
           },
+          "400": {
+            "description": "Malformed request: a body or parameter that is not valid (BAD_REQUEST), or JSON nested too deeply to parse",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Missing or invalid bearer token",
             "content": {
@@ -1787,8 +1807,8 @@
               }
             }
           },
-          "428": {
-            "description": "If-Match required",
+          "413": {
+            "description": "The JSON body is larger than 1 MB (PAYLOAD_TOO_LARGE)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1807,18 +1827,8 @@
               }
             }
           },
-          "400": {
-            "description": "Malformed request: a body or parameter that is not valid (BAD_REQUEST), or JSON nested too deeply to parse",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "413": {
-            "description": "The JSON body is larger than 1 MB (PAYLOAD_TOO_LARGE)",
+          "428": {
+            "description": "If-Match required",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1935,7 +1945,59 @@
             }
           },
           "422": {
-            "description": "EMBED_NOT_ALLOWED (any host or shape off the list), EMBED_PROVIDER_NOT_ALLOWED_HERE or EMBED_INTENT_UNKNOWN",
+            "description": "EMBED_NOT_ALLOWED (any host or shape off the list), EMBED_MAP_RETIRED (a map link or intent map, 1.10.0), EMBED_PROVIDER_NOT_ALLOWED_HERE or EMBED_INTENT_UNKNOWN",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/celebrations/{celebrationId}/design": {
+      "get": {
+        "operationId": "getPublicDesign",
+        "security": [],
+        "summary": "Published design of a published celebration",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CelebrationId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The last published version of the design. Files it references are in the public gallery listing (`GET /public/celebrations/{celebrationId}/assets`); a file hidden by moderation is not there.",
+            "headers": {
+              "Cache-Control": {
+                "description": "public, max-age=15",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicDesign"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown celebration, not published, archived, hidden by moderation or without a published design: always the same answer, it reveals nothing",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error (INTERNAL)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -12022,7 +12084,7 @@
                 "scheme": "light",
                 "foreground": "muted",
                 "background": "canvas",
-                "ratio": 2.0,
+                "ratio": 2,
                 "minimum": 4.5,
                 "suggestion": "#6E6A65"
               },
@@ -12130,7 +12192,7 @@
                 "scheme": "dark",
                 "foreground": "accent",
                 "background": "canvas",
-                "ratio": 2.0,
+                "ratio": 2,
                 "minimum": 4.5,
                 "suggestion": "#807D85"
               },
@@ -12265,7 +12327,7 @@
                 "scheme": "light",
                 "foreground": "accent",
                 "background": "canvas",
-                "ratio": 1.0,
+                "ratio": 1,
                 "minimum": 4.5,
                 "suggestion": "#131313"
               },
@@ -12893,7 +12955,7 @@
               "map",
               null
             ],
-            "description": "Narrows the providers: video = YouTube, Vimeo; music = YouTube, Spotify; map = Google Maps"
+            "description": "Narrows the providers: video = YouTube, Vimeo; music = YouTube, Spotify. `map` is retired (1.10.0): it answers 422 EMBED_MAP_RETIRED."
           }
         }
       },
@@ -12937,7 +12999,7 @@
           },
           "ref": {
             "type": "string",
-            "description": "Provider identifier: YouTube/Vimeo id, Spotify kind/id, or the map query"
+            "description": "Provider identifier: YouTube/Vimeo id or Spotify kind/id (the map query of `google_maps` is retired)"
           },
           "sandbox": {
             "type": "string",
@@ -12946,6 +13008,28 @@
           "allow": {
             "type": "string",
             "description": "Value of the iframe allow attribute"
+          }
+        }
+      },
+      "PublicDesign": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "version",
+          "document",
+          "publishedAt"
+        ],
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "document": {
+            "$ref": "#/components/schemas/DesignDocumentV2"
+          },
+          "publishedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },

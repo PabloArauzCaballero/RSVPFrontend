@@ -40,6 +40,12 @@ export const SEEDED_ART: Readonly<Record<string, TemplateArt>> = {
   "82ffe36e-53f2-52d2-9e0d-42a6982fa983": { hero: "birrete", ornament: "laurel" }, // graduacion
   "e983a0c1-0fc2-5e1a-b26b-7ad27d06f673": { hero: "sonajero", ornament: "onda" }, // baby-shower
   "76bc1ae5-77da-53e9-a4bd-f85babf7fe8b": { hero: "caliz", ornament: "arcos" }, // primera-comunion
+  "0f2e158b-0faa-5132-993c-a4ea99322775": { hero: "brujula", ornament: "filete" }, // otros-rumbo
+  "2c2ff3d9-90a2-5fb3-a785-fb02b683e647": { hero: "mesa-larga", ornament: "onda" }, // otros-mesa
+  "222aca44-32fa-55c3-af78-2787ceee0130": { hero: "bola-disco", ornament: "onda" }, // despedida-disco
+  "9b901c0b-4178-534c-8166-de476e77527d": { hero: "pajarita", ornament: "filete" }, // despedida-esmoquin
+  "577d5708-976d-53e0-897b-5c299f4b79bf": { hero: "solitario", ornament: undefined }, // pedida-solitario
+  "d76ce414-6e7d-5f66-b34e-1165c3df4f94": { hero: "rosa", ornament: "arcos" }, // pedida-rosa
 };
 
 /** What an event-type tag draws when the template is not one of the seeded ones, most specific tags first. */

@@ -262,6 +262,8 @@ export const setCoverPhoto = (mediaId: string | null): DocumentOp => (doc) => {
   return mapPages(doc, (page) => {
     if (page.kind !== "cover") return page;
     if (mediaId === null) { const { background: _removed, ...rest } = page; return rest; }
-    return { ...page, background: { kind: "media", mediaId, fit: "cover", scrim: 0.35 } };
+    // Changing the photo keeps the host's choice of veil (graded or even): it belongs to the cover, not to one photo. A first photo takes the graded veil of the templates, written explicitly.
+    const veil = page.background?.kind === "media" ? (page.background as { veil?: unknown }).veil : undefined;
+    return { ...page, background: { kind: "media", mediaId, fit: "cover", scrim: 0.35, veil: veil === "even" ? "even" : "graded" } };
   });
 };

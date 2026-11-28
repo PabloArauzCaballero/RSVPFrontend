@@ -62,6 +62,23 @@ export const designEditorEnUS: DeepStrings<typeof designEditorEsBO> = {
       title: "Drawings", loading: "Loading the drawings…", failed: "We could not load the drawings. Check your connection and try again.", cover: "Cover drawing", none: "No drawing",
       hint: "Drawings use your template's accent colour.",
       unavailable: "Choosing drawings will be here once the drawing library is published. It is not available yet."
+    },
+    look: {
+      title: "Cover and animations",
+      variant: "Cover style",
+      variants: { classic: "Classic", minimal: "Minimal", editorial: "Editorial", festive: "Festive", corporate: "Corporate", arch: "Arch with double frame", hanging: "Hanging from a cord", deco: "Art deco doors", poster: "Full-bleed poster" },
+      animation: "Animation of {{page}}",
+      animations: { none: "None", aparecer: "Fade in", "revelar-telon": "Curtain reveal", "abrir-puertas": "Open doors" },
+      animationHint: "Plays once and is skipped when the person asked for less motion. The design sets the duration.",
+      veil: "Photo veil",
+      veilGraded: "Graded: strong only behind the text",
+      veilHint: "Turn it off for one even veil over the whole photo. The text stays readable on any photo.",
+      veilNeedsPhoto: "The veil shows up once the cover has a photo.",
+      poster: "Video cover photo",
+      posterProvider: "Use the provider thumbnail",
+      posterMissing: "A photo that is no longer in your list",
+      posterHint: "The provider thumbnail is only requested when someone taps the video.",
+      posterUnavailable: "Choosing the video cover photo will be here once photo upload is ready."
     }
   },
   contrast: {
@@ -154,6 +171,17 @@ export const designEditorEnUS: DeepStrings<typeof designEditorEsBO> = {
     rotate: "Rotate {{block}}",
     element: "{{block}}",
     inspector: { close: "Close", title: "Element", none: "Choose an element on the canvas.", x: "Column", y: "Row", w: "Width (columns)", h: "Height (rows)", rotation: "Rotation (degrees)", z: "Layer", padding: "Padding", margin: "Margin", top: "Top", right: "Right", bottom: "Bottom", left: "Left", front: "Bring to front", back: "Send to back", visible: "Visible on this canvas", remove: "Remove", invalid: "Enter a whole number between {{min}} and {{max}}.", locked: "This element is mandatory: you can move and resize it, but not remove, hide or rotate it." },
+    fx: {
+      title: "Animation, mask and frame",
+      animation: "Element animation", animations: { none: "None", aparecer: "Fade in", mecerse: "Sway", "revelar-telon": "Curtain reveal" },
+      animationHint: "Plays once. The design sets the duration and it cannot be changed.",
+      protectedNote: "This button takes no mask, frame or animation: it stays still and in view.",
+      mask: "Mask", masks: { none: "None", arch: "Arch", "deco-doors": "Art deco doors", chamfer: "Cut corners", circle: "Circle", rounded: "Rounded", stamp: "Stamp" },
+      maskHint: "Only offered on images, galleries, drawings, monograms, ornaments, videos and maps.",
+      frame: "Frame", frames: { none: "No frame", double: "Double", deco: "Art deco", hairline: "Hairline" },
+      frameColour: "Frame colour",
+      colours: { canvas: "Background", surface: "Card", text: "Text", muted: "Secondary text", accent: "Accent", accentFill: "Accent fill", onAccent: "Text on accent", line: "Line" }
+    },
     palette: { title: "Add", page: "On page", heading: "Heading", text: "Text", quote: "Quote", button: "Button", countdown: "Countdown", ornament: "Ornament", spacer: "Spacer", html: "Custom HTML", default: { heading: "Heading", text: "Write your message here.", quote: "A phrase that represents you.", button: "Learn more" } },
     block: { cover: "Cover", giftsCta: "Gifts button", rsvpCta: "RSVP", heading: "Heading", text: "Text", story: "Story", image: "Image", imageText: "Image and text", gallery: "Gallery", schedule: "Schedule", venues: "Venues", countdown: "Countdown", dressCode: "Dress code", faq: "FAQ", recommendations: "Recommendations", illustration: "Drawing", monogram: "Monogram", ornament: "Ornament", spacer: "Spacer", button: "Button", quote: "Quote", weddingParty: "Wedding party", video: "Video", music: "Music", map: "Map", html: "HTML" },
     announce: {
