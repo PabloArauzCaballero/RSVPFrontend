@@ -99,3 +99,16 @@ describe("R7 · WCAG 2.5.3 on the host's unavailable-gift controls", () => {
     for (const [visible, name] of pairs) expect(t(name, params).toLowerCase().includes(t(visible).toLowerCase()), `${locale} ${name}`).toBe(true);
   });
 });
+
+describe("portal.errors.state · the titles of a whole section that failed", () => {
+  // `PortalErrorState` composes `portal.errors.state.<kind>` at run time, so the type system cannot see a missing key: it would show the raw key.
+  it.each(["es-BO", "en-US"] as const)("%s: every title the portal can ask for resolves to text, never to the key", (locale) => {
+    const t = createTranslator(locale);
+    for (const kind of ["network", "server", "storage", "unavailable"]) {
+      const key = `portal.errors.state.${kind}`;
+      const text = t(key as never);
+      expect(text, `${locale} ${key}`).not.toBe(key);
+      expect(text.trim().length, `${locale} ${key}`).toBeGreaterThan(0);
+    }
+  });
+});
