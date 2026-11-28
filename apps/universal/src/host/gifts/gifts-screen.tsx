@@ -8,6 +8,7 @@ import { useApiClient, useLocale, useT } from "../../platform/providers";
 import { CelebrationScreen, useScreenHeader, type ScreenProps } from "../gate";
 import { HOST_ROUTES, withCelebration } from "../routes";
 import { GiftErrorNotice } from "./gift-errors";
+import { ClosurePanel } from "./closure-panel";
 import { ReplacementsPanel, ReplacementsToggle, type SwapMutation } from "./replacements-panel";
 import { ActionButton, ConfirmDialog, EmptyState, ErrorNotice, Loading, Notice, useStyles } from "../ui";
 import { Figure } from "../figures";
@@ -207,12 +208,14 @@ function GiftsBody({ celebrationId, eventType, content, onNavigate }: { readonly
       {all.length === 0 ? (
         <>
           <EmptyState illustration="noGifts" title={t("gifts.host.list.emptyTitle")} body={t("gifts.host.list.emptyBody")} />
+          {list.data ? <ClosurePanel celebrationId={celebrationId} closed={list.data.closed === true} /> : null}
           <RequesterVisibility celebrationId={celebrationId} />
         </>
       ) : (
         <>
           <GiftFigures items={items} />
           {list.data?.deliveryNotes ? <Text style={styles.body} testID="gift-delivery-notes">{t("gifts.host.wizard.list.delivery", { notes: list.data.deliveryNotes })}</Text> : null}
+          {list.data ? <ClosurePanel celebrationId={celebrationId} closed={list.data.closed === true} /> : null}
           <RequesterVisibility celebrationId={celebrationId} />
           {items.length > 0 ? (
             <View testID="gift-list">
