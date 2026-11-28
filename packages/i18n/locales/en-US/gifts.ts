@@ -57,6 +57,8 @@ export const giftsEnUS: DeepStrings<typeof giftsEsBO> = {
     },
     /** R8a (REG-01) · list closed by hand: say so and offer no reservation. */
     closed: { title: "The gift list is closed", body: "Your hosts closed it: gifts can no longer be reserved.", keepsMine: "What you already reserved stays reserved. You can still cancel it." },
+    /** Agotado con reserva (gift-list 1.21.0): la reserva se mantiene y se quitan los botones de compra. */
+    soldOut: { title: "Product sold out", bodyMine: "It can no longer be bought in the store, but your reservation stays. You can cancel it if you prefer.", bodyOthers: "This gift is already reserved and the product sold out, so it can no longer be bought." },
     /** D-3 · the guest cancels their own reservation (app). */
     mine: { label: "Your reservation", pendingLabel: "Your reservation, waiting for approval", cancel: "Cancel my reservation", cancelFor: "Cancel my reservation of {{title}}", confirmTitle: "Cancel your reservation?", confirmBody: "\"{{title}}\" becomes available to the other guests again. If you change your mind, you can reserve it again while it is still free.", confirm: "Yes, cancel the reservation", keep: "No, keep it", confirmBodyClosed: "The list is closed: if you cancel your reservation of \"{{title}}\", you will not be able to reserve it again while it stays closed.", cancelling: "Cancelling…", done: "You cancelled your reservation of \"{{title}}\". The gift is back on the list.", notActive: "This reservation was no longer active. We refreshed the list.", error: "We could not cancel the reservation. Try again: it will not be cancelled twice.", expired: "Your link no longer works. Ask whoever invited you for a new one.", offline: "No connection right now. Your reservation is unchanged; try again when you are back online.", released: "Your hosts released \"{{title}}\". You can choose another gift." },
     reserveError: {
@@ -78,6 +80,8 @@ export const giftsEnUS: DeepStrings<typeof giftsEsBO> = {
       unavailableNote: "Your guests no longer see it: this gift is no longer available in the catalog."
     },
     unavailable: { title: "Unavailable ({{count}})", body: "These gifts can no longer be given and your guests do not see them. They are not counted in your list total." },
+    /** Agotado con reserva (gift-list 1.21.0): el anfitrión ve el aviso junto al regalo reservado. */
+    soldOut: { title: "Product sold out", titleOther: "Product unavailable", body: "The reservation stays and your guests no longer see the buy buttons. If you prefer, release the gift and look for a replacement." },
     status: { AVAILABLE: "Available", PROPOSED: "To review", PENDING_REVIEW: "Reservation to review", COMMITTED: "Reserved", REJECTED: "Rejected", UNAVAILABLE: "Unavailable" },
     visibility: { title: "Who sees who reserved", intro: "You decide whether names show in your dashboard and in your guests' list.", host: "Show the name in my dashboard", hostHelp: "If you turn it off, you see reservations without a name.", guests: "Show the name to other guests", guestsHelp: "Off: guests only see that the gift is already reserved.", saved: "Preference saved. It applies from now on." },
     approveProposal: "Approve proposal", approvingProposal: "Approving…",

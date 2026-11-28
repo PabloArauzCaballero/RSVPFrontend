@@ -39,7 +39,8 @@
 .gift-note { display: grid; gap: .6rem; justify-items: center; padding: 1rem; border-radius: var(--radius-inner); border: 1px solid var(--border); background: var(--surface); }
 .gift-note:focus { outline: none; }
 .gift-note:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-.gift-note h2, .gift-note h3, .gift-note p { margin: 0; }
+.gift-note h2, .gift-note h3, .gift-note h4, .gift-note p { margin: 0; }
+.gift-note__title { font-size: 1rem; font-weight: 600; letter-spacing: 0; }
 .gift-note h2 { font-size: 1.1rem; }
 .gift-note--warn { justify-items: start; border-color: var(--danger); background: var(--danger-bg); }
 .gift-note--info { justify-items: start; background: var(--surface-muted); }

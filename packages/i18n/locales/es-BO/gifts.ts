@@ -55,6 +55,8 @@ export const giftsEsBO = {
     },
     /** R8a (REG-01) · lista cerrada a mano: se avisa y no se ofrece reservar. */
     closed: { title: "La lista de regalos está cerrada", body: "Quienes te invitan la cerraron: ya no se pueden reservar regalos.", keepsMine: "Lo que ya reservaste se mantiene. Si quieres, puedes cancelarlo." },
+    /** Agotado con reserva (gift-list 1.21.0): la reserva se mantiene y se quitan los botones de compra. */
+    soldOut: { title: "Producto agotado", bodyMine: "Ya no se puede comprar en la tienda, pero tu reserva se mantiene. Si prefieres, puedes cancelarla.", bodyOthers: "Este regalo ya está reservado y el producto se agotó, así que ya no se puede comprar." },
     /** D-3 · el invitado cancela su propia reserva (app). */
     mine: { label: "Tu reserva", pendingLabel: "Tu reserva, esperando aprobación", cancel: "Cancelar mi reserva", cancelFor: "Cancelar mi reserva de {{title}}", confirmTitle: "¿Cancelar tu reserva?", confirmBody: "«{{title}}» vuelve a estar disponible para los demás invitados. Si cambias de idea, podrás reservarlo otra vez mientras siga libre.", confirm: "Sí, cancelar la reserva", keep: "No, mantenerla", confirmBodyClosed: "La lista está cerrada: si cancelas tu reserva de «{{title}}», no podrás volver a reservarlo mientras siga cerrada.", cancelling: "Cancelando…", done: "Cancelaste tu reserva de «{{title}}». El regalo volvió a la lista.", notActive: "Esta reserva ya no estaba activa. Actualizamos la lista.", error: "No pudimos cancelar la reserva. Inténtalo de nuevo: no se cancelará dos veces.", expired: "Tu enlace ya no funciona. Pídele uno nuevo a quien te invitó.", offline: "Sin conexión por ahora. Tu reserva sigue igual; reintenta cuando vuelva internet.", released: "Quienes te invitan liberaron «{{title}}». Puedes elegir otro regalo." },
     reserveError: {
@@ -76,6 +78,8 @@ export const giftsEsBO = {
       unavailableNote: "Tus invitados ya no lo ven: este regalo dejó de estar disponible en el catálogo."
     },
     unavailable: { title: "No disponibles ({{count}})", body: "Estos regalos ya no se pueden dar y tus invitados no los ven. No cuentan en el total de tu lista." },
+    /** Agotado con reserva (gift-list 1.21.0): el anfitrión ve el aviso junto al regalo reservado. */
+    soldOut: { title: "Producto agotado", titleOther: "Producto no disponible", body: "La reserva se mantiene y tus invitados ya no ven los botones de compra. Si prefieres, libera el regalo y busca un reemplazo." },
     status: { AVAILABLE: "Disponible", PROPOSED: "Por revisar", PENDING_REVIEW: "Reserva por revisar", COMMITTED: "Reservado", REJECTED: "Rechazado", UNAVAILABLE: "No disponible" },
     visibility: { title: "Quién ve quién reservó", intro: "Tú decides si los nombres salen en tu panel y en la lista de tus invitados.", host: "Ver el nombre en mi panel", hostHelp: "Si lo apagas, verás las reservas sin nombre.", guests: "Mostrar el nombre a otros invitados", guestsHelp: "Apagado: los invitados solo ven que el regalo ya está reservado.", saved: "Preferencia guardada. Aplica desde ahora." },
     approveProposal: "Aprobar propuesta", approvingProposal: "Aprobando…",

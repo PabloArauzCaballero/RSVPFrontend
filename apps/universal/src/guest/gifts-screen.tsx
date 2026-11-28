@@ -303,6 +303,11 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
         {item.description ? <Text style={styles.muted}>{item.description}</Text> : null}
         <UnitsAndGroup id={item.id} state={state} />
         {item.status !== "AVAILABLE" && !state.group ? <Chip tone={item.status === "PENDING_REVIEW" ? "wait" : "yes"}>{t(`gifts.guest.status.${item.status}`)}</Chip> : null}
+        {state.productGone ? (
+          <View testID={`gift-soldout-${item.id}`}>
+            <Notice kind="info"><Text style={styles.subtitle}>{t("gifts.guest.soldOut.title")}</Text><Text style={styles.body}>{t(state.role === null ? "gifts.guest.soldOut.bodyOthers" : "gifts.guest.soldOut.bodyMine")}</Text></Notice>
+          </View>
+        ) : null}
         {item.reservedByName && !state.group ? <Text style={styles.muted} testID={`gift-by-${item.id}`}>{t("gifts.guest.reservedBy", { name: item.reservedByName })}</Text> : null}
         {held || state.role ? (
           <View testID={`gift-mine-${item.id}`} style={{ gap: spacing[2], alignItems: "flex-start" }}>
@@ -325,7 +330,7 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
             )}
           </View>
         ) : null}
-        {asked && !opened ? <PurchasePromptCard id={item.id} title={item.title} units={asked.units} reminder={asked.phase === "reminder"} closed={listClosed && state.role === null} onAnswer={(answer) => answerPrompt(item, answer)} claimAnnouncement={() => prompt.claimAnnouncement(item.id)} /> : null}
+        {asked && !opened && !state.productGone ? <PurchasePromptCard id={item.id} title={item.title} units={asked.units} reminder={asked.phase === "reminder"} closed={listClosed && state.role === null} onAnswer={(answer) => answerPrompt(item, answer)} claimAnnouncement={() => prompt.claimAnnouncement(item.id)} /> : null}
         {note ? <Text accessibilityLiveRegion="polite" role="status" style={styles.muted} testID={`gift-prompt-note-${item.id}`}>{t(note)}</Text> : null}
         {opened ? form(item) : (
           <View style={{ gap: spacing[3] }}>
