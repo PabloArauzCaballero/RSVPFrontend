@@ -296,6 +296,12 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, eventType, in
         {item.description ? <p className="rsvp-hint">{item.description}</p> : null}
         <UnitsAndGroup id={item.id} state={state} t={t} />
         {item.status !== 'AVAILABLE' && !state.group ? <p className="guest-chip" data-tone={item.status === 'PENDING_REVIEW' ? 'wait' : 'yes'}>{t(`gifts.guest.status.${item.status}`)}</p> : null}
+        {state.productGone ? (
+          <div className="gift-note gift-note--info" role="status" data-testid={`gift-soldout-${item.id}`}>
+            <h4 className="gift-note__title">{t('gifts.guest.soldOut.title')}</h4>
+            <p>{t(state.role === null ? 'gifts.guest.soldOut.bodyOthers' : 'gifts.guest.soldOut.bodyMine')}</p>
+          </div>
+        ) : null}
         {item.reservedByName && !state.group ? <p className="rsvp-hint" data-testid="reserved-by">{t('gifts.guest.reservedBy', { name: item.reservedByName })}</p> : null}
         {held || state.role ? (
           <div className="gift-mine" data-testid="my-reservation">
@@ -318,7 +324,7 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, eventType, in
             )}
           </div>
         ) : null}
-        {asked && !opened ? <PurchasePromptCard id={item.id} title={item.title} units={asked.units} reminder={asked.phase === 'reminder'} closed={listClosed && state.role === null} t={t} onAnswer={(answer) => answerPrompt(item, answer)} claimAnnouncement={() => prompt.claimAnnouncement(item.id)} /> : null}
+        {asked && !opened && !state.productGone ? <PurchasePromptCard id={item.id} title={item.title} units={asked.units} reminder={asked.phase === 'reminder'} closed={listClosed && state.role === null} t={t} onAnswer={(answer) => answerPrompt(item, answer)} claimAnnouncement={() => prompt.claimAnnouncement(item.id)} /> : null}
         {note ? <FocusNote tone="info" testId={`gift-prompt-note-${item.id}`}><p>{t(note)}</p></FocusNote> : null}
         {opened ? form(item) : (
           <>
