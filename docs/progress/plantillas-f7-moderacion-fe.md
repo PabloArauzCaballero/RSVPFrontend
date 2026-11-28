@@ -113,3 +113,10 @@ e2e universal playwright.admin-states.config.ts (ADMIN, mock de contratos)      
 Mutación N1 (se vuelve al componente anterior): fallan las 3 pruebas nuevas de `report-invitation`. Mutación N2 (se vuelve a `reports.tsx` anterior): fallan las 2 nuevas de `admin-reports` (36/36 con el arreglo).
 
 **No probado:** gateway real, backend real ni TEST (las respuestas de moderación y el 429 son del fixture/mock; `Retry-After` entre orígenes no se prueba); iOS, Android, Safari y Firefox; gitleaks (binario no disponible en esta máquina); coverage y Docker; el foco con un lector de pantalla real.
+
+## Integración nube 3 (2026-11-28)
+- Orden: oficial `b04345d2` → FE #143 (`2a69afda`) → FE #145 (`9ec63569`) → este PR (un solo merge de #145, que ya contiene a los otros dos). Conflictos: `render.tsx` (se conservan `ownMusicGone` de este PR y `animationOf`/`Doors` de #145), `query-hooks/celebration/types.ts` (comentario de `HIDDEN` de este PR) y los contratos (regenerados).
+- Contratos re-vendorizados contra BE `f5076715` (#167 integrado sobre #164, #163, #159 y la oficial 0902b70b): celebration 1.8.0, template-media 1.9.1, provider-catalog 3.7.0, gift-list 1.15.0. Sustituye al pin provisional 9e97de01. `check:generated` OK; `check:source` NO ejecutado. Re-vendorizar con el SHA real cuando BE #167 se fusione.
+- `yarn typecheck` 19/19; `yarn lint:code` 0; vitest: celebration-theme 3365, universal 889, query-hooks 235, seo-web 244, design-editor 483, ui 333, auth 89 (1 saltado heredado), forms 65, design-tokens 92, api-client 17, ui-web 15, contracts 6, telemetry 8 (turbo, concurrencia 2, 33/33 tareas).
+- Chrome real (chromium 1243), `--trace off`: seo-web denuncia 23; universal HOST 2 y ADMIN 13 (con `EXPO_OFFLINE=1`, mock de contratos); seo-web sobre la fusión: f6 medios+libre 40, fidelidad 78, portadas-existentes 120, extra 217, sobrio 171, f6 ataques 414.
+- NO probado: backend real, gateway/Kong (`Retry-After` entre orígenes), RabbitMQ, MinIO, Docker, iOS/Android, Safari/Firefox, lector de pantalla, gitleaks (sin binario). `CONTENT_RESTORED` y `Retry-After` en Kong siguen siendo requisitos del BE.
