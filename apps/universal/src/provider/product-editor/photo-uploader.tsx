@@ -20,7 +20,6 @@ export const activePhotos = (photos: readonly ListingPhoto[] | undefined): reado
 /** The photos a version already shows, counted like the server does (3 per version, §5.1). */
 export const variantPhotoCount = (photos: readonly ListingPhoto[] | undefined, variantId: string): number => activePhotos(photos).filter((photo) => photo.variantId === variantId).length;
 const WHOLE_PRODUCT = "";
-const NOTHING: readonly string[] = [];
 const ignore = (): void => {};
 
 function PhotoRow({ photo, index, cover, variant, busy, onCover, onDelete }: { readonly photo: ListingPhoto; readonly index: number; readonly cover: boolean; readonly variant: string | null; readonly busy: boolean; readonly onCover: () => void; readonly onDelete: () => void }): ReactNode {
@@ -86,6 +85,9 @@ export function PhotoUploader({ sheet, providerId, locale, reordering, onReorder
   const full = active.length >= MAX_PHOTOS;
   const variantFull = chosen !== WHOLE_PRODUCT && variantPhotoCount(photos, chosen) >= MAX_PHOTOS_PER_VARIANT;
   const busy = upload.isPending || remove.isPending || reordering;
+  // While it takes nothing, the zone neither paints a drag nor answers a drop; with the version full it does not invite one either.
+  const blocked = busy || variantFull;
+  const invites = droppable && !variantFull;
 
   const send = (variables: UploadPhotoVariables): void => {
     last.current = variables;
@@ -110,12 +112,19 @@ export function PhotoUploader({ sheet, providerId, locale, reordering, onReorder
   // A drop follows the same rules as the button: nothing while another photo is on its way or the chosen version is full.
   const dropped = (files: readonly File[]): void => {
     const [first] = toPickedDrop(files);
-    if (!first || busy || variantFull) return;
+    if (!first || blocked) return;
     clearProblems();
     take(first.file, first.type, first.size);
   };
-  const hint = drag === "valid" ? t("host.media.dropNow") : drag === "invalid" ? t("host.media.dropInvalid") : t("portal.product.photos.dropHint");
-  const border = drag === "valid" ? palette.primary : drag === "invalid" ? palette.danger : palette.fieldBorder;
+  const droppedNothing = (): void => {
+    // Clearing here would reset the upload or removal in flight: controls would come back and its error would be lost.
+    if (blocked) return;
+    clearProblems();
+    setNotAFile(true);
+  };
+  const shownDrag: DragState = blocked ? "idle" : drag;
+  const hint = shownDrag === "valid" ? t("host.media.dropNow") : shownDrag === "invalid" ? t("host.media.dropInvalid") : t("portal.product.photos.dropHint");
+  const border = shownDrag === "valid" ? palette.primary : shownDrag === "invalid" ? palette.danger : palette.fieldBorder;
   const makeCover = (photoId: string): void => onReorder([photoId, ...photos.map((photo) => photo.id).filter((id) => id !== photoId)]);
 
   return (
@@ -129,7 +138,7 @@ export function PhotoUploader({ sheet, providerId, locale, reordering, onReorder
       ) : <Text style={styles.muted}>{t("portal.product.photos.empty")}</Text>}
       {full ? (
         // With no room left the zone stays mounted and takes nothing: without it, a dropped file would make the browser leave the app to open it.
-        <FileDropArea label={t("portal.product.photos.zone")} describedBy={helpId} multiple={false} accept={NOTHING} onFiles={ignore} onNoFiles={ignore} onDragState={ignore} testID="photo-dropzone">
+        <FileDropArea label={t("portal.product.photos.zone")} describedBy={helpId} multiple={false} accept={PHOTO_TYPES} disabled onFiles={ignore} onNoFiles={ignore} onDragState={ignore} testID="photo-dropzone">
           <Text nativeID={helpId} style={styles.muted} testID="photo-limit">{t("portal.product.photos.limit")}</Text>
         </FileDropArea>
       ) : (
@@ -144,10 +153,10 @@ export function PhotoUploader({ sheet, providerId, locale, reordering, onReorder
           ) : null}
           <Field label={t("portal.product.photos.alt")} value={alt} onChange={setAlt} help={t("portal.product.photos.altHelp")} maxLength={200} testID="photo-alt" />
           {variantFull ? <Text style={styles.muted} testID="photo-variant-limit">{t("portal.product.photos.variantLimit", { variant: variantLabel(chosen) ?? "", max: MAX_PHOTOS_PER_VARIANT })}</Text> : null}
-          <FileDropArea label={t("portal.product.photos.zone")} describedBy={helpId} multiple={false} accept={PHOTO_TYPES}
-            onFiles={dropped} onNoFiles={() => { clearProblems(); setNotAFile(true); }} onDragState={setDrag} testID="photo-dropzone"
-            style={droppable ? { gap: spacing[3], padding: spacing[5], alignItems: "center", borderWidth: 2, borderStyle: "dashed", borderRadius: radius.lg, borderColor: border, backgroundColor: drag === "idle" ? "transparent" : palette.primaryMuted } : { alignItems: "flex-start" }}>
-            {droppable ? <Text nativeID={helpId} aria-live="polite" style={[styles.body, { textAlign: "center", fontWeight: "600" }]}>{hint}</Text> : null}
+          <FileDropArea label={t("portal.product.photos.zone")} describedBy={invites ? helpId : undefined} multiple={false} accept={PHOTO_TYPES} disabled={blocked}
+            onFiles={dropped} onNoFiles={droppedNothing} onDragState={setDrag} testID="photo-dropzone"
+            style={invites ? { gap: spacing[3], padding: spacing[5], alignItems: "center", borderWidth: 2, borderStyle: "dashed", borderRadius: radius.lg, borderColor: border, backgroundColor: shownDrag === "idle" ? "transparent" : palette.primaryMuted } : { alignItems: "flex-start" }}>
+            {invites ? <Text nativeID={helpId} aria-live="polite" style={[styles.body, { textAlign: "center", fontWeight: "600" }]}>{hint}</Text> : null}
             <ActionButton variant="secondary" icon="upload" label={t("portal.product.photos.add")} busy={upload.isPending} disabled={busy || variantFull} onPress={() => { void choose(); }} testID="photo-add" />
           </FileDropArea>
           {notAFile ? <Notice kind="error">{t("host.media.pickProblems.notAFile")}</Notice> : null}

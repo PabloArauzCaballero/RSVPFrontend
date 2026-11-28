@@ -4,9 +4,11 @@ import { View, type StyleProp, type ViewStyle } from "react-native";
 export type DragState = "idle" | "valid" | "invalid";
 
 export interface FileDropAreaProps {
-  /** Accessible name of the group and the id of the text that explains what it takes. */
+  /** Accessible name of the group and the id of the text that explains what it takes, only when that text is on screen. */
   readonly label: string;
-  readonly describedBy: string;
+  readonly describedBy?: string | undefined;
+  /** It takes nothing for now: no copy cursor and no drag state, and a file dropped on it still does not open in the browser. */
+  readonly disabled?: boolean;
   /** False takes only the first of the dropped files. */
   readonly multiple: boolean;
   /** MIME types it takes, only to paint the drag as valid or not: every dropped file still gets its own answer. */
