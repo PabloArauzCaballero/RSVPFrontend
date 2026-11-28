@@ -9,6 +9,7 @@ import { ChoiceGroup, DateInput, EmptyState, FilterSelect, Notice, PageIntro, us
 import { PortalErrorNotice as ErrorNotice } from "./errors";
 import { PortalScreen, usePortalHeader } from "./frame";
 import { RowsSkeleton } from "./parts";
+import { LeadReportSection } from "./lead-report-section";
 
 const DAY_MS = 86_400_000;
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
@@ -138,6 +139,7 @@ function Metrics({ provider }: { readonly provider: Provider }): ReactNode {
           </View>
         </>
       ) : null}
+      <LeadReportSection provider={provider} />
     </View>
   );
 }

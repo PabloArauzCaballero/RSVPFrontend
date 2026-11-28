@@ -1,4 +1,5 @@
 import { CORRELATION_HEADER, REDIRECT_STATUS, resolveRedirect } from "../../../lib/redirect";
+import { resolveLocale } from "@rsvp/i18n/server";
 import { redirectErrorPage } from "../../../lib/redirect-page";
 import { clientAddressOf, trustedProxyHops } from "../../../lib/client-address";
 
@@ -12,7 +13,8 @@ export const dynamic = "force-dynamic";
 function backLink(referrer: string | null, origin: string): string {
   try {
     const url = new URL(referrer ?? "", origin);
-    return url.origin === origin && !url.pathname.startsWith("/r/") ? `${url.pathname}${url.search}` : "/proveedores";
+    // A leading run of slashes would make the href protocol-relative (`//host/x`); one slash keeps it a path of this site.
+    return url.origin === origin && !url.pathname.startsWith("/r/") ? `${url.pathname.replace(/^\/+/, "/")}${url.search}` : "/proveedores";
   } catch {
     return "/proveedores";
   }
@@ -33,8 +35,9 @@ export async function GET(request: Request, { params }: { readonly params: Promi
   if (outcome.kind === "redirect") {
     return new Response(null, { status: REDIRECT_STATUS, headers: { ...noStore, location: outcome.location } });
   }
-  return new Response(redirectErrorPage(outcome.reason, backLink(request.headers.get("referer"), url.origin)), {
+  return new Response(redirectErrorPage(outcome.reason, backLink(request.headers.get("referer"), url.origin), resolveLocale(url.searchParams.get("locale"))), {
     status: outcome.status,
-    headers: { ...noStore, "content-type": "text/html; charset=utf-8" }
+    // no-referrer only on the failure page (not on the 302, which would change what the partner sees): its URL may carry the member's `ctx` (a bearer) until the script strips it.
+    headers: { ...noStore, "content-type": "text/html; charset=utf-8", "referrer-policy": "no-referrer" }
   });
 }
