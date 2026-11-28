@@ -36,3 +36,7 @@ Un bloqueo de pop-up no se puede detectar (`noopener` devuelve null); en Safari 
 
 ## Reversión
 Revertir el PR. Sin `ctx` los clics de miembros se cobran como antes. Los contratos vuelven por sí solos al lock de la base (`188d08f8`, BE #157); no hace falta ejecutar `generate`.
+
+## Hallazgo del recorrido real contra BE `fc68da23` (2026-11-28)
+- La cabecera `Referrer-Policy: no-referrer` que `route.ts` pone en la página de error de `/r/` **no llega al navegador**: la regla global de `next.config.js` (`strict-origin-when-cross-origin`) la reemplaza (observado con `next start` real; el test de la ruta solo miraba la respuesta del handler). No se cambia la regla global porque también afectaría al 302 y con ello lo que ve el proveedor. Corrección: la página lleva `<meta name="referrer" content="no-referrer">` y una prueba lo exige. Con la política servida (origen solo en cruces de sitio) el `ctx` no sale por Referer a otros orígenes, pero la defensa documentada ahora sí existe.
+- Corrección de la expectativa del caso 3 con BE de la cadena (#166, R6b): `surface=PREVIEW` sin `ctx` de vista previa ya NO se registra como inválido `PREVIEW`: se ignora y el clic cuenta como de visitante normal; con el `ctx` PREVIEW del dueño sí queda inválido `PREVIEW`; `ctx` PROVIDER_OWNER del dueño queda `PROVIDER_SELF`.

@@ -37,6 +37,7 @@ export async function GET(request: Request, { params }: { readonly params: Promi
   return new Response(redirectErrorPage(outcome.reason, backLink(request.headers.get("referer"), url.origin)), {
     status: outcome.status,
     // no-referrer only on the failure page (not on the 302, which would change what the partner sees): its URL may carry the member's `ctx` (a bearer) until the script strips it.
+    // The next.config.js global rule overrides this header in the served response; the page's <meta name="referrer"> (lib/redirect-page.ts) is what holds.
     headers: { ...noStore, "content-type": "text/html; charset=utf-8", "referrer-policy": "no-referrer" }
   });
 }
