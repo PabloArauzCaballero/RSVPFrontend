@@ -55,7 +55,7 @@ function limitError(t: Translate, value: string, max: number | undefined): { rea
   return excess === null || max === undefined ? {} : { error: t("host.limits.tooLong", { count: excess, max }) };
 }
 
-function ListEditor({ items, onChange, fields, itemLabel, addLabel, t }: { readonly items: readonly Row[]; readonly onChange: (items: Row[]) => void; readonly fields: readonly { readonly key: string; readonly label: string; readonly multiline?: boolean; readonly max?: number; /** A calendar day or a time of day, picked instead of typed. */ readonly picker?: "date" | "time"; readonly choices?: readonly { readonly value: string; readonly label: string }[]; /** A field drawn by the caller (it receives the row and how to change one of its values). */ readonly render?: (item: Row, update: (key: string, value: string) => void) => ReactNode }[]; readonly itemLabel: (n: number) => string; readonly addLabel: string; readonly t: Translate }): ReactNode {
+function ListEditor({ items, onChange, fields, itemLabel, addLabel, t }: { readonly items: readonly Row[]; readonly onChange: (items: Row[]) => void; readonly fields: readonly { readonly key: string; readonly label: string; readonly multiline?: boolean; readonly max?: number; /** A calendar day or a time of day, picked instead of typed. */ readonly picker?: "date" | "time"; readonly choices?: readonly { readonly value: string; readonly label: string }[]; /** A field drawn by the caller (it receives the row and how to change one of its values). */ readonly render?: (item: Row, update: (key: string, value: string) => void, index: number) => ReactNode }[]; readonly itemLabel: (n: number) => string; readonly addLabel: string; readonly t: Translate }): ReactNode {
   const styles = useStyles();
   const update = (index: number, key: string, value: string): void => onChange(items.map((item, position) => (position === index ? { ...item, [key]: value } : item)));
   const move = (index: number, delta: number): void => {
@@ -78,7 +78,7 @@ function ListEditor({ items, onChange, fields, itemLabel, addLabel, t }: { reado
               { key: "remove", label: t("host.common.remove"), onPress: () => onChange(items.filter((_, position) => position !== index)), destructive: true }
             ]} />
           </View>
-          {fields.map((field) => field.render ? <View key={field.key}>{field.render(item, (key, value) => update(index, key, value))}</View>
+          {fields.map((field) => field.render ? <View key={field.key}>{field.render(item, (key, value) => update(index, key, value), index)}</View>
             : field.choices
             ? <ChoiceGroup key={field.key} label={field.label} choices={field.choices} value={item[field.key] ?? null} onChange={(value) => update(index, field.key, value)} />
             : field.picker === "date" ? <DateInput key={field.key} label={field.label} value={item[field.key] ?? ""} onChange={(value) => update(index, field.key, value)} />
@@ -274,10 +274,15 @@ function Editor({ loaded, section, saved, onSaved, onNavigate }: { readonly load
       <Part section="lugares">
         <ListEditor t={t} items={rows(draft["venues"], ["key", "kind", "name", "address"])} onChange={(items) => set("venues", items.map((item, index) => ({ ...item, key: item["key"] || newItemId(`venue${index}`) })))}
           itemLabel={(n) => t("host.editor.venues.item", { n })} addLabel={t("host.editor.venues.add")}
-          fields={[{ key: "name", label: t("host.editor.venues.name"), max: LIMITS.venueName, render: (item, update) => (
+          fields={[{ key: "name", label: t("host.editor.venues.name"), max: LIMITS.venueName, render: (item, update, index) => (
             <LocationField name={item["name"] ?? ""} onName={(value) => update("name", value)} nameLabel={t("host.editor.venues.name")} testID={`field-venue-${item["key"] || "new"}`}
               location={item["key"] ? resolveLocation({ saved: locations[item["key"]], name: item["name"] ?? "" }) ?? (locations[item["key"]] ?? null) : null}
-              onLocation={(location) => { if (item["key"]) setDraft((current) => withPlaceLocation(current, item["key"] as string, location)); }}
+              onLocation={(location) => setDraft((current) => {
+                // A venue saved before keys existed has none: it gets one now, so its point is never lost.
+                const key = asText(asRecords(current["venues"])[index]?.["key"]) || item["key"] || newItemId(`venue${index}`);
+                const venues = asRecords(current["venues"]).map((venue, position) => (position === index && !asText(venue["key"]) ? { ...venue, key } : venue));
+                return withPlaceLocation({ ...current, venues }, key, location);
+              })}
               {...(overLimit(item["name"] ?? "", LIMITS.venueName) === null ? {} : { nameError: t("host.limits.tooLong", { count: overLimit(item["name"] ?? "", LIMITS.venueName) ?? 0, max: LIMITS.venueName }) })} />) }, { key: "address", label: t("host.editor.venues.address"), max: LIMITS.venueAddress }, { key: "kind", label: t("host.editor.venues.kind"), choices: VENUE_KINDS.map((kind) => ({ value: kind, label: t(`host.editor.venues.kinds.${kind}`) })) }]} />
       </Part>
     ),

@@ -32,7 +32,10 @@ export function MapEmbed({ start, zoom, label }: { readonly start: MapPoint; rea
   useEffect(() => {
     // iOS delivers web view messages to `window`, Android to `document`.
     const onMessage = (event: Event): void => {
-      const message = parseNativeToMap((event as MessageEvent<unknown>).data);
+      // Only the app's web view talks to this page: outside it there is no bridge, and a message from another window or origin is ignored.
+      const from = event as MessageEvent<unknown>;
+      if (!bridge() || (from.source && from.source !== window) || (from.origin && from.origin !== "null" && from.origin !== window.location.origin)) return;
+      const message = parseNativeToMap(from.data);
       if (message) map.current?.setView({ lat: message.lat, lng: message.lng }, message.zoom);
     };
     window.addEventListener("message", onMessage); document.addEventListener("message", onMessage);

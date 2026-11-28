@@ -161,6 +161,21 @@ describe("parts of the invitation and their progress", () => {
     expect((patchBody(calls).content["locations"] as Record<string, unknown>)).toEqual({ v1: expect.objectContaining({ lat: -17.78 }) });
   });
 
+  it("a venue saved before keys existed gets a key when it is pinned, so its point is saved with it", async () => {
+    const base = { ...CELEBRATION, content: { ...CELEBRATION.content, venues: [{ kind: "ceremony", name: "Catedral" }] } };
+    const place = { id: "node/3", name: "Catedral", label: "Catedral, La Paz", lat: -16.5, lng: -68.1 };
+    const { client, calls } = fakeClient({ ...baseHandlers(), "GET /celebrations/c-1": () => base, "GET /providers/geo/search": () => ({ items: [place], attribution: "x" }), "PATCH /celebrations/c-1": () => ({ ...base, version: 4 }) });
+    renderApp(<ContentEditorScreen section="lugares" celebrationId="c-1" onNavigate={navigate} />, client);
+    fireEvent.click(await screen.findByTestId("field-venue-new-search"));
+    fireEvent.click(await screen.findByRole("button", { name: "Catedral, La Paz" }));
+    fireEvent.click(screen.getByTestId("save-content"));
+    await waitFor(() => expect(patchBody(calls)).toBeTruthy());
+    const venues = patchBody(calls).content["venues"] as { key?: string }[];
+    const key = venues[0]?.key;
+    expect(key).toBeTruthy();
+    expect(Object.keys(patchBody(calls).content["locations"] as object)).toEqual([key]);
+  });
+
   it("the programme keeps the venueKey of an activity when it is edited, and offers the venues of the list", async () => {
     const base = { ...CELEBRATION, content: { ...CELEBRATION.content, venues: [{ key: "v1", kind: "ceremony", name: "Catedral" }], schedule: [{ id: "s1", title: "Misa", startsAt: "2026-12-19T23:00:00.000Z", venueKey: "v1" }] } };
     const { client, calls } = fakeClient({ ...baseHandlers(), "GET /celebrations/c-1": () => base, "PATCH /celebrations/c-1": () => ({ ...base, version: 4 }) });
