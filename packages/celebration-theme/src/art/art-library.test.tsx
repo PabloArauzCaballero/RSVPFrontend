@@ -373,6 +373,28 @@ describe("ornaments (PL-M7)", () => {
     }
   });
 
+  it("banderines: the cord is ONE continuous curve, with no flat stretch and no corner where the sags meet (R3-2)", () => {
+    const set = ORNAMENT_SETS.find((candidate) => candidate.id === "banderin");
+    const cord = set?.separator.paths.find((path) => path.stroke !== undefined)?.d ?? "";
+    expect(cord, "a straight command would be the flat stretch").not.toMatch(/[LHVlhv]/);
+    // Walk the curve: every segment is a Q (control, end) or a C (two controls, end). At each join, the direction the segment arrives with and the one the next leaves with are the same.
+    const segments = [...cord.matchAll(/([QC])([^QCM]+)/g)].map((match) => ({ kind: match[1], numbers: (match[2] ?? "").trim().split(/[\s,]+/).map(Number) }));
+    const start = (cord.match(/^M([\d.]+)[ ,]([\d.]+)/) ?? []).slice(1, 3).map(Number) as [number, number];
+    expect(segments.length).toBeGreaterThanOrEqual(3);
+    let from = start; let incoming: [number, number] | null = null;
+    for (const segment of segments) {
+      const n = segment.numbers; const firstControl: [number, number] = [n[0] as number, n[1] as number];
+      const lastControl: [number, number] = segment.kind === "Q" ? firstControl : [n[2] as number, n[3] as number]; const end: [number, number] = [n[n.length - 2] as number, n[n.length - 1] as number];
+      const leaving: [number, number] = [firstControl[0] - from[0], firstControl[1] - from[1]];
+      if (incoming) {
+        const cross = incoming[0] * leaving[1] - incoming[1] * leaving[0]; const dot = incoming[0] * leaving[0] + incoming[1] * leaving[1];
+        expect(dot, "it keeps going the same way").toBeGreaterThan(0);
+        expect(Math.abs(cross) / (Math.hypot(...incoming) * Math.hypot(...leaving)), `the tangent is continuous at ${from.join(",")}`).toBeLessThan(0.005);
+      }
+      incoming = [end[0] - lastControl[0], end[1] - lastControl[1]]; from = end;
+    }
+  });
+
   it.each(ORNAMENT_SETS)("$id is a golden", (set) => {
     expect({ separator: set.separator, corner: set.corner }).toMatchSnapshot();
   });

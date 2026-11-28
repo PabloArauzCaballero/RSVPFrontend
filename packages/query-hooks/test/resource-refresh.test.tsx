@@ -125,14 +125,14 @@ describe("targeted resource refresh", () => {
 
   it("stops polling automatically when a PROCESSING asset is stale", async () => {
     vi.useFakeTimers();
-    const tenMinutesAgo = new Date(Date.now() - 10 * 60_000).toISOString();
-    const h = setup(() => ({ items: [{ id: "stuck-1", status: "PROCESSING", createdAt: tenMinutesAgo, variants: {} }] }));
-    const view = renderHook(() => useMediaAssets(h.client, "c-1"), { wrapper: h.wrapper });
+    const h = setup(() => ({ items: [{ id: "stuck-1", status: "PROCESSING", variants: {} }] }));
+    const view = renderHook(() => useMediaAssets(h.client, "stale-celebration"), { wrapper: h.wrapper });
     await act(async () => { await vi.advanceTimersByTimeAsync(10); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(3 * 60_000 + 10_000); });
     expect(view.result.current.data?.items[0]?.status).toBe("PROCESSING");
-    expect(h.calls).toHaveLength(1);
+    const count = h.calls.length;
     await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
-    expect(h.calls).toHaveLength(1);
+    expect(h.calls).toHaveLength(count);
   });
 
   it("adding a gift updates the active list without refetching another celebration", async () => {

@@ -117,3 +117,16 @@ export function requiredScrim(palette: { readonly canvas: string; readonly text:
   }
   return SCRIM_MAX;
 }
+
+/** Contract 1.8.0, `x-rsvp-veil`: the graded veil is about .85 behind the text and about .2 elsewhere. */
+export const GRADED_TEXT_VEIL = 0.85;
+export const GRADED_ELSEWHERE_VEIL = 0.2;
+
+/**
+ * The two levels of the graded veil for a palette. Behind the text it is never lighter than .85 nor than what the palette needs for AA over the worst
+ * picture (`requiredScrim`), and a veil the document sets (`own`) can only raise it; elsewhere it is .2 or the document's own. The text sits on the
+ * canvas colour at `text` over a picture already under `elsewhere`, so the picture reaches it at `1 - (1 - elsewhere)(1 - text)`, never less than `text`.
+ */
+export function gradedVeil(palette: { readonly canvas: string; readonly text: string }, own = 0): { readonly text: number; readonly elsewhere: number } {
+  return { text: Math.min(0.95, Math.max(GRADED_TEXT_VEIL, own, requiredScrim(palette))), elsewhere: Math.max(own, GRADED_ELSEWHERE_VEIL) };
+}

@@ -22,10 +22,10 @@ const FILES: readonly GalleryImage[] = [
 
 type Blocks = readonly { readonly block: DesignBlock; readonly element: Partial<DesignElement> }[];
 /** Marfil with extra blocks placed on its story page, and optionally a media background on its cover. */
-function documentWith(blocks: Blocks, extra: { readonly coverBackground?: boolean; readonly css?: string } = {}): DesignDocumentV2 {
+function documentWith(blocks: Blocks, extra: { readonly coverBackground?: boolean; readonly css?: string; readonly veil?: "graded" | "even" } = {}): DesignDocumentV2 {
   const base = JSON.parse(JSON.stringify(designTemplate("marfil").theme)) as DesignDocumentV2;
   const pages = base.pages.map((page) => {
-    if (page.kind === "cover" && extra.coverBackground) return { ...page, background: { kind: "media" as const, mediaId: BG, fit: "cover" as const } };
+    if (page.kind === "cover" && extra.coverBackground) return { ...page, background: { kind: "media" as const, mediaId: BG, fit: "cover" as const, ...(extra.veil ? { veil: extra.veil } : {}) } };
     if (page.section !== "story") return page;
     const elements = blocks.map(({ block, element }, position) => ({ id: `x-${block.id}`, block: block.id, x: 0, y: 1 + position, w: 4, h: 1, visible: true, ...element }));
     return { ...page, canvases: { ...page.canvases, mobile: { ...page.canvases.mobile, elements: [...page.canvases.mobile.elements, ...elements] }, ...(page.canvases.desktop ? { desktop: page.canvases.desktop } : {}) } };
@@ -62,8 +62,8 @@ describe("F6 · pictures", () => {
     expect(container.querySelector(".celebration-gallery-navigation")).toBeNull();
   });
 
-  it("a page background is a veiled picture behind the content, with a veil per scheme that keeps the text at AA", () => {
-    const design = documentWith([], { coverBackground: true });
+  it("an even veil (contract 1.8.0, `veil: even`) is one veil over the whole picture, with a value per scheme that keeps the text at AA", () => {
+    const design = documentWith([], { coverBackground: true, veil: "even" });
     const { container } = draw(design);
     const backdrop = container.querySelector('[data-page-kind="cover"] .celebration-media-backdrop') as HTMLElement;
     expect(backdrop).toBeTruthy();
@@ -91,11 +91,11 @@ describe("F6 · pictures", () => {
   });
 
   it("a veil the document sets can raise the automatic one, never lower it", () => {
-    const design = documentWith([], { coverBackground: true });
+    const design = documentWith([], { coverBackground: true, veil: "even" });
     const needed = requiredScrim(designPalette(design, "light"));
     const lowered = JSON.parse(JSON.stringify(design)) as DesignDocumentV2;
-    const page = lowered.pages[0] as { background?: { kind: "media"; mediaId: string; fit: "cover"; scrim?: number } };
-    page.background = { kind: "media", mediaId: BG, fit: "cover", scrim: 0 };
+    const page = lowered.pages[0] as { background?: { kind: "media"; mediaId: string; fit: "cover"; scrim?: number; veil?: "even" | "graded" } };
+    page.background = { kind: "media", mediaId: BG, fit: "cover", scrim: 0, veil: "even" };
     const { container } = draw(readDesign(lowered) as DesignDocumentV2);
     const backdrop = container.querySelector(".celebration-media-backdrop") as HTMLElement;
     expect(Number.parseInt(backdrop.style.getPropertyValue("--cd-veil-l"), 10)).toBe(Math.round(needed * 100));
@@ -187,7 +187,7 @@ describe("F6 · embeds (P17)", () => {
     expect(audio.getAttribute("preload")).toBe("none");
     const button = container.querySelector("button.celebration-audio-button") as HTMLElement;
     expect(button.getAttribute("aria-label")).toContain("celebration.media.play");
-    expect(button.textContent).toBe("celebration.media.openMusic");
+    expect(button.textContent).toBe("celebration.media.playShort");
     expect(container.querySelector(".celebration-embed[data-kind=\"audio\"] audio")).toBeTruthy();
     expect(container.querySelector("progress")).toBeTruthy();
   });

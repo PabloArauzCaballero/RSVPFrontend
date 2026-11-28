@@ -143,7 +143,10 @@ export interface paths {
         /** The caller's private templates (P21) */
         get: operations["listPrivateTemplates"];
         put?: never;
-        /** Create the design of a celebration, or a private template */
+        /**
+         * Create the design of a celebration, or a private template
+         * @description For a PRIVATE_TEMPLATE the source is copied without photos, personal text and personal links (decision of 2026-11-25; PL-135-M3): the layout, colours, typography and the mandatory gifts block stay, photos and links are taken out, blocks that cannot exist without them become empty spacers, texts become neutral placeholders. The response reports what was taken out in `stripped`. A CELEBRATION design keeps everything.
+         */
         post: operations["createDesign"];
         delete?: never;
         options?: never;
@@ -162,8 +165,8 @@ export interface paths {
         put?: never;
         post?: never;
         /**
-         * Deletes a design and all its versions (PF-1)
-         * @description A private template is deleted by its owner (or an administrator); a celebration design by whoever manages the celebration. A celebration design that was ever published is 409 DESIGN_PUBLISHED: Celebration keeps the reference of its published version, so it is replaced by publishing again and goes away with the celebration (celebration.celebration.deleted.v1). Deleting an account deletes its private templates too (identity.user.deleted.v1).
+         * Deletes a draft design and all its versions (PF-1)
+         * @description Only drafts are deleted (decision of 2026-11-25): a design with a published version, of a celebration or a private template, is 409 DESIGN_PUBLISHED; unpublish it first (`POST /designs/{designId}/unpublish`) and then delete the draft. A private template is deleted by its owner (or an administrator); a celebration design by whoever manages the celebration. Deleting an account deletes its private templates too (identity.user.deleted.v1) and erasing a celebration deletes its design (celebration.celebration.deleted.v1); those paths do not need the unpublish.
          */
         delete: operations["deleteDesign"];
         options?: never;
@@ -199,6 +202,26 @@ export interface paths {
         put?: never;
         /** Publish the draft as the next immutable version */
         post: operations["publishDesign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/designs/{designId}/unpublish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Withdraws the published version of a design
+         * @description The invitation of a celebration goes back to the base template and the draft and every version stay, so the host can publish again (the next version number is higher than the withdrawn one). Idempotent: a design that is not published is returned as it is and nothing is emitted. A private template unpublishes too and emits nothing. Needs no If-Match: it does not touch the draft.
+         */
+        post: operations["unpublishDesign"];
         delete?: never;
         options?: never;
         head?: never;
@@ -513,15 +536,20 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /**
+         * @description Curated named animations (1.8.0). aparecer: fade and rise once. mecerse: a damped swing that settles, for an element that hangs (a piñata); never on a page or on the gifts and reply buttons. revelar-telon: a curtain that slides away to show the page. abrir-puertas: two art déco doors that open to show the page; pages only. Duration and easing come from the motion tokens of the renderer, never from the document. All of them play once and are off under prefers-reduced-motion (the final state shows at once).
+         * @enum {string}
+         */
+        AnimationName: "aparecer" | "mecerse" | "revelar-telon" | "abrir-puertas";
+        /**
          * @description A palette role; the renderer takes its value from the palette of the guest's colour scheme.
          * @enum {string}
          */
         ColourRole: "canvas" | "surface" | "text" | "muted" | "accent" | "accentFill" | "onAccent" | "line";
         /**
-         * @description Cover composition. The five values are the v1 layouts; F4 adds new ones.
+         * @description Cover composition. classic, minimal, editorial, festive and corporate are the v1 layouts. 1.8.0 adds arch (photo in an arch window with a double frame), hanging (a piece hanging from a cord over the title), deco (art déco frame, the photo behind two doors) and poster (the photo fills the cover under the graded veil).
          * @enum {string}
          */
-        CoverVariant: "classic" | "minimal" | "editorial" | "festive" | "corporate";
+        CoverVariant: "classic" | "minimal" | "editorial" | "festive" | "corporate" | "arch" | "hanging" | "deco" | "poster";
         Design: {
             /** Format: uuid */
             celebrationId: string | null;
@@ -536,13 +564,20 @@ export interface components {
             id: string;
             kind: components["schemas"]["DesignKind"];
             name: string;
-            /** @description Latest published version, null until the first publish */
+            /** @description Latest published version; null until the first publish and after it is unpublished */
             publishedVersion: number | null;
+            /** @description Only on the response of creating a PRIVATE_TEMPLATE: how many photos, personal texts and personal links were taken out of the source. All zero when the source had none. */
+            stripped?: {
+                links: number;
+                photos: number;
+                texts: number;
+            };
             /** Format: date-time */
             updatedAt: string;
             /** @description Contrast warnings of the draft; present on create, save and restore. They never block (P19) */
             warnings?: components["schemas"]["DesignWarning"][];
         };
+        /** @description How an element or a page enters. `entrance` is the v2 kind; `name` (1.8.0) picks a named animation whose duration comes from the motion tokens, so it cannot carry `durationMs` (422 DESIGN_DECORATION_INVALID). With a `name`, `entrance` is ignored by the renderer: send `none` (the service tolerates another value and stores it, so documents saved earlier keep validating, and the renderer ignores it). The gifts and reply buttons take no `name` at all: it would move, hide or cover them (422 DESIGN_DECORATION_INVALID); the inherited `entrance` stays accepted there. */
         DesignAnimation: {
             delayMs?: number;
             durationMs?: number;
@@ -551,6 +586,7 @@ export interface components {
              * @enum {string}
              */
             entrance: "none" | "fade" | "rise" | "scale" | "draw" | "envelope";
+            name?: components["schemas"]["AnimationName"];
         };
         DesignBackground: components["schemas"]["DesignColourBackground"] | components["schemas"]["DesignMediaBackground"] | components["schemas"]["DesignIllustrationBackground"];
         /** @description Typed component registry (plan §5). */
@@ -868,6 +904,11 @@ export interface components {
         };
         DesignBlockVideo: {
             config: {
+                /**
+                 * Format: uuid
+                 * @description 1.8.0. A photo of the celebration the host picks as the cover of the video. Without one the renderer shows the provider thumbnail, loaded only when the guest taps.
+                 */
+                posterMediaId?: string;
                 /** @enum {string} */
                 provider: "youtube" | "vimeo";
                 videoId: string;
@@ -932,6 +973,8 @@ export interface components {
             role: components["schemas"]["ColourRole"];
         };
         DesignCoverPage: {
+            /** @description How the section enters (1.8.0). Only the named animations aparecer, revelar-telon and abrir-puertas are allowed on a page. The gifts and reply buttons stay reachable and on top while it plays. */
+            animation?: components["schemas"]["DesignAnimation"];
             background?: components["schemas"]["DesignBackground"];
             canvases: components["schemas"]["DesignCanvases"];
             id: components["schemas"]["DesignId"];
@@ -969,12 +1012,14 @@ export interface components {
             background?: components["schemas"]["DesignBackground"];
             block: components["schemas"]["DesignId"];
             border?: components["schemas"]["DesignBorder"];
+            frame?: components["schemas"]["DesignFrame"];
             /** @description Height in rows (minimum height in a flow canvas) */
             h: number;
             id: components["schemas"]["DesignId"];
             /** @description Destination of the element. Not allowed on the element that places the gifts block: its destination is always /c/{slug}/regalos (422 GIFTS_BLOCK_LOCKED). */
             link?: components["schemas"]["DesignLink"];
             margin?: components["schemas"]["DesignBox"];
+            mask?: components["schemas"]["DesignMask"];
             /** @description Default 1. The gifts block is always 1 (422 GIFTS_BLOCK_HIDDEN). */
             opacity?: number;
             padding?: components["schemas"]["DesignBox"];
@@ -992,6 +1037,15 @@ export interface components {
             y: number;
             /** @description Layer; default 0 */
             z?: number;
+        };
+        /** @description A decorative frame drawn around the element (1.8.0). Never on the gifts and reply buttons. */
+        DesignFrame: {
+            colour: components["schemas"]["ColourRole"];
+            /**
+             * @description double: two concentric lines; deco: art déco stepped corners; hairline: one fine line
+             * @enum {string}
+             */
+            style: "double" | "deco" | "hairline";
         };
         /** @description Identifier unique within one design document (kebab-case). */
         DesignId: string;
@@ -1014,7 +1068,7 @@ export interface components {
             document?: components["schemas"]["DesignDocumentV2"] | null;
             /**
              * Format: uuid
-             * @description Start from another design the caller can read (P21: save a celebration design as a private template)
+             * @description Start from another design the caller can read (P21: save a celebration design as a private template; the copy has no photos, personal text or personal links)
              */
             fromDesignId?: string | null;
             kind: components["schemas"]["DesignKind"];
@@ -1056,6 +1110,11 @@ export interface components {
              */
             listingId: string;
         };
+        /**
+         * @description Shape an element is clipped to (1.8.0): arch (round top, flat base), deco-doors (two arched doors side by side), chamfer (cut corners), circle, rounded, stamp (a postage-stamp edge). Allowed on image, gallery, illustration, monogram, ornament, video and map blocks only: a mask would cut text, and it is never allowed on the gifts and reply buttons.
+         * @enum {string}
+         */
+        DesignMask: "arch" | "deco-doors" | "chamfer" | "circle" | "rounded" | "stamp";
         DesignMediaBackground: {
             /** @enum {string} */
             fit: "cover" | "contain";
@@ -1068,6 +1127,11 @@ export interface components {
             mediaId: string;
             /** @description Veil over the image so text stays readable */
             scrim?: number;
+            /**
+             * @description 1.8.0. even (what an absent `veil` means, so every v2 document saved before 1.8.0 renders as it always did): one veil over the whole photo, the v2 behaviour. graded (explicit, written by the editor and by the new templates): the veil is strong only behind the text (about 0.85) and light elsewhere (about 0.2). In both modes the renderer raises the veil behind the text as far as the palette needs for 4.5:1 on any photo (F0), so `scrim` can only add to it.
+             * @enum {string}
+             */
+            veil?: "graded" | "even";
         };
         /** @description Provenance of a document converted from v1: the exact v1 font stacks, layout and section order, so the conversion is reversible. Renderers ignore it. */
         DesignOrigin: {
@@ -1095,7 +1159,7 @@ export interface components {
             surface: components["schemas"]["HexColour"];
             text: components["schemas"]["HexColour"];
         };
-        /** @description 422 of a v2 design (400 and 413 are plain Problems). code is INVALID_THEME (not an object, neither v1 nor v2, or a schemaVersion that is not the integer 2), DESIGN_SCHEMA_INVALID (issues lists the paths), GIFTS_BLOCK_REQUIRED (no gifts block, said before the schema errors), GIFTS_BLOCK_LOCKED (link or rotation on the gifts element), GIFTS_BLOCK_HIDDEN (not visible or translucent), GIFTS_BLOCK_OUT_OF_CANVAS, GIFTS_BLOCK_TOO_SMALL (under 44 px, or under 44 px of height left once vertical padding and border are taken out), GIFTS_BLOCK_TEXT_TOO_LARGE (label over 32 px or taller than the useful height), GIFTS_BLOCK_COVERED (another element paints over it), GIFTS_BLOCK_LOW_CONTRAST (text under 4.5:1 or contour under 3:1 in either palette), DESIGN_REFERENCE_INVALID, FONT_WEIGHT_UNAVAILABLE, CUSTOM_CODE_UNAVAILABLE (custom html/css until the F5 sanitiser), or DESIGN_V2_NOT_AVAILABLE (POST/PATCH of any v2 theme while the service gate DESIGN_V2_ACCEPTED is off, which is not the default since F4 b; checked before the document is validated). Design endpoints add VERSION_CONFLICT (409, currentVersion), DESIGN_EXISTS (409), PRIVATE_TEMPLATE_LIMIT (409), DESIGN_PUBLISHED (409, a published celebration design cannot be deleted), DESIGN_TOO_LARGE, DESIGN_MEDIA_INVALID (a mediaId that is not a usable photo of the celebration; mediaIds lists them), DESIGN_MEDIA_NOT_ALLOWED (a private template cannot reference photos; mediaIds lists them), CELEBRATION_REQUIRED, CELEBRATION_NOT_ALLOWED and KIND_REQUIRED (422). */
+        /** @description 422 of a v2 design (400 and 413 are plain Problems). code is INVALID_THEME (not an object, neither v1 nor v2, or a schemaVersion that is not the integer 2), DESIGN_SCHEMA_INVALID (issues lists the paths), GIFTS_BLOCK_REQUIRED (no gifts block, said before the schema errors), GIFTS_BLOCK_LOCKED (link or rotation on the gifts element), GIFTS_BLOCK_HIDDEN (not visible or translucent), GIFTS_BLOCK_OUT_OF_CANVAS, GIFTS_BLOCK_TOO_SMALL (under 44 px, or under 44 px of height left once vertical padding and border are taken out), GIFTS_BLOCK_TEXT_TOO_LARGE (label over 32 px or taller than the useful height), GIFTS_BLOCK_COVERED (another element paints over it), GIFTS_BLOCK_LOW_CONTRAST (text under 4.5:1 or contour under 3:1 in either palette), DESIGN_REFERENCE_INVALID, FONT_WEIGHT_UNAVAILABLE, CUSTOM_CODE_UNAVAILABLE (custom html/css until the F5 sanitiser), DESIGN_DECORATION_INVALID (1.8.0: a named animation with durationMs, mecerse on a page, abrir-puertas on an element, a mask on a block with text, or a mask, frame or mecerse on the gifts or reply buttons), or DESIGN_V2_NOT_AVAILABLE (POST/PATCH of any v2 theme while the service gate DESIGN_V2_ACCEPTED is off, which is not the default since F4 b; checked before the document is validated). Design endpoints add VERSION_CONFLICT (409, currentVersion), DESIGN_EXISTS (409), PRIVATE_TEMPLATE_LIMIT (409), DESIGN_PUBLISHED (409, a published design is not deleted: unpublish it first), DESIGN_TOO_LARGE, DESIGN_MEDIA_INVALID (a mediaId that is not a usable photo of the celebration; mediaIds lists them), DESIGN_MEDIA_NOT_ALLOWED (saving a draft of a private template with photos; when a template is created the photos are taken out instead; mediaIds lists them), CELEBRATION_REQUIRED, CELEBRATION_NOT_ALLOWED and KIND_REQUIRED (422). */
         DesignProblem: components["schemas"]["Problem"] & {
             field?: string;
             issues?: components["schemas"]["DesignIssue"][];
@@ -1110,6 +1174,8 @@ export interface components {
             label?: string;
         };
         DesignSectionPage: {
+            /** @description How the section enters (1.8.0). Only the named animations aparecer, revelar-telon and abrir-puertas are allowed on a page. The gifts and reply buttons stay reachable and on top while it plays. */
+            animation?: components["schemas"]["DesignAnimation"];
             background?: components["schemas"]["DesignBackground"];
             canvases: components["schemas"]["DesignCanvases"];
             id: components["schemas"]["DesignId"];
@@ -1824,7 +1890,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Created */
+            /** @description Created. For a private template, `stripped` says what was taken out of the source */
             201: {
                 headers: {
                     ETag?: string;
@@ -2023,7 +2089,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description DESIGN_PUBLISHED: a published celebration design is replaced, not deleted */
+            /** @description DESIGN_PUBLISHED: a published design is unpublished first, then deleted */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -2260,6 +2326,75 @@ export interface operations {
             };
             /** @description If-Match required */
             428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unexpected error (INTERNAL); nothing was stored */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    unpublishDesign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                designId: components["parameters"]["DesignId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The design, now without a published version */
+            200: {
+                headers: {
+                    /** @description draftVersion, to send back in If-Match */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Design"];
+                };
+            };
+            /** @description Malformed request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Can read but not change it */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unknown, or not visible to the caller (never 403 for what the caller cannot see) */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -3,14 +3,11 @@ import { Photo } from "../photo.js";
 import type { Translate } from "../types.js";
 import { isAllowedEmbedUrl, type Embed } from "./embed.js";
 import { AudioPlayerView, EmbedFacadeView, type AudioLabels, type EmbedLabels } from "./interactive.js";
-import { clampScrim, hasImage, imageSources, type PublicMedia } from "./variants.js";
+import { clampVeil, hasImage, imageSources, type PublicMedia } from "./variants.js";
 
 /** Components of F6 for the public invitation and for the editor to import. Web only: the native app shows the web invitation (P10).
  *  This file runs on the server: what needs the browser (the facade's tap, the player) lives in `interactive.tsx`, a client module that receives text already
  *  translated, because a function such as `t` cannot cross from a server component to a client one. */
-
-/** A veil that is laid on a photo when the document does not set one, so text on top stays readable (AA) on any picture. */
-export const AUTO_SCRIM = 0.4;
 
 export interface MediaImageProps {
   readonly media: PublicMedia;
@@ -47,32 +44,11 @@ export interface MediaBackdropProps { readonly media: PublicMedia; readonly fit?
 /** The picture behind a page or an element, with its veil, as an absolutely positioned decoration: the content that goes over it is a sibling. */
 export function MediaBackdrop({ media, fit = "cover", light, dark, priority = false }: MediaBackdropProps): ReactNode {
   if (!hasImage(media)) return null;
-  const style = { "--cd-veil-l": `${Math.round(clampScrim(light) * 100)}%`, "--cd-veil-d": `${Math.round(clampScrim(dark) * 100)}%` } as CSSProperties;
+  const style = { "--cd-veil-l": `${Math.round(clampVeil(light) * 100)}%`, "--cd-veil-d": `${Math.round(clampVeil(dark) * 100)}%` } as CSSProperties;
   return (
     <div className="celebration-media-backdrop" aria-hidden="true" style={style}>
       <MediaImage media={media} alt="" fit={fit} priority={priority} className="celebration-media-background-image" />
       <div className="celebration-media-veil" />
-    </div>
-  );
-}
-
-export interface MediaBackgroundProps {
-  readonly media: PublicMedia;
-  readonly fit?: "cover" | "contain";
-  /** 0 to 0.8, from the design document. Missing means the automatic veil. */
-  readonly scrim?: number;
-  readonly priority?: boolean;
-  readonly children?: ReactNode;
-}
-
-/** A section or page background picture with its veil. The picture is decoration: the text on top carries the meaning. */
-export function MediaBackground({ media, fit = "cover", scrim, priority = false, children }: MediaBackgroundProps): ReactNode {
-  const veil = scrim === undefined ? AUTO_SCRIM : clampScrim(scrim);
-  return (
-    <div className="celebration-media-background" data-scrim={veil} style={{ "--celebration-scrim": `${Math.round(veil * 100)}%` } as CSSProperties}>
-      <MediaImage media={media} alt="" fit={fit} priority={priority} className="celebration-media-background-image" />
-      <div className="celebration-media-veil" aria-hidden="true" />
-      <div className="celebration-media-content">{children}</div>
     </div>
   );
 }
@@ -113,6 +89,6 @@ export interface AudioPlayerProps {
 export function AudioPlayer({ media, title, t }: AudioPlayerProps): ReactNode {
   const src = media.variants.audio;
   if (!src) return null;
-  const labels: AudioLabels = { shortPlay: t("celebration.media.openMusic"), shortPause: t("celebration.media.pauseShort"), play: t("celebration.media.play", { title }), pause: t("celebration.media.pause", { title }), progress: t("celebration.media.progress", { title }), error: t("celebration.media.audioError") };
+  const labels: AudioLabels = { shortPlay: t("celebration.media.playShort"), shortPause: t("celebration.media.pauseShort"), play: t("celebration.media.play", { title }), pause: t("celebration.media.pause", { title }), progress: t("celebration.media.progress", { title }), error: t("celebration.media.audioError") };
   return <AudioPlayerView src={src} durationMs={media.durationMs ?? null} labels={labels} />;
 }

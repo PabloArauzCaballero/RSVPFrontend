@@ -122,7 +122,7 @@ test("Minimalista has a single object on the cover: its line", async ({ page }) 
 
 // PL-130-M2 · the names are in the first screen and above the dock whatever the template, the photo or the width (the phone canvas stops stretching at 480 px), the
 // whole cover text (title and date) clears the dock too, and no word of the title is cut in the middle.
-const SCREENS = [{ width: 360, height: 800 }, { width: 768, height: 1024 }, { width: 1280, height: 900 }] as const;
+const SCREENS = [{ width: 360, height: 800 }, { width: 390, height: 844 }, { width: 768, height: 1024 }, { width: 1280, height: 900 }] as const;
 for (const name of NAMES) {
   for (const variant of ["", "-sinfoto"] as const) {
     for (const screen of SCREENS) {

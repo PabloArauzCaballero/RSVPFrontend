@@ -10,13 +10,15 @@ import { SectionNav } from "../section-nav.js";
 import { GiftsAction, RsvpAction, SECTIONS } from "../sections/index.js";
 import { AudioPlayer, EmbedFacade, MediaBackdrop, MediaImage } from "../media/components.js";
 import { embedFromConfig, mapEmbed } from "../media/embed.js";
-import { clampScrim, type PublicMedia } from "../media/variants.js";
+import { clampScrim, hasImage, type PublicMedia } from "../media/variants.js";
 import { layoutOf, themeVariables } from "../theme.js";
 import type { CelebrationTheme, SectionId, Translate } from "../types.js";
 import { scopeCss } from "../custom/css.js";
-import { requiredScrim } from "./colour.js";
+import { gradedVeil, requiredScrim } from "./colour.js";
+import { familyById } from "./catalog.js";
+import { EXTRA_TEMPLATE_IDS } from "./documents/extra-ids.js";
 import { designPalette, fontStack } from "./read.js";
-import type { DesignBackground, PaletteRole, DesignBlock, DesignCanvas, DesignDocumentV2, DesignElement, DesignLink, DesignPage } from "./types.js";
+import { MASKABLE_BLOCKS, type DesignAnimation, type DesignBackground, type PaletteRole, type DesignBlock, type DesignCanvas, type DesignDocumentV2, type DesignElement, type DesignLink, type DesignPage } from "./types.js";
 
 /**
  * F4 b · the renderer of the design document v2 (web). The document is data: tokens become CSS custom properties, every page
@@ -87,13 +89,43 @@ function backgroundStyle(background: DesignBackground | undefined): CSSPropertie
   return background?.kind === "colour" ? { background: role(background.role) } : {};
 }
 
-/** A page or element background that is a picture (F6): AVIF/WebP, with the veil the palette needs so the text on top is AA; the document's own veil can only add to it. */
-function BackgroundMedia({ background, context, priority = false }: { readonly background: DesignBackground | undefined; readonly context: Context; readonly priority?: boolean }): ReactNode {
+/** The blocks whose text sits over the picture an element carries as its own background (the whole element is then the text zone), and over a page photo with a graded veil (each gets the strong panel).
+ *  Every block type of the contract is in exactly one of the two lists (a test reads the contract), so a new block cannot reach a photo without a decision about its text. The gifts and reply buttons
+ *  are the protected layer: they paint their own surface and take no panel. */
+export const NO_TEXT_BLOCKS: readonly string[] = ["image", "illustration", "ornament", "spacer", "giftsCta", "rsvpCta"];
+export const TEXT_BLOCK_TYPES: readonly string[] = ["cover", "story", "schedule", "venues", "faq", "recommendations", "dressCode", "heading", "text", "quote", "countdown", "monogram", "imageText", "gallery", "music", "map", "video", "button", "weddingParty", "html"];
+const TEXT_BLOCKS: ReadonlySet<string> = new Set(TEXT_BLOCK_TYPES);
+
+/** The veil of a photo, per scheme, as percentages the stylesheet reads. `even` (contract 1.8.0): one veil over the whole photo, raised to what the palette needs for AA. `graded`
+ *  (explicit in the document): light over the photo (`elsewhere`) and strong only behind the text (`text`), which the stylesheet paints as a feathered panel behind every text block. Either
+ *  way the text sits under at least the veil the palette needs, so it is AA over any picture; the document's own `scrim` can only add. */
+function veilLevels(background: Extract<DesignBackground, { kind: "media" }>, context: Context): { readonly graded: boolean; readonly backdrop: { readonly light: number; readonly dark: number }; readonly text: { readonly light: number; readonly dark: number } } {
+  const own = background.scrim === undefined ? 0 : clampScrim(background.scrim);
+  const light = gradedVeil(designPalette(context.design, "light"), own);
+  const dark = gradedVeil(designPalette(context.design, "dark"), own);
+  const even = { light: Math.max(own, context.veil.light), dark: Math.max(own, context.veil.dark) };
+  const graded = background.veil === "graded";
+  return { graded, backdrop: graded ? { light: light.elsewhere, dark: dark.elsewhere } : even, text: graded ? { light: light.text, dark: dark.text } : even };
+}
+
+/** A page or element background that is a picture (F6): AVIF/WebP, with the veil the palette needs so the text on top is AA; the document's own veil can only add to it.
+ *  On an element that carries text, the whole element is the text zone, so its veil is the strong one. */
+function BackgroundMedia({ background, context, priority = false, textZone = false }: { readonly background: DesignBackground | undefined; readonly context: Context; readonly priority?: boolean; readonly textZone?: boolean }): ReactNode {
   if (background?.kind !== "media") return null;
   const file = context.media.find((item) => item.id === background.mediaId);
   if (!file) return null;
-  const own = background.scrim === undefined ? 0 : clampScrim(background.scrim);
-  return <MediaBackdrop media={asMedia(file)} fit={background.fit} light={Math.max(own, context.veil.light)} dark={Math.max(own, context.veil.dark)} priority={priority} />;
+  const levels = veilLevels(background, context);
+  const veil = textZone ? levels.text : levels.backdrop;
+  return <MediaBackdrop media={asMedia(file)} fit={background.fit} light={veil.light} dark={veil.dark} priority={priority} />;
+}
+
+/** Variables and marker of a page whose picture carries a graded veil: the strong level the text panels use (`--cd-tv-l`, `--cd-tv-d`). */
+function pageVeil(page: DesignPage, context: Context): { readonly attr: "graded" | undefined; readonly style: CSSProperties } {
+  const background = page.background;
+  if (background?.kind !== "media" || !context.media.some((item) => item.id === background.mediaId)) return { attr: undefined, style: {} };
+  const levels = veilLevels(background, context);
+  if (!levels.graded) return { attr: undefined, style: {} };
+  return { attr: "graded", style: { "--cd-tv-l": `${Math.round(levels.text.light * 100)}%`, "--cd-tv-d": `${Math.round(levels.text.dark * 100)}%` } as CSSProperties };
 }
 
 function BackgroundArt({ background }: { readonly background: DesignBackground | undefined }): ReactNode {
@@ -102,15 +134,24 @@ function BackgroundArt({ background }: { readonly background: DesignBackground |
   return drawing ? <InvitationArt drawing={drawing} className="cdesign-bg-art" /> : null;
 }
 
-/** The title block of the cover: who, when and where. The photo, when there is one, is part of the same block (PL-A9: every template decides where it goes). */
-function CoverBlock({ block, context }: { readonly block: DesignBlock; readonly context: Context }): ReactNode {
+/** Templates whose cover photo is put on the axis of the centred text (PL-FE143-V2). */
+const PHOTO_ON_TEXT_AXIS: ReadonlySet<string> = new Set(Object.values(EXTRA_TEMPLATE_IDS));
+
+/** Templates drawn and measured with a script title whose facts (date, place, countdown) keep the body face (PL-FE143-V1). Any other design with a script heading keeps the face it had
+ * (PL-FE143-R4-1): the marker is only emitted for these, whatever the heading family of a user's design or of one already published. Like `PHOTO_ON_TEXT_AXIS` it is keyed to the theme id. */
+const SCRIPT_TITLE_FACTS_IN_BODY: ReadonlySet<string> = new Set(Object.values(EXTRA_TEMPLATE_IDS));
+
+/** The title block of the cover: who, when and where. The photo, when there is one, is part of the same block (PL-A9: every template decides where it goes). When the document centres the text
+ * (`typography.align: "center"`) the photo shares its axis (PL-FE143-V2), but only for the templates that were drawn and measured with it (`PHOTO_ON_TEXT_AXIS`): the older templates keep the geometry
+ * they had (PL-FE143-R2-2), until the owner decides whether the same fix reaches them. */
+function CoverBlock({ block, context, centred }: { readonly block: DesignBlock; readonly context: Context; readonly centred: boolean }): ReactNode {
   const { content, view, t, cover } = context;
   const image = cover && (cover.variants.medium || cover.variants.full || cover.variants.webp || cover.variants.svg) ? asMedia(cover) : null;
   // A title made of the hosts' names ("Ana y Luis") already says who: repeating them underneath is noise.
   const hostsInTitle = content.hosts.length > 0 && content.hosts.every((host) => content.title.includes(host.name));
   const days = daysUntil(content.eventDate, context.now);
   return (
-    <div className="cdesign-cover" data-variant={str(config(block)["variant"])} data-has-image={image ? "true" : "false"}>
+    <div className="cdesign-cover" data-variant={str(config(block)["variant"])} data-has-image={image ? "true" : "false"} data-align={centred ? "center" : undefined}>
       {image ? <MediaImage media={image} alt="" priority sizes={COVER_SIZES} className="cdesign-cover-photo" /> : null}
       <div className="cdesign-cover-copy">
         <h1>{content.title}</h1>
@@ -144,7 +185,7 @@ function BlockBody({ block, element, context }: { readonly block: DesignBlock; r
     giftsHref: context.giftsHref, giftsStatus: props.giftsStatus
   };
   switch (block.type) {
-    case "cover": return <CoverBlock block={block} context={context} />;
+    case "cover": return <CoverBlock block={block} context={context} centred={element.typography?.align === "center" && PHOTO_ON_TEXT_AXIS.has(context.theme.id)} />;
     case "giftsCta": return <GiftsAction {...sectionProps} label={str(settings["label"])} variant={str(settings["style"])} />;
     case "rsvpCta": return <RsvpAction {...sectionProps} label={str(settings["label"])} variant={str(settings["style"])} />;
     case "story": case "schedule": case "venues": case "gallery": case "faq": case "recommendations": {
@@ -184,7 +225,11 @@ function BlockBody({ block, element, context }: { readonly block: DesignBlock; r
       return file ? <MediaImage media={asMedia(file)} alt={str(settings["alt"]) ?? ""} fit={settings["fit"] === "contain" ? "contain" : "cover"} sizes="(min-width: 56.25rem) 50vw, 100vw" className="cdesign-image" /> : null;
     }
     // F6 (P17): nothing of the provider loads until the guest taps. An id or link off the allowlist draws nothing.
-    case "video": return <EmbedFacade embed={embedFromConfig("video", settings)} title={content.title} t={t} />;
+    // 1.8.0: the host's own cover photo for the video (a file of the celebration). Without one, or with one the celebration does not have, nothing of the provider is shown before the tap.
+    case "video": {
+      const poster = context.media.find((item) => item.id === settings["posterMediaId"] && hasImage(asMedia(item)));
+      return <EmbedFacade embed={embedFromConfig("video", settings)} title={content.title} t={t} {...(poster ? { poster: asMedia(poster) } : {})} />;
+    }
     case "music": {
       if (settings["source"] === "media") {
         const file = isMusicHidden(view) ? undefined : context.media.find((item) => item.id === settings["ref"]);
@@ -213,7 +258,7 @@ function fontSize(size: number): string {
   return size >= BIG_TEXT ? `clamp(${Math.round(size / 2)}px, ${(size / FLUID_DIVISOR).toFixed(2)}vw, ${size}px)` : `${size}px`;
 }
 
-function elementStyle(element: DesignElement, mobile: DesignElement | undefined, desktop: DesignElement | undefined): CSSProperties {
+function elementStyle(element: DesignElement, mobile: DesignElement | undefined, desktop: DesignElement | undefined, decorate: boolean): CSSProperties {
   const style: Record<string, string | number | undefined> = {};
   const set = (prefix: string, item: DesignElement | undefined): void => {
     if (!item) return;
@@ -241,7 +286,9 @@ function elementStyle(element: DesignElement, mobile: DesignElement | undefined,
       textAlign: typography.align === "start" ? "start" : typography.align === "end" ? "end" : typography.align, lineHeight: typography.lineHeight,
       letterSpacing: typography.letterSpacing === undefined ? undefined : `${typography.letterSpacing}em`, textTransform: typography.transform, color: role(typography.colour)
     } : {}),
-    ...(element.animation ? { "--cdesign-delay": `${element.animation.delayMs ?? 0}ms`, "--cdesign-duration": `${element.animation.durationMs ?? 700}ms` } : {})
+    // A named animation (1.8.0) takes its duration from the motion tokens in the stylesheet; only its delay comes from the document.
+    ...(element.animation ? { "--cdesign-delay": `${element.animation.delayMs ?? 0}ms`, ...(element.animation.name ? {} : { "--cdesign-duration": `${element.animation.durationMs ?? 700}ms` }) } : {}),
+    ...(decorate && element.frame && Object.hasOwn(ROLE_VAR, element.frame.colour) ? { "--cd-frame": role(element.frame.colour) } : {})
   } as CSSProperties;
 }
 
@@ -251,6 +298,22 @@ function ownMusicGone(block: DesignBlock, context: Context): boolean {
   const settings = config(block);
   if (settings["source"] !== "media") return false;
   return isMusicHidden(context.view) || !context.media.some((item) => item.id === settings["ref"] && item.variants.audio);
+}
+
+/**
+ * How an element enters. A named animation (1.8.0) replaces the entrance: `aparecer` is the entrance `rise` (the stylesheet's own token), `mecerse` and `revelar-telon` are
+ * animations of their own. The gifts and reply buttons never play one (P22).
+ */
+function animationOf(animation: DesignAnimation | undefined, protectedBlock: boolean): { readonly entrance: string | undefined; readonly named: string | undefined } {
+  if (!animation || protectedBlock) return { entrance: undefined, named: undefined };
+  if (animation.name === "aparecer") return { entrance: "rise", named: undefined };
+  if (animation.name === "mecerse" || animation.name === "revelar-telon") return { entrance: undefined, named: animation.name };
+  return { entrance: animation.entrance !== "none" ? animation.entrance : undefined, named: undefined };
+}
+
+/** The two panels of a page that opens (`abrir-puertas`) or draws a curtain (`revelar-telon`): decoration only, above the content and below the protected blocks (z-index in the stylesheet), never able to take a click. */
+function Doors({ kind }: { readonly kind: "abrir-puertas" | "revelar-telon" }): ReactNode {
+  return <span className="cdesign-doors" data-kind={kind} aria-hidden="true"><span className="cdesign-door" data-side="l" />{kind === "abrir-puertas" ? <span className="cdesign-door" data-side="r" /> : null}</span>;
 }
 
 function Canvas({ page, context }: { readonly page: DesignPage; readonly context: Context }): ReactNode {
@@ -263,6 +326,7 @@ function Canvas({ page, context }: { readonly page: DesignPage; readonly context
   const vars = { "--cd-cols-m": mobile.columns, "--cd-row-m": `${mobile.rowHeight}px`, "--cd-cols-d": desktop?.columns ?? mobile.columns, "--cd-row-d": `${(desktop ?? mobile).rowHeight}px` } as CSSProperties;
   return (
     <div className="cdesign-canvas" data-mode={mobile.mode} data-desktop={desktop ? "" : undefined} style={vars}>
+      {page.animation?.name === "abrir-puertas" || page.animation?.name === "revelar-telon" ? <Doors kind={page.animation.name} /> : null}
       {ids.map((id) => {
         const element = (phone.get(id) ?? wide.get(id)) as DesignElement;
         const block = blocks.get(element.block);
@@ -274,11 +338,18 @@ function Canvas({ page, context }: { readonly page: DesignPage; readonly context
         const content = <BlockBody block={block} element={element} context={context} />;
         const body = protectedBlock ? content : <div className="cdesign-author">{content}</div>;
         const href = block.type === "button" || block.type === "giftsCta" || block.type === "rsvpCta" ? undefined : hrefOf(element.link, context);
+        const { entrance, named } = animationOf(element.animation, protectedBlock);
+        // Contract 1.8.0 (P22): a mask, a frame or a named animation never reaches the gifts or reply buttons, whatever the document says; a mask only cuts blocks without text.
+        const decorated = protectedBlock ? {} : {
+          "data-mask": element.mask && MASKABLE_BLOCKS.includes(block.type) ? element.mask : undefined,
+          "data-frame": element.frame && Object.hasOwn(ROLE_VAR, element.frame.colour) ? element.frame.style : undefined,
+          "data-anim": named
+        };
         return (
           <div key={id} className={block.type === "giftsCta" || block.type === "rsvpCta" ? "cdesign-el rsvp-protected" : "cdesign-el"} data-block={block.type} data-m={phone.has(id) ? "" : undefined} data-d={wide.has(id) || (!desktop && phone.has(id)) ? "" : undefined}
-            data-entrance={element.animation && element.animation.entrance !== "none" ? element.animation.entrance : undefined} data-sized={element.typography?.size !== undefined ? "" : undefined} data-round={element.radius ? "" : undefined} data-bg-media={element.background?.kind === "media" ? "" : undefined}
-            style={elementStyle(element, phone.get(id), wide.get(id) ?? (desktop ? undefined : phone.get(id)))}>
-            <BackgroundMedia background={element.background} context={context} />
+            data-entrance={entrance} data-sized={element.typography?.size !== undefined ? "" : undefined} data-round={element.radius ? "" : undefined} data-bg-media={element.background?.kind === "media" ? "" : undefined} data-text={TEXT_BLOCKS.has(block.type) ? "" : undefined} {...decorated}
+            style={elementStyle(element, phone.get(id), wide.get(id) ?? (desktop ? undefined : phone.get(id)), !protectedBlock)}>
+            <BackgroundMedia background={element.background} context={context} textZone={TEXT_BLOCKS.has(block.type)} />
             {href ? <a href={href} className="cdesign-el-link" {...linkAttributes(element.link)}>{body}</a> : body}
           </div>
         );
@@ -321,13 +392,17 @@ function PageBlock({ page, context, only }: { readonly page: DesignPage; readonl
   const { t } = context;
   const section = page.section as SectionId | undefined;
   const inner = <><BackgroundArt background={page.background} /><BackgroundMedia background={page.background} context={context} priority={page.kind === "cover"} /><Canvas page={page} context={context} /></>;
+  const veil = pageVeil(page, context);
+  // `aparecer` on a page is the entrance of its canvas; the doors and the curtain are drawn inside the canvas.
+  const pageAnimation = page.animation?.name;
+  const shared = { "data-style": page.style, "data-bg-media": page.background?.kind === "media" ? "" : undefined, "data-veil": veil.attr, "data-page-anim": pageAnimation } as const;
   if (page.kind === "cover") {
-    return <header className="cdesign-page" data-page-kind="cover" data-page={page.id} data-style={page.style} data-bg-media={page.background?.kind === "media" ? "" : undefined} style={backgroundStyle(page.background)}>{inner}</header>;
+    return <header className="cdesign-page" data-page-kind="cover" data-page={page.id} {...shared} style={{ ...backgroundStyle(page.background), ...veil.style }}>{inner}</header>;
   }
   if (!section) return null;
   const headingId = `section-${section}`;
   return (
-    <section id={section} className="cdesign-page" data-page-kind="section" data-section={section} data-page={page.id} data-style={page.style} data-bg-media={page.background?.kind === "media" ? "" : undefined} aria-labelledby={headingId} style={backgroundStyle(page.background)}>
+    <section id={section} className="cdesign-page" data-page-kind="section" data-section={section} data-page={page.id} {...shared} aria-labelledby={headingId} style={{ ...backgroundStyle(page.background), ...veil.style }}>
       <h2 id={headingId} className={only ? "celebration-visually-hidden" : "cdesign-page-title"}>{t(sectionTitleKey(section))}</h2>
       {section === "gifts" || section === "rsvp" ? <div className="cdesign-intro"><p>{t(`celebration.${section}.${section === "gifts" ? "intro" : "body"}`)}</p></div> : null}
       {inner}
@@ -353,13 +428,15 @@ export function DesignRenderer(props: DesignRendererProps): ReactNode {
     ...Object.fromEntries(Object.entries(themeVariables(theme, scheme ?? "light")).filter(([name]) => scheme !== undefined || !isColourVariable(name))),
     "--celebration-monogram-font": monogram ? fontStack(monogram) : "var(--celebration-heading-font)",
     "--celebration-space": "clamp(1rem, 4vw, 2rem)",
+    "--cd-tv-l": `${Math.round(gradedVeil(designPalette(design, "light")).text * 100)}%`,
+    "--cd-tv-d": `${Math.round(gradedVeil(designPalette(design, "dark")).text * 100)}%`,
     ...(scheme ? artVariables(artPalette(palette)) : {})
   } as CSSProperties;
   const placed = design.pages.filter((page) => page.kind === "cover" || (page.section && available.includes(page.section as SectionId)));
   const pages = props.only ? placed.filter((page) => page.kind === "section" && page.section === props.only) : placed;
   return (
     <article className="celebration celebration-design" data-design="2" data-layout={theme.layout} data-color-scheme={scheme ?? "light"} data-scheme-source={scheme ? "prop" : "system"}
-      data-section-style={theme.sectionStyle} data-divider={layout.divider} data-images={layout.imageTreatment} lang={view.locale} style={style}>
+      data-section-style={theme.sectionStyle} data-divider={layout.divider} data-images={layout.imageTreatment} data-heading-face={SCRIPT_TITLE_FACTS_IN_BODY.has(theme.id) && familyById(design.tokens.typography.heading.family)?.category === "script" ? "script" : undefined} lang={view.locale} style={style}>
       {scheme ? null : <SystemColours theme={theme} />}
       <CustomCss design={design} />
       <Dock t={t} giftsHref={context.giftsHref} giftsStatus={props.giftsStatus} rsvpHref={props.rsvpHref} rsvpHelpHref={props.rsvpHelpHref} rsvpAdaptive={props.rsvpAdaptive} />
