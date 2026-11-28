@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { createTranslator } from "@rsvp/i18n";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { setPageBackgroundPhoto } from "../model/ops.js";
@@ -46,6 +46,16 @@ describe("images in the advanced level (E4)", () => {
     expect(within(panel).getByRole("button", { name: "Agregar como monograma" })).toBeTruthy();
   });
 
+  it("files a page background as a background and an image of the page as a block, by what the person says it is for", async () => {
+    const asked: (string | undefined)[] = [];
+    const panel = openAdvanced(source([], ({ purpose }) => { if (purpose) asked.push(purpose); return <button type="button">Elegir archivo</button>; }));
+    expect(await within(panel).findByRole("button", { name: "Elegir archivo" })).toBeTruthy();
+    fireEvent.click(within(panel).getByRole("radio", { name: "El fondo de la página" }));
+    await waitFor(() => expect(asked.at(-1)).toBe("background"));
+    fireEvent.click(within(panel).getByRole("radio", { name: "Una imagen dentro de la página" }));
+    await waitFor(() => expect(asked.at(-1)).toBe("block"));
+  });
+
   it("sets and removes the background of a page by media id", () => {
     const doc = fixture();
     const sectionId = doc.pages.find((page) => page.kind === "section")?.id ?? "";
@@ -72,7 +82,7 @@ describe("insert an image into the HTML or CSS without typing its address (E5)",
     fireEvent.click(await within(details).findByRole("radio", { name: /boda\.jpg/ }));
     fireEvent.click(within(details).getByRole("button", { name: "Insertar en el HTML" }));
     const html = screen.getByLabelText("HTML") as HTMLTextAreaElement;
-    expect(html.value).toBe(`<img src="/media/public/assets/${ID}/medium" alt="boda.jpg">`);
+    expect(html.value).toBe(`<img src="/media/public/assets/${ID}/medium" alt="">`);
     fireEvent.click(within(details).getByRole("button", { name: "Insertar como fondo en el CSS" }));
     const css = screen.getByLabelText("CSS") as HTMLTextAreaElement;
     expect(css.value).toBe(`.mi-fondo-0b1e7a40 { background-image: url(/media/public/assets/${ID}/full); background-size: cover; background-position: center; }`);

@@ -30,3 +30,10 @@ Fotos de servicio y galeria del micrositio (necesitan BE), bloques/fondos del ed
 
 ## Bloqueado por decisión del dueño (D2/D3)
 Fotos de servicio (B6), galería del micrositio con `provider_media` (B7), UI de fotos de servicio y micrositio (F10) y logo de proveedor.
+
+## Correcciones de la revision independiente
+- #4: `withPublishedDesign` dibuja el diseno publicado aunque la celebracion no tenga plantilla (usa la plantilla neutra `FALLBACK_TEMPLATE` como portadora). Prueba en `celebration-load.test.ts`.
+- #5: el panel de imagenes pregunta «¿Para que es la foto?» (imagen dentro de la pagina o fondo de la pagina) y sube con `purpose` `block` o `background` segun la respuesta. Prueba nueva.
+- #6: la imagen insertada en el HTML lleva `alt=""` (decorativa) y el aviso dice como describirla.
+- #1 (BE): `Cache-Control` del diseno publico baja a `max-age=15`.
+- Pruebas: design-editor 458, seo-web 226, i18n 18; tsc y eslint limpios.

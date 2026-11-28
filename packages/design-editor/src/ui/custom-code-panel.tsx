@@ -23,8 +23,8 @@ export function CustomCodePanel({ media }: { readonly media?: MediaSource }) {
   useEffect(() => { if (scopeCss(css).css !== document.custom.css) setCss(document.custom.css); }, [document.custom.css]);
 
   // The only addresses the code may name are the ones of the media store, so the person never types one: the picture is chosen and the reference is written for them.
-  const insertHtml = (id: string, name: string): void => {
-    const next = `${html}${html && !html.endsWith("\n") ? "\n" : ""}<img src="/media/public/assets/${id}/medium" alt="${name.replace(/[<>"&]/g, "")}">`;
+  const insertHtml = (id: string): void => {
+    const next = `${html}${html && !html.endsWith("\n") ? "\n" : ""}<img src="/media/public/assets/${id}/medium" alt="">`;
     setHtml(next);
     dispatch({ type: "edit", op: setCustomHtml(next), key: "custom:html", at: now() });
     announce(t(key("inserted.html")));
@@ -60,7 +60,7 @@ export function CustomCodePanel({ media }: { readonly media?: MediaSource }) {
           <PhotoPicker media={media} purpose="block">
             {(choice) => (
               <div className="de-row de-row--wrap">
-                <button type="button" className="de-btn" onClick={() => insertHtml(choice.id, choice.name)}>{t(key("insertHtml"))}</button>
+                <button type="button" className="de-btn" onClick={() => insertHtml(choice.id)}>{t(key("insertHtml"))}</button>
                 <button type="button" className="de-btn" onClick={() => insertCss(choice.id)}>{t(key("insertCss"))}</button>
               </div>
             )}

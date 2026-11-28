@@ -23,6 +23,13 @@ describe("loadPublicPage", () => {
     expect((await loadPublicPage("ana-luis", "es", client(routes(down))))?.template).toEqual({ id: "t1", theme: { v1: true } });
     expect((await loadPublicPage("ana-luis", "es", client({ "/celebrations/public/": () => view, "/media/templates/": () => ({ id: "t1", theme: { v1: true } }), "/media/public/": () => ({ items: [] }) })))?.template).toEqual({ id: "t1", theme: { v1: true } });
   });
+  it("draws the published design even when the celebration has no template", async () => {
+    const document = { schemaVersion: 2, tokens: {}, pages: [] };
+    const page = await loadPublicPage("ana-luis", "es", client({ "/celebrations/public/": () => ({ ...view, templateId: null }), "/media/public/celebrations/c1/design": () => ({ version: 1, document }), "/media/public/": () => ({ items: [] }) }));
+    expect(page?.template?.theme).toEqual(document);
+    const none = await loadPublicPage("ana-luis", "es", client({ "/celebrations/public/": () => ({ ...view, templateId: null }), "/media/public/": () => ({ items: [] }) }));
+    expect(none?.template).toBeNull();
+  });
   it("is null for an unpublished or unknown slug (404) and still fails loudly when the celebration service itself is down", async () => {
     expect(await loadPublicPage("nope", "es", client({}))).toBeNull();
     await expect(loadPublicPage("x", "es", client({ "/celebrations/public/": down }))).rejects.toBeInstanceOf(ApiError);

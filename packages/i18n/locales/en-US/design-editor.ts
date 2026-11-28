@@ -110,7 +110,7 @@ export const designEditorEnUS: DeepStrings<typeof designEditorEsBO> = {
   },
   customCode: {
     insertImage: "Insert an image", insertHelp: "Upload or choose a photo: there is no address to type.", insertHtml: "Insert into the HTML", insertCss: "Insert as a background in the CSS",
-    inserted: { html: "Image inserted at the end of the HTML.", css: "Rule \".{{name}}\" added to the CSS: use it as the class of an element." },
+    inserted: { html: "Image inserted at the end of the HTML with an empty alt (decorative). If it says something, write its description inside alt=\"\".", css: "Rule \".{{name}}\" added to the CSS: use it as the class of an element." },
     title: "Custom code",
     html: "HTML",
     css: "CSS",
@@ -145,6 +145,7 @@ export const designEditorEnUS: DeepStrings<typeof designEditorEsBO> = {
     choose: "Your photos", help: "Choose a photo with the keyboard (arrow keys) or by tapping it.", selected: "You chose \"{{name}}\"."
   },
   images: {
+    use: { title: "What is the photo for?", image: "An image inside the page", background: "The background of the page" },
     title: "Invitation images", page: "On the page", alt: "Image description (for someone who cannot see it)", altHelp: "A short sentence. Leave it empty if it is only decoration.",
     defaultText: "Write your message here.", added: "You added: {{what}}.", note: "Backgrounds and images are added at the end of the page; move them on the canvas.",
     kind: { image: "Add as an image", imageText: "Add an image with text", monogram: "Add as a monogram", background: "Use as the background of \"{{page}}\"" },

@@ -107,7 +107,7 @@ export const designEditorEsBO = {
   },
   customCode: {
     insertImage: "Insertar una imagen", insertHelp: "Sube o elige una foto: no hace falta escribir ninguna dirección.", insertHtml: "Insertar en el HTML", insertCss: "Insertar como fondo en el CSS",
-    inserted: { html: "Imagen insertada al final del HTML.", css: "Regla «.{{name}}» agregada al CSS: úsala como clase de un elemento." },
+    inserted: { html: "Imagen insertada al final del HTML con alt vacío (decorativa). Si cuenta algo, escribe su descripción dentro de alt=\"\".", css: "Regla «.{{name}}» agregada al CSS: úsala como clase de un elemento." },
     title: "Código propio",
     html: "HTML",
     css: "CSS",
@@ -142,6 +142,7 @@ export const designEditorEsBO = {
     choose: "Tus fotos", help: "Elige una foto con el teclado (flechas) o tocándola.", selected: "Elegiste «{{name}}»."
   },
   images: {
+    use: { title: "¿Para qué es la foto?", image: "Una imagen dentro de la página", background: "El fondo de la página" },
     title: "Imágenes de la invitación", page: "En la página", alt: "Descripción de la imagen (para quien no la ve)", altHelp: "Una frase corta. Déjala vacía si es solo decorativa.",
     defaultText: "Escribe aquí tu mensaje.", added: "Agregaste: {{what}}.", note: "Los fondos y las imágenes se agregan al final de la página; muévelos en el lienzo.",
     kind: { image: "Agregar como imagen", imageText: "Agregar imagen con texto", monogram: "Agregar como monograma", background: "Usar de fondo de «{{page}}»" },

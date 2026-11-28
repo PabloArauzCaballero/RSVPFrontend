@@ -16,6 +16,8 @@ export function ImagePanel({ media }: { readonly media: MediaSource }) {
   const { document, dispatch, t, now, announce } = useEditor();
   const [pageId, setPageId] = useState(document.pages[0]?.id ?? "");
   const [alt, setAlt] = useState("");
+  // What the file is for decides how it is filed when uploaded: a page background is a `background`, an image of the page is a `block`.
+  const [use, setUse] = useState<"image" | "background">("image");
   const page = document.pages.find((candidate) => candidate.id === pageId);
   const background = page?.background?.kind === "media" ? page.background.mediaId : null;
   const pageName = (id: string): string => { const found = document.pages.find((candidate) => candidate.id === id); return found?.kind === "cover" ? t("designEditor.outline.cover") : t(`celebration.sections.${found?.section ?? ""}`); };
@@ -35,13 +37,22 @@ export function ImagePanel({ media }: { readonly media: MediaSource }) {
         <input id="de-img-alt" type="text" maxLength={MAX_ALT} value={alt} aria-describedby="de-img-alt-help" onChange={(event) => setAlt(event.target.value)} />
         <small id="de-img-alt-help" className="de-hint">{t(key("altHelp"))}</small>
       </div>
-      <PhotoPicker media={media} purpose="block">
-        {(choice) => (
+      <fieldset className="de-fieldset">
+        <legend>{t(key("use.title"))}</legend>
+        {(["image", "background"] as const).map((value) => (
+          <label key={value} className="de-field de-field--check"><input type="radio" name="de-img-use" checked={use === value} onChange={() => setUse(value)} /><span>{t(key(`use.${value}`))}</span></label>
+        ))}
+      </fieldset>
+      <PhotoPicker media={media} purpose={use === "image" ? "block" : "background"}>
+        {(choice) => use === "background" ? (
+          <div className="de-row de-row--wrap">
+            <button type="button" className="de-btn" onClick={() => { dispatch({ type: "edit", op: setPageBackgroundPhoto(pageId, choice.id), at: now() }); done(t(key("kind.background"), { page: pageName(pageId) })); }}>{t(key("kind.background"), { page: pageName(pageId) })}</button>
+          </div>
+        ) : (
           <div className="de-row de-row--wrap">
             <button type="button" className="de-btn" onClick={() => { dispatch({ type: "edit", op: addBlock(pageId, "image", { mediaId: choice.id, fit: "cover", alt }), at: now() }); done(t(key("kind.image"))); }}>{t(key("kind.image"))}</button>
             <button type="button" className="de-btn" onClick={() => { dispatch({ type: "edit", op: addBlock(pageId, "imageText", { mediaId: choice.id, alt, text: t(key("defaultText")), imageSide: "start" }), at: now() }); done(t(key("kind.imageText"))); }}>{t(key("kind.imageText"))}</button>
             <button type="button" className="de-btn" onClick={() => { dispatch({ type: "edit", op: addBlock(pageId, "monogram", { mediaId: choice.id }), at: now() }); done(t(key("kind.monogram"))); }}>{t(key("kind.monogram"))}</button>
-            <button type="button" className="de-btn" onClick={() => { dispatch({ type: "edit", op: setPageBackgroundPhoto(pageId, choice.id), at: now() }); done(t(key("kind.background"), { page: pageName(pageId) })); }}>{t(key("kind.background"), { page: pageName(pageId) })}</button>
           </div>
         )}
       </PhotoPicker>
