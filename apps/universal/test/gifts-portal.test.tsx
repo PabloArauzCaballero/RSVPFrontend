@@ -528,43 +528,30 @@ describe("REQ-F28-03/05 · services with delivery conditions", () => {
     expect((await screen.findByTestId("listing-hidden-h1")).textContent).toMatch(/Hidden: the type does not match the category/);
     expect(screen.getByTestId("listing-state-h1").textContent).toBe("Hidden");
   });
-  it("lists product categories and creates a product with an HTTPS photo and fulfillment in minor units", async () => {
+  it("R1 + R2 · a product with a sheet that the platform hid shows only «Oculto» and why: no completeness chip, menu or «Editar»", async () => {
     await withProvider();
-    const { client, calls } = fakeClient(providerHandlers({ [`GET /providers/${PID}/listings`]: () => ({ items: [] }), [`POST /providers/${PID}/listings`]: () => ({ id: "n" }) }));
+    const items = [{ id: "h3", providerId: PID, type: "PRODUCT", category: "PASTRY", city: "la-paz", title: "Oculta con ficha", published: false, version: 2, completeness: "INCOMPLETE", missing: ["PHOTO"], hiddenReason: "CATEGORY_TYPE_MISMATCH" }];
+    const { client } = fakeClient(providerHandlers({ [`GET /providers/${PID}/listings`]: () => ({ items }) }));
+    renderApp(<ProductsScreen />, client, HOST);
+    const row = await screen.findByTestId("listing-h3");
+    expect(screen.getByTestId("listing-state-h3").textContent).toBe("Oculto");
+    expect(screen.getByTestId("listing-hidden-h3")).toBeTruthy();
+    expect(within(row).queryByRole("button", { name: /Más opciones/ })).toBeNull();
+    for (const id of ["listing-completeness-h3", "listing-edit-h3", "listing-missing-h3", "listing-not-gift-h3", "publish-blocked-h3"]) expect(screen.queryByTestId(id)).toBeNull();
+  });
+  it("lists the categories of each offer type; a product goes to the step-by-step sheet (R2: no image link, 422 IMAGE_URL_NOT_ALLOWED)", async () => {
+    await withProvider();
+    const { client, calls } = fakeClient(providerHandlers({ [`GET /providers/${PID}/listings`]: () => ({ items: [] }) }));
     renderApp(<ProductsScreen />, client, HOST);
     fireEvent.click(await screen.findByTestId("offer-new"));
     const categories = await screen.findByTestId("listing-category");
-    const names = () => within(categories).getAllByRole("option").map((option) => option.textContent);
-    expect(names()).toEqual(["Salones de eventos", "Decoración"]);
+    expect(within(categories).getAllByRole("option").map((option) => option.textContent)).toEqual(["Salones de eventos", "Decoración"]);
     expect(screen.queryByTestId("listing-image-url")).toBeNull();
     fireEvent.click(screen.getByRole("radio", { name: "Producto" }));
-    expect(names()).toEqual(["Decoración", "Pastelería", "Utensilios de cocina", "Ropa y accesorios"]);
-    fireEvent.change(categories, { target: { value: "PASTRY" } });
-    fireEvent.click(screen.getByTestId("offer-more"));
-    type("Nombre del producto", "Torta");
-    type("WhatsApp (enlace https://wa.me/…)", "https://wa.me/59170000000");
-    // Coverage and city are picked by name (QA 2026-11-13: typing "la-paz" was the only way and "Santa Cruz De la Sierra" came back 422).
-    fireEvent.click(await screen.findByRole("checkbox", { name: "La Paz" }));
-    fireEvent.click(screen.getByRole("checkbox", { name: "El Alto" }));
-    expect(screen.queryByText(/la-paz/)).toBeNull();
-    expect(within(screen.getByTestId("listing-city")).getByRole("option", { name: "Santa Cruz de la Sierra (Santa Cruz)" })).toBeTruthy();
-    fireEvent.change(screen.getByTestId("listing-city"), { target: { value: "santa-cruz" } });
-    type("Costo de traslado (Bs.)", "50");
-    type("Plazo (días de anticipación)", "3");
-    type("Condiciones", "Montaje incluido");
-    type("Precio del producto (Bs.)", "450");
-    type("URL de la foto (opcional)", "http://images.example/torta.jpg");
-    fireEvent.click(screen.getByTestId("listing-submit"));
-    expect(await screen.findByText(/Escribe un enlace HTTPS válido/)).toBeTruthy();
+    expect(screen.queryByTestId("listing-submit")).toBeNull();
+    expect(screen.queryByTestId("listing-image-url")).toBeNull();
+    expect(screen.getByTestId("product-start")).toBeTruthy();
     expect(calls.some((call) => call.method === "POST")).toBe(false);
-
-    type("URL de la foto (opcional)", "https://images.example/torta.jpg");
-    fireEvent.click(screen.getByTestId("listing-submit"));
-    await waitFor(() => expect(calls.find((call) => call.method === "POST")?.body).toMatchObject({
-      type: "PRODUCT", category: "PASTRY", city: "santa-cruz", priceFromMinor: 45000,
-      imageUrl: "https://images.example/torta.jpg", destinations: { WHATSAPP: "https://wa.me/59170000000" },
-      fulfillment: { responsible: "PROVIDER", coverageZones: ["la-paz", "el-alto"], transportCostMinor: 5000, leadTimeDays: 3 }
-    }));
   });
 });
 

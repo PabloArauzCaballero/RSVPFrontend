@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ContentEditorScreen } from "../src/host/content-editor";
 import { contentPatch, scheduleContent, slugify, toWallClock } from "../src/host/content-draft";
 import { CelebrationsScreen, forgetAutoOpen } from "../src/host/celebrations";
-import { GalleryEditorScreen, imageProblem } from "../src/host/gallery-editor";
+import { GalleryEditorScreen } from "../src/host/gallery-editor";
 import { ModesScreen } from "../src/host/modes-screen";
 import { defaultCurrency, OnboardingScreen, suggestedTitle, zoneLabel } from "../src/host/onboarding";
 import { PublishScreen, taskFor } from "../src/host/publish-checklist";
@@ -322,13 +322,13 @@ describe("C12 · gallery", () => {
 
   it("an invalid file is refused with a clear message, before any upload", async () => {
     const { client, calls } = fakeClient({ ...baseHandlers(), "GET /media/celebrations/c-1/assets": () => ({ items: [] }) });
-    const pick = vi.fn(async () => ({ file: new Blob(["%PDF"]), name: "contrato.pdf", type: "application/pdf", size: 4 }));
+    const pick = vi.fn(async () => [{ file: new Blob(["%PDF"]), name: "contrato.pdf", type: "application/pdf", size: 4 }, { file: new Blob(["x"]), name: "enorme.png", type: "image/png", size: 11 * 1024 * 1024 }]);
     renderApp(<GalleryEditorScreen celebrationId="c-1" onNavigate={navigate} pick={pick} />, client);
     fireEvent.click(await screen.findByTestId("add-photo"));
-    expect(await screen.findByText("Ese archivo no es una imagen JPG, PNG o WebP.")).toBeTruthy();
+    // Each file gets its own reason.
+    expect(await screen.findByText("contrato.pdf: este tipo de archivo no se puede subir aquí.")).toBeTruthy();
+    expect(screen.getByText("enorme.png es demasiado grande. Prueba con una versión más liviana.")).toBeTruthy();
     expect(calls.some((call) => call.path.includes("presign"))).toBe(false);
-    expect(imageProblem({ type: "image/png", size: 11 * 1024 * 1024 })).toBe("tooLarge");
-    expect(imageProblem({ type: "image/webp", size: 10 })).toBeNull();
   });
 
   it("reorders and chooses the cover through the API", async () => {
@@ -438,6 +438,17 @@ describe("C13–C16 · translations, templates, preview, publishing", () => {
     fireEvent.click(screen.getAllByText("Publicar celebración").at(-1) as HTMLElement);
     await waitFor(() => expect(calls.find((call) => call.method === "POST")?.headers.get("if-match")).toBe('"3"'));
     expect(screen.getByTestId("whatsapp-card").textContent).toContain("Ana y Luis");
+  });
+});
+
+describe("C16 · shared link card", () => {
+  it("with an SVG cover it previews the first gallery photo that has raster variants", async () => {
+    const asset = (id: string, over: Record<string, unknown>) => ({ id, celebrationId: "c-1", filename: id, contentType: "image/png", sizeBytes: 1, status: "PROCESSED", width: 1, height: 1, sortOrder: 0, isCover: false, ...over });
+    const items = [asset("d", { isCover: true, variants: { svg: "https://x.test/d.svg" } }), asset("fondo", { purpose: "background", variants: { medium: "https://x.test/fondo.webp" } }), asset("foto", { purpose: "gallery", variants: { medium: "https://x.test/foto.webp" } })];
+    const { client } = fakeClient({ ...baseHandlers(), "GET /celebrations/c-1/publish-check": () => ({ ready: true, missingFields: [], status: "DRAFT", version: 3 }), "GET /media/celebrations/c-1/assets": () => ({ items }) });
+    renderApp(<PublishScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    await waitFor(() => expect(screen.getByTestId("whatsapp-card").innerHTML).toContain("https://x.test/foto.webp"));
+    expect(screen.getByTestId("whatsapp-card").innerHTML).not.toContain("fondo.webp");
   });
 });
 
