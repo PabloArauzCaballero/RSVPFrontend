@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MAP_BRIDGE, mapEmbedUrl, parseMapToNative, parseNativeToMap, startFromQuery } from "./picker-bridge.js";
+import { MAP_BRIDGE, embedModeFromQuery, mapEmbedUrl, parseMapToNative, parseNativeToMap, startFromQuery } from "./picker-bridge.js";
 
 const wire = (message: object): string => JSON.stringify({ bridge: MAP_BRIDGE, ...message });
 
@@ -21,5 +21,11 @@ describe("the map page ↔ native app bridge", () => {
     expect(startFromQuery({ lat: "-17.78", lng: "-63.18", z: "99" }).zoom).toBe(17);
     expect(startFromQuery({ lat: "95", lng: "0" })).toEqual({ lat: -16.7, lng: -64.9, zoom: 5 });
     expect(startFromQuery({})).toEqual({ lat: -16.7, lng: -64.9, zoom: 5 });
+  });
+
+  it("the view mode is a parameter of the page address and anything else is the picker", () => {
+    expect(mapEmbedUrl("https://site.example", { lat: -17.7, lng: -63.1, zoom: 17 }, "view")).toBe("https://site.example/mapa/incrustado?lat=-17.700000&lng=-63.100000&z=17&mode=view");
+    expect(embedModeFromQuery("view")).toBe("view");
+    for (const other of [undefined, "", "pick", "VIEW", "edit"]) expect(embedModeFromQuery(other)).toBe("pick");
   });
 });

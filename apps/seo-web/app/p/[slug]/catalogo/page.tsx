@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { formatMinor } from "@rsvp/i18n/server";
+import { zoneName } from "@rsvp/query-hooks";
 import { siteI18n } from "../../../../lib/site-locale";
 import { Breadcrumbs } from "../../../../components/provider-directory";
 import "../../../../components/provider/provider.css";
@@ -36,7 +37,7 @@ export default async function CatalogPage({ params }: Props) {
             <li key={listing.listingId}>
               <h2 style={{ fontSize: "1.1rem", margin: 0 }}>{listing.summary ?? listing.name}</h2>
               {listing.priceFrom ? <p><strong>{t("detail.priceFrom", { price: formatMinor(listing.priceFrom.amountMinor, listing.priceFrom.currency, locale) })}</strong></p> : null}
-              {listing.fulfillment ? <p>{t(`fulfillment.responsibleValue.${listing.fulfillment.responsible === "CUSTOMER" ? "CUSTOMER" : "PROVIDER"}`)} · {listing.fulfillment.coverageZones.join(", ")}</p> : null}
+              {listing.fulfillment ? <p>{t(`fulfillment.responsibleValue.${listing.fulfillment.responsible === "CUSTOMER" ? "CUSTOMER" : "PROVIDER"}`)} · {listing.fulfillment.coverageZones.map(zoneName).join(", ")}</p> : null}
               <a className="rsvp-button rsvp-button--secondary" href={`/p/${encodeURIComponent(slug)}/catalogo/${listing.listingId}`}>{t("catalog.open")}</a>
             </li>
           ))}

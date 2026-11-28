@@ -127,6 +127,7 @@ export const hostEnUS: DeepStrings<typeof hostEsBO> = {
   publish: {
     title: "Publish", intro: "Complete what is missing, publish and share the link.", ready: "Your celebration is ready to publish.", readyBody: "Everything needed is complete. Publish whenever you like.", missing: "Before publishing, complete:", pending: "Items left: {{count}}",
     fields: { title: "The celebration name", subtitle: "The welcome line", eventDate: "The event date", venueName: "The location", childName: "The name of the child being baptised", companyName: "The company name", celebrantName: "The name of the celebrant", host: "The name of: {{role}}", other: "The field “{{field}}”" },
+    place: { withPoint: "Your guests will see the map of the place and «How to get there». Anyone with the invitation link sees the exact point: for a home, remove the point and leave only the area or a reference.", withoutPoint: "You have not marked the place on the map yet. Your guests will see only the name and the address, and «How to get there» will search that address in OpenStreetMap. Mark the point so they arrive without doubt.", mark: "Mark the place" },
     goTo: "Complete", publish: "Publish celebration", publishConfirm: "Your invitation will be visible to anyone with the link. Publish now?",
     done: { title: "Your invitation is published", body: "Share the link and tomorrow you will know who is coming." },
     unpublish: "Unpublish", unpublishConfirm: "The site stops showing until you publish it again. The link stays the same.", reasonLabel: "Reason (optional)",

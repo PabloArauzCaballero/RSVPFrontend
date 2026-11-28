@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react
 import { ApiError } from '@rsvp/api-client';
 import { createTranslator, formatMinor, type AppLocale } from '@rsvp/i18n/server';
 import { isFutureDate, quoteSchema, toMinor } from '@rsvp/forms';
-import { quoteFailureMessage, useQuote, type QuoteReceipt } from '@rsvp/query-hooks';
+import { quoteFailureMessage, useQuote, zoneName, type QuoteReceipt } from '@rsvp/query-hooks';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { appUrl } from '../../lib/app-url';
 import { createVisitorClient, readVisitorToken } from '../../lib/visitor-client';
@@ -81,7 +81,7 @@ function QuoteBody({ slug, providerId, providerName, offers, preselected, locale
             <label key={offer.listingId} className="quote-item">
               <input type="checkbox" checked={selected.includes(offer.listingId)} onChange={(event) => setSelected((current) => event.target.checked ? [...current, offer.listingId] : current.filter((id) => id !== offer.listingId))} />
               <span><strong>{offer.title}</strong>{offer.priceFrom ? ` · ${t('detail.priceFrom', { price: formatMinor(offer.priceFrom.amountMinor, offer.priceFrom.currency, locale) })}` : ''}</span>
-              {offer.fulfillment ? <small>{t('fulfillment.responsibleValue.' + (offer.fulfillment.responsible === 'CUSTOMER' ? 'CUSTOMER' : 'PROVIDER'))} · {offer.fulfillment.coverageZones.join(', ')} · {t('fulfillment.leadTimeValue', { days: offer.fulfillment.leadTimeDays })}</small> : null}
+              {offer.fulfillment ? <small>{t('fulfillment.responsibleValue.' + (offer.fulfillment.responsible === 'CUSTOMER' ? 'CUSTOMER' : 'PROVIDER'))} · {offer.fulfillment.coverageZones.map(zoneName).join(', ')} · {t('fulfillment.leadTimeValue', { days: offer.fulfillment.leadTimeDays })}</small> : null}
             </label>
           ))}
           {err('listingIds') ? <p className="rsvp-error" role="alert">{err('listingIds')}</p> : null}

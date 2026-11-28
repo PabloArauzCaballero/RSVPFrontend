@@ -124,6 +124,7 @@ export const hostEsBO = {
   publish: {
     title: "Publicar", intro: "Completa lo que falta, publica y comparte el enlace.", ready: "Tu celebración está lista para publicar.", readyBody: "Todo lo necesario está completo. Publícala cuando quieras.", missing: "Antes de publicar, completa:", pending: "Datos pendientes: {{count}}",
     fields: { title: "El nombre de la celebración", subtitle: "La frase de bienvenida", eventDate: "La fecha del evento", venueName: "La ubicación", childName: "El nombre de quien se bautiza", companyName: "El nombre de la empresa", celebrantName: "El nombre de la celebrante", host: "El nombre de: {{role}}", other: "El dato «{{field}}»" },
+    place: { withPoint: "Tus invitados verán el mapa del lugar y «Cómo llegar». Quien tenga el enlace de la invitación verá el punto exacto: si es una casa, quita el punto y deja solo la zona o una referencia.", withoutPoint: "Todavía no marcaste el lugar en el mapa. Tus invitados verán solo el nombre y la dirección, y «Cómo llegar» buscará esa dirección en OpenStreetMap. Marca el punto para que lleguen sin dudas.", mark: "Marcar el lugar" },
     goTo: "Completar", publish: "Publicar celebración", publishConfirm: "Tu invitación será visible para cualquiera que tenga el enlace. ¿Publicar ahora?",
     done: { title: "Tu invitación ya está publicada", body: "Comparte el enlace y mañana sabrás quién viene." },
     unpublish: "Despublicar", unpublishConfirm: "El sitio dejará de verse hasta que lo publiques otra vez. El enlace no cambia.", reasonLabel: "Motivo (opcional)",

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { startFromQuery } from "@rsvp/celebration-theme";
+import { embedModeFromQuery, startFromQuery } from "@rsvp/celebration-theme";
 import { MapEmbed } from "../../../components/map-embed";
 import { siteI18n } from "../../../lib/site-locale";
 
@@ -15,7 +15,7 @@ export default async function EmbeddedMapPage({ searchParams }: { readonly searc
   return (
     <>
       <span hidden data-quiet-chrome="" />
-      <MapEmbed start={{ lat: start.lat, lng: start.lng }} zoom={start.zoom} label={t("host.location.mapLabel")} />
+      <MapEmbed start={{ lat: start.lat, lng: start.lng }} zoom={start.zoom} mode={embedModeFromQuery(one(query["mode"]))} label={t(embedModeFromQuery(one(query["mode"])) === "view" ? "celebration.venues.mapOfPlace" : "host.location.mapLabel")} />
     </>
   );
 }

@@ -35,9 +35,13 @@ export function parseNativeToMap(raw: unknown): NativeToMap | null {
   return { bridge: MAP_BRIDGE, type: "center", lat: message["lat"] as number, lng: message["lng"] as number, ...(zoom ? { zoom } : {}) };
 }
 
+/** `pick`: the host moves the map under a fixed pin (editor). `view`: a pin on the place, nothing is reported back (partner page, app). */
+export type EmbedMode = "pick" | "view";
+export const embedModeFromQuery = (value: string | undefined): EmbedMode => (value === "view" ? "view" : "pick");
+
 /** Address of the map page for the web view: where it opens (the point already marked, or Bolivia) and nothing personal. */
-export function mapEmbedUrl(origin: string, start: { readonly lat: number; readonly lng: number; readonly zoom: number }): string {
-  const query = new URLSearchParams({ lat: start.lat.toFixed(6), lng: start.lng.toFixed(6), z: String(start.zoom) });
+export function mapEmbedUrl(origin: string, start: { readonly lat: number; readonly lng: number; readonly zoom: number }, mode: EmbedMode = "pick"): string {
+  const query = new URLSearchParams({ lat: start.lat.toFixed(6), lng: start.lng.toFixed(6), z: String(start.zoom), ...(mode === "view" ? { mode } : {}) });
   return `${origin.replace(/\/$/, "")}${MAP_EMBED_PATH}?${query}`;
 }
 

@@ -14,6 +14,7 @@ import { loginHref } from "../auth/routes";
 import { PageTop, TextLink, useSearchStyles, type DirectoryProps } from "../directory/directory-screens";
 import { ActionButton, Field, Notice, useStyles } from "../host/ui";
 import { partnerRedirectUrl } from "../platform/partner-link";
+import { PlaceView } from "../platform/place-view";
 import { useApiClient, useLocale, useT } from "../platform/providers";
 
 /**
@@ -160,7 +161,7 @@ function PartnerBody({ partner, onNavigate }: { readonly partner: Partner } & Di
       <View style={{ gap: spacing[2] }} testID="partner-coverage">
         <Text accessibilityRole="header" aria-level={2} style={s.h2}>{t("partner.coverage")}</Text>
         <Text style={s.lead} testID="partner-zones">{partner.coverage.length ? partner.coverage.map(zoneName).join(" · ") : t("partner.noCoverage", { city: partner.city })}</Text>
-        {partner.address ? <Text style={s.lead}>{partner.address}</Text> : null}
+        {partner.address || partner.point ? <PlaceView name={partner.name} address={partner.address} point={partner.point} /> : null}
         {partner.hours.map((line) => <Text key={line} style={s.lead}>{line}</Text>)}
       </View>
 
@@ -181,7 +182,7 @@ export function CatalogScreen({ slug, onNavigate }: { readonly slug: string } & 
           <View key={listing.listingId} style={[s.card, { flexDirection: "column", gap: spacing[2] }]} testID={`offer-${listing.listingId}`}>
             <Text accessibilityRole="header" aria-level={2} style={[s.h2, { fontSize: 18 }]}>{listing.summary ?? listing.name}</Text>
             <Money card={listing} />
-            {listing.fulfillment ? <Text style={s.lead}>{t(`fulfillment.responsibleValue.${listing.fulfillment.responsible === "CUSTOMER" ? "CUSTOMER" : "PROVIDER"}`)} · {listing.fulfillment.coverageZones.join(", ")}</Text> : null}
+            {listing.fulfillment ? <Text style={s.lead}>{t(`fulfillment.responsibleValue.${listing.fulfillment.responsible === "CUSTOMER" ? "CUSTOMER" : "PROVIDER"}`)} · {listing.fulfillment.coverageZones.map(zoneName).join(", ")}</Text> : null}
             <ActionButton icon="arrow" variant="secondary" label={t("catalog.open")} onPress={() => onNavigate(`${base(slug)}/catalogo/${encodeURIComponent(listing.listingId)}`)} />
           </View>
         ))}
@@ -198,7 +199,7 @@ function FulfillmentNotice({ fulfillment, currency }: { readonly fulfillment: Di
   if (!fulfillment) return <Text role="status" style={s.lead} testID="fulfillment">{t("fulfillment.missing")}</Text>;
   const rows: readonly [string, string][] = [
     [t("fulfillment.responsible"), t(`fulfillment.responsibleValue.${fulfillment.responsible === "CUSTOMER" ? "CUSTOMER" : "PROVIDER"}`)],
-    [t("fulfillment.coverage"), fulfillment.coverageZones.join(", ")],
+    [t("fulfillment.coverage"), fulfillment.coverageZones.map(zoneName).join(", ")],
     [t("fulfillment.transport"), fulfillment.transportCostMinor !== undefined ? formatMinor(fulfillment.transportCostMinor, currency, locale) : t("fulfillment.transportNone")],
     [t("fulfillment.leadTime"), t("fulfillment.leadTimeValue", { days: fulfillment.leadTimeDays })],
     [t("fulfillment.conditions"), fulfillment.conditions]
@@ -399,7 +400,7 @@ function QuoteBody({ slug, partner, providerId, timeZone, preselected, onNavigat
           <View key={offer.listingId} style={{ gap: spacing[1] }}>
             <Checkbox label={`${offer.summary ?? offer.name}${offer.priceFrom ? ` · ${t("detail.priceFrom", { price: formatMinor(offer.priceFrom.amountMinor, offer.priceFrom.currency, locale) })}` : ""}`} value={selected.includes(offer.listingId)}
               onChange={(checked) => setSelected((current) => (checked ? [...current, offer.listingId] : current.filter((id) => id !== offer.listingId)))} />
-            {offer.fulfillment ? <Text style={[s.lead, { fontSize: 13 }]}>{t(`fulfillment.responsibleValue.${offer.fulfillment.responsible === "CUSTOMER" ? "CUSTOMER" : "PROVIDER"}`)} · {offer.fulfillment.coverageZones.join(", ")} · {t("fulfillment.leadTimeValue", { days: offer.fulfillment.leadTimeDays })}</Text> : null}
+            {offer.fulfillment ? <Text style={[s.lead, { fontSize: 13 }]}>{t(`fulfillment.responsibleValue.${offer.fulfillment.responsible === "CUSTOMER" ? "CUSTOMER" : "PROVIDER"}`)} · {offer.fulfillment.coverageZones.map(zoneName).join(", ")} · {t("fulfillment.leadTimeValue", { days: offer.fulfillment.leadTimeDays })}</Text> : null}
           </View>
         ))}
         {err("listingIds") ? <Text role="alert" style={{ color: s.palette.danger, fontFamily: fonts.sans }} testID="quote-items-error">{err("listingIds")}</Text> : null}
