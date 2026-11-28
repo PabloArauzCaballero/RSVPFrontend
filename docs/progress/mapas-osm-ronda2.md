@@ -19,7 +19,8 @@ Rama `feat/req-mapas-osm-fe`. Sin PR abierto. No se tocó FE #81 ni #169 (solo s
 | F11 (parcial) | `www.google.com` ya no está en `frame-src`/`FRAME_HOSTS` (ronda 1). Quedan: quitar la escritura dual `venueMapUrl` (cuando no queden apps viejas) y regenerar capturas e2e de seo-web (no se pudo) |
 | Aviso de publicación | En «Publicar» (borrador): aviso no bloqueante. Con punto: dice que quien tenga el enlace ve el punto exacto y sugiere solo zona si es una casa (D7). Sin punto: dice qué verá el invitado (nombre, dirección y búsqueda en OSM) y ofrece «Marcar el lugar» |
 | Texto legal | Sección «Mapas y búsqueda de lugares» en la política de privacidad (es-BO y en-US), borrador como el resto (pendiente de revisión legal): OSM recibe IP al pedir el mapa, la búsqueda pasa por nuestro servidor a Nominatim, caché por huella, punto exacto visible con el enlace |
-| Contratos | `packages/contracts` fijado a BE `601a10bb`: celebration 1.9.0, provider-catalog 3.13.0, template-media 1.10.0 (ver tabla en la rama BE `docs/progress/mapas-osm-ronda2.md`; FE #159-#167 no definen versiones de contrato propias, solo siguen las de los PR de BE) |
+| Criterio BE/FE de enlaces antiguos | Un solo criterio: `@lat,lng` y `ll` de Google se leen como punto «sin verificar» tanto en el FE (`pointOf`/`resolveLocation`) como en el backfill BE (que los copia como `legacy-link`) |
+| Contratos | `packages/contracts` fijado a BE `3269c57c`: celebration 1.9.0, provider-catalog 3.13.0, template-media 1.10.0 (ver tabla en la rama BE `docs/progress/mapas-osm-ronda2.md`; FE #159-#167 no definen versiones de contrato propias, solo siguen las de los PR de BE) |
 | Proveedores y admin | Ronda 1: pin y mapa en perfil/micrositio del partner y pin en `/admin/geografia`. Ronda 2: V3 y nombres de ciudad. D6 (pin KYP) y D8 (recogida con dirección) siguen sin hacerse por ser decisiones del dueño |
 
 ## Comandos reales y resultados (2026-11-28)

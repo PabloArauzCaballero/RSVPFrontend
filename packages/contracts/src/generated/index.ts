@@ -16,5 +16,5 @@ export const contractVersions = {
   "identity": "5f2ae92b0403aee8",
   "notification": "670dd80c6c1e7fd0",
   "provider-catalog": "e2e5c320dab83114",
-  "template-media": "48375ce035d114ec"
+  "template-media": "b9f2ff656b31bebb"
 } as const;
