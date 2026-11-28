@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { ApiError, createApiClient } from "@rsvp/api-client";
 import {
-  AFFORDABLE_UNITS_PER_GUESTS, assistantApi, balanceOf, bandOf, batchFailures, createBatchKeys, defaultVariant, deliveryNotesProblem, notesLength, ideaOverlapsBand, mayHaveBeenApplied, recommendationPath, suggestGroupGift, toBatchEntry, unitPriceOf
+  AFFORDABLE_UNITS_PER_GUESTS, assistantApi, balanceOf, bandOf, batchFailures, createBatchKeys, defaultVariant, ideaOverlapsBand, listingPriceOf, mayHaveBeenApplied, recommendationPath, suggestGroupGift, toBatchEntry
 } from "../src/index.js";
 
 interface Call { readonly method: string; readonly path: string; readonly headers: Headers; readonly body: unknown }
@@ -54,11 +54,10 @@ describe("R4 · products and versions", () => {
     { id: "v-out", label: "Rojo", price: { amountMinor: 35_000, currency: "BOB" as const }, stock: "OUT_OF_STOCK" as const },
     { id: "v-ok", label: "Dorado", price: { amountMinor: 40_000, currency: "BOB" as const }, stock: "AVAILABLE" as const }
   ] };
-  it("preselects the first version in stock and prices by the chosen version", () => {
+  it("preselects the first version in stock and counts the LISTING price, which is the one Gift stores, whatever version is chosen", () => {
     expect(defaultVariant(product)).toBe("v-ok");
     expect(defaultVariant({ variants: [] })).toBeNull();
-    expect(unitPriceOf(product, "v-ok")).toBe(40_000);
-    expect(unitPriceOf(product, null)).toBe(30_000);
+    expect(listingPriceOf(product)).toBe(30_000);
   });
   it("a batch entry carries the idea, the version, the quantity and the switch", () => {
     expect(toBatchEntry({ ideaCode: "CAKE", listingId: L, variantId: "v-ok", quantity: 2, groupGift: true })).toEqual({ productListingId: L, giftIdeaCode: "CAKE", variantCode: "v-ok", quantity: 2, groupGiftEnabled: true });
@@ -86,17 +85,6 @@ describe("R4 · 422 of the batch: itemIndex and failures", () => {
   });
 });
 
-describe("R4 · delivery notes, the same checks as the backend", () => {
-  it("counts code points of the trimmed, NFC text and refuses control characters but not tab or line breaks", () => {
-    expect(notesLength("  😀😀  ")).toBe(2);
-    expect(notesLength("e\u0301")).toBe(1);
-    expect(deliveryNotesProblem("😀".repeat(200))).toBeNull();
-    expect(deliveryNotesProblem("😀".repeat(201))).toBe("tooLong");
-    expect(deliveryNotesProblem("a\u0000b")).toBe("control");
-    expect(deliveryNotesProblem("a\u007fb")).toBe("control");
-    expect(deliveryNotesProblem("uno\ndos\r\n\ttres")).toBeNull();
-  });
-});
 
 describe("R4 · Idempotency-Key", () => {
   it("the same selection keeps its key and another selection gets a new one", () => {
@@ -142,12 +130,10 @@ describe("R4 · Idempotency-Key", () => {
     await expect(assistantApi(client).addBatch("c-1", { items: [entry] }, "k")).rejects.toMatchObject({ status: 422 });
     expect(calls).toHaveLength(1);
   });
-  it("updateItem and putDeliveryNotes use the contract routes", async () => {
+  it("putDeliveryNotes uses the contract route", async () => {
     const { client, calls } = harness({ status: 200, body: {} });
-    await assistantApi(client).updateItem("c-1", "g-1", { version: 3, quantity: 2 });
     await assistantApi(client).putDeliveryNotes("c-1", null);
-    expect(calls.map((call) => `${call.method} ${call.path}`)).toEqual(["PATCH /gifts/celebrations/c-1/items/g-1", "PUT /gifts/celebrations/c-1/gift-list/delivery-notes"]);
-    expect(calls[0]?.body).toEqual({ version: 3, quantity: 2 });
-    expect(calls[1]?.body).toEqual({ deliveryNotes: null });
+    expect(calls.map((call) => `${call.method} ${call.path}`)).toEqual(["PUT /gifts/celebrations/c-1/gift-list/delivery-notes"]);
+    expect(calls[0]?.body).toEqual({ deliveryNotes: null });
   });
 });

@@ -3,7 +3,7 @@ import type { GiftListComponents, ProviderCatalogComponents } from "@rsvp/contra
 import { problemCode, giftApi, isGiftListMissing } from "./api.js";
 
 /**
- * R4 (gift-list 1.17.0, provider-catalog 3.7.0, D-10 §5.5, §5.6 and §5.11): the types come from the generated contract, so a field renamed by the
+ * R4 (gift-list 1.17.0, provider-catalog 3.8.0, D-10 §5.5, §5.6 and §5.11): the types come from the generated contract, so a field renamed by the
  * backend fails `tsc` here and not in a screen. The rules below are the host assistant's pure logic: both the app and any later surface read them.
  */
 type Gift = GiftListComponents["schemas"];
@@ -12,7 +12,6 @@ export type GiftBatchEntry = Gift["GiftBatchEntry"];
 export type GiftBatchRequest = Gift["GiftBatchRequest"];
 export type GiftBatchResult = Gift["GiftBatchResult"];
 export type GiftItemView = Gift["GiftItemView"];
-export type GiftItemUpdateRequest = Gift["GiftItemUpdateRequest"];
 export type GiftRecommendations = Catalog["GiftRecommendations"];
 export type GiftRecommendation = Catalog["GiftRecommendation"];
 export type RecommendedProductCard = Catalog["RecommendedProductCard"];
@@ -20,17 +19,6 @@ export type ProductStockState = Catalog["Stock"];
 
 /** §5.11 and §11: the business cap of one gift (the server answers 422 INVALID_QUANTITY above its own GIFT_MAX_QUANTITY_PER_GIFT). */
 export const MAX_GIFT_QUANTITY = 50;
-/** Contract: a batch carries at most 25 entries. The assistant offers one product per idea, so it never reaches it with the 25 ideas of §5.4. */
-export const MAX_BATCH_ITEMS = 25;
-/** The note of the list: «Indicaciones de entrega», at most 200 characters, never the exact address (§5.6). */
-export const DELIVERY_NOTES_MAX = 200;
-// eslint-disable-next-line no-control-regex -- the backend rejects these control characters (tab, line feed and carriage return are allowed), so the client says so first
-const CONTROL_CHARACTERS = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/;
-/** The backend counts code points of the trimmed, NFC-normalised text, not UTF-16 units: an emoji is one character. */
-export const notesLength = (text: string): number => [...text.trim().normalize("NFC")].length;
-export const hasControlCharacters = (text: string): boolean => CONTROL_CHARACTERS.test(text);
-/** Why the backend would answer 422 INVALID_DELIVERY_NOTES, or null when the text is acceptable. */
-export const deliveryNotesProblem = (text: string): "tooLong" | "control" | null => (hasControlCharacters(text) ? "control" : notesLength(text) > DELIVERY_NOTES_MAX ? "tooLong" : null);
 /** §11: the switch «Se puede regalar entre varios» is suggested on above Bs 1 000 (minor units). */
 export const GROUP_GIFT_SUGGESTED_MINOR = 100_000;
 
@@ -80,11 +68,12 @@ export function ideaOverlapsBand(range: { readonly minMinor: number; readonly ma
   return target ? range.minMinor <= target.maxMinor && range.maxMinor >= target.minMinor : true;
 }
 
-/** The unit price of a chosen product: its version's price, or the product's. */
-export function unitPriceOf(product: Pick<RecommendedProductCard, "price" | "variants">, variantId: string | null): number {
-  const variant = variantId ? product.variants.find((item) => item.id === variantId) : undefined;
-  return (variant ?? product).price.amountMinor;
-}
+/**
+ * The unit price the assistant counts (total and balance): the LISTING price, which is the one Gift stores. The contract says so for `variantCode`
+ * («the price stored is the listing price Provider Catalog reports; version prices are an open decision»), so counting a version's price would show the
+ * host a total the list does not keep. The version price is only information on its chip until the owner decides (docs/progress/DECISIONS.md).
+ */
+export const listingPriceOf = (product: Pick<RecommendedProductCard, "price">): number => product.price.amountMinor;
 
 /** A product or version that is out of stock cannot be chosen. */
 export const isOrderable = (stock: ProductStockState): boolean => stock !== "OUT_OF_STOCK";
@@ -168,8 +157,6 @@ export function assistantApi(client: ApiClient) {
       try { await giftApi(client).createList(celebrationId); } catch (error) { if (!(error instanceof ApiError && error.status === 409 && problemCode(error) === "GIFT_LIST_EXISTS")) throw error; }
       return batch(celebrationId, body, idempotencyKey);
     },
-    updateItem: (celebrationId: string, giftItemId: string, body: GiftItemUpdateRequest) =>
-      client.request<GiftItemView, GiftItemUpdateRequest>(`${base(celebrationId)}/items/${encodeURIComponent(giftItemId)}`, { method: "PATCH", body }),
     putDeliveryNotes: (celebrationId: string, deliveryNotes: string | null) =>
       client.request<Gift["GiftListView"], Gift["GiftListDeliveryNotesRequest"]>(`${base(celebrationId)}/gift-list/delivery-notes`, { method: "PUT", body: { deliveryNotes } })
   } as const;
