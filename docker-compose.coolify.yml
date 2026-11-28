@@ -37,6 +37,8 @@ services:
         # Lista explicita (separada por comas, sin comodines) de origenes ADICIONALES que pueden embeber /vista-previa, p. ej. el segundo
         # dominio de la app (https://dev.doneapp.events). Opcional; vacio = solo NEXT_PUBLIC_APP_URL.
         NEXT_PUBLIC_PREVIEW_EXTRA_ORIGINS: ${NEXT_PUBLIC_PREVIEW_EXTRA_ORIGINS:-}
+        # «Proveedores para tu evento»: tambien en build (next build ve el mismo interruptor que el runtime); `on` lo enciende, cualquier otro valor lo apaga.
+        GUEST_MARKETPLACE: ${GUEST_MARKETPLACE:-off}
     environment:
       # Server-side calls (/r) go to the gateway. RSVP_API_INTERNAL_URL (optional) points them at Kong over a shared Docker
       # network instead of the public domain, so no second Traefik hop can drop the visitor address (B1).
