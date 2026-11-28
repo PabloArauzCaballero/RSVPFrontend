@@ -1166,14 +1166,14 @@ export interface components {
             kind: "video" | "audio" | "map";
             /** @enum {string} */
             provider: "youtube" | "vimeo" | "spotify" | "google_maps";
-            /** @description Provider identifier: YouTube/Vimeo id, Spotify kind/id, or the map query */
+            /** @description Provider identifier: YouTube/Vimeo id or Spotify kind/id (the map query of `google_maps` is retired) */
             ref: string;
             /** @description Value of the iframe sandbox attribute */
             sandbox: string;
         };
         EmbedResolveRequest: {
             /**
-             * @description Narrows the providers: video = YouTube, Vimeo; music = YouTube, Spotify; map = Google Maps
+             * @description Narrows the providers: video = YouTube, Vimeo; music = YouTube, Spotify. `map` is retired (1.10.0): it answers 422 EMBED_MAP_RETIRED.
              * @enum {string|null}
              */
             intent?: "video" | "music" | "map" | null;
@@ -2350,7 +2350,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description EMBED_NOT_ALLOWED (any host or shape off the list), EMBED_PROVIDER_NOT_ALLOWED_HERE or EMBED_INTENT_UNKNOWN */
+            /** @description EMBED_NOT_ALLOWED (any host or shape off the list), EMBED_MAP_RETIRED (a map link or intent map, 1.10.0), EMBED_PROVIDER_NOT_ALLOWED_HERE or EMBED_INTENT_UNKNOWN */
             422: {
                 headers: {
                     [name: string]: unknown;

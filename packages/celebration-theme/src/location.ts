@@ -10,7 +10,7 @@ export const LocationSource = { Pin: "pin", Search: "search", Device: "device", 
 export type LocationSource = (typeof LocationSource)[keyof typeof LocationSource];
 export interface OsmRef { readonly type: "node" | "way" | "relation"; readonly id: number }
 
-/** A point of `content.locations` (backend contract: Celebration 1.7.0). */
+/** A point of `content.locations` (backend contract: Celebration 1.9.0). */
 export interface CelebrationLocation {
   readonly lat: number;
   readonly lng: number;
