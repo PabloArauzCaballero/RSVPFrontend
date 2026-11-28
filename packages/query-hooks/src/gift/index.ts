@@ -51,10 +51,10 @@ export function catalogedFirst<T extends { readonly source: string }>(items: rea
   return [...items.filter((item) => item.source === "CATALOGED"), ...items.filter((item) => item.source !== "CATALOGED")];
 }
 
-/** Guest-visible gifts: the host also receives PROPOSED/REJECTED and the UNAVAILABLE ones (`availability`), which a guest must never see. */
-export const guestVisible = <T extends { readonly status: string; readonly availability?: string }>(items: readonly T[]): T[] => items.filter((item) => item.availability !== "UNAVAILABLE" && (item.status === "AVAILABLE" || item.status === "PENDING_REVIEW" || item.status === "COMMITTED"));
-/** True when the gift can no longer be given (gift-list 1.14.0 `availability`). */
-export const isGiftUnavailable = (item: { readonly availability?: string }): boolean => item.availability === "UNAVAILABLE";
+/** Gifts a guest may meet: the host also receives PROPOSED/REJECTED, which a guest must never see. The gallery still shows an UNAVAILABLE one with its chip (R7). */
+const guestStatusVisible = <T extends { readonly status: string }>(items: readonly T[]): T[] => items.filter((item) => item.status === "AVAILABLE" || item.status === "PENDING_REVIEW" || item.status === "COMMITTED");
+/** Gifts a guest can still be offered: `guestStatusVisible` without the UNAVAILABLE ones (`availability`, R1). Decides whether the RSVP shows a gifts block. */
+export const guestVisible = <T extends { readonly status: string; readonly availability?: string }>(items: readonly T[]): T[] => guestStatusVisible(items).filter((item) => item.availability !== "UNAVAILABLE");
 
 /** `credential` = the guest's bearer; omit it for the host session. The credential is never part of the query key. */
 /** Where a gift comes from, as a guest filters it: a DOne partner (CATALOGED) or any other store. */
@@ -66,7 +66,7 @@ export interface GiftFilters { readonly maxMinor?: number; readonly source: Gift
  * gifts before the others whatever the order they arrived in. One function so both surfaces filter identically.
  */
 export function arrangeGifts<T extends { readonly source: string; readonly status: string; readonly availability?: string; readonly price: { readonly amountMinor: number }; readonly currentPrice?: { readonly amountMinor: number } | null }>(items: readonly T[], filters: GiftFilters): { readonly partner: T[]; readonly other: T[] } {
-  const kept = guestVisible(items).filter((item) => (filters.maxMinor === undefined || (item.currentPrice?.amountMinor ?? item.price.amountMinor) <= filters.maxMinor) && (!filters.onlyAvailable || (item.status === "AVAILABLE" && item.availability !== "UNAVAILABLE")) && (filters.source === "all" || (filters.source === "partner") === (item.source === "CATALOGED")));
+  const kept = guestStatusVisible(items).filter((item) => (filters.maxMinor === undefined || (item.currentPrice?.amountMinor ?? item.price.amountMinor) <= filters.maxMinor) && (!filters.onlyAvailable || (item.status === "AVAILABLE" && item.availability !== "UNAVAILABLE")) && (filters.source === "all" || (filters.source === "partner") === (item.source === "CATALOGED")));
   const ordered = catalogedFirst(kept);
   return { partner: ordered.filter((item) => item.source === "CATALOGED"), other: ordered.filter((item) => item.source !== "CATALOGED") };
 }
