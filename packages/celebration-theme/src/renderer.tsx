@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
-import { daysUntil, giftsPath, hasSectionContent, readContent, sectionTitleKey, type GalleryImage, type GiftsStatus, type PublicCelebrationView } from "./content.js";
+import { daysUntil, giftsPath, hasSectionContent, isPhotoImage, readContent, sectionTitleKey, type GalleryImage, type GiftsStatus, type PublicCelebrationView } from "./content.js";
 import { drawingById, InvitationArt, ornamentSetById, OrnamentSeparator } from "./art/index.js";
 import { formatDate } from "./format.js";
 import { SECTION_ART } from "./hero-art.js";
@@ -80,7 +80,7 @@ export function CelebrationRenderer(props: CelebrationRendererProps): ReactNode 
   const { theme, view, t } = props;
   // F4 b: a design document v2 is drawn from its pages and canvases; v1 templates keep the layout engine below.
   if (theme.design) return <DesignRenderer {...props} design={theme.design} />;
-  const gallery = props.gallery ?? [];
+  const gallery = (props.gallery ?? []).filter(isPhotoImage);
   const content = readContent(view);
   const layout = layoutOf(theme);
   const available = theme.sections.filter((section) => hasSectionContent(section, content, gallery));

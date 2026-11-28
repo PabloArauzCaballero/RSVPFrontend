@@ -78,6 +78,11 @@ export const hostEsBO = {
     deleteTitle: "¿Eliminar esta foto?", deleteBody: "Se quita de tu invitación y no se puede deshacer.", deleted: "Foto eliminada.", orderSaved: "Orden guardado.",
     photo: "Foto {{n}}"
   },
+  documentDrop: {
+    zone: "Subir un documento", hint: "Arrastra aquí tu documento o elígelo. PDF, JPG, PNG o WebP, de hasta {{max}} MB.", dropNow: "Suelta para subir.", dropInvalid: "Ese archivo no se puede subir aquí.",
+    takePhoto: "Tomar foto del documento", notAFile: "Eso no es un archivo. Si es una imagen de otra página, guárdala en tu equipo y súbela desde ahí.", severalFiles: "Se sube un documento por vez: tomamos el primero.",
+    cameraDenied: "No tenemos permiso para usar la cámara. Actívalo en los ajustes del teléfono o elige el archivo.", unreadable: "No pudimos abrir ese archivo. Vuelve a elegirlo.", openSettings: "Abrir ajustes"
+  },
   media: {
     title: "Archivos", quota: "{{assets}} de {{maxAssets}} archivos · {{used}} de {{max}} usados", quotaFull: "Llegaste al límite de archivos de esta invitación. Elimina alguno para subir otro.",
     add: "Agregar archivos", addMusic: "Subir música (MP3)", help: "JPG, PNG, WebP, GIF, AVIF, SVG o HEIC, de hasta {{max}} MB cada uno (SVG: hasta {{svgMax}} MB).", helpMusic: "MP3 de hasta {{max}} MB y {{minutes}} minutos.",

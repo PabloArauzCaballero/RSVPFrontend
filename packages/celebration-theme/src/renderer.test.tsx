@@ -25,6 +25,15 @@ describe("CelebrationRenderer", () => {
     expect(document.querySelector(".celebration-hero")?.getAttribute("data-has-image")).toBe("true");
   });
 
+  it("a background, logo or illustration of the design is never drawn as a photo of the v1 gallery or cover", () => {
+    const background = { id: "bg", width: 100, height: 100, isCover: false, purpose: "background", variants: { thumb: "https://media.test/bg-thumb.webp", medium: "https://media.test/bg-medium.webp", full: "https://media.test/bg-full.webp" } };
+    const html = renderWith(TEMPLATES[0], { gallery: [background] });
+    expect(html).not.toContain("media.test/bg-");
+    const withPhotos = renderWith(TEMPLATES[0], { gallery: [background, ...GALLERY] });
+    expect(withPhotos).not.toContain("media.test/bg-");
+    expect(withPhotos).toBe(renderWith(TEMPLATES[0]));
+  });
+
   it("REQ-F09-05 · a brand-new template row changes the site without touching code", () => {
     const before = renderWith(TEMPLATES[0]);
     const inserted: TemplateDocument = { ...TEMPLATES[0], id: "t-new", name: "Nuevo", layout: "festive", theme: { palette: { canvas: "#000000", surface: "#111111", text: "#FAFAFA", accent: "#FFD700", muted: "#AAAAAA" }, typography: { heading: "Georgia, serif", body: "Arial, sans-serif" }, sectionStyle: "cards" }, sectionOrder: ["faq", "story"] };

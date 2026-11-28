@@ -11,6 +11,7 @@ import { useApiClient, useLocale, useT } from "../platform/providers";
 import { ActionButton, EmptyState, ErrorNotice, Notice } from "./ui";
 import type { ScreenProps } from "./gate";
 import { HOST_ROUTES, withCelebration } from "./routes";
+import { designMediaSource } from "./design-media";
 
 const toEditable = (record: DesignRecord): EditableDesign => ({ id: record.id, name: record.name, draftVersion: record.draftVersion, publishedVersion: record.publishedVersion, document: record.document, ...(record.warnings ? { warnings: record.warnings } : {}) });
 
@@ -44,6 +45,7 @@ export function DesignEditorScreen({ celebrationId }: ScreenProps): ReactNode {
       restore: async (id: string, version: number, draftVersion: number) => { const done = await api.restore(id, version, draftVersion); return { draftVersion: done.draftVersion, document: done.document, ...(done.warnings ? { warnings: done.warnings } : {}) }; }
     };
   }, [client]);
+  const media = useMemo(() => designMediaSource(client, celebrationId ?? ""), [client, celebrationId]);
   const tags = eventTypes.data?.items.find((type) => type.code === celebration.data?.eventTypeCode)?.compatibleTemplateTags ?? [];
   const tagKey = tags.join(",");
   const templates = useMemo(() => ({
@@ -85,5 +87,5 @@ export function DesignEditorScreen({ celebrationId }: ScreenProps): ReactNode {
   }
   const record = found.data;
   // Keyed by the design alone: a refetch of the record (another tab saved) must not remount the editor and drop the open history.
-  return <EditorShell key={record.id} design={toEditable(record)} gateway={gateway} versions={versions} templates={templates} timeZone={celebration.data.timeZone} locale={locale} t={t} onReload={reload} signInHref={signInHref} />;
+  return <EditorShell key={record.id} design={toEditable(record)} gateway={gateway} versions={versions} templates={templates} media={media} timeZone={celebration.data.timeZone} locale={locale} t={t} onReload={reload} signInHref={signInHref} />;
 }

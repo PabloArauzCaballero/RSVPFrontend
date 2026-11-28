@@ -131,7 +131,7 @@ function DraftPreview({ celebration, eventType, content, slug, onClose }: { read
   const template = useTemplate(client, celebration.templateId);
   const media = useMediaAssets(client, celebration.id);
   const theme = themeFromTemplate(template.data ? asTemplateDocument(template.data) : null, eventType?.enabledSections ?? []);
-  const images = (media.data?.items ?? []).filter((asset) => asset.status === "PROCESSED").map((asset) => ({ id: asset.id, width: asset.width, height: asset.height, isCover: asset.isCover, variants: asset.variants }));
+  const images = (media.data?.items ?? []).filter((asset) => asset.status === "PROCESSED").map((asset) => ({ id: asset.id, width: asset.width, height: asset.height, isCover: asset.isCover, ...(asset.purpose ? { purpose: asset.purpose } : {}), variants: asset.variants }));
   return (
     <Modal visible transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>

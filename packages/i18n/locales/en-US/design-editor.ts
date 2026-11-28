@@ -55,6 +55,7 @@ export const designEditorEnUS: DeepStrings<typeof designEditorEsBO> = {
     photos: {
       title: "Photos", loading: "Loading your photos…", failed: "We could not load your photos. Check your connection and try again.", empty: "You have not uploaded any photos yet.",
       cover: "Cover photo", placeholder: "Choose a photo", remove: "Remove the cover photo",
+      upload: "Upload a photo", uploaded: "Done: \"{{name}}\" is now the cover photo.",
       unavailable: "Choosing and removing the cover photo will be here once photo upload is ready. It is not available yet.",
       gallery: "The gallery photos are your celebration's own and change with its details."
     },

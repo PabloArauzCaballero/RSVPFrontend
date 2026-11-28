@@ -40,7 +40,7 @@ function Preview({ celebration, eventType, device, setDevice, gallery, locale, o
   const client = useApiClient();
   const template = useTemplate(client, celebration.templateId);
   const theme = themeFromTemplate(template.data ? asTemplateDocument(template.data) : null, eventType?.enabledSections ?? []);
-  const images = gallery.filter((asset) => asset.status === "PROCESSED").map((asset) => ({ id: asset.id, width: asset.width, height: asset.height, isCover: asset.isCover, variants: asset.variants }));
+  const images = gallery.filter((asset) => asset.status === "PROCESSED").map((asset) => ({ id: asset.id, width: asset.width, height: asset.height, isCover: asset.isCover, ...(asset.purpose ? { purpose: asset.purpose } : {}), variants: asset.variants }));
   const published = celebration.status === "PUBLISHED";
   // One action: open the public page once it exists, otherwise go and publish. Changing the style is secondary.
   useScreenHeader({

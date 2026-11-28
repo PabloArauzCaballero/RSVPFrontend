@@ -81,6 +81,11 @@ export const hostEnUS: DeepStrings<typeof hostEsBO> = {
     deleteTitle: "Delete this photo?", deleteBody: "It's removed from your invitation and can't be undone.", deleted: "Photo deleted.", orderSaved: "Order saved.",
     photo: "Photo {{n}}"
   },
+  documentDrop: {
+    zone: "Upload a document", hint: "Drag your document here or choose it. PDF, JPG, PNG or WebP, up to {{max}} MB.", dropNow: "Drop to upload.", dropInvalid: "That file can't be uploaded here.",
+    takePhoto: "Take a photo of the document", notAFile: "That is not a file. If it is an image from another page, save it to your device and upload it from there.", severalFiles: "One document is uploaded at a time: we took the first one.",
+    cameraDenied: "We don't have permission to use the camera. Turn it on in your phone settings or choose the file.", unreadable: "We could not open that file. Choose it again.", openSettings: "Open settings"
+  },
   media: {
     title: "Files", quota: "{{assets}} of {{maxAssets}} files · {{used}} of {{max}} used", quotaFull: "You reached the file limit of this invitation. Delete one to upload another.",
     add: "Add files", addMusic: "Upload music (MP3)", help: "JPG, PNG, WebP, GIF, AVIF, SVG or HEIC, up to {{max}} MB each (SVG: up to {{svgMax}} MB).", helpMusic: "MP3 up to {{max}} MB and {{minutes}} minutes.",

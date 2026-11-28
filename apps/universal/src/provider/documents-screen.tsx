@@ -6,6 +6,7 @@ import { DOCUMENT_KINDS, DOCUMENT_TYPES, MAX_DOCUMENT_BYTES, useDeleteDocument, 
 import { useApiClient, useT } from "../platform/providers";
 import { pickDocument, type PickedImage } from "../platform/pick-document";
 import { ActionButton, ConfirmDialog, EmptyState, FilterSelect, Notice, OverflowMenu, PageIntro, useStyles } from "../host/ui";
+import { DocumentDrop } from "../host/media/document-drop";
 import { PortalErrorNotice as ErrorNotice, PortalErrorState } from "./errors";
 import { PortalScreen, usePortalHeader } from "./frame";
 import { RowsSkeleton } from "./parts";
@@ -48,7 +49,8 @@ function Documents({ provider }: { readonly provider: Provider }): ReactNode {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [removed, setRemoved] = useState(false);
 
-  const choose = async (): Promise<void> => { setDone(false); const picked = await pickDocument(); if (picked) { setFile(picked); setProblem(null); } };
+  const take = (picked: PickedImage): void => { setDone(false); setFile(picked); setProblem(null); };
+  const choose = async (): Promise<void> => { const picked = await pickDocument(); if (picked) take(picked); };
   const send = (): void => {
     const issue = documentProblem(file);
     setDone(false); setPutFailed(false);
@@ -70,8 +72,10 @@ function Documents({ provider }: { readonly provider: Provider }): ReactNode {
       <PageIntro>{t("portal.documents.intro")}</PageIntro>
       <View style={{ gap: spacing[3] }}>
         <View style={{ gap: spacing[1], maxWidth: 360 }}><Text style={styles.label}>{t("portal.documents.kind")}</Text><FilterSelect<DocumentKind> label={t("portal.documents.kind")} value={kind} onChange={setKind} options={KINDS.map((value) => ({ value, label: t(`portal.documents.kinds.${value}`) }))} testID="document-kind" /></View>
-        <View style={styles.row}>
+        <DocumentDrop onPick={take} disabled={upload.isPending} testID="document-drop">
           <ActionButton variant="secondary" label={t("portal.documents.choose")} onPress={() => { void choose(); }} testID="document-choose" />
+        </DocumentDrop>
+        <View style={styles.row}>
           {file ? <Text style={styles.muted} testID="document-chosen">{file.name} · {t("portal.documents.size", { kb: Math.max(1, Math.round(file.size / BYTES_PER_KB)) })}</Text> : null}
         </View>
         {problem ? <Notice kind="error">{problem}</Notice> : null}

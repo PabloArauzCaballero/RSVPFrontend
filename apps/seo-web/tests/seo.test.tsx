@@ -42,7 +42,7 @@ describe("data loading (contract responses)", () => {
     const loaded = await loadPublicPage(VIEW.slug, "en-US", client);
     expect(loaded?.template?.id).toBe("t-classic");
     expect(loaded?.gallery).toHaveLength(1);
-    expect(calls).toHaveLength(3);
+    expect(calls).toHaveLength(4);
   });
 
   it("A21 · a 404 from the read model is a controlled not-found, revealing nothing", async () => {

@@ -52,6 +52,7 @@ export const designEditorEsBO = {
     photos: {
       title: "Fotos", loading: "Cargando tus fotos…", failed: "No pudimos cargar tus fotos. Revisa tu conexión e inténtalo otra vez.", empty: "Todavía no tienes fotos subidas.",
       cover: "Foto de portada", placeholder: "Elige una foto", remove: "Quitar la foto de portada",
+      upload: "Subir una foto", uploaded: "Listo: «{{name}}» ya es la foto de portada.",
       unavailable: "Elegir y quitar la foto de portada estará aquí cuando termine la subida de fotos. Todavía no está disponible.",
       gallery: "Las fotos de la galería son las de tu celebración y se cambian con sus datos."
     },

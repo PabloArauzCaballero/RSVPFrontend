@@ -21,11 +21,22 @@ export interface PublicSlug {
 export async function loadPublicPage(slug: string, language: string, client: ApiClient = publicClient()): Promise<PublicPage | null> {
   const view = await orNull(client.request<PublicCelebrationView>(`/celebrations/public/${encodeURIComponent(slug)}`, { auth: false, headers: language ? { "accept-language": language } : {} }));
   if (!view) return null;
-  const [template, gallery] = await Promise.all([
+  const [template, gallery, published] = await Promise.all([
     view.templateId ? optional(client.request<TemplateDocument>(`/media/templates/${view.templateId}`, { auth: false })) : Promise.resolve(null),
-    optional(client.request<{ readonly items: readonly GalleryImage[] }>(`/media/public/celebrations/${view.celebrationId}/assets`, { auth: false }))
+    optional(client.request<{ readonly items: readonly GalleryImage[] }>(`/media/public/celebrations/${view.celebrationId}/assets`, { auth: false })),
+    optional(client.request<{ readonly document?: unknown }>(`/media/public/celebrations/${view.celebrationId}/design`, { auth: false }))
   ]);
-  return { view, template, gallery: gallery?.items ?? [] };
+  return { view, template: withPublishedDesign(template, published?.document), gallery: gallery?.items ?? [] };
+}
+
+/**
+ * What the host published in the editor (its design document) replaces the template's own look; the template stays the carrier of
+ * the rest (id, name). A celebration without a published design, a service that does not have the endpoint yet (404), or a body that
+ * is not a design document v2 all leave the template exactly as it was: the page never gets worse for lack of a design.
+ */
+function withPublishedDesign(template: TemplateDocument | null, document: unknown): TemplateDocument | null {
+  if (!template || typeof document !== "object" || document === null || (document as { readonly schemaVersion?: unknown }).schemaVersion !== 2) return template;
+  return { ...template, theme: document as TemplateDocument["theme"] };
 }
 
 /**
