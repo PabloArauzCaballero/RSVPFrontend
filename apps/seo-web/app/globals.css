@@ -568,13 +568,10 @@ body:has([data-quiet-chrome]) .site-nav, body:has([data-quiet-chrome]) .site-foo
 .map-embed-canvas { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; border-radius: 0; }
 .map-embed-pin { position: absolute; left: 50%; top: 50%; z-index: 1000; width: 26px; height: 26px; margin: -40px 0 0 -13px; border-radius: 50%; background: #302c28; border: 2px solid #fffbf4; pointer-events: none; }
 .map-embed-pin::after { content: ""; position: absolute; left: 50%; top: 100%; width: 3px; height: 14px; margin-left: -1.5px; background: #302c28; border-radius: 0 0 2px 2px; }
-<<<<<<< HEAD
 /* The entry on the invitation and on the guest's personal page: a quiet block after everything else, never a button that competes with Confirmar. */
 .celebration-providers { max-width: 40rem; margin: 2rem auto; padding: 1rem; display: grid; gap: .25rem; justify-items: start; border-top: 1px solid var(--border); }
 .celebration-providers a { display: inline-flex; align-items: center; min-height: 44px; color: var(--text); font-weight: 600; text-decoration: underline; text-underline-offset: .2em; }
 .celebration-providers p { margin: 0; color: var(--text-muted); font-size: .9rem; }
-=======
 
 /* The place of a partner is drawn by the invitation's LocationView, which reads --celebration-* tokens; outside an invitation they come from the site's own. */
 .partner-location { --celebration-accent: var(--text); --celebration-surface: var(--surface); --celebration-text: var(--text); --celebration-muted: var(--text-muted); --celebration-radius: var(--radius-cell, 12px); }
->>>>>>> int/fe-mapas
