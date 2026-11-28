@@ -50,8 +50,8 @@
 .mkt-card__media img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .mkt-card__media .monogram { width: 4rem; height: 4rem; font-size: 1.75rem; }
 .mkt-card__body { display: grid; gap: .4rem; padding: 0 1rem; align-content: start; }
-.mkt-card h3 { margin: 0; font-size: 1.15rem; font-weight: 500; overflow-wrap: anywhere; }
-.mkt-card h3 a { color: var(--text); text-underline-offset: .2em; }
+.mkt-card h2 { margin: 0; font-size: 1.15rem; font-weight: 500; overflow-wrap: anywhere; }
+.mkt-card h2 a { color: var(--text); text-underline-offset: .2em; }
 .mkt-card__meta, .mkt-card__summary, .mkt-card__price { margin: 0; }
 .mkt-card__meta { color: var(--text-muted); font-size: .88rem; }
 .mkt-card__summary { font-size: .92rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }

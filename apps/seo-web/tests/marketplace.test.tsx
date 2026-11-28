@@ -150,7 +150,7 @@ describe("guest marketplace · the page", () => {
     expect(cards).toHaveLength(2);
     expect(cards[0]!.querySelector('[data-testid="mkt-sponsored"]')).toBeNull();
     expect(cards[1]!.querySelector('[data-testid="mkt-sponsored"]')?.textContent).toBe("Destacado");
-    expect(cards[0]!.querySelector("h3 a")?.getAttribute("href")).toBe("/p/eventos-andinos");
+    expect(cards[0]!.querySelector("h2 a")?.getAttribute("href")).toBe("/p/eventos-andinos");
     expect(cards[0]!.textContent).toMatch(/Desde .*2.?500/);
     expect(cards[1]!.querySelector("img")?.getAttribute("alt")).toBe("");
     // No direct partner link and no redirector on this page: the lead is born on the partner's page.

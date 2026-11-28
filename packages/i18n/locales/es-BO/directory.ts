@@ -53,6 +53,7 @@ export const directoryEsBO = {
     entry: "Proveedores para tu evento", entryBody: "Salones, catering, foto y más, verificados por DOne.", entryCta: "Ver proveedores",
     title: "Proveedores para tu evento", metaTitle: "Proveedores para tu evento · {{name}}", metaDescription: "Proveedores verificados para organizar tu propia celebración.",
     lead: "Para tu propia celebración, a la medida de lo que necesites.",
+    // REVISIÓN LEGAL PENDIENTE (decisión 10, 2026-11-28): se publica en TEST; no encender GUEST_MARKETPLACE en producción sin revisión.
     trust: "DOne verifica a los proveedores; no presta el servicio. El proveedor puede pagar a DOne por tu contacto.",
     back: "Volver a la invitación", categoriesLabel: "Categorías de proveedores", all: "Todas", cityLabel: "Ciudad", allBolivia: "Toda Bolivia", apply: "Ver proveedores",
     resultCount_one: "{{count}} proveedor", resultCount_other: "{{count}} proveedores", resultsLabel: "Proveedores",
