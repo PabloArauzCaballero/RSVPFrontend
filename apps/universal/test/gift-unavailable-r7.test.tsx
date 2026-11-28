@@ -322,65 +322,44 @@ describe("R7 · host list: take the unavailable gift off the list (Gift 1.20.0, 
   });
 });
 
-describe("R7 · guest card: the unavailable gift", () => {
+describe("M41 · the guest never meets the unavailable gift", () => {
   const TOKEN = MOCK_VALID_TOKEN;
   const LISTING = "6f1c2a3b-4d5e-4f60-8a7b-9c0d1e2f3a4b";
-  const guestGifts = (items: unknown[], mine: unknown[] = []) => {
-    const { client, calls } = fakeClient({
+  const show = (items: unknown[], props: { readonly onlyItemId?: string } = {}, locale: "es-BO" | "en-US" = "es-BO") => {
+    const { client } = fakeClient({
       "GET /celebrations/public/ana-luis": () => ({ celebrationId: "c-1", slug: "ana-luis", content: { title: "Ana y Luis" } }),
       "GET /gifts/celebrations/c-1/items": () => ({ items, partnerPriorityEnabled: true }),
-      "GET /gifts/celebrations/c-1/my-reservations": () => ({ items: mine }),
+      "GET /gifts/celebrations/c-1/my-reservations": () => ({ items: [] }),
       [`GET /listings/${LISTING}`]: () => ({ id: LISTING, destinationTypes: ["PRODUCT_PAGE", "WHATSAPP"] })
     });
-    renderApp(<GuestGiftsScreen slug="ana-luis" token={TOKEN} onNavigate={vi.fn()} />, client, GUEST);
-    return { calls };
+    renderApp(<GuestGiftsScreen slug="ana-luis" token={TOKEN} onNavigate={vi.fn()} {...props} />, client, GUEST, locale);
   };
   beforeEach(() => { clearGiftCredential("ana-luis"); saveGiftCredential("ana-luis", TOKEN); });
   const base = { productListingId: LISTING, title: "Vajilla" };
 
-  it("is muted, says «El proveedor ya no lo ofrece», and has no reserve, store, WhatsApp or units controls", async () => {
-    guestGifts([gift("g1", { ...base, availability: "UNAVAILABLE", quantity: 12, unitsLeft: 8 })]);
-    const card = within(await screen.findByTestId("gift-g1"));
-    expect(card.getByTestId("gift-unavailable-note-g1").textContent).toBe("El proveedor ya no lo ofrece");
-    expect(card.getByText("No disponible")).toBeTruthy();
-    expect(card.queryByTestId("reserve-g1")).toBeNull();
-    expect(card.queryByTestId("whatsapp-g1")).toBeNull();
-    expect(card.queryByTestId("partner-g1")).toBeNull();
-    expect(card.queryByTestId("units-g1")).toBeNull();
-    expect(card.queryByTestId("gift-units-g1")).toBeNull();
-    expect(card.queryByText(/Faltan/)).toBeNull();
+  it("drops it from the list even if a response carried it, in both languages, and keeps the available gift with its buttons", async () => {
+    for (const [locale, chip] of [["es-BO", /No disponible/], ["en-US", /Unavailable/]] as const) {
+      show([gift("g1", { ...base, availability: "UNAVAILABLE", unavailableReason: "OUT_OF_STOCK", quantity: 12, unitsLeft: 8 }), gift("g2", { ...base, title: "Torta" })], {}, locale);
+      await screen.findByTestId("gift-g2");
+      expect(screen.queryByTestId("gift-g1")).toBeNull();
+      expect(screen.queryByText("Vajilla")).toBeNull();
+      expect(screen.queryByText(chip)).toBeNull();
+      expect(screen.queryByText(/proveedor ya no lo ofrece|provider no longer offers/)).toBeNull();
+      await waitFor(() => expect(within(screen.getByTestId("gift-g2")).getByTestId("reserve-g2")).toBeTruthy());
+      cleanup();
+    }
   });
 
-  it("the same gift AVAILABLE again shows its buttons as usual", async () => {
-    guestGifts([gift("g1", { ...base })]);
-    const card = within(await screen.findByTestId("gift-g1"));
-    await waitFor(() => expect(card.getByTestId("reserve-g1")).toBeTruthy());
-    await waitFor(() => expect(card.getByTestId("whatsapp-g1")).toBeTruthy());
-    expect(card.queryByTestId("gift-unavailable-note-g1")).toBeNull();
+  it("opening it by its link says it is no longer on the list and does not leak its title", async () => {
+    show([gift("g1", { ...base, availability: "UNAVAILABLE" })], { onlyItemId: "g1" });
+    expect(await screen.findByText("Este regalo ya no está en la lista.")).toBeTruthy();
+    expect(screen.queryByText("Vajilla")).toBeNull();
+    expect(screen.queryByTestId("gift-g1")).toBeNull();
   });
 
-  it("en-US words it", async () => {
-    const { client } = fakeClient({
-      "GET /celebrations/public/ana-luis": () => ({ celebrationId: "c-1", slug: "ana-luis", content: { title: "Ana y Luis" } }),
-      "GET /gifts/celebrations/c-1/items": () => ({ items: [gift("g1", { ...base, availability: "UNAVAILABLE" })], partnerPriorityEnabled: true }),
-      "GET /gifts/celebrations/c-1/my-reservations": () => ({ items: [] })
-    });
-    renderApp(<GuestGiftsScreen slug="ana-luis" token={TOKEN} onNavigate={vi.fn()} />, client, GUEST, "en-US");
-    expect((await screen.findByTestId("gift-unavailable-note-g1")).textContent).toBe("The provider no longer offers this");
-  });
-
-  it("a reservation the guest already holds on it stays visible and can still be cancelled", async () => {
-    guestGifts([gift("g1", { ...base, availability: "UNAVAILABLE", viewer: { reservationId: "r-1", role: "SOLE", status: "COMMITTED", units: 1 } })], [{ id: "r-1", itemId: "g1", celebrationId: "c-1", status: "COMMITTED", requestedAt: "2026-11-01T00:00:00Z", role: "SOLE", units: 1 }]);
-    const card = within(await screen.findByTestId("gift-g1"));
-    expect(card.getByTestId("gift-mine-g1")).toBeTruthy();
-    expect(card.getByTestId("cancel-reservation-g1")).toBeTruthy();
-    expect(card.queryByTestId("whatsapp-g1")).toBeNull();
-  });
-
-  it("is readable by assistive technology: no critical or serious axe violation", async () => {
-    guestGifts([gift("g1", { ...base, availability: "UNAVAILABLE" })]);
-    const card = await screen.findByTestId("gift-g1");
-    const result = await axe.run(card.parentElement ?? card, { rules: { "color-contrast": { enabled: false } } });
-    expect(result.violations.filter((v) => v.impact === "critical" || v.impact === "serious").map((v) => v.id)).toEqual([]);
+  it("when it is the only gift the guest gets the empty state", async () => {
+    show([gift("g1", { ...base, availability: "UNAVAILABLE" })]);
+    expect(await screen.findByText("Aún no hay regalos")).toBeTruthy();
+    expect(screen.queryByTestId("gift-g1")).toBeNull();
   });
 });

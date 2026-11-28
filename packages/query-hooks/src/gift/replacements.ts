@@ -5,10 +5,10 @@ import type { GiftBatchEntry } from "./assistant.js";
 import type { GiftItem } from "./types.js";
 
 /**
- * R7 (gift-list 1.19.0, plan 5.10): the host's «3 reemplazos de la misma idea» of a gift its provider no longer offers.
+ * R7 (gift-list 1.19.0, 1.20.0 adds removeGiftItem; plan 5.10): the host's «3 reemplazos de la misma idea» of a gift its provider no longer offers.
  * `GET /celebrations/{celebrationId}/items/{giftItemId}/replacements` (listGiftReplacements) only READS. The contract has no replace operation: the swap
  * is the multiple add (`POST /items/batch`, addGiftItemsBatch) of the chosen listing, and an UNAVAILABLE gift does not occupy its idea, so the idea
- * is free to take the new product. The unavailable gift stays on the list, marked, until the provider offers it again.
+ * is free to take the new product. The unavailable gift stays on the list, marked, until the provider offers it again or the host takes it off (`removeGiftItem`, 1.20.0; 409 while it has reservations).
  */
 export type GiftReplacements = GiftListComponents["schemas"]["GiftReplacements"];
 export type GiftReplacement = GiftListComponents["schemas"]["GiftReplacement"];

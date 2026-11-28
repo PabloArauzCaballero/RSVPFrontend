@@ -169,7 +169,7 @@ export interface paths {
         };
         /**
          * Replacements of an unavailable gift: eligible products of the same gift idea (host or organizer)
-         * @description Since 1.19.0 (R7, plan §5.10). MANAGE only (PF-3): 401 without a token, 403 without MANAGE access, 404 for a gift of another celebration. Up to GIFT_REPLACEMENT_COUNT (1..5, default 3) eligible products of the SAME gift idea as the gift, read live from Provider Catalog's recommendation (provider-catalog 3.6.0: VERIFIED provider, published, COMPLETE, not hidden, in stock), without the products the list already has. With the celebration's eventType and city the ones that deliver there come first. It never writes: the host swaps with POST /items/batch. A gift without an idea, or Provider Catalog unreachable, gives an empty list (200), never an error. Only eventType and city are accepted: any other or repeated parameter is 422 INVALID_QUERY. Cache-Control: no-store, private.
+         * @description Since 1.20.0 (R7, plan §5.10). MANAGE only (PF-3): 401 without a token, 403 without MANAGE access, 404 for a gift of another celebration. Up to GIFT_REPLACEMENT_COUNT (1..5, default 3) eligible products of the SAME gift idea as the gift, read live from Provider Catalog's recommendation (provider-catalog 3.6.0: VERIFIED provider, published, COMPLETE, not hidden, in stock), without the products the list already has. With the celebration's eventType and city the ones that deliver there come first. It never writes: the host swaps with POST /items/batch. A gift without an idea, or Provider Catalog unreachable, gives an empty list (200), never an error. Only eventType and city are accepted: any other or repeated parameter is 422 INVALID_QUERY. Cache-Control: no-store, private.
          */
         get: operations["listGiftReplacements"];
         put?: never;
@@ -1053,7 +1053,7 @@ export interface components {
             status: "AVAILABLE" | "PENDING_REVIEW" | "COMMITTED" | "REJECTED";
             title: string;
             /**
-             * @description Since 1.19.0 (R7). Why the gift is unavailable; present together with availability=UNAVAILABLE and absent otherwise. LISTING_NOT_PRODUCT: its listing is no longer a PRODUCT (R1). The others come from Provider Catalog: HIDDEN_BY_ADMIN, PROVIDER_SUSPENDED, PROVIDER_REJECTED, PROVIDER_NOT_VERIFIED, UNPUBLISHED, INCOMPLETE, OUT_OF_STOCK (the product) or VARIANT_OUT_OF_STOCK (the version the host chose). Owner's private lists only.
+             * @description Since 1.20.0 (R7). Why the gift is unavailable; present together with availability=UNAVAILABLE and absent otherwise. LISTING_NOT_PRODUCT: its listing is no longer a PRODUCT (R1). The others come from Provider Catalog: HIDDEN_BY_ADMIN, PROVIDER_SUSPENDED, PROVIDER_REJECTED, PROVIDER_NOT_VERIFIED, UNPUBLISHED, INCOMPLETE, OUT_OF_STOCK (the product) or VARIANT_OUT_OF_STOCK (the version the host chose). Owner's private lists only.
              * @enum {string}
              */
             unavailableReason?: "HIDDEN_BY_ADMIN" | "PROVIDER_SUSPENDED" | "PROVIDER_REJECTED" | "PROVIDER_NOT_VERIFIED" | "UNPUBLISHED" | "INCOMPLETE" | "OUT_OF_STOCK" | "VARIANT_OUT_OF_STOCK" | "LISTING_NOT_PRODUCT";
@@ -1259,7 +1259,7 @@ export interface components {
             status: "AVAILABLE" | "PENDING_REVIEW" | "COMMITTED" | "REJECTED";
             title: string;
             /**
-             * @description Since 1.19.0 (R7). Why the gift is unavailable; present together with availability=UNAVAILABLE and absent otherwise. LISTING_NOT_PRODUCT: its listing is no longer a PRODUCT (R1). The others come from Provider Catalog: HIDDEN_BY_ADMIN, PROVIDER_SUSPENDED, PROVIDER_REJECTED, PROVIDER_NOT_VERIFIED, UNPUBLISHED, INCOMPLETE, OUT_OF_STOCK (the product) or VARIANT_OUT_OF_STOCK (the version the host chose). Owner's private lists only.
+             * @description Since 1.20.0 (R7). Why the gift is unavailable; present together with availability=UNAVAILABLE and absent otherwise. LISTING_NOT_PRODUCT: its listing is no longer a PRODUCT (R1). The others come from Provider Catalog: HIDDEN_BY_ADMIN, PROVIDER_SUSPENDED, PROVIDER_REJECTED, PROVIDER_NOT_VERIFIED, UNPUBLISHED, INCOMPLETE, OUT_OF_STOCK (the product) or VARIANT_OUT_OF_STOCK (the version the host chose). Owner's private lists only.
              * @enum {string}
              */
             unavailableReason?: "HIDDEN_BY_ADMIN" | "PROVIDER_SUSPENDED" | "PROVIDER_REJECTED" | "PROVIDER_NOT_VERIFIED" | "UNPUBLISHED" | "INCOMPLETE" | "OUT_OF_STOCK" | "VARIANT_OUT_OF_STOCK" | "LISTING_NOT_PRODUCT";
@@ -1346,7 +1346,7 @@ export interface components {
             priceMinor: number;
             title: string;
         };
-        /** @description Since 1.19.0 (R7). */
+        /** @description Since 1.20.0 (R7). */
         GiftReplacements: {
             /** @description The gift idea the replacements are of; null for a gift added outside the assistant (no replacements). */
             giftIdeaCode: string | null;
@@ -1627,7 +1627,7 @@ export interface components {
             status: "AVAILABLE" | "PROPOSED" | "PENDING_REVIEW" | "COMMITTED" | "REJECTED";
             title: string;
             /**
-             * @description Since 1.19.0 (R7). Why the gift is unavailable; present together with availability=UNAVAILABLE and absent otherwise. LISTING_NOT_PRODUCT: its listing is no longer a PRODUCT (R1). The others come from Provider Catalog: HIDDEN_BY_ADMIN, PROVIDER_SUSPENDED, PROVIDER_REJECTED, PROVIDER_NOT_VERIFIED, UNPUBLISHED, INCOMPLETE, OUT_OF_STOCK (the product) or VARIANT_OUT_OF_STOCK (the version the host chose). Owner's private lists only.
+             * @description Since 1.20.0 (R7). Why the gift is unavailable; present together with availability=UNAVAILABLE and absent otherwise. LISTING_NOT_PRODUCT: its listing is no longer a PRODUCT (R1). The others come from Provider Catalog: HIDDEN_BY_ADMIN, PROVIDER_SUSPENDED, PROVIDER_REJECTED, PROVIDER_NOT_VERIFIED, UNPUBLISHED, INCOMPLETE, OUT_OF_STOCK (the product) or VARIANT_OUT_OF_STOCK (the version the host chose). Owner's private lists only.
              * @enum {string}
              */
             unavailableReason?: "HIDDEN_BY_ADMIN" | "PROVIDER_SUSPENDED" | "PROVIDER_REJECTED" | "PROVIDER_NOT_VERIFIED" | "UNPUBLISHED" | "INCOMPLETE" | "OUT_OF_STOCK" | "VARIANT_OUT_OF_STOCK" | "LISTING_NOT_PRODUCT";

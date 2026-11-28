@@ -1,24 +1,27 @@
 # R6b FE · reportes de leads, ctx del portal y vista previa con enlaces (FE #150)
 
-Fuera de carril; sigue §5.9 y R6 del plan «Regalos solo de proveedores cargados» (D-10 #33 a #35) y la sección «Lo que falta para el portal» de FE #147. Contrato pinneado a BE `1151e6f1` (BE #166; provider-catalog 3.9.0). Fecha de la evidencia: 2026-11-27. Nivel: **TESTED** (jsdom, red simulada). No VERIFIED.
+Fuera de carril; sigue §5.9 y R6 del plan «Regalos solo de proveedores cargados» (D-10 #33 a #35) y la sección «Lo que falta para el portal» de FE #147. Contrato pinneado a BE `f612d243` (rama `feat/regalos-r6b-reportes` del BE, aún sin fusionar; provider-catalog 3.10.0, gift-list 1.18.0): hay que regenerar con el SHA fusionado cuando el BE entre. Fecha de la evidencia: 2026-11-28. Nivel: **TESTED** (jsdom, red simulada) más un recorrido con Chrome real de la ronda 3 (ver «Evidencia»). No VERIFIED.
 
 ## Qué hay
 - Portal `/portal/leads`: filtros mes, producto y botón; por clic producto, botón, fecha en la zona del proveedor, tipo de evento y ciudad (PF-1: nada de celebración ni invitado; `Lead.context` cerrado, A35).
 - Portal `/portal/metricas`: reporte mensual por producto y botón (válidos, no válidos por motivo, cobrables).
 - Admin `/admin/metricas`: reporte de leads para cobro con mes, proveedor y descarga CSV.
-- seo-web `/r/{listingId}`: reenvía `eventType` y el `ctx` del portal (I-6); ya no envía `sessionId` (M34).
-- Vista previa de la ficha (`/portal/productos/{id}?paso=resumen`): los botones abren el destino real con el ctx `PREVIEW` (M-2). El ctx se pide a `POST /providers/{id}/lead-context`, se renueva desde su `expiresAt` (3 min antes, al volver a primer plano y al pulsar) y nunca va en un `href`, en el DOM, en una clave de consulta ni en un enlace copiable. Sin ctx los botones quedan apagados.
+- seo-web `/r/{listingId}`: reenvía `eventType` y el `ctx` del portal (I-6); ya no envía `sessionId` (M34). Los emisores de enlaces (lista de regalos de la app y de seo-web, `PartnerLink`, `partnerRedirectUrl`) envían el `eventType` (código de la celebración, validado con la misma forma que `/r`). **La ciudad (`city`) todavía no se llena con tráfico real:** el builder la admite, pero la vista pública de la celebración no trae ciudad y ningún emisor tiene de dónde sacarla sin cambiar el contrato; queda como brecha (ver «Pendiente de decisión»).
+- Reportes en el idioma de la app: `locale` viaja en el reporte del proveedor, el del admin, su CSV y la lista de leads, y forma parte de las claves de consulta (el servidor lee `?locale=` antes de `Accept-Language`; el contrato OpenAPI no declara ese parámetro en estas operaciones, pero el servicio lo resuelve igual: conviene declararlo en el BE).
+- Vista previa de la ficha (`/portal/productos/{id}?paso=resumen`): los botones abren el destino real con el ctx `PREVIEW` (M-2). El ctx se pide a `POST /providers/{id}/lead-context`, se renueva desde su `expiresAt` (3 min antes, al volver a primer plano y, una vez, al entrar en el margen) y nunca va en un `href`, en el DOM, en una clave de consulta ni en un enlace copiable. Sin ctx los botones quedan apagados.
 
 ## No hay (y por qué)
 - **`PROVIDER_OWNER` sin llamador:** ninguna pantalla del portal abre hoy un `/r/` a una oferta propia fuera de la vista previa. El hook y `portalRedirectUrl` lo soportan y están probados.
-- Del recorrido con Chrome real (sección «Evidencia») no se recorrió la vista previa con enlaces ni la renovación del ctx: solo hay pruebas de pantalla con red simulada. iOS y Android no probados. 360/768/1280, claro/oscuro, axe y comparación visual: pendientes (las capturas de macOS no se regeneran en Linux).
+- iOS y Android no probados. La comparación visual contra capturas de macOS no se regenera en Linux. El recorrido con Chrome real de la «Evidencia de la ronda 3» (vista previa, 360/768/1280, claro/oscuro, en-US, axe) se hizo sobre la punta anterior `7dcee78f`; **esta ronda de correcciones no lo repitió** (no se levantó el BE real) y por eso lo cubren solo las pruebas de pantalla con red simulada.
+- «Compartido» en nativo: el CSV del admin se comparte como texto por la hoja del sistema (`Share`), no como archivo; ya no se anuncia «Compartimos…» si se cierra la hoja (`dismissed`). Compartirlo como archivo exige `expo-file-system` y `expo-sharing`, que el repositorio no trae.
+- Pendiente de decisión de Pablo: la lista de leads ya no muestra la fecha del evento ni el número de invitados de las cotizaciones (coherente con A35/PF-1, pero es una pérdida visible para el proveedor; pregunta H4 de `estado-nube2-regalos`). Y la brecha de `city` descrita arriba.
 
-## Comandos y resultados (sobre la punta de la rama)
+## Comandos y resultados de la ronda 2 (historial; las cifras vigentes están en «Evidencia de la ronda 4»)
 | Comando | Resultado |
 |---|---|
 | `corepack yarn typecheck` | exit 0, 19/19 |
 | `corepack yarn lint` | exit 0, 19/19 |
-| `corepack yarn workspace @rsvp/contracts check:generated` | exit 0, 8 contratos en `1151e6f14597` |
+| `corepack yarn workspace @rsvp/contracts check:generated` | exit 0, 8 contratos en `1151e6f14597` (el lock actual es `f612d243`; ver ronda 4) |
 | api-client / ui-web / query-hooks / seo-web `test` (sobre la punta `624c42f9`) | exit 0: 19 / 22 / 192 / 227 |
 | universal `test` | exit 0: 809 pruebas, 64 archivos (sobre `624c42f9`). Una primera corrida simultánea con el build de seo-web salió con exit 1 sin que yo viera el motivo; la repetición a solas pasó |
 | `corepack yarn workspace @rsvp/seo-web build` | exit 0 |
@@ -68,3 +71,20 @@ El sitio de destino (`tienda.example`, `wa.me`) se simula con `context.route`; e
 | 4 pantallas × 360/768/1280 × claro/oscuro (+ en-US en 360 y 1280) = 40 combinaciones | 0 desbordes horizontales, 0 claves crudas, axe (wcag2a, wcag2aa, wcag21a, wcag21aa): 0 violaciones |
 
 Capturas en `evidence/r6b/` (`viewports/` trae 360 y 1280, claro y oscuro; el resto está en `axe-resultados.json` por combinación).
+
+## Evidencia de la ronda 4 (correcciones de la revisión independiente; punta posterior a `7dcee78f`)
+
+Corrido en Linux, jsdom, red simulada (el yarn 4.10.3 se ejecutó desde el `.yarn/releases` de otro checkout porque corepack no pudo bajarlo sin red).
+
+| Comprobación | Resultado |
+|---|---|
+| `yarn typecheck` (turbo) | exit 0, 19/19 |
+| `yarn lint` | exit 0, 19/19 |
+| `yarn build` | exit 0, 19/19 |
+| `yarn workspace @rsvp/contracts check:generated` | exit 0 |
+| `yarn test` completo | una corrida con otras tareas pesadas en la máquina dio exit 1 por pruebas de universal con tiempo agotado o sin relación con este cambio (guests, categorías admin) y por mis pruebas nuevas aún sin ajustar; tras corregirlas, universal a solas: 973 pruebas, 74 archivos, todas pasan; seo-web 276 pasan; query-hooks 283 pasan (incluye las nuevas) |
+| Archivos tocados, repetidos aislados | `portal-preview-links` 14, `lead-reports` 26, `files` 4, `guest-gifts-r5`, `provider-admin-buttons`, `guests`, `admin-modules`: pasan |
+
+**No corrido en esta ronda:** gitleaks (no está instalado en esta máquina), el recorrido con Chrome real y axe (no se levantó el BE real; la evidencia de la ronda 3 es de la punta anterior), iOS y Android, y las capturas de macOS. No se regeneraron contratos.
+
+Hallazgos de la revisión corregidos: M1 (el `eventType` viaja en los enlaces; `city` queda como brecha), M2 (vista previa sin ráfaga de POST y sin «Preparando» eterno; pulsar un ctx caducado lo avisa), M3 (esta documentación y los comentarios de versión), M4 (`locale` en los reportes y la lista), m1 a m9 (ver el historial de commits). Notas: el vocabulario «toques» (portal) y «clics» (admin) se mantiene porque son públicos distintos y el modelo de cobro se llama CPC; se unificó «Cobrable» y se aclaró que el tope es informativo.

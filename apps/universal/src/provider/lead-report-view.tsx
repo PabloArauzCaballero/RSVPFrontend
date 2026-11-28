@@ -8,7 +8,7 @@ import { useLocale, useT } from "../platform/providers";
 import { useStyles } from "../host/ui";
 
 /**
- * R6b · the monthly lead report as the portal and the admin panel show it (provider-catalog 3.9.0, D-10 #33 and #34).
+ * R6b · the monthly lead report as the portal and the admin panel show it (provider-catalog 3.10.0, D-10 #33 and #34).
  * Figures only: ids, names of providers and products and counters (PF-1). `billableLeads` is null when the provider is not billed per click.
  */
 
@@ -21,9 +21,16 @@ const rk = (ns: ReportNs, key: ReportKey): string => `${ns}.${key}`;
 const MONTH = /^(\d{4})-(\d{2})$/;
 const MONTHS_BACK = 12;
 
+/** `Intl` throws a RangeError for a time zone it does not know: the report then counts the month in La Paz (the platform's own zone) instead of failing the render. */
+const FALLBACK_ZONE = "America/La_Paz";
+function monthParts(timeZone: string, now: Date): Intl.DateTimeFormatPart[] {
+  const format = (zone: string): Intl.DateTimeFormatPart[] => new Intl.DateTimeFormat("en-CA", { timeZone: zone, year: "numeric", month: "2-digit" }).formatToParts(now);
+  try { return format(timeZone); } catch { return format(FALLBACK_ZONE); }
+}
+
 /** The calendar month (YYYY-MM) of `now` in `timeZone`: the one the backend closes a provider's month in. */
 export function currentMonth(timeZone: string, now: Date = new Date()): string {
-  const parts = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit" }).formatToParts(now);
+  const parts = monthParts(timeZone, now);
   const pick = (type: string): string => parts.find((part) => part.type === type)?.value ?? "";
   return `${pick("year")}-${pick("month")}`;
 }
@@ -56,13 +63,13 @@ export function monthLabel(value: string, locale: string): string {
 }
 
 /** «Bot: 2 · Duplicado: 1»: only the reasons that happened. */
-export function InvalidBreakdown({ counts, testID }: { readonly counts: InvalidLeadCounts; readonly testID?: string }): ReactNode {
+export function InvalidBreakdown({ counts, ns, testID }: { readonly counts: InvalidLeadCounts; readonly ns: ReportNs; readonly testID?: string }): ReactNode {
   const t = useT();
   const locale = useLocale();
   const styles = useStyles();
   const present = INVALID_REASONS.filter((reason) => counts[reason] > 0);
   if (present.length === 0) return null;
-  return <Text style={styles.muted} testID={testID}>{present.map((reason) => `${t(`portal.leads.invalid.${reason}`)}: ${formatNumber(counts[reason], locale)}`).join(" · ")}</Text>;
+  return <Text style={styles.muted} testID={testID}>{present.map((reason) => `${t(ns === "admin.leadReport" ? `admin.leadReport.invalidReason.${reason}` : `portal.leads.invalid.${reason}`)}: ${formatNumber(counts[reason], locale)}`).join(" · ")}</Text>;
 }
 
 /** The words for a button code (a code this build does not know is shown as received). */
@@ -88,7 +95,7 @@ export function ProviderTotals({ provider, ns, testID }: { readonly provider: Le
         <Chip tone="yes">{`${t(rk(ns, "valid"))}: ${formatNumber(provider.validLeads, locale)}`}</Chip>
         <Chip tone="no">{`${t(rk(ns, "invalid"))}: ${formatNumber(provider.invalidLeads, locale)}`}</Chip>
       </View>
-      <InvalidBreakdown counts={provider.invalidByReason} />
+      <InvalidBreakdown counts={provider.invalidByReason} ns={ns} />
       <Text style={styles.label}>{provider.billableLeads === null ? t(rk(ns, "notPerClick"), { model }) : `${t(rk(ns, "billable"))}: ${formatNumber(provider.billableLeads, locale)}`}</Text>
       <Text style={styles.muted}>{provider.monthlyCap > 0 ? t(rk(ns, "cap"), { cap: formatNumber(provider.monthlyCap, locale) }) : t(rk(ns, "noCap"))}</Text>
     </View>
@@ -109,7 +116,7 @@ export function ReportRows({ rows, ns }: { readonly rows: readonly LeadReportRow
           <Text style={styles.label}>{t(rk(ns, "row"), { product: row.listingTitle ?? t(rk(ns, "unknownProduct")), button: buttonLabel(row.destination) })}</Text>
           {ns === "admin.leadReport" ? <Text style={styles.muted}>{row.providerName}</Text> : null}
           <Text style={styles.body}>{t(rk(ns, "rowFigures"), { valid: formatNumber(row.validLeads, locale), invalid: formatNumber(row.invalidLeads, locale) })}</Text>
-          <InvalidBreakdown counts={row.invalidByReason} />
+          <InvalidBreakdown counts={row.invalidByReason} ns={ns} />
           {row.billableLeads !== null ? <Text style={styles.muted}>{`${t(rk(ns, "billable"))}: ${formatNumber(row.billableLeads, locale)}`}</Text> : null}
         </View>
       ))}

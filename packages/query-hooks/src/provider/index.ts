@@ -126,7 +126,7 @@ export const LEADS_PAGE_SIZE = 50;
 /** Leads in pages of 50 (`limit`/`offset`, the server allows up to 200); `total` tells whether there is another page. */
 export function useInfiniteLeads(client: ApiClient, providerId: string | undefined, filters: LeadFilters = {}) {
   return useInfiniteQuery({
-    queryKey: P(providerId ?? "", "leads", "pages", filters.month ?? "", filters.listingId ?? "", filters.destination ?? ""), initialPageParam: 0, ...live, enabled: Boolean(providerId),
+    queryKey: P(providerId ?? "", "leads", "pages", filters.month ?? "", filters.listingId ?? "", filters.destination ?? "", filters.locale ?? ""), initialPageParam: 0, ...live, enabled: Boolean(providerId),
     /** A filter change keeps the previous list on screen until the new one arrives, so the filters never lose focus behind a skeleton. */
     placeholderData: keepPreviousData,
     queryFn: ({ pageParam }) => providerService(client).leads(providerId ?? "", LEADS_PAGE_SIZE, pageParam, filters),

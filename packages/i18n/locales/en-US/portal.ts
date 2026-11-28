@@ -93,7 +93,7 @@ export const portalEnUS: DeepStrings<typeof portalEsBO> = {
   },
   leadReport: {
     title: "Monthly request report", intro: "How many taps each product got in the month, by button. You only see figures: never who looked for you.", month: "Month", product: "Product", destination: "Button", allProducts: "All products", allDestinations: "All buttons",
-    valid: "Valid", invalid: "Not valid", billable: "Billable", notPerClick: "Not billed per tap ({{model}})", cap: "Monthly cap: {{cap}}", noCap: "No monthly cap",
+    valid: "Valid", invalid: "Not valid", billable: "Billable", notPerClick: "Not billed per tap ({{model}})", cap: "Monthly cap: {{cap}} (informational)", noCap: "No monthly cap",
     billingModel: { CPC: "per tap", CPA: "per action", FLAT: "flat fee", COMMISSION: "commission" }, rowsTitle: "Detail by product and button", row: "{{product}} · {{button}}", rowFigures: "{{valid}} valid · {{invalid}} not valid",
     emptyTitle: "No taps this month", empty: "When someone taps the buttons of your products, the month will show up here. Try another month or remove a filter.", unknownProduct: "Untitled product", tz: "Months are counted in your business time zone ({{zone}}).",
     dedupeNote: "The same visitor counts once every 24 h per product and button. If they change network, they may count twice."

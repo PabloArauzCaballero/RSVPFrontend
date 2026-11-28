@@ -5,7 +5,7 @@ import type { ApiClient } from "@rsvp/api-client";
 import type { ProviderCatalogComponents, ProviderCatalogOperations } from "@rsvp/contracts";
 
 /**
- * R6b (provider-catalog 3.9.0, D-10 #33 to #35, A35, M-1, M-2): the monthly lead report of a provider, the administrator's report with its CSV
+ * R6b (provider-catalog 3.10.0, D-10 #33 to #35, A35, M-1, M-2): the monthly lead report of a provider, the administrator's report with its CSV
  * and the signed `ctx` of the portal. Types come from the generated contract, so a renamed field fails `tsc` here and not in a screen.
  * PF-1: the report carries ids, names of providers and products and counters, never a guest or a celebration.
  */
@@ -27,7 +27,11 @@ const MONTH = /^20\d{2}-(0[1-9]|1[0-2])$/;
 export const isReportMonth = (value: string): boolean => MONTH.test(value);
 
 /** Filters shared by the provider's lead list and report. An empty value means "no filter". */
-export interface LeadFilters { readonly month?: string; readonly listingId?: string; readonly destination?: LeadDestination | "" }
+export interface LeadFilters {
+  readonly month?: string; readonly listingId?: string; readonly destination?: LeadDestination | "";
+  /** es-BO or en-US: the language of the product titles in the answer. The service reads `?locale=` before the browser's `Accept-Language`, so the app's language wins over the device's. */
+  readonly locale?: string;
+}
 
 const qs = (params: Record<string, string | number | undefined>): string => {
   const entries = Object.entries(params).filter((entry): entry is [string, string | number] => entry[1] !== undefined && entry[1] !== "");
@@ -35,17 +39,17 @@ const qs = (params: Record<string, string | number | undefined>): string => {
 };
 
 export const leadReportKeys = {
-  provider: (providerId: string, filters: LeadFilters) => ["providers", providerId, "lead-report", filters.month ?? "", filters.listingId ?? "", filters.destination ?? ""] as const,
-  admin: (month: string, providerId?: string) => ["admin", "lead-report", month, providerId ?? ""] as const,
+  provider: (providerId: string, filters: LeadFilters) => ["providers", providerId, "lead-report", filters.month ?? "", filters.listingId ?? "", filters.destination ?? "", filters.locale ?? ""] as const,
+  admin: (month: string, providerId?: string, locale?: string) => ["admin", "lead-report", month, providerId ?? "", locale ?? ""] as const,
   context: (providerId: string, relation: string, listingId?: string) => ["providers", providerId, "lead-context", relation, listingId ?? ""] as const
 } as const;
 
 export const leadReportApi = (client: ApiClient) => ({
   providerReport: (providerId: string, filters: LeadFilters & { readonly month: string }) =>
-    client.request<LeadReport>(`/providers/${encodeURIComponent(providerId)}/leads/report${qs({ month: filters.month, listingId: filters.listingId, destination: filters.destination })}`),
-  adminReport: (month: string, providerId?: string) => client.request<AdminLeadReport>(`/providers/admin/leads/report${qs({ month, providerId })}`),
-  adminCsv: async (month: string, providerId?: string): Promise<string> => {
-    const text = await client.request<string>(`/providers/admin/leads/report.csv${qs({ month, providerId })}`, { responseType: "text" });
+    client.request<LeadReport>(`/providers/${encodeURIComponent(providerId)}/leads/report${qs({ month: filters.month, listingId: filters.listingId, destination: filters.destination, locale: filters.locale })}`),
+  adminReport: (month: string, providerId?: string, locale?: string) => client.request<AdminLeadReport>(`/providers/admin/leads/report${qs({ month, providerId, locale })}`),
+  adminCsv: async (month: string, providerId?: string, locale?: string): Promise<string> => {
+    const text = await client.request<string>(`/providers/admin/leads/report.csv${qs({ month, providerId, locale })}`, { responseType: "text" });
     return text.replace(/^\uFEFF/, ""); // the file saver adds its own byte order mark
   },
   issueLeadContext: (providerId: string, body: LeadContextRequest) =>
@@ -60,13 +64,13 @@ export function useProviderLeadReport(client: ApiClient, providerId: string | un
 }
 
 /** GET /providers/admin/leads/report (ADMIN). */
-export function useAdminLeadReport(client: ApiClient, month: string, providerId?: string) {
-  return useQuery({ queryKey: leadReportKeys.admin(month, providerId), queryFn: () => leadReportApi(client).adminReport(month, providerId), ...REPORT_FRESH, enabled: isReportMonth(month) });
+export function useAdminLeadReport(client: ApiClient, month: string, providerId?: string, locale?: string) {
+  return useQuery({ queryKey: leadReportKeys.admin(month, providerId, locale), queryFn: () => leadReportApi(client).adminReport(month, providerId, locale), ...REPORT_FRESH, enabled: isReportMonth(month) });
 }
 
 /** GET /providers/admin/leads/report.csv as text, for the file the administrator saves. Nothing is cached: every press asks again. */
 export function useDownloadLeadReportCsv(client: ApiClient) {
-  return useMutation({ mutationFn: ({ month, providerId }: { readonly month: string; readonly providerId?: string }) => leadReportApi(client).adminCsv(month, providerId) });
+  return useMutation({ mutationFn: ({ month, providerId, locale }: { readonly month: string; readonly providerId?: string; readonly locale?: string }) => leadReportApi(client).adminCsv(month, providerId, locale) });
 }
 
 /** The ctx lives 15 minutes (3.9.0, `expiresAt` in the answer): it is asked again when 3 minutes are left, so a link opened from a long session never carries a stale one. */

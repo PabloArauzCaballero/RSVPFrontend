@@ -19,8 +19,8 @@ export function LeadReportSection({ provider }: { readonly provider: Provider })
   const locale = useLocale();
   const styles = useStyles();
   const [filters, setFilters] = useState<LeadFilters & { readonly month: string }>({ month: currentMonth(provider.timeZone) });
-  const report = useProviderLeadReport(client, provider.id, filters);
-  const own = report.data?.providers.find((row) => row.providerId === provider.id) ?? report.data?.providers[0];
+  const report = useProviderLeadReport(client, provider.id, { ...filters, locale });
+  const own = report.data?.providers.find((row) => row.providerId === provider.id); // never another provider's totals: without its own row there are none to show
   return (
     <View style={{ gap: spacing[4] }} testID="report-leads">
       <View style={{ gap: spacing[1] }}>

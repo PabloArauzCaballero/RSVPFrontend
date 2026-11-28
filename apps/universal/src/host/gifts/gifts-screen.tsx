@@ -16,9 +16,10 @@ import { RetryNotice } from "../guests/parts";
 import { useSingleFlightGate } from "../../platform/single-flight";
 
 type ChipTone = "yes" | "maybe" | "wait" | "no";
-const STATUS_TONE: Readonly<Record<GiftItem["status"], ChipTone>> = { AVAILABLE: "wait", PROPOSED: "maybe", PENDING_REVIEW: "maybe", COMMITTED: "yes", REJECTED: "no", UNAVAILABLE: "no" };
-/** R7 · what the row shows as its status: «No disponible» whenever the provider no longer offers the gift (the wire `status` keeps the value it had; `availability` says it). */
-const shownStatus = (item: GiftItem): GiftItem["status"] => (isGiftUnavailable(item) ? "UNAVAILABLE" : item.status);
+type ShownStatus = GiftItem["status"] | "UNAVAILABLE";
+const STATUS_TONE: Readonly<Record<ShownStatus, ChipTone>> = { AVAILABLE: "wait", PROPOSED: "maybe", PENDING_REVIEW: "maybe", COMMITTED: "yes", REJECTED: "no", UNAVAILABLE: "no" };
+/** R7 · the chip says «No disponible» from `availability` (gift-list 1.14.0), never from `status`, which keeps the value the gift had. */
+const shownStatus = (item: GiftItem): ShownStatus => (isGiftUnavailable(item) ? "UNAVAILABLE" : item.status);
 
 /** A square monogram: the first letter of the gift on a quiet ground, so every row has a face before it has a photo. */
 function Monogram({ title }: { readonly title: string }): ReactNode {

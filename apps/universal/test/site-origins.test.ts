@@ -60,6 +60,14 @@ describe("R5 · the redirector link carries the context of the WhatsApp message,
     expect(Object.fromEntries(new URL(partnerRedirectUrl(LISTING, options)).searchParams)).toEqual({ destination: "WHATSAPP", surface: "GIFT_LIST", celebrationId: "c1", celebrationSlug: "ana-y-luis", giftItemId: "g1", variant: "v1", quantity: "2", city: "santa-cruz", locale: "es-BO" });
   });
 
+  it("adds the eventType code of the celebration and drops one the redirector would refuse", () => {
+    vi.stubEnv("EXPO_PUBLIC_RSVP_ORIGIN", "https://done.bo");
+    vi.stubEnv("EXPO_PUBLIC_SITE_URL", "");
+    expect(new URL(partnerRedirectUrl(LISTING, { ...options, eventType: "BABY_SHOWER" })).searchParams.get("eventType")).toBe("BABY_SHOWER");
+    for (const eventType of ["baby shower", "", "A", "1WEDDING"]) expect(new URL(partnerRedirectUrl(LISTING, { ...options, eventType })).searchParams.has("eventType")).toBe(false);
+    expect(new URL(partnerRedirectUrl(LISTING, { surface: "GIFT_LIST" })).searchParams.has("eventType")).toBe(false);
+  });
+
   it("leaves out what is empty, a null version and a quantity that is not a positive integer", () => {
     vi.stubEnv("EXPO_PUBLIC_RSVP_ORIGIN", "https://done.bo");
     vi.stubEnv("EXPO_PUBLIC_SITE_URL", "");

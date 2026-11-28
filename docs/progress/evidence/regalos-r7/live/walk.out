@@ -32,15 +32,5 @@ PASS BE: the unavailable gift stays on the list, marked
 PASS BE guest now sees the replacement and still not the dead gift 
 PASS BE: the swapped product is no longer offered as a replacement 2 left
 PASS BE 422 when the idea already has a live gift (DUPLICATE_GIFT_IDEA) 422 DUPLICATE_GIFT_IDEA
-PASS [guest 360-light-es-BO] real payload: normal card with its reserve button reserve buttons: 1
-PASS [guest 360-light-es-BO] SIMULATED UNAVAILABLE: muted card says the sentence El proveedor ya no lo ofrece
-PASS [guest 360-light-es-BO] no reserve / store / WhatsApp / units control []
-PASS [guest 360-light-es-BO] no /r/ partner link 0
-PASS axe guest unavailable card 360-light-es-BO 0 minor/moderate, 0 critical/serious
-PASS [guest 1280-dark-en-US] real payload: normal card with its reserve button reserve buttons: 1
-PASS [guest 1280-dark-en-US] SIMULATED UNAVAILABLE: muted card says the sentence The provider no longer offers this
-PASS [guest 1280-dark-en-US] no reserve / store / WhatsApp / units control []
-PASS [guest 1280-dark-en-US] no /r/ partner link 0
-PASS axe guest unavailable card 1280-dark-en-US 0 minor/moderate, 0 critical/serious
 
-44/44 passed
+34/34 passed

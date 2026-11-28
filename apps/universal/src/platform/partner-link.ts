@@ -1,5 +1,7 @@
 import { publicSiteOrigin } from "./site-origin";
 
+/** An event type code (WEDDING, BABY_SHOWER): the same shape the redirector of the public site accepts; anything else is not sent. */
+const EVENT_TYPE_SHAPE = /^[A-Z][A-Z0-9_]{1,59}$/;
 const LISTING_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
@@ -17,6 +19,8 @@ export interface GiftLinkContext {
   readonly quantity?: number;
   /** City slug of the celebration, when it is known: {ciudad}. */
   readonly city?: string;
+  /** Event type code of the celebration (`eventType.code` of its public view): the provider reports break leads down by it. */
+  readonly eventType?: string;
 }
 export type PartnerLinkContext =
   | ({ readonly celebrationId: string; readonly ctx?: string | null } & GiftLinkContext)
@@ -28,8 +32,8 @@ export type PartnerLinkContext =
  * Same rule as `PartnerLink` in ui-web; it takes a listing id, so a direct partner URL cannot be built here.
  *
  * With `ctx` the URL is a bearer (whoever holds it clicks for free in the member's name): it is handed to `Linking.openURL` and never shown, copied
- * or shared. `surface: "PREVIEW"` only means something with the signed `ctx` of the portal or of moderation; without a token the click is evaluated
- * as a normal one (decision M-2).
+ * or shared. `surface: "PREVIEW"`: per provider-catalog 3.8.0 the click is recorded as an invalid (non-billable) lead with reason `PREVIEW`, with or
+ * without `ctx`; restricting it to the portal's signed `ctx` is not in this contract (BE R6b, #166).
  */
 export function partnerRedirectUrl(listingId: string, options: { readonly destination?: string; readonly surface: string; /** es-BO or en-US: picks the language of the provider's template. */ readonly locale?: string } & PartnerLinkContext): string {
   if (!LISTING_ID.test(listingId)) throw new Error("partnerRedirectUrl needs a listing id (UUID), never a partner URL");
@@ -44,6 +48,7 @@ export function partnerRedirectUrl(listingId: string, options: { readonly destin
     if (options.variant) query.set("variant", options.variant);
     if (Number.isInteger(options.quantity) && (options.quantity ?? 0) > 0) query.set("quantity", String(options.quantity));
     if (options.city) query.set("city", options.city);
+    if (options.eventType && EVENT_TYPE_SHAPE.test(options.eventType)) query.set("eventType", options.eventType);
   }
   if (options.locale) query.set("locale", options.locale);
   // R6a: the member's signed lead context (opaque, ~5 min).

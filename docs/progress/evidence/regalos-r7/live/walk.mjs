@@ -126,36 +126,6 @@ for (const [width, scheme, locale] of [[360, "light", "es-BO"], [768, "dark", "e
   note("BE 422 when the idea already has a live gift (DUPLICATE_GIFT_IDEA)", dup.status === 422 && dup.body.code === "DUPLICATE_GIFT_IDEA", `${dup.status} ${dup.body?.code}`);
   await context.close();
 }
-// 5 · guest card (app). The REAL gift-list never sends an UNAVAILABLE gift to a guest, so the payload of ONE gift is marked by the gateway (SIMULATED) to see and scan the card.
-for (const [width, scheme, locale] of [[360, "light", "es-BO"], [1280, "dark", "en-US"]]) {
-  const context = await browser.newContext({ viewport: { width, height: 900 }, locale, colorScheme: scheme });
-  context.setDefaultTimeout(40000);
-  const page = await context.newPage();
-  const tag = `${width}-${scheme}-${locale}`;
-  const id = world().items.alive;
-  const es = locale === "es-BO";
-  await fetch(`${GW}/__r7/inject?on=0`);
-  await page.goto(`${APP}/c/ana-y-luis/regalos/${world().guestSecret}`);
-  await page.getByTestId(`gift-${id}`).waitFor();
-  const normal = await page.getByTestId(`reserve-${id}`).count();
-  note(`[guest ${tag}] real payload: normal card with its reserve button`, normal === 1, `reserve buttons: ${normal}`);
-  await page.waitForTimeout(1800);
-  await page.screenshot({ path: `${OUT}/guest-available-${tag}.png`, fullPage: true });
-  await fetch(`${GW}/__r7/inject?on=1`);
-  await page.goto(`${APP}/c/ana-y-luis/regalos/${world().guestSecret}`);
-  await page.getByTestId(`gift-unavailable-note-${id}`).waitFor();
-  const text = await page.getByTestId(`gift-unavailable-note-${id}`).innerText();
-  note(`[guest ${tag}] SIMULATED UNAVAILABLE: muted card says the sentence`, text === (es ? "El proveedor ya no lo ofrece" : "The provider no longer offers this"), text);
-  const controls = await page.locator(`[data-testid="gift-${id}"] button, [data-testid="gift-${id}"] [role="button"]`).evaluateAll((els) => els.map((e) => e.getAttribute("data-testid")).filter((t) => t && /^(reserve|whatsapp|partner|store|units)-/.test(t)));
-  note(`[guest ${tag}] no reserve / store / WhatsApp / units control`, controls.length === 0, JSON.stringify(controls));
-  const links = await page.locator(`[data-testid="gift-${id}"] a[href*="/r/"]`).count();
-  note(`[guest ${tag}] no /r/ partner link`, links === 0, String(links));
-  await page.waitForTimeout(1800);
-  await page.screenshot({ path: `${OUT}/guest-unavailable-${tag}.png`, fullPage: true });
-  await axeRun(page, `guest unavailable card ${tag}`);
-  await fetch(`${GW}/__r7/inject?on=0`);
-  await context.close();
-}
 await browser.close();
 writeFileSync("/var/tmp/r7-live/results.json", JSON.stringify(results, null, 1));
 console.log(`\n${results.filter((r) => r.ok).length}/${results.length} passed`);

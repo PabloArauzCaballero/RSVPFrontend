@@ -74,7 +74,8 @@ export const adminEnUS: DeepStrings<typeof adminEsBO> = {
     downloaded: "We downloaded {{name}}.", shared: "We shared {{name}}.", downloadFailed: "We could not prepare the CSV. Try again.", fileName: "leads-{{month}}.csv",
     row: "{{product}} · {{button}}", rowFigures: "{{valid}} valid · {{invalid}} not valid",
     valid: "Valid", invalid: "Not valid", billable: "Billable", billingModel: { CPC: "CPC (per click)", CPA: "CPA", FLAT: "Flat fee", COMMISSION: "Commission" },
-    notPerClick: "Not billed per click ({{model}})", cap: "Cap: {{cap}}", noCap: "No cap",
+    notPerClick: "Not billed per click ({{model}})", cap: "Cap: {{cap}} (informational)", noCap: "No cap",
+    invalidReason: { dup: "Duplicate (same visitor within 24 h)", bot: "Discarded bot", PREVIEW: "Preview", NOT_ELIGIBLE: "Product not eligible", PROVIDER_SELF: "Click from the provider's own account", HOST_OR_PLANNER: "Host or organizer", OTHER: "Other reasons" },
     emptyTitle: "No leads this month", empty: "No clicks were recorded for this month and filter.", unknownProduct: "Untitled product", tz: "Each provider counts the month in its own time zone.", rowsTitle: "Detail by product and button"
   },
   operations: {

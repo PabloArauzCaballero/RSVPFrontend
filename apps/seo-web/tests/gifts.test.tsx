@@ -36,19 +36,12 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 describe("R1 · un regalo UNAVAILABLE no llega al invitado", () => {
-  // The contract (gift-list 1.14.0) says a guest list never carries an UNAVAILABLE gift. If a server did send one, R7 shows it as a quiet card
-  // marked «No disponible» with no way to reserve, buy or write: the guest can never act on it. Which of the two (hide or quiet card) is
-  // the product decision is open between R1 and R7 (reported in the PR chain).
-  it("even if the answer carried it, the guest web list offers no action on it (no reserve, no store, no WhatsApp)", async () => {
+  it("even if the answer carried it, the guest web list leaves it out", async () => {
     const withUnavailable = [...ITEMS, item({ id: "off", title: "Parlante", availability: "UNAVAILABLE" })];
     stubFetch(() => json(201, {}), () => json(200, { items: withUnavailable, partnerPriorityEnabled: true }));
     renderList();
     await screen.findByText("Torta");
-    const row = document.querySelector<HTMLElement>('[data-gift-id="off"]');
-    expect(row?.getAttribute("data-availability")).toBe("UNAVAILABLE");
-    expect(row?.querySelector("button")).toBeNull();
-    expect(row?.querySelector("a[href*='/r/']")).toBeNull();
-    expect(row?.querySelector("[data-testid^='reserve-']")).toBeNull();
+    expect(screen.queryByText("Parlante")).toBeNull();
   });
 });
 

@@ -179,10 +179,12 @@ for (const [i, [nombre, ctx]] of [['falso (firmado con otra clave)', ctxForged],
   record(2, `ctx ${nombre}: redirige igual y el lead se evalúa como visitante normal (válido)`, v.firstStatus === 302 && l?.valid === true && l?.billable === true, { status: v.firstStatus, lead: leadSummary(l) });
 }
 // ---------- Caso 3: PREVIEW sin token ----------
+// Contrato provider-catalog 3.8.0: el clic de surface=PREVIEW se registra como lead inválido (no cobrable) con motivo PREVIEW, con o sin ctx.
+// Restringir PREVIEW al ctx del portal NO está en este contrato (llega con BE R6b, #166): hoy cualquiera puede añadir surface=PREVIEW a un enlace.
 {
   const v = await visit(rUrl(services[4], { surface: 'PREVIEW' }));
   const l = await leadOf(correlationOf(v.location));
-  record(3, 'surface=PREVIEW sin token: redirige y se evalúa como un clic normal (válido, cobrable), como dicen los comentarios del FE (M-2)', v.firstStatus === 302 && l?.valid === true && l?.billable === true, { status: v.firstStatus, lead: leadSummary(l) });
+  record(3, 'surface=PREVIEW sin token: redirige y el lead queda inválido y no cobrable con motivo PREVIEW (contrato 3.8.0)', v.firstStatus === 302 && l?.valid === false && l?.billable === false && l?.invalidReason === 'PREVIEW', { status: v.firstStatus, lead: leadSummary(l) });
 }
 // ---------- Caso 4: ctx de más de 512 caracteres ----------
 {

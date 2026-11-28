@@ -1,17 +1,21 @@
-/** Gift List (gift-list.openapi.json; vendored version in packages/contracts/backend.lock.json, 1.19.0). Money is integer minor units, never a float. */
+import type { GiftListComponents } from "@rsvp/contracts";
+/** Gift List (gift-list.openapi.json; vendored version in packages/contracts/backend.lock.json, 1.20.0). Money is integer minor units, never a float. */
 export interface Money { readonly amountMinor: number; readonly currency: string }
 export type GiftSource = "CATALOGED" | "EXTERNAL";
 /**
- * UNAVAILABLE (1.14.0, R1, M-6; reasons since 1.19.0, R7): the gift can no longer be given. On the wire the frozen `status` NEVER says UNAVAILABLE
- * (gift-list keeps the value the gift had, `wireGiftStatus`): what says it is `availability` + `unavailableReason`, and only the host (MANAGE)
- * receives such a gift. `status` keeps the literal only for payloads of a server that still wrote it there; read the state through `isGiftUnavailable`.
+ * `status` never says UNAVAILABLE (gift-list 1.14.0, R1, M-6): it keeps the value the gift had (`wireGiftStatus`). That a gift can no longer be given
+ * is `availability` (+ `unavailableReason`, 1.19.0, R7), and only the host (MANAGE) receives such a gift (M41: the guest never does). Derived from the contract (PF-6).
  */
-export type GiftItemStatus = "AVAILABLE" | "PROPOSED" | "PENDING_REVIEW" | "COMMITTED" | "REJECTED" | "UNAVAILABLE";
+export type GiftItemStatus = GiftListComponents["schemas"]["DevCompatGiftItemStatus"];
 export type GiftAvailability = "AVAILABLE" | "UNAVAILABLE";
-export const GIFT_UNAVAILABLE_REASONS = ["HIDDEN_BY_ADMIN", "PROVIDER_SUSPENDED", "PROVIDER_REJECTED", "PROVIDER_NOT_VERIFIED", "UNPUBLISHED", "INCOMPLETE", "OUT_OF_STOCK", "VARIANT_OUT_OF_STOCK", "LISTING_NOT_PRODUCT"] as const;
-export type GiftUnavailableReason = (typeof GIFT_UNAVAILABLE_REASONS)[number];
-/** The gift cannot be reserved or bought any more: its provider stopped offering it. It comes back by itself when the listing is eligible again. */
-export const isGiftUnavailable = (item: { readonly availability?: GiftAvailability; readonly status?: string }): boolean => item.availability === "UNAVAILABLE" || item.status === "UNAVAILABLE";
+/** The contract's reasons (PF-6): the runtime list below must hold exactly these, so a reason a new contract adds fails the typecheck instead of drifting. */
+export type GiftUnavailableReason = NonNullable<GiftListComponents["schemas"]["GiftCatalogedItem"]["unavailableReason"]>;
+export const GIFT_UNAVAILABLE_REASONS = ["HIDDEN_BY_ADMIN", "PROVIDER_SUSPENDED", "PROVIDER_REJECTED", "PROVIDER_NOT_VERIFIED", "UNPUBLISHED", "INCOMPLETE", "OUT_OF_STOCK", "VARIANT_OUT_OF_STOCK", "LISTING_NOT_PRODUCT"] as const satisfies readonly GiftUnavailableReason[];
+type MissingReasons = Exclude<GiftUnavailableReason, (typeof GIFT_UNAVAILABLE_REASONS)[number]>;
+/** Compiles only while `MissingReasons` is `never`. */
+export const GIFT_UNAVAILABLE_REASONS_COMPLETE: [MissingReasons] extends [never] ? true : never = true;
+/** The gift cannot be reserved or bought any more: its provider stopped offering it. Reads `availability` only: a legacy `status: "UNAVAILABLE"` marks nothing (R1). */
+export const isGiftUnavailable = (item: { readonly availability?: string }): boolean => item.availability === "UNAVAILABLE";
 /** The reason to show, only for one the contract knows (a newer server may add one: the screen then says it generically). */
 export const unavailableReasonOf = (item: { readonly unavailableReason?: string | null }): GiftUnavailableReason | null =>
   (GIFT_UNAVAILABLE_REASONS as readonly string[]).includes(item.unavailableReason ?? "") ? (item.unavailableReason as GiftUnavailableReason) : null;

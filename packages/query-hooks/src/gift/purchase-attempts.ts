@@ -5,7 +5,7 @@
  * It is local state, by gift id and one attempt each, and it never leaves the device: no request, no log, no guest data (PF-1). Storage may be
  * missing or blocked (private mode), so every read and write is guarded and the list works the same without it.
  */
-export const PURCHASE_STORE_KEY = "rsvp.gift.purchase.v1";
+export const PURCHASE_STORAGE_SLOT = "rsvp.gift.purchase.v1";
 /** An attempt older than this is forgotten: the guest is not asked about a click from two weeks ago. */
 export const ATTEMPT_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 /** Few and recent: the worst case (10 real UUIDs) is about 1.7 KB, under the 2048 B at which SecureStore warns on iOS; the oldest are dropped. */

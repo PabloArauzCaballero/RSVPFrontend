@@ -114,6 +114,7 @@
       "caso": 3,
       "nombre": "surface=PREVIEW sin token: redirige y se evalúa como un clic normal (válido, cobrable), como dicen los comentarios del FE (M-2)",
       "ok": false,
+      "nota": "DIVERGENCIA CONOCIDA, no un fallo del backend. Esta salida es de la ejecución original (BE d3b4b50e) y la expectativa de entonces era errónea: el contrato provider-catalog 3.8.0 registra PREVIEW como lead inválido con motivo PREVIEW, que es lo observado. Los comentarios del FE y la expectativa de recorrido-real.mjs se corrigieron después; este caso no se volvió a ejecutar porque el entorno actual no tiene Docker. Restringir PREVIEW al ctx del portal llega con BE R6b (#166).",
       "observado": {
         "status": 302,
         "lead": {
