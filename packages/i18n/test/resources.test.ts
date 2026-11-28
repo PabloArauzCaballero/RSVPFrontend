@@ -87,3 +87,15 @@ describe("R5 · WCAG 2.5.3 on the guest's gift card", () => {
     for (const [visible, name] of pairs) expect(new RegExp(`(^|[^\\p{L}])${t(visible).replace(/[.:]$/, "")}([^\\p{L}]|$)`, "iu").test(t(name, { title })), `${locale} ${name}`).toBe(true);
   });
 });
+
+describe("R7 · WCAG 2.5.3 on the host's unavailable-gift controls", () => {
+  it.each(["es-BO", "en-US"] as const)("%s: the accessible name of each control contains, in order, the text the control shows", (locale) => {
+    const t = createTranslator(locale);
+    const params = { title: "Vajilla dorada", old: "Vajilla dorada", new: "Vajilla azul" };
+    const pairs: ReadonlyArray<readonly [string, string]> = [
+      ["gifts.host.remove.action", "gifts.host.remove.actionFor"], ["gifts.host.replacements.open", "gifts.host.replacements.openLabel"],
+      ["gifts.host.replacements.close", "gifts.host.replacements.closeLabel"], ["gifts.host.replacements.swap", "gifts.host.replacements.swapLabel"]
+    ];
+    for (const [visible, name] of pairs) expect(t(name, params).toLowerCase().includes(t(visible).toLowerCase()), `${locale} ${name}`).toBe(true);
+  });
+});
