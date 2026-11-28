@@ -14,16 +14,25 @@ export interface NativeScreenTransitionProps extends ScreenTransitionProps {
   scrollRef?: RefObject<{ scrollTo?: (options: { y: number; animated: boolean }) => void } | null>;
 }
 
+/** Native twin of the web `moveScreenFocus`: VoiceOver/TalkBack focus on `node`, or the title read aloud when there is no node. */
+export function moveScreenFocus(node: unknown, announce?: string): unknown {
+  const handle = node ? findNodeHandle(node as Parameters<typeof findNodeHandle>[0]) : null;
+  if (handle) { AccessibilityInfo.setAccessibilityFocus(handle); return node; }
+  if (announce) AccessibilityInfo.announceForAccessibility(announce);
+  return null;
+}
+
+/** Native has no document to ask: a node that was focused and is being redrawn by the same screen has to be focused again. */
+export function screenFocusWasLost(node: unknown): boolean {
+  return node !== null && node !== undefined && !findNodeHandle(node as Parameters<typeof findNodeHandle>[0]);
+}
+
 function Panel({ groupKey, title, headingRef, scrollRef, focusHeading, resetScroll, children }: Omit<NativeScreenTransitionProps, 'routeKey'>) {
   const [change] = useState(() => peekScreenChange(groupKey));
   useEffect(() => {
     if (!change.initial) {
       if (resetScroll !== false) scrollRef?.current?.scrollTo?.({ y: 0, animated: false });
-      if (focusHeading !== false) {
-        const handle = headingRef?.current ? findNodeHandle(headingRef.current as Parameters<typeof findNodeHandle>[0]) : null;
-        if (handle) AccessibilityInfo.setAccessibilityFocus(handle);
-        else if (title) AccessibilityInfo.announceForAccessibility(title);
-      }
+      if (focusHeading !== false) moveScreenFocus(headingRef?.current, title);
     }
     commitScreenChange(groupKey);
   }, [change.initial, groupKey, title, headingRef, scrollRef, focusHeading, resetScroll]);

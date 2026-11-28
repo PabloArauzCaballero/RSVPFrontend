@@ -77,4 +77,16 @@ describe('native motion', () => {
     rerender(<ScreenTransition routeKey="b" groupKey="g" title="Invitados">y</ScreenTransition>);
     expect(rn.AccessibilityInfo.announceForAccessibility).toHaveBeenCalledWith('Invitados');
   });
+
+  it('moveScreenFocus gives VoiceOver/TalkBack the node, and reads the title aloud when there is none', async () => {
+    const { rn } = await load(true);
+    const { moveScreenFocus } = await import('./screen-transition.native');
+    const focus = vi.spyOn(rn.AccessibilityInfo, 'setAccessibilityFocus').mockImplementation(() => undefined);
+    vi.spyOn(rn, 'findNodeHandle').mockReturnValue(7);
+    const node = {};
+    expect(moveScreenFocus(node, 'Invitados')).toBe(node);
+    expect(focus).toHaveBeenCalledWith(7);
+    expect(moveScreenFocus(null, 'Regalos')).toBeNull();
+    expect(rn.AccessibilityInfo.announceForAccessibility).toHaveBeenCalledWith('Regalos');
+  });
 });

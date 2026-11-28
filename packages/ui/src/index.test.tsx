@@ -178,9 +178,10 @@ describe('shared primitives of the frame (A6)', () => {
 
   it('StickyActions sticks to the bottom on web and groups its actions', async () => {
     const { StickyActions } = await import('./index');
-    render(<UiProvider scheme="light"><StickyActions testID="bar"><Button>Guardar</Button></StickyActions></UiProvider>);
+    render(<UiProvider scheme="light"><StickyActions label="Acciones" testID="bar"><Button>Guardar</Button></StickyActions></UiProvider>);
     const bar = screen.getByTestId('bar');
     expect(bar.getAttribute('role')).toBe('group');
+    expect(screen.getByRole('group', { name: 'Acciones' })).toBe(bar);
     expect(getComputedStyle(bar).position).toBe('sticky');
     expect(screen.getByRole('button', { name: 'Guardar' })).toBeTruthy();
   });

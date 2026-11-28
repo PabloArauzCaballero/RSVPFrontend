@@ -3,12 +3,13 @@ import { Text, View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
 import { formatNumber } from "@rsvp/i18n";
 import { Stagger, useColors } from "@rsvp/ui";
-import { useMetrics, type MetricTotals, type Provider } from "@rsvp/query-hooks";
+import { categoryLabel, useMetrics, useOfferCategories, type MetricTotals, type Provider } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../platform/providers";
 import { ChoiceGroup, DateInput, EmptyState, FilterSelect, Notice, PageIntro, useStyles } from "../host/ui";
 import { PortalErrorNotice as ErrorNotice } from "./errors";
 import { PortalScreen, usePortalHeader } from "./frame";
 import { RowsSkeleton } from "./parts";
+import { LeadReportSection } from "./lead-report-section";
 
 const DAY_MS = 86_400_000;
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
@@ -90,6 +91,8 @@ function Metrics({ provider }: { readonly provider: Provider }): ReactNode {
   const [error, setError] = useState<string | null>(null);
   const applied = period === "custom" ? custom : lastDays(PERIOD_DAYS[period], provider.timeZone);
   const metrics = useMetrics(client, provider.id, applied.from, applied.to, group);
+  const categories = useOfferCategories(client, locale);
+  const categoryNames = Object.fromEntries((categories.data?.items ?? []).map((item) => [item.code, item.name]));
   const apply = (): void => { if (!validRange(from, to)) return setError(t("portal.metrics.dateInvalid")); setError(null); setCustom({ from, to }); };
   usePortalHeader(period === "custom" ? { icon: "refresh", label: t("portal.metrics.apply"), onPress: apply, testID: "metrics-apply" } : undefined);
   const rows = (metrics.data?.groups ?? metrics.data?.rows ?? []) as readonly Record<string, unknown>[];
@@ -119,8 +122,10 @@ function Metrics({ provider }: { readonly provider: Provider }): ReactNode {
             {rows.length === 0 ? <EmptyState illustration="emptySearch" title={t("portal.metrics.emptyTitle")} body={t("portal.metrics.empty")} /> : (
               <Stagger>
                 {rows.map((row, index) => {
-                  const title = String(row[group] ?? Object.values(row).find((value) => typeof value === "string") ?? "");
-                  const figures = Object.entries(row).filter(([key, value]) => key !== group && value !== title).map(([key, value]) => `${FIELDS.includes(key) ? t(`portal.metrics.field.${key}`) : key}: ${typeof value === "number" ? formatNumber(value, locale) : String(value)}`);
+                  // The backend answers a group as {key, ...totals}; for categories the key is the code.
+                  const id = String(row[group] ?? Object.values(row).find((value) => typeof value === "string") ?? "");
+                  const title = group === "category" ? categoryLabel(String(row["categoryCode"] ?? id), t, categoryNames) : id;
+                  const figures = Object.entries(row).filter(([key, value]) => key !== group && value !== id).map(([key, value]) => `${FIELDS.includes(key) ? t(`portal.metrics.field.${key}`) : key}: ${typeof value === "number" ? formatNumber(value, locale) : String(value)}`);
                   return (
                     <View key={`${title}-${index}`} style={{ gap: spacing[1], paddingVertical: spacing[3], borderTopWidth: 1, borderTopColor: palette.border }} testID="metric-row">
                       <Text style={styles.label}>{title}</Text>
@@ -134,6 +139,7 @@ function Metrics({ provider }: { readonly provider: Provider }): ReactNode {
           </View>
         </>
       ) : null}
+      <LeadReportSection provider={provider} />
     </View>
   );
 }

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
 import { PressFeedback, useColors } from "@rsvp/ui";
-import { useOfferCategories } from "@rsvp/query-hooks";
+import { categoryLabel, useOfferCategories } from "@rsvp/query-hooks";
 import {
   KYP_STATUSES, PARTNER_ORIGINS, PARTNER_STATUSES, PARTNERS_PAGE_SIZE, useAdminPartner, useAdminPartners, useAdminUsersByIds, useOpenIntakes, usePartnerAction, usePartnerGeo,
   type PartnerDetail, type PartnerFilters, type PartnerRow
@@ -161,7 +161,7 @@ function PartnersScreenContent({ onNavigate, params, onParams }: PartnersScreenP
   const [changingOwner, setChangingOwner] = useState<string | null>(null);
   const ownerChange = partnerOwnerChangeEnabled();
 
-  const categoryName = (code: string): string => categoriesQuery.data?.items.find((item) => item.code === code)?.name ?? code;
+  const categoryName = (code: string): string => categoryLabel(code, t, Object.fromEntries((categoriesQuery.data?.items ?? []).map((item) => [item.code, item.name])));
   const cityName = (code: string): string => geo.data?.items.find((city) => city.slug === code)?.name ?? code;
   const email = (id: string): string => {
     if (!id || (people.isPending && people.isFetching)) return "—";
