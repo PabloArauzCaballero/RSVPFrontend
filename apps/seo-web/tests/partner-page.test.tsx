@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import type * as ReactModule from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createApiClient } from "@rsvp/api-client";
 import { describe, expect, it, vi } from "vitest";
@@ -7,7 +8,7 @@ import { loadCategories } from "../lib/providers";
 
 /** React's `cache` only memoizes inside a server render; here it memoizes by argument, as it does within one request. */
 vi.mock("react", async (original) => ({
-  ...(await original<typeof import("react")>()),
+  ...(await original<typeof ReactModule>()),
   cache: <TResult,>(load: (key: string) => TResult) => {
     const seen = new Map<string, TResult>();
     return (key: string): TResult => {
