@@ -1,0 +1,237 @@
+[
+ {
+  "name": "anfitrión antes: sin aviso · 360",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "anfitrión antes: estado «Reservado» sin aviso · 360",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "anfitrión después: aviso «Producto agotado» + motivo + reserva se mantiene · 360",
+  "ok": true,
+  "detail": "Producto agotado / Se agotó. / La reserva se mantiene y tus invitados ya no ven los botones de compra. Si prefieres, libera el regalo y busca un reemplazo."
+ },
+ {
+  "name": "anfitrión después: la reserva sigue («Reservado» y «Liberar regalo») · 360",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "anfitrión después: no pasa a «No disponibles» · 360",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "sin scroll horizontal · anfitrión 360",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "axe sin violaciones · anfitrión 360",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "invitado (app) antes: ve «Ver en la tienda» y «Pedir por WhatsApp» · 360",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "invitado (app) después: aviso, sin motivo interno · 360",
+  "ok": true,
+  "detail": "Producto agotado / Ya no se puede comprar en la tienda, pero tu reserva se mantiene. Si prefieres, puedes cancelarla."
+ },
+ {
+  "name": "invitado (app) después: sin botones de compra · 360",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "invitado (app) después: conserva «Tu reserva» y «Cancelar mi reserva» · 360",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "invitado (app) después: otro regalo sin cambios (Torta conserva botones) · 360",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "sin scroll horizontal · invitado app 360",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "axe sin violaciones · invitado app 360",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "otro invitado (app): aviso y sin compra, sin «Tu reserva» · 360",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "invitado (web) antes: ve «Ver en la tienda» y «Pedir por WhatsApp» · 360",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "invitado (web) después: aviso · 360",
+  "ok": true,
+  "detail": "Producto agotado /  / Ya no se puede comprar en la tienda, pero tu reserva se mantiene. Si prefieres, puedes cancelarla."
+ },
+ {
+  "name": "invitado (web) después: sin enlaces de compra · 360",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "invitado (web) después: conserva su reserva y cancelar · 360",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "invitado (web) después: Torta conserva sus enlaces · 360",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "sin scroll horizontal · invitado web 360",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "axe sin violaciones · invitado web 360",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "backend: la reserva sigue activa mientras el producto está agotado · 360",
+  "ok": true,
+  "detail": "COMMITTED"
+ },
+ {
+  "name": "anfitrión antes: sin aviso · 1280",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "anfitrión antes: estado «Reservado» sin aviso · 1280",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "anfitrión después: aviso «Producto agotado» + motivo + reserva se mantiene · 1280",
+  "ok": true,
+  "detail": "Producto agotado / Se agotó. / La reserva se mantiene y tus invitados ya no ven los botones de compra. Si prefieres, libera el regalo y busca un reemplazo."
+ },
+ {
+  "name": "anfitrión después: la reserva sigue («Reservado» y «Liberar regalo») · 1280",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "anfitrión después: no pasa a «No disponibles» · 1280",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "sin scroll horizontal · anfitrión 1280",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "axe sin violaciones · anfitrión 1280",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "invitado (app) antes: ve «Ver en la tienda» y «Pedir por WhatsApp» · 1280",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "invitado (app) después: aviso, sin motivo interno · 1280",
+  "ok": true,
+  "detail": "Producto agotado / Ya no se puede comprar en la tienda, pero tu reserva se mantiene. Si prefieres, puedes cancelarla."
+ },
+ {
+  "name": "invitado (app) después: sin botones de compra · 1280",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "invitado (app) después: conserva «Tu reserva» y «Cancelar mi reserva» · 1280",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "invitado (app) después: otro regalo sin cambios (Torta conserva botones) · 1280",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "sin scroll horizontal · invitado app 1280",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "axe sin violaciones · invitado app 1280",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "otro invitado (app): aviso y sin compra, sin «Tu reserva» · 1280",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "invitado (web) antes: ve «Ver en la tienda» y «Pedir por WhatsApp» · 1280",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "invitado (web) después: aviso · 1280",
+  "ok": true,
+  "detail": "Producto agotado /  / Ya no se puede comprar en la tienda, pero tu reserva se mantiene. Si prefieres, puedes cancelarla."
+ },
+ {
+  "name": "invitado (web) después: sin enlaces de compra · 1280",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "invitado (web) después: conserva su reserva y cancelar · 1280",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "invitado (web) después: Torta conserva sus enlaces · 1280",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "sin scroll horizontal · invitado web 1280",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "axe sin violaciones · invitado web 1280",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "invitado (web) en-US: aviso en inglés",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "backend: la reserva sigue activa mientras el producto está agotado · 1280",
+  "ok": true,
+  "detail": "COMMITTED"
+ }
+]

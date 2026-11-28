@@ -11,7 +11,7 @@ export type { paths as TemplateMediaPaths, components as TemplateMediaComponents
 export const contractVersions = {
   "celebration": "205ff5706427809a",
   "gateway": "1307c08dc3ff407e",
-  "gift-list": "b83396d9c9b262b8",
+  "gift-list": "cdcea42e9c508ca7",
   "guest-rsvp": "532ec48dcd10e0c5",
   "identity": "5f2ae92b0403aee8",
   "notification": "670dd80c6c1e7fd0",

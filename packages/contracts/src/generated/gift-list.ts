@@ -1536,6 +1536,13 @@ export interface components {
                 groupGiftEnabled?: boolean;
                 /** @description Active reservations (guests signed up). */
                 participants?: number;
+                /** @description Since 1.21.0 (agotado con reserva). true when the product of this gift can no longer be bought: the gift is UNAVAILABLE, or its product left the gift lists (out of stock, version out of stock, unpublished, incomplete, hidden, provider suspended, rejected or not verified) while somebody holds a reservation, in which case the gift keeps its status and its reservations (D-3). Present for guests and hosts. A guest keeps the reservation and must not be offered the provider buttons while it is true. */
+                productUnavailable?: boolean;
+                /**
+                 * @description Since 1.21.0. Why productUnavailable is true; only for the host or the organizer (MANAGE). Always null for a guest (PF-1) and null while productUnavailable is false.
+                 * @enum {string|null}
+                 */
+                productUnavailableReason?: "HIDDEN_BY_ADMIN" | "PROVIDER_SUSPENDED" | "PROVIDER_REJECTED" | "PROVIDER_NOT_VERIFIED" | "UNPUBLISHED" | "INCOMPLETE" | "OUT_OF_STOCK" | "VARIANT_OUT_OF_STOCK" | "LISTING_NOT_PRODUCT" | null;
                 /** @description Since 1.17.0 (R4): units wanted. 1 for every gift added before the assistant. Business cap 50 (GIFT_MAX_QUANTITY_PER_GIFT). */
                 quantity?: number;
                 /** @description quantity minus unitsReserved: the 'Faltan N de M' of the card. */

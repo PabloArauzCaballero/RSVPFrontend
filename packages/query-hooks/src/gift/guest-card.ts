@@ -1,4 +1,4 @@
-import { isGiftUnavailable, type GiftItem, type GiftReservation, type Money, type ReservationRole } from "./types.js";
+import { isProductGone, type GiftItem, type GiftReservation, type Money, type ReservationRole } from "./types.js";
 
 /**
  * R5 · What the guest's card of a gift says and offers, derived in one place so the app and the public site agree (plan 5.7 and 5.11).
@@ -27,6 +27,8 @@ export interface GuestGiftState {
   readonly chooseUnits: boolean;
   /** Both provider buttons (store and WhatsApp) are for this viewer: whoever may reserve a plain gift, whoever already holds one (reserve, then buy: D-3), and the coordinator of a group. Never a contributor, never a plain gift taken by others. */
   readonly showProviderButtons: boolean;
+  /** 1.21.0 · the product is gone (out of stock, version out of stock, withdrawn) while the reservation stays: the card warns, offers no purchase and no new reservation, and the guest may still cancel theirs. */
+  readonly productGone: boolean;
   /** The host closed the list: nobody starts a reservation and the provider buttons go only to whoever already holds one. */
   readonly closed: boolean;
   /** Group gift: somebody already coordinates it. */
@@ -67,7 +69,8 @@ export function guestGiftState(item: GiftItem, held?: Pick<GiftReservation, "rol
   const role = item.viewer?.role ?? held?.role ?? (held ? "SOLE" : null);
   const hasCoordinator = group && ((item.participants ?? 0) > 0 || role === "COORDINATOR");
   // M41: the server never sends a guest an UNAVAILABLE gift and the lists drop it (`guestVisible`); this only keeps a stray one from being actionable.
-  const unavailable = isGiftUnavailable(item);
+  // 1.21.0: a gift somebody holds comes with `productUnavailable` when its product left the lists: the reservation stays, the purchase and a new reservation do not.
+  const unavailable = isProductGone(item);
   const open = HOLDS.has(item.status) && !unavailable;
   const canReserve = !closed && role === null && open && (group || (item.status === "AVAILABLE" && unitsLeft > 0));
   const showProviderButtons = !unavailable && (group ? role === "COORDINATOR" : role === "SOLE" || (!closed && role === null && item.status === "AVAILABLE" && unitsLeft > 0));
@@ -76,7 +79,7 @@ export function guestGiftState(item: GiftItem, held?: Pick<GiftReservation, "rol
   return {
     quantity, unitsLeft, showUnits: quantity > 1, group, role, heldUnits, canReserve,
     chooseUnits: !group && canReserve && unitsLeft > 1,
-    showProviderButtons, closed, hasCoordinator,
+    showProviderButtons, closed, productGone: unavailable, hasCoordinator,
     coordinator: group && hasCoordinator && role !== "COORDINATOR" ? { name } : null,
     contributors: group ? Math.max(0, item.contributors ?? 0) : 0,
     contributorNames: group && role === "COORDINATOR" ? (item.contributorNames ?? []).filter((n) => typeof n === "string" && n.trim() !== "") : []
