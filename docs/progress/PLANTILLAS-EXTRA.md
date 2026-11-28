@@ -108,3 +108,24 @@ Ninguna. Capturas nuevas solo en `docs/progress/evidence/plantillas-extra/` (360
 
 ## Reversión
 Revertir el PR; las filas sembradas en un entorno se quedan hasta que se archiven (la migración tiene `--revert` para las no editadas).
+
+## Ronda 3 · 2026-11-28 · maquetación de escritorio de Mesa larga, Rumbo, Solitario y Disco (PL-FE-V2-HUECOS)
+
+Entorno: Linux, Google Chrome `/usr/bin/google-chrome`, `next build` + `next start` sobre `apps/seo-web/scripts/fixture-api.mjs` (NO backend real). Yarn 4 instalado desde `@yarnpkg/cli-dist` (`repo.yarnpkg.com` bloqueado).
+
+Reproducción (nueve documentos de Otros, Despedida y Pedida a 360 y 1280, midiendo el lienzo de la portada en el DOM):
+
+| documento a 1280 | antes | después |
+| --- | --- | --- |
+| Mesa larga: dibujo de la mesa | 1016 × 968 px (llena la primera pantalla) | 291 px de alto, 4 de 12 columnas |
+| Rumbo: tramo vacío bajo la portada | 448 px | 64 px (solo el `gap` de la rejilla) |
+| Solitario: tramo vacío | 448 px | 64 px |
+| Disco: tramo vacío | 288 px | 64 px |
+
+A 360 px no cambia nada (el teléfono ya estaba bien). Los otros cinco documentos no se tocan.
+
+Causa raíz: `stack()` de `bodas.py` hace que un elemento con `hero=<filas>` ocupe esas filas; la rejilla solo crece en las ocho filas que cubre el titular, de modo que las filas restantes (56 en Rumbo y Solitario, 36 en Disco) quedaban vacías. El dibujo ya se dimensiona por su ancho, así que `hero` no hacía falta. En Mesa larga la mesa abarcaba las 12 columnas con 160 px de relleno lateral y el dibujo escalaba con el ancho.
+
+Corrección (`extra.py`, regenerado con `python3 extra.py src/design/documents`; los mismos bytes van a `seeds/templates/design-v2/` del BE): se quita `hero=` de Rumbo, Solitario y Disco y la mesa pasa a 4 columnas centradas sin relleno.
+
+Pruebas: `extra.test.tsx` (ningún elemento de la portada de escritorio abarca más de 8 filas ni un dibujo pasa de 6 de 12 columnas; falla con los cuatro documentos antiguos) y `plantillas-v2-extra.spec.ts` (los nueve documentos a 360 y 1280: tramo vacío ≤ 120 px y dibujo ≤ 600 px). Con Chrome real: `plantillas-v2-extra` + `plantillas-v2-portadas-existentes` 355 casos, sin fallos tras ajustar el criterio de la prueba nueva.

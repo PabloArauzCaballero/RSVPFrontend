@@ -144,7 +144,7 @@
                 "x": 0,
                 "y": 0,
                 "w": 6,
-                "h": 64,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "scale",
@@ -189,7 +189,7 @@
                 "id": "el-botella",
                 "block": "art-botella",
                 "x": 8,
-                "y": 64,
+                "y": 8,
                 "w": 2,
                 "h": 8,
                 "visible": true,
