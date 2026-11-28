@@ -26,7 +26,13 @@ export function LeadFilterBar({ provider, value, onChange, allMonths = false, ns
   const months = recentMonths(provider.timeZone);
   const shownMonths = value.month && !months.includes(value.month) ? [value.month, ...months] : months;
   const monthOptions = [...(allMonths ? [{ value: ALL, label: t("portal.leads.allMonths") }] : []), ...shownMonths.map((month) => ({ value: month, label: monthLabel(month, locale) }))];
-  const products = [{ value: ALL, label: t(`${ns}.allProducts`) }, ...(listings.data?.items ?? []).map((item) => ({ value: item.id, label: item.title }))];
+  const own = listings.data?.items ?? [];
+  // A product without a title in this language still has to be choosable, and the one that is filtered stays an option while the list loads or fails.
+  const products = [
+    { value: ALL, label: t(`${ns}.allProducts`) },
+    ...own.map((item) => ({ value: item.id, label: item.title?.trim() ? item.title : t("portal.leads.productUnknown") })),
+    ...(value.listingId && !own.some((item) => item.id === value.listingId) ? [{ value: value.listingId, label: t("portal.leads.productUnknown") }] : [])
+  ];
   const buttons = [{ value: ALL, label: t(`${ns}.allDestinations`) }, ...LEAD_DESTINATIONS.map((destination) => ({ value: destination, label: destinationLabel(destination) }))];
   const monthKey = ns === "portal.leads" ? "filterMonth" : "month";
   const productKey = ns === "portal.leads" ? "filterProduct" : "product";

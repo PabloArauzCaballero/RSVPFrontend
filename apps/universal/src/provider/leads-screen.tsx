@@ -17,10 +17,10 @@ type Kind = "all" | "quote" | "click";
 const NO_FILTERS = { month: "" } as const;
 
 /** The celebration type of a click as a word; a code this build does not know is shown as received (never a celebration name: PF-1). */
+/** The event types the app has words for (`portal.leads.eventTypes`); a code this build does not know is shown as received. */
+export const KNOWN_EVENT_TYPES = ["WEDDING", "QUINCEANERA", "BAUTIZO", "ANNIVERSARY", "BIRTHDAY", "CORPORATE", "ADULT_BIRTHDAY", "PATRONAL_FEAST", "OPENING", "ENGAGEMENT", "BACHELOR_PARTY", "GOLDEN_WEDDING", "SILVER_WEDDING", "REUNION", "THEMED_PARTY", "NEW_YEAR", "OTHER", "GRADUATION", "BABY_SHOWER", "FIRST_COMMUNION"] as const;
 function eventTypeLabel(t: ReturnType<typeof useT>, code: string): string {
-  const key = `portal.leads.eventTypes.${code}`;
-  const text = t(key);
-  return text === key ? code : text;
+  return (KNOWN_EVENT_TYPES as readonly string[]).includes(code) ? t(`portal.leads.eventTypes.${code}`) : code;
 }
 
 /** D-10 #34 · what the provider sees of a click: product, button, date, event type and city. Never the celebration, the guest or the referrer (PF-1). */
@@ -35,7 +35,7 @@ function LeadRow({ lead, timeZone, cities }: { readonly lead: Lead; readonly tim
   const city = lead.city ?? lead.context?.city ?? null;
   return (
     <View style={{ gap: spacing[1], padding: spacing[5], marginBottom: spacing[3], backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, borderRadius: radius.lg, ...depth(scheme) }} testID={`lead-${lead.id}`}>
-      <View style={[styles.row, { justifyContent: "space-between", flexWrap: "nowrap" }]}><Text style={[styles.label, { flex: 1 }]}>{t(`portal.leads.kind.${lead.kind}`)}</Text><Chip tone={lead.valid ? "yes" : "no"}>{lead.valid ? t("portal.leads.valid") : t(`portal.leads.invalid.${lead.invalidReason ?? "bot"}`)}</Chip></View>
+      <View style={[styles.row, { justifyContent: "space-between", flexWrap: "nowrap" }]}><Text style={[styles.label, { flex: 1 }]}>{t(`portal.leads.kind.${lead.kind}`)}</Text><Chip tone={lead.valid ? "yes" : "no"}>{lead.valid ? t("portal.leads.valid") : t(`portal.leads.invalid.${lead.invalidReason ?? "OTHER"}`)}</Chip></View>
       <Text style={styles.muted}>{formatCelebrationDate(lead.occurredAt, { locale, timeZone })}</Text>
       <Text style={styles.body} testID={`product-of-${lead.id}`}>{t("portal.leads.product", { title: lead.listingTitle ?? t("portal.leads.productUnknown") })}</Text>
       {lead.destination ? <Text style={styles.body}>{t("portal.leads.destination", { destination: destinationLabel(lead.destination) })}</Text> : null}
@@ -49,10 +49,11 @@ function LeadRow({ lead, timeZone, cities }: { readonly lead: Lead; readonly tim
 /** D12/D13 · Leads received: clicks on the contacts and quote requests (FORM leads), each in its own list. */
 function Leads({ provider }: { readonly provider: Provider }): ReactNode {
   const t = useT();
+  const locale = useLocale();
   const client = useApiClient();
   const styles = useStyles();
   const [filters, setFilters] = useState<LeadFilters & { readonly month: string }>(NO_FILTERS);
-  const leads = useInfiniteLeads(client, provider.id, filters);
+  const leads = useInfiniteLeads(client, provider.id, { ...filters, locale });
   const geo = useProviderGeo(client);
   const [kind, setKind] = useState<Kind>("all");
   const filtered = Boolean(filters.month || filters.listingId || filters.destination);
