@@ -36,6 +36,8 @@ export interface GiftExperienceProps {
   readonly celebrationId: string;
   readonly celebrationTitle: string;
   readonly locale: AppLocale;
+  /** Event type code of the celebration: travels in the partner link so the provider's lead report can break leads down by it. */
+  readonly eventType?: string;
   /** Server-rendered list (cataloged first). Absent when Gift List answered 401 to the anonymous server read. */
   readonly initial?: GiftItemList;
   /** Show only this gift (detail page). */
@@ -81,7 +83,7 @@ export function GiftExperience(props: GiftExperienceProps) {
   return <GiftProviders><GiftBody {...props} /></GiftProviders>;
 }
 
-function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, onlyItemId }: GiftExperienceProps) {
+function GiftBody({ slug, celebrationId, celebrationTitle, locale, eventType, initial, onlyItemId }: GiftExperienceProps) {
   const t = useMemo(() => createTranslator(locale), [locale]);
   const client = useMemo(() => createGuestClient(), []);
   const [credential, setCredential] = useState<string | null | undefined>(undefined);
@@ -320,7 +322,7 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
             <div className="gift-actions">
               {state.canReserve && !listClosed ? <button type="button" className="rsvp-button" onClick={() => open(item)} aria-label={t(state.group ? (state.hasCoordinator ? 'gifts.guest.group.joinFor' : 'gifts.guest.group.startFor') : 'gifts.guest.reserveFor', { title: item.title })} data-testid={`reserve-${item.id}`}>{state.group ? t(state.hasCoordinator ? 'gifts.guest.group.join' : 'gifts.guest.group.start') : t('gifts.guest.reserve')}</button> : null}
               {listingId && state.showProviderButtons ? contact.map((destination) => (
-                <PartnerLink key={destination} listingId={listingId} destination={destination} surface="GIFT_LIST" celebrationId={celebrationId} celebrationSlug={slug} giftItemId={item.id} {...(item.variantCode ? { variant: item.variantCode } : {})} quantity={quantity} locale={locale} ctx={leadCtx} disclaimer={false} className="gift-partner-link"
+                <PartnerLink key={destination} listingId={listingId} destination={destination} surface="GIFT_LIST" celebrationId={celebrationId} celebrationSlug={slug} giftItemId={item.id} {...(item.variantCode ? { variant: item.variantCode } : {})} quantity={quantity} locale={locale} ctx={leadCtx} {...(eventType ? { eventType } : {})} disclaimer={false} className="gift-partner-link"
                   onFollow={() => prompt.record({ giftItemId: item.id, destination, units: quantity })}>
                   {t(destination === 'WHATSAPP' ? 'gifts.card.viaWhatsApp' : 'gifts.guest.viaPartner')}
                 </PartnerLink>

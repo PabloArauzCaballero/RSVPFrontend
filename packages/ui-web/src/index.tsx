@@ -52,6 +52,8 @@ export type ButtonProps = PropsWithChildren<{
   onPress?: () => void;
 } & VariantProps<typeof buttonVariants> & ButtonHTMLAttributes<HTMLButtonElement>>;
 
+/** An event type code (WEDDING, BABY_SHOWER): the same shape the redirector accepts; anything else is not sent. */
+const EVENT_TYPE_SHAPE = /^[A-Z][A-Z0-9_]{1,59}$/;
 const LISTING_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export type PartnerDestination = 'OFFICIAL_SITE' | 'LANDING' | 'WHATSAPP' | 'PHONE' | 'EMAIL' | 'INSTAGRAM' | 'PRODUCT_PAGE';
 /**
@@ -74,6 +76,8 @@ export interface PartnerGiftContext {
   quantity?: number;
   /** City slug of the celebration, when known: {ciudad}. */
   city?: string;
+  /** Event type code of the celebration (`eventType.code` of its public view): the provider reports break leads down by it. */
+  eventType?: string;
 }
 export type PartnerLinkContext =
   | ({ celebrationId: string; ctx?: string | null } & PartnerGiftContext)
@@ -97,6 +101,7 @@ export function partnerRedirectHref(listingId: string, options: PartnerRedirectO
     if (options.variant) query.set('variant', options.variant);
     if (Number.isInteger(options.quantity) && (options.quantity ?? 0) > 0) query.set('quantity', String(options.quantity));
     if (options.city) query.set('city', options.city);
+    if (options.eventType && EVENT_TYPE_SHAPE.test(options.eventType)) query.set('eventType', options.eventType);
   }
   if (options.locale) query.set('locale', options.locale);
   // R6a: the member's signed lead context (opaque, ~5 min).

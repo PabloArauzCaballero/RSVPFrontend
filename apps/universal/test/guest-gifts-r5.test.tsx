@@ -300,3 +300,28 @@ describe("R5 · accessibility of the card (structure; contrast and screen reader
     } finally { launch.mockRestore(); }
   });
 });
+
+describe("R6b · the type of event travels in the partner link", () => {
+  it("the provider button asks /r with the eventType code of the celebration, so the lead report can break leads down by it", async () => {
+    const launch = vi.spyOn(Linking, "openURL").mockResolvedValue(undefined);
+    try {
+      items = [gift({ variantCode: VARIANT })];
+      show({ "GET /celebrations/public/ana-luis": () => ({ celebrationId: "c-1", slug: "ana-luis", content: { title: "Ana y Luis" }, eventType: { code: "BABY_SHOWER", name: "Baby shower", hostRoles: [] } }) });
+      const r = await row();
+      fireEvent.click(await r.findByRole("button", { name: "Pedir por WhatsApp" }));
+      expect(lastLaunch(launch)).toMatchObject({ destination: "WHATSAPP", celebrationId: "c-1", eventType: "BABY_SHOWER" });
+    } finally { launch.mockRestore(); }
+  });
+
+  it("a celebration without a usable code sends none, and the click still goes through /r", async () => {
+    const launch = vi.spyOn(Linking, "openURL").mockResolvedValue(undefined);
+    try {
+      items = [gift({ variantCode: VARIANT })];
+      show();
+      const r = await row();
+      fireEvent.click(await r.findByRole("button", { name: "Pedir por WhatsApp" }));
+      expect(lastLaunch(launch)).not.toHaveProperty("eventType");
+      expect(new URL(String(launch.mock.calls.at(-1)?.[0])).pathname).toBe(`/r/${LISTING}`);
+    } finally { launch.mockRestore(); }
+  });
+});

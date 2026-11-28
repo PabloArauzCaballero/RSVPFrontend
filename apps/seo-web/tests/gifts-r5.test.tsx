@@ -411,3 +411,15 @@ describe("R5 · accessibility of the card (structure; contrast needs a real brow
     expect(screen.getAllByRole("region").filter((r) => r === focused)).toHaveLength(1);
   });
 });
+
+describe("R6b · the type of event travels in the partner link", () => {
+  it("both buttons ask /r with the eventType code of the celebration; without one, none is sent", async () => {
+    items = [gift({ quantity: 1, unitsLeft: 1, variantCode: VARIANT })]; stub();
+    render(<GiftExperience slug="ana-luis" celebrationId={CELEBRATION} celebrationTitle="Ana y Luis" locale="es-BO" eventType="BABY_SHOWER" />);
+    const row = within(await rowOf());
+    for (const name of ["Pedir por WhatsApp", "Ver en la tienda"]) expect(partnerQuery(await row.findByRole("link", { name }))).toMatchObject({ eventType: "BABY_SHOWER", celebrationId: CELEBRATION });
+    cleanup();
+    stub(); renderList();
+    expect(partnerQuery(await within(await rowOf()).findByRole("link", { name: "Pedir por WhatsApp" }))).not.toHaveProperty("eventType");
+  });
+});

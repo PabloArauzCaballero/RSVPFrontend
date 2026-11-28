@@ -67,6 +67,7 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
   useEffect(() => { if (token) { saveGiftCredential(slug, token); setCredential(token); } }, [slug, token]);
   const celebration = useCelebrationBySlug<PublicCelebrationView>(client, slug);
   const celebrationId = celebration.data?.celebrationId;
+  const eventTypeCode = celebration.data?.eventType?.code;
   const list = useGiftList(client, celebrationId, credential);
   // R6a: this list is read with the guest's link credential (never the session), and Gift List answers leadContext null to a guest, so
   // today no ctx is added here. It is wired so a member read (host list, once it shows partner links) uses the same link builder.
@@ -165,7 +166,7 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
   const goToPartner = (item: GiftItem, listingId: string, destination: string, quantity: number): void => {
     prompt.record({ giftItemId: item.id, destination, units: quantity });
     const link = celebrationId
-      ? partnerRedirectUrl(listingId, { destination, surface: "GIFT_LIST", celebrationId, celebrationSlug: slug, giftItemId: item.id, ...(item.variantCode ? { variant: item.variantCode } : {}), quantity, locale, ctx: leadCtx })
+      ? partnerRedirectUrl(listingId, { destination, surface: "GIFT_LIST", celebrationId, celebrationSlug: slug, giftItemId: item.id, ...(item.variantCode ? { variant: item.variantCode } : {}), quantity, locale, ctx: leadCtx, ...(eventTypeCode ? { eventType: eventTypeCode } : {}) })
       : partnerRedirectUrl(listingId, { destination, surface: "GIFT_LIST", locale });
     void Linking.openURL(link);
   };
