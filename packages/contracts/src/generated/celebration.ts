@@ -1660,7 +1660,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description The celebration is not yours, or it has no published design yet (never 403) */
+            /** @description The celebration is not yours, it has no published design yet, or its published design was unpublished and the invitation uses the base template (never 403) */
             404: {
                 headers: {
                     [name: string]: unknown;

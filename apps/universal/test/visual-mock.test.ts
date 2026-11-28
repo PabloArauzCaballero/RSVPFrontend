@@ -45,6 +45,7 @@ describe("visual mock behaves like the gateway the app talks to", () => {
     expect(reply.headers["cache-control"]).toBe("no-store");
     const spec = JSON.parse(readFileSync(resolve(REPO, "packages/contracts/specs/celebration.openapi.json"), "utf8")) as { components: { schemas: Record<string, { required: string[]; properties: Record<string, unknown> }> } };
     const schema = spec.components.schemas["PublicPageStatus"]!;
+    // Celebration 1.6.0: the service always answers `moderation`, null while no moderator hides the page.
     expect(Object.keys(reply.body).sort()).toEqual(Object.keys(schema.properties).sort());
     for (const field of schema.required) expect(reply.body).toHaveProperty(field);
     expect(reply.body).toEqual({ celebrationId: demo.id, status: demo.status, state: "LIVE", version: demo.version, publicVersion: demo.version, moderation: null });

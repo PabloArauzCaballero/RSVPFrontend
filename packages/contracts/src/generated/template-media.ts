@@ -109,7 +109,10 @@ export interface paths {
         /** The caller's private templates (P21) */
         get: operations["listPrivateTemplates"];
         put?: never;
-        /** Create the design of a celebration, or a private template */
+        /**
+         * Create the design of a celebration, or a private template
+         * @description For a PRIVATE_TEMPLATE the source is copied without photos, personal text and personal links (decision of 2026-11-25; PL-135-M3): the layout, colours, typography and the mandatory gifts block stay, photos and links are taken out, blocks that cannot exist without them become empty spacers, texts become neutral placeholders. The response reports what was taken out in `stripped`. A CELEBRATION design keeps everything.
+         */
         post: operations["createDesign"];
         delete?: never;
         options?: never;
@@ -128,8 +131,8 @@ export interface paths {
         put?: never;
         post?: never;
         /**
-         * Deletes a design and all its versions (PF-1)
-         * @description A private template is deleted by its owner (or an administrator); a celebration design by whoever manages the celebration. A celebration design that was ever published is 409 DESIGN_PUBLISHED: Celebration keeps the reference of its published version, so it is replaced by publishing again and goes away with the celebration (celebration.celebration.deleted.v1). Deleting an account deletes its private templates too (identity.user.deleted.v1).
+         * Deletes a draft design and all its versions (PF-1)
+         * @description Only drafts are deleted (decision of 2026-11-25): a design with a published version, of a celebration or a private template, is 409 DESIGN_PUBLISHED; unpublish it first (`POST /designs/{designId}/unpublish`) and then delete the draft. A private template is deleted by its owner (or an administrator); a celebration design by whoever manages the celebration. Deleting an account deletes its private templates too (identity.user.deleted.v1) and erasing a celebration deletes its design (celebration.celebration.deleted.v1); those paths do not need the unpublish.
          */
         delete: operations["deleteDesign"];
         options?: never;
@@ -165,6 +168,26 @@ export interface paths {
         put?: never;
         /** Publish the draft as the next immutable version */
         post: operations["publishDesign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/designs/{designId}/unpublish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Withdraws the published version of a design
+         * @description The invitation of a celebration goes back to the base template and the draft and every version stay, so the host can publish again (the next version number is higher than the withdrawn one). Idempotent: a design that is not published is returned as it is and nothing is emitted. A private template unpublishes too and emits nothing. Needs no If-Match: it does not touch the draft.
+         */
+        post: operations["unpublishDesign"];
         delete?: never;
         options?: never;
         head?: never;
@@ -489,8 +512,14 @@ export interface components {
             id: string;
             kind: components["schemas"]["DesignKind"];
             name: string;
-            /** @description Latest published version, null until the first publish */
+            /** @description Latest published version; null until the first publish and after it is unpublished */
             publishedVersion: number | null;
+            /** @description Only on the response of creating a PRIVATE_TEMPLATE: how many photos, personal texts and personal links were taken out of the source. All zero when the source had none. */
+            stripped?: {
+                links: number;
+                photos: number;
+                texts: number;
+            };
             /** Format: date-time */
             updatedAt: string;
             /** @description Contrast warnings of the draft; present on create, save and restore. They never block (P19) */
@@ -987,7 +1016,7 @@ export interface components {
             document?: components["schemas"]["DesignDocumentV2"] | null;
             /**
              * Format: uuid
-             * @description Start from another design the caller can read (P21: save a celebration design as a private template)
+             * @description Start from another design the caller can read (P21: save a celebration design as a private template; the copy has no photos, personal text or personal links)
              */
             fromDesignId?: string | null;
             kind: components["schemas"]["DesignKind"];
@@ -1078,7 +1107,7 @@ export interface components {
             surface: components["schemas"]["HexColour"];
             text: components["schemas"]["HexColour"];
         };
-        /** @description 422 of a v2 design (400 and 413 are plain Problems). code is INVALID_THEME (not an object, neither v1 nor v2, or a schemaVersion that is not the integer 2), DESIGN_SCHEMA_INVALID (issues lists the paths), GIFTS_BLOCK_REQUIRED (no gifts block, said before the schema errors), GIFTS_BLOCK_LOCKED (link or rotation on the gifts element), GIFTS_BLOCK_HIDDEN (not visible or translucent), GIFTS_BLOCK_OUT_OF_CANVAS, GIFTS_BLOCK_TOO_SMALL (under 44 px, or under 44 px of height left once vertical padding and border are taken out), GIFTS_BLOCK_TEXT_TOO_LARGE (label over 32 px or taller than the useful height), GIFTS_BLOCK_COVERED (another element paints over it), GIFTS_BLOCK_LOW_CONTRAST (text under 4.5:1 or contour under 3:1 in either palette), DESIGN_REFERENCE_INVALID, FONT_WEIGHT_UNAVAILABLE, CUSTOM_CODE_UNAVAILABLE (custom html/css until the F5 sanitiser), DESIGN_DECORATION_INVALID (1.8.0: a named animation with durationMs, mecerse on a page, abrir-puertas on an element, a mask on a block with text, or a mask, frame or mecerse on the gifts or reply buttons), or DESIGN_V2_NOT_AVAILABLE (POST/PATCH of any v2 theme while the service gate DESIGN_V2_ACCEPTED is off, which is not the default since F4 b; checked before the document is validated). Design endpoints add VERSION_CONFLICT (409, currentVersion), DESIGN_EXISTS (409), PRIVATE_TEMPLATE_LIMIT (409), DESIGN_PUBLISHED (409, a published celebration design cannot be deleted), DESIGN_TOO_LARGE, DESIGN_MEDIA_INVALID (a mediaId that is not a usable photo of the celebration; mediaIds lists them), DESIGN_MEDIA_NOT_ALLOWED (a private template cannot reference photos; mediaIds lists them), CELEBRATION_REQUIRED, CELEBRATION_NOT_ALLOWED and KIND_REQUIRED (422). */
+        /** @description 422 of a v2 design (400 and 413 are plain Problems). code is INVALID_THEME (not an object, neither v1 nor v2, or a schemaVersion that is not the integer 2), DESIGN_SCHEMA_INVALID (issues lists the paths), GIFTS_BLOCK_REQUIRED (no gifts block, said before the schema errors), GIFTS_BLOCK_LOCKED (link or rotation on the gifts element), GIFTS_BLOCK_HIDDEN (not visible or translucent), GIFTS_BLOCK_OUT_OF_CANVAS, GIFTS_BLOCK_TOO_SMALL (under 44 px, or under 44 px of height left once vertical padding and border are taken out), GIFTS_BLOCK_TEXT_TOO_LARGE (label over 32 px or taller than the useful height), GIFTS_BLOCK_COVERED (another element paints over it), GIFTS_BLOCK_LOW_CONTRAST (text under 4.5:1 or contour under 3:1 in either palette), DESIGN_REFERENCE_INVALID, FONT_WEIGHT_UNAVAILABLE, CUSTOM_CODE_UNAVAILABLE (custom html/css until the F5 sanitiser), DESIGN_DECORATION_INVALID (1.8.0: a named animation with durationMs, mecerse on a page, abrir-puertas on an element, a mask on a block with text, or a mask, frame or mecerse on the gifts or reply buttons), or DESIGN_V2_NOT_AVAILABLE (POST/PATCH of any v2 theme while the service gate DESIGN_V2_ACCEPTED is off, which is not the default since F4 b; checked before the document is validated). Design endpoints add VERSION_CONFLICT (409, currentVersion), DESIGN_EXISTS (409), PRIVATE_TEMPLATE_LIMIT (409), DESIGN_PUBLISHED (409, a published design is not deleted: unpublish it first), DESIGN_TOO_LARGE, DESIGN_MEDIA_INVALID (a mediaId that is not a usable photo of the celebration; mediaIds lists them), DESIGN_MEDIA_NOT_ALLOWED (saving a draft of a private template with photos; when a template is created the photos are taken out instead; mediaIds lists them), CELEBRATION_REQUIRED, CELEBRATION_NOT_ALLOWED and KIND_REQUIRED (422). */
         DesignProblem: components["schemas"]["Problem"] & {
             field?: string;
             issues?: components["schemas"]["DesignIssue"][];
@@ -1659,7 +1688,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Created */
+            /** @description Created. For a private template, `stripped` says what was taken out of the source */
             201: {
                 headers: {
                     ETag?: string;
@@ -1858,7 +1887,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description DESIGN_PUBLISHED: a published celebration design is replaced, not deleted */
+            /** @description DESIGN_PUBLISHED: a published design is unpublished first, then deleted */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -2095,6 +2124,75 @@ export interface operations {
             };
             /** @description If-Match required */
             428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unexpected error (INTERNAL); nothing was stored */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    unpublishDesign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                designId: components["parameters"]["DesignId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The design, now without a published version */
+            200: {
+                headers: {
+                    /** @description draftVersion, to send back in If-Match */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Design"];
+                };
+            };
+            /** @description Malformed request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Can read but not change it */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unknown, or not visible to the caller (never 403 for what the caller cannot see) */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

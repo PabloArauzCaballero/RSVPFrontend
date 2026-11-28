@@ -6,6 +6,7 @@ import type { MapPlace } from "@rsvp/api-client";
 import type { MapPoint } from "@rsvp/celebration-theme/model";
 import { Button, overlayAnimation, useColors } from "@rsvp/ui";
 import { colors, radius, spacing } from "@rsvp/design-tokens";
+import { mapTileUrl } from "../platform/map-tiles";
 import { useT } from "../platform/providers";
 import { PlaceSearch } from "./place-search";
 import { ActionButton, Notice, useStyles } from "./ui";
@@ -27,13 +28,17 @@ export interface MapPickerProps {
   readonly onClose: () => void;
 }
 
-const TILES = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 const ATTRIBUTION = "&copy; <a href=\"https://www.openstreetmap.org/copyright\" target=\"_blank\" rel=\"noopener noreferrer\">OpenStreetMap</a>";
 /** Nothing marked yet: Bolivia whole, so the first move is a search or "my location". */
 const COUNTRY: MapPoint = { lat: -16.7, lng: -64.9 };
 const ZOOM_COUNTRY = 5;
 const ZOOM_PLACE = 17;
 const ZOOM_MAX = 19;
+/**
+ * OSM's tile policy asks web apps to send a Referer. Some of our pages are `no-referrer` (guest credential paths), so each
+ * tile states its own policy: another origin receives only our origin, never the path, the query or a token.
+ */
+const TILE_REFERRER_POLICY = "strict-origin-when-cross-origin";
 const DIALOG_WIDTH = 720;
 const MAP_MAX = 440;
 const MAP_MIN = 220;
@@ -62,7 +67,8 @@ export function MapPicker({ initial, query, onPick, onClose }: MapPickerProps): 
       if (disposed || !element) return;
       const point = startPoint.current ?? COUNTRY;
       const created = leaflet.map(element, { center: [point.lat, point.lng], zoom: startPoint.current ? ZOOM_PLACE : ZOOM_COUNTRY, maxZoom: ZOOM_MAX });
-      leaflet.tileLayer(TILES, { maxZoom: ZOOM_MAX, attribution: ATTRIBUTION }).addTo(created);
+      // Only the tiles in view are requested, with the browser's own cache: no prefetch and no offline copy (OSM tile policy).
+      leaflet.tileLayer(mapTileUrl(), { maxZoom: ZOOM_MAX, attribution: ATTRIBUTION, referrerPolicy: TILE_REFERRER_POLICY }).addTo(created);
       created.attributionControl.setPrefix(false);
       map.current = created;
       // The dialog has just been laid out: measure again once it has its size.

@@ -1,0 +1,195 @@
+// R2 FE walk in Chromium (Playwright, preinstalled browser) against the REAL provider-catalog runtime behind serve.mjs.
+// Functional part only (es-BO, light, 1280). Captures and axe run in capture.cjs.
+const path = require("node:path");
+const fs = require("node:fs");
+const { chromium } = require("/var/tmp/wt-r2fe/node_modules/playwright");
+const W = __dirname;
+const APP = process.env.APP ?? "http://localhost:8320";
+const walk = JSON.parse(fs.readFileSync(path.join(W, "walk.json"), "utf8"));
+const results = [];
+const note = (step, ok, detail = "") => { results.push({ step, ok, detail }); console.log(`${ok ? "PASS" : "FAIL"} ${step}${detail ? ` · ${detail}` : ""}`); };
+const tid = (id) => `[data-testid="${id}"] >> visible=true`;
+
+async function api(method, p, body, headers = {}) {
+  const response = await fetch(`${walk.gateway}${p}`, { method, headers: { authorization: `Bearer ${walk.ownerToken}`, ...(body ? { "content-type": "application/json" } : {}), ...headers }, ...(body ? { body: JSON.stringify(body) } : {}) });
+  const text = await response.text();
+  return { status: response.status, body: text ? JSON.parse(text) : undefined };
+}
+
+(async () => {
+  const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH ?? "/opt/pw-browsers/chromium-1243/chrome-linux64/chrome" });
+  const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, locale: "es-BO", reducedMotion: "reduce" });
+  await context.addInitScript(([k, v]) => { try { localStorage.setItem(k, v); } catch { /* none */ } }, [`rsvp.provider.${walk.ownerId}`, walk.providerId]);
+  const page = await context.newPage();
+  const pageErrors = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  const network = [];
+  page.on("response", (response) => { const u = new URL(response.url()); if (u.port === "28400" && response.request().method() !== "OPTIONS") network.push(`${response.request().method()} ${u.pathname.replace(/[0-9a-f]{8}-[0-9a-f-]{27}/g, ":id")} ${response.status()}`); });
+  const shot = (name) => page.screenshot({ path: path.join(W, "shots", `walk-${name}.png`), fullPage: true });
+  const upload = async (file) => {
+    const [chooser] = await Promise.all([page.waitForEvent("filechooser"), page.click(tid("photo-add"))]);
+    await chooser.setFiles(path.join(W, "img", file));
+  };
+  const waitStage = async (text, timeout = 30000) => page.waitForFunction((t) => document.querySelector('[data-testid="photo-stage"]')?.textContent === t, text, { timeout });
+  try {
+    // 1 · Nuevo producto: Básico crea el borrador (POST con Idempotency-Key).
+    await page.goto(`${APP}/portal/productos/nuevo`, { waitUntil: "networkidle" });
+    await page.waitForSelector(tid("product-title"), { timeout: 60000 });
+    await page.click(tid("step-next"));
+    note("Básico vacío: errores locales sin POST", await page.getByText("Escribe un nombre de 3 a 120 caracteres.").isVisible() && !network.some((n) => n.startsWith("POST /providers/:id/listings")));
+    await page.fill(tid("product-title"), "Juego de 6 copas de cristal");
+    await page.selectOption(tid("product-category"), "TABLEWARE");
+    await page.fill(tid("product-description"), "Seis copas de cristal soplado de 250 ml, en caja de regalo forrada.");
+    await page.fill(tid("product-whatsapp-new"), "+591 70012345");
+    await shot("1-basico");
+    await page.click(tid("step-next"));
+    await page.waitForURL(/\/portal\/productos\/[0-9a-f-]{36}\?paso=ideas/, { timeout: 20000 });
+    const lid = page.url().match(/productos\/([0-9a-f-]{36})/)[1];
+    walk.listingId = lid;
+    note("POST crea el borrador y abre Ideas", true, lid.slice(0, 8));
+    // 2 · Ideas
+    await page.waitForSelector(tid("idea-GLASSWARE"));
+    await page.click(tid("idea-GLASSWARE"));
+    await page.click(tid("step-next"));
+    await page.waitForSelector(tid("photo-add"), { timeout: 20000 });
+    note("Ideas guarda y abre Fotos", network.some((n) => n.startsWith("PATCH /providers/:id/listings/:id 200")));
+    // 3 · Fotos: 3 subidas reales (registrar → PUT → completar → worker sharp → READY).
+    for (const file of ["copa-1.jpg", "copa-2.jpg", "copa-3.jpg"]) { await upload(file); await waitStage("Foto lista."); }
+    const count = await page.textContent(tid("photo-count"));
+    note("3 fotos subidas y procesadas (READY)", count === "3 de 5 fotos", count);
+    const thumbs = await page.$$eval('[data-testid^="photo-"] img', (imgs) => imgs.filter((img) => img.offsetParent).map((img) => img.naturalWidth));
+    note("Las miniaturas WebP cargan desde el bucket", thumbs.length >= 3 && thumbs.every((w) => w > 0), JSON.stringify(thumbs));
+    await shot("3-fotos");
+    // 4 · Precio y versiones: 2 versiones.
+    await page.click(tid("step-precio"));
+    await page.waitForSelector(tid("price-variants"));
+    await page.click(tid("price-variants"));
+    await page.fill(tid("variant-label-0"), "Dorado");
+    await page.fill(tid("variant-price-0"), "350");
+    await page.click(tid("variant-add"));
+    await page.fill(tid("variant-label-1"), "Plateado");
+    await page.fill(tid("variant-price-1"), "320.50");
+    await shot("4-precio");
+    await page.click(tid("step-next"));
+    await page.waitForSelector('[data-testid^="coverage-"]', { timeout: 20000 });
+    let sheet = (await api("GET", `/providers/${walk.providerId}/listings/${lid}`)).body;
+    note("2 versiones guardadas; priceMinor sigue a la versión por defecto", sheet.variants.length === 2 && sheet.priceMinor === 35000, sheet.variants.map((v) => `${v.label}:${v.priceMinor}`).join(","));
+    // 4b · Foto de una versión (decisión 13).
+    await page.click(tid("step-fotos"));
+    await page.waitForSelector(tid("photo-variant"));
+    const plateado = sheet.variants.find((v) => v.label === "Plateado").id;
+    await page.selectOption(tid("photo-variant"), plateado);
+    await upload("copa-4.jpg"); await waitStage("Foto lista.");
+    sheet = (await api("GET", `/providers/${walk.providerId}/listings/${lid}`)).body;
+    note("La foto de la versión llega con variantId", sheet.photos.some((p) => p.variantId === plateado && p.status === "READY"));
+    note("La fila nombra la versión", await page.getByText(/Foto 4 · Plateado/).isVisible());
+    await shot("4b-foto-version");
+    // Archivo HEIC: el selector no lo ofrece (accept) y, si llega, se rechaza antes de pedir nada.
+    const accept = await page.evaluate(() => new Promise((resolve) => { const orig = HTMLInputElement.prototype.click; HTMLInputElement.prototype.click = function () { resolve(this.accept); HTMLInputElement.prototype.click = orig; }; document.querySelector('[data-testid="photo-add"]').click(); }));
+    note("accept no incluye HEIC (decisión 1)", accept === "image/jpeg,image/png,image/webp", accept);
+    // 5 · Entrega
+    await page.click(tid("step-entrega"));
+    await page.waitForSelector(tid("coverage-la-paz"));
+    await page.click(tid("coverage-la-paz"));
+    await page.fill(tid("product-lead"), "3");
+    await page.fill(tid("product-shipping"), "0");
+    await page.click(tid("step-next"));
+    await page.waitForTimeout(1500);
+    const deliveryError = await page.locator(tid("sheet-error")).or(page.getByRole("alert")).first().textContent().catch(() => null);
+    const deliveryPatch = network.filter((n) => n.startsWith("PATCH")).at(-1);
+    note("Entrega sin condiciones (M32)", deliveryPatch?.endsWith("200"), `${deliveryPatch} ${deliveryError ?? ""}`);
+    await shot("5-entrega-sin-condiciones");
+    if (!deliveryPatch?.endsWith("200")) {
+      await page.fill(tid("product-conditions"), "Entrega en caja cerrada; coordinamos la hora por WhatsApp.");
+      await page.click(tid("step-next"));
+      await page.waitForSelector(tid("product-whatsapp"), { timeout: 20000 });
+      note("Entrega con condiciones guarda", network.filter((n) => n.startsWith("PATCH")).at(-1)?.endsWith("200"));
+    }
+    // 6 · Contacto: plantilla propia con teléfono → 422 TEMPLATE_CONTAINS_CONTACT o CONTACT_IN_TEXT; luego válida.
+    await page.waitForSelector(tid("product-whatsapp"));
+    await page.click(tid("template-own"));
+    await page.fill(tid("template-text"), "Hola {proveedor}, quiero {producto} ({version}). Llámame al 70012345");
+    await page.click(tid("step-next"));
+    await page.waitForSelector(tid("sheet-error"), { timeout: 15000 });
+    note("Plantilla con teléfono: 422 con el fragmento", /70012345/.test(await page.textContent(tid("sheet-error"))), await page.textContent(tid("sheet-error")));
+    await page.fill(tid("template-text"), "Hola {proveedor}, quiero {producto} ({version}) × {cantidad} para {celebracion}.");
+    await page.click(tid("step-next"));
+    await page.waitForSelector(tid("preview-card"), { timeout: 20000 });
+    note("Contacto guarda y abre el Resumen", true);
+    // 7 · 409: otra pestaña cambia el producto; guardar en Precio da VERSION_CONFLICT, recargar conserva lo escrito.
+    sheet = (await api("GET", `/providers/${walk.providerId}/listings/${lid}`)).body;
+    await page.click(tid("step-precio"));
+    await page.waitForSelector(tid("variant-price-1"));
+    const other = await api("PATCH", `/providers/${walk.providerId}/listings/${lid}`, { giftIdeas: ["GLASSWARE", "DINNERWARE_SET"] }, { "if-match": `"${sheet.version}"` });
+    await page.fill(tid("variant-price-1"), "330");
+    await page.click(tid("step-next"));
+    await page.waitForSelector(tid("sheet-reload"), { timeout: 15000 });
+    note("409 VERSION_CONFLICT ofrece recargar", other.status === 200, await page.textContent(tid("sheet-error")));
+    await shot("7-conflicto");
+    await page.click(tid("sheet-reload"));
+    await page.waitForTimeout(1500);
+    note("Recargar conserva lo escrito en el paso", (await page.inputValue(tid("variant-price-1"))) === "330");
+    await page.click(tid("step-next"));
+    await page.waitForSelector('[data-testid^="coverage-"]', { timeout: 15000 });
+    note("Después de recargar, guardar funciona", network.filter((n) => n.startsWith("PATCH")).at(-1)?.endsWith("200"));
+    // 8 · Resumen y publicar.
+    await page.click(tid("step-resumen"));
+    await page.waitForSelector(tid("preview-card"));
+    sheet = (await api("GET", `/providers/${walk.providerId}/listings/${lid}`)).body;
+    note("Ficha COMPLETE", sheet.completeness === "COMPLETE", `${sheet.completeness} ${JSON.stringify(sheet.missing)}`);
+    const cover = await page.locator('[data-testid="preview-cover"] img').last().evaluate((img) => img.naturalWidth).catch(() => 0);
+    note("La tarjeta del invitado muestra la portada (card 480)", cover > 0, String(cover));
+    await shot("8-resumen");
+    await page.click(tid("product-publish"));
+    await page.getByText("Producto publicado").waitFor({ timeout: 15000 });
+    sheet = (await api("GET", `/providers/${walk.providerId}/listings/${lid}`)).body;
+    note("Publicar: publicado", sheet.published === true);
+    const listed = await fetch(`${walk.gateway}/listings?type=PRODUCT&q=copas`).then((r) => r.json());
+    note("Aparece en GET /listings?type=PRODUCT (elegible)", listed.items.some((i) => i.id === lid));
+    await shot("8b-publicado");
+    // 9 · Duplicar desde el resumen: la copia abre en Fotos, sin fotos, INCOMPLETE (decisión 4).
+    await page.getByRole("button", { name: /Más opciones/ }).first().click();
+    await page.getByRole("menuitem", { name: "Duplicar" }).click();
+    await page.waitForURL(/paso=fotos&copia=1/, { timeout: 15000 });
+    const copyId = page.url().match(/productos\/([0-9a-f-]{36})/)[1];
+    const copy = (await api("GET", `/providers/${walk.providerId}/listings/${copyId}`)).body;
+    note("Duplicar crea un borrador sin fotos e incompleto", copy.photos.length === 0 && copy.completeness === "INCOMPLETE" && copy.missing.includes("PHOTO"), JSON.stringify(copy.missing));
+    await shot("9-copia");
+    // 10 · La copia incompleta: Publicar apagado y la lista de lo que falta enlaza al paso.
+    await page.click(tid("step-resumen"));
+    await page.waitForSelector(tid("missing-list"));
+    note("Incompleto: Publicar apagado", (await page.getAttribute(tid("product-publish"), "aria-disabled")) === "true");
+    const viaApi = await api("POST", `/providers/${walk.providerId}/listings/${copyId}/publish`);
+    note("El catálogo también lo rechaza (422 LISTING_INCOMPLETE)", viaApi.status === 422 && viaApi.body.code === "LISTING_INCOMPLETE", `${viaApi.status} ${viaApi.body?.code}`);
+    await page.click(tid("missing-PHOTO"));
+    await page.waitForSelector(tid("photo-add"));
+    note("«Al menos una foto lista» abre Fotos", /paso=fotos/.test(page.url()));
+    // 11 · Lista de ofertas: chips y «Falta».
+    await page.goto(`${APP}/portal/productos`, { waitUntil: "networkidle" });
+    await page.waitForSelector(tid(`listing-completeness-${lid}`), { timeout: 20000 });
+    note("OfferRow: Completo y la copia Incompleta con «Falta»", (await page.textContent(tid(`listing-completeness-${lid}`))) === "Completo" && /Falta/.test(await page.textContent(tid(`listing-missing-${copyId}`))));
+    await shot("11-ofertas");
+    // 12 · Mensaje del negocio.
+    await page.goto(`${APP}/portal/destinos`, { waitUntil: "networkidle" });
+    await page.waitForSelector(tid("business-template"), { timeout: 20000 });
+    await page.locator('[data-testid="business-template"] [data-testid="template-own"]').click();
+    await page.locator('[data-testid="business-template"] [data-testid="template-text"]').fill("Hola {proveedor}, vengo de DOne: quiero {producto} ({version}).");
+    await page.click(tid("business-template-save"));
+    await page.getByText("Mensaje guardado.", { exact: false }).waitFor({ timeout: 15000 });
+    const stored = (await api("GET", `/providers/${walk.providerId}/whatsapp-template`)).body;
+    note("PUT del mensaje del negocio", stored.template?.["es-BO"]?.startsWith("Hola {proveedor}, vengo de DOne"));
+    await page.locator('[data-testid="business-template"] [data-testid="template-text"]').fill("Escríbeme a www.copas.bo");
+    await page.click(tid("business-template-save"));
+    await page.getByText(/Quita el teléfono o el enlace del mensaje/).waitFor({ timeout: 15000 });
+    note("Mensaje del negocio con enlace: 422 TEMPLATE_CONTAINS_CONTACT", true, await page.getByText(/Quita el teléfono/).textContent());
+    await shot("12-mensaje-negocio");
+  } catch (error) {
+    note("EXCEPCIÓN", false, error.message.split("\n")[0]);
+    await shot("error").catch(() => undefined);
+  } finally {
+    note("Sin errores de página", pageErrors.length === 0, pageErrors.slice(0, 3).join(" | "));
+    fs.writeFileSync(path.join(W, "walk-results.json"), JSON.stringify({ results, network, walk: { providerId: walk.providerId, listingId: walk.listingId } }, null, 2));
+    fs.writeFileSync(path.join(W, "walk.json"), JSON.stringify(walk, null, 2));
+    await browser.close();
+  }
+})();
