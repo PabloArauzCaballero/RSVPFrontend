@@ -441,6 +441,17 @@ describe("C13–C16 · translations, templates, preview, publishing", () => {
   });
 });
 
+describe("C16 · shared link card", () => {
+  it("with an SVG cover it previews the first gallery photo that has raster variants", async () => {
+    const asset = (id: string, over: Record<string, unknown>) => ({ id, celebrationId: "c-1", filename: id, contentType: "image/png", sizeBytes: 1, status: "PROCESSED", width: 1, height: 1, sortOrder: 0, isCover: false, ...over });
+    const items = [asset("d", { isCover: true, variants: { svg: "https://x.test/d.svg" } }), asset("fondo", { purpose: "background", variants: { medium: "https://x.test/fondo.webp" } }), asset("foto", { purpose: "gallery", variants: { medium: "https://x.test/foto.webp" } })];
+    const { client } = fakeClient({ ...baseHandlers(), "GET /celebrations/c-1/publish-check": () => ({ ready: true, missingFields: [], status: "DRAFT", version: 3 }), "GET /media/celebrations/c-1/assets": () => ({ items }) });
+    renderApp(<PublishScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    await waitFor(() => expect(screen.getByTestId("whatsapp-card").innerHTML).toContain("https://x.test/foto.webp"));
+    expect(screen.getByTestId("whatsapp-card").innerHTML).not.toContain("fondo.webp");
+  });
+});
+
 describe("C17–C18 · settings and switches", () => {
   it("REQ-F13-06 · a past deadline warns that RSVPs freeze; computed in the celebration zone", async () => {
     expect(nowInZone("America/La_Paz", new Date("2026-12-20T03:30:00Z"))).toBe("2026-12-19T23:30");

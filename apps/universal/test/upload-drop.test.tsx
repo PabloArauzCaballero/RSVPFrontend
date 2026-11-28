@@ -1,8 +1,10 @@
-import { cleanup, createEvent, fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, createEvent, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { QueryClient } from "@tanstack/react-query";
 import { GalleryEditorScreen } from "../src/host/gallery-editor";
+import { AppProviders } from "../src/platform/providers";
 import { MediaUploader } from "../src/host/media/media-uploader";
-import { baseHandlers, fakeClient, HttpFailure, renderApp } from "./support";
+import { baseHandlers, CELEBRATION, fakeClient, HOST, HttpFailure, renderApp } from "./support";
 
 /** The web build: drag and drop and the browser's file input (vitest would otherwise load the iOS/Android files). */
 vi.mock("../src/platform/file-drop", () => import("../src/platform/file-drop.web"));
@@ -27,6 +29,8 @@ function drag(kind: "dragEnter" | "dragOver" | "dragLeave" | "drop", target: Ele
 
 class FakeXhr {
   static failNext = false;
+  /** Keeps every PUT open until the test lets it go. */
+  static held: (() => void)[] | null = null;
   upload: { onprogress?: (event: { lengthComputable: boolean; loaded: number; total: number }) => void } = {};
   status = 200;
   onload?: () => void;
@@ -36,6 +40,7 @@ class FakeXhr {
   send(): void {
     this.upload.onprogress?.({ lengthComputable: true, loaded: 5, total: 10 });
     if (FakeXhr.failNext) { FakeXhr.failNext = false; this.onerror?.(); return; }
+    if (FakeXhr.held) { FakeXhr.held.push(() => this.onload?.()); return; }
     this.onload?.();
   }
 }
@@ -44,6 +49,7 @@ let revoked: string[] = [];
 beforeEach(() => {
   localStorage.clear();
   FakeXhr.failNext = false;
+  FakeXhr.held = null;
   revoked = [];
   vi.stubGlobal("XMLHttpRequest", FakeXhr);
   let n = 0;
@@ -78,11 +84,12 @@ describe("E10 · drag and drop on the gallery", () => {
     expect(screen.getByTestId("media-preview-upload-1").querySelector("img")?.getAttribute("src")).toBe("blob:preview-1");
     // A PDF is not drawn: its extension stands in.
     expect(screen.getByTestId("media-preview-upload-3").textContent).toBe("PDF");
+    // A refused file gets no preview at all, not even a temporary address.
+    expect(screen.getByTestId("media-preview-upload-4").querySelector("img")).toBeNull();
     // Removing a row releases its preview and keeps the focus on the upload zone.
-    const removed = screen.getByRole("button", { name: "Quitar de la lista pesada.jpg" });
-    fireEvent.click(removed);
-    expect(screen.queryByText(/pesada\.jpg es demasiado grande/)).toBeNull();
-    expect(revoked).toHaveLength(1);
+    fireEvent.click(await screen.findByRole("button", { name: "Quitar de la lista uno.png" }));
+    expect(screen.queryByTestId("media-row-upload-1")).toBeNull();
+    expect(revoked).toEqual(["blob:preview-1"]);
     expect(document.activeElement).toBe(zone());
   });
 
@@ -146,7 +153,7 @@ describe("E10 · drag and drop on the gallery", () => {
     renderApp(<MediaUploader celebrationId="c-1" purpose="gallery" />, client);
     const group = screen.getByRole("group", { name: "Subir archivos" });
     const help = document.getElementById(group.getAttribute("aria-describedby") ?? "");
-    expect(help?.textContent).toBe("JPG, PNG, WebP, GIF, AVIF, SVG o HEIC, de hasta 10 MB cada uno.");
+    expect(help?.textContent).toBe("JPG, PNG, WebP, GIF, AVIF, SVG o HEIC, de hasta 10 MB cada uno (SVG: hasta 5 MB).");
     expect(group.getAttribute("role")).toBe("group");
     // Reached by script only (after a removal); the Tab key goes to the real button inside.
     expect(group.tabIndex).toBe(-1);
@@ -234,5 +241,52 @@ describe("E10 · the gallery shows only gallery photos", () => {
     drag("drop", zone(), [file("grande.png")]);
     expect(await screen.findByText(/grande\.png no cabe en el espacio que te queda/)).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Reintentar grande.png" })).toBeNull();
+  });
+});
+
+describe("E10 · review fixes in the gallery", () => {
+  it("files still waiting never go up to the celebration the host moved to", async () => {
+    let n = 0;
+    const other = { ...CELEBRATION, id: "c-2" };
+    const completes = Object.fromEntries([1, 2, 3].map((id) => [`POST /media/uploads/n${id}/complete`, () => asset(`n${id}`)]));
+    const { client, calls } = fakeClient({ ...baseHandlers(), ...baseHandlers(other), "GET /media/celebrations/c-1/assets": () => ({ items: [] }), "GET /media/celebrations/c-2/assets": () => ({ items: [] }), "POST /media/uploads/presign": () => intent(`n${++n}`), ...completes });
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+    const screenFor = (id: string) => <AppProviders client={client} claims={HOST} locale="es-BO" queryClient={queryClient}><GalleryEditorScreen celebrationId={id} onNavigate={vi.fn()} /></AppProviders>;
+    // Both celebrations are already read, so moving between them does not go through the loading state.
+    const view = render(screenFor("c-2"));
+    await screen.findByText("Aquí van las fotos de su historia");
+    view.rerender(screenFor("c-1"));
+    await screen.findByText("Aquí van las fotos de su historia");
+    FakeXhr.held = [];
+    drag("drop", zone(), [file("a.png"), file("b.png"), file("c.png")]);
+    await waitFor(() => expect(FakeXhr.held).toHaveLength(2));
+    view.rerender(screenFor("c-2"));
+    await waitFor(() => expect(screen.queryByTestId("media-row-upload-1")).toBeNull());
+    FakeXhr.held.splice(0).forEach((finish) => finish());
+    await waitFor(() => expect(presigns(calls)).toHaveLength(3));
+    expect(presigns(calls).map((body) => (body as { celebrationId: string }).celebrationId)).toEqual(["c-1", "c-1", "c-1"]);
+    FakeXhr.held.splice(0).forEach((finish) => finish());
+  });
+
+  const drawing = (over: Record<string, unknown> = {}) => asset("dibujo", { status: "PROCESSED", filename: "dibujo.svg", contentType: "image/svg+xml", variants: { svg: "https://x.test/dibujo.svg" }, ...over });
+
+  it("an SVG is drawn on the web and is not offered as the cover by hand", async () => {
+    const photo = asset("foto", { status: "PROCESSED", isCover: true, variants: { thumb: "https://x.test/t.webp", full: "https://x.test/f.webp" } });
+    const { client } = server(() => ({ items: [photo, drawing()] }));
+    renderApp(<GalleryEditorScreen celebrationId="c-1" onNavigate={vi.fn()} />, client);
+    const menus = await screen.findAllByRole("button", { name: /^Más opciones: / });
+    expect(screen.queryByTestId("svg-placeholder-dibujo")).toBeNull();
+    fireEvent.click(menus[1] as HTMLElement);
+    expect(await screen.findByRole("menuitem", { name: "Eliminar" })).toBeTruthy();
+    expect(screen.queryByRole("menuitem", { name: "Usar como portada" })).toBeNull();
+  });
+
+  it("one drop takes up to 30 files and says how many stayed out", async () => {
+    const { client } = server();
+    FakeXhr.held = [];
+    renderApp(<MediaUploader celebrationId="c-1" purpose="gallery" />, client);
+    drag("drop", zone(), Array.from({ length: 33 }, (_, index) => file(`f${index}.png`)));
+    expect(await screen.findByText("Se agregan hasta 30 archivos por vez. Quedaron 3 fuera: elígelos cuando terminen estos.")).toBeTruthy();
+    expect(screen.getAllByTestId(/^media-row-/)).toHaveLength(30);
   });
 });

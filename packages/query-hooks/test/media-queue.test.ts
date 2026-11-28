@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { ApiError } from "@rsvp/api-client";
-import { ACCEPTED_IMAGE_TYPES, classifyFailure, createUploadQueue, isGalleryAsset, precheck, UploadError, type MediaAsset, type MediaQuota, type QueueFile, type UploadOne } from "../src/index.js";
+import { ACCEPTED_IMAGE_TYPES, classifyFailure, createUploadQueue, DEFAULT_LIMITS, isGalleryAsset, precheck, uploadToPresignedUrl, UploadError, type MediaAsset, type MediaQuota, type QueueFile, type UploadOne } from "../src/index.js";
 
 const file = (name: string, type = "image/png", size = 1000): QueueFile => ({ file: new Blob(["x"]), name, type, size });
 const asset = (status: MediaAsset["status"] = "PROCESSING"): MediaAsset => ({ id: "a", celebrationId: "c", filename: "f", contentType: "image/png", sizeBytes: 1, status, width: null, height: null, sortOrder: 0, isCover: false, variants: {} });
@@ -154,5 +154,61 @@ describe("gallery assets and empty files", () => {
     const picked = { ...file("a.png"), previewUri: "file:///a.png" };
     queue.add([picked], { purpose: "gallery" });
     expect(queue.getSnapshot().items[0]).toMatchObject({ file: picked.file, previewUri: "file:///a.png" });
+  });
+});
+
+describe("throttling, vector limit and pending quota", () => {
+  const intent = { assetId: "a", objectKey: "k", uploadUrl: "https://storage.test/a", method: "PUT" as const, requiredHeaders: {}, maxBytes: 1 };
+  /** Answers each PUT with the next status. */
+  function storage(statuses: readonly number[], retryAfter: string | null = null) {
+    let sent = 0;
+    const create = (): XMLHttpRequest => {
+      const xhr = {
+        status: 0, upload: {} as XMLHttpRequestUpload, onload: null as null | (() => void), onerror: null,
+        open: () => {}, setRequestHeader: () => {}, getResponseHeader: () => retryAfter,
+        send: () => { xhr.status = statuses[sent++] ?? 200; xhr.onload?.(); }
+      };
+      return xhr as unknown as XMLHttpRequest;
+    };
+    return { create, sent: () => sent };
+  }
+
+  it("a 429 on the PUT is waited out and the same signed URL is tried again", async () => {
+    const waits: number[] = [];
+    const server = storage([429, 429, 200]);
+    await uploadToPresignedUrl(intent, new Blob(["x"]), () => {}, server.create, async (ms) => { waits.push(ms); });
+    expect(server.sent()).toBe(3);
+    expect(waits).toEqual([5_000, 20_000]);
+  });
+
+  it("it honours Retry-After up to a minute, and a 429 that persists goes up as retryable", async () => {
+    const waits: number[] = [];
+    const server = storage([429, 429, 429], "600");
+    const failure = await uploadToPresignedUrl(intent, new Blob(["x"]), () => {}, server.create, async (ms) => { waits.push(ms); }).catch((error: unknown) => error);
+    expect(waits).toEqual([60_000, 60_000]);
+    expect(server.sent()).toBe(3);
+    expect(classifyFailure(failure)).toEqual({ failure: "server", retryable: true });
+  });
+
+  it("another refusal is not repeated", async () => {
+    const server = storage([400]);
+    await expect(uploadToPresignedUrl(intent, new Blob(["x"]), () => {}, server.create, async () => {})).rejects.toMatchObject({ status: 400 });
+    expect(server.sent()).toBe(1);
+  });
+
+  it("an SVG stops at 5 MiB while a photo goes to 10", () => {
+    const check = (type: string, size: number) => precheck({ type, size }, "gallery", undefined, 0, 0, DEFAULT_LIMITS);
+    expect([check("image/svg+xml", 5 * 1024 * 1024), check("image/svg+xml", 5 * 1024 * 1024 + 1), check("image/png", 10 * 1024 * 1024)]).toEqual([null, "tooLarge", null]);
+  });
+
+  it("what is waiting or uploading from an earlier batch counts against the quota of the next one", () => {
+    const queue = createUploadQueue(() => new Promise<MediaAsset>(() => {}), { quota: () => quota({ assets: 97, bytes: 0 }) });
+    queue.add([file("a.png"), file("b.png"), file("c.png")], { purpose: "gallery" });
+    queue.add([file("d.png")], { purpose: "gallery" });
+    expect(queue.getSnapshot().items.map((item) => item.failure ?? "ok")).toEqual(["ok", "ok", "ok", "quotaAssets"]);
+    const bytes = createUploadQueue(() => new Promise<MediaAsset>(() => {}), { quota: () => quota({ maxBytes: 1500 }) });
+    bytes.add([file("a.png")], { purpose: "gallery" });
+    bytes.add([file("b.png")], { purpose: "gallery" });
+    expect(bytes.getSnapshot().items[1]?.failure).toBe("quotaBytes");
   });
 });

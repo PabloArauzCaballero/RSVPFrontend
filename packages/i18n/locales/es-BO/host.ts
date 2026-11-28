@@ -80,13 +80,13 @@ export const hostEsBO = {
   },
   media: {
     title: "Archivos", quota: "{{assets}} de {{maxAssets}} archivos · {{used}} de {{max}} usados", quotaFull: "Llegaste al límite de archivos de esta invitación. Elimina alguno para subir otro.",
-    add: "Agregar archivos", addMusic: "Subir música (MP3)", help: "JPG, PNG, WebP, GIF, AVIF, SVG o HEIC, de hasta {{max}} MB cada uno.", helpMusic: "MP3 de hasta {{max}} MB y {{minutes}} minutos.",
+    add: "Agregar archivos", addMusic: "Subir música (MP3)", help: "JPG, PNG, WebP, GIF, AVIF, SVG o HEIC, de hasta {{max}} MB cada uno (SVG: hasta {{svgMax}} MB).", helpMusic: "MP3 de hasta {{max}} MB y {{minutes}} minutos.",
     queued: "En espera", uploading: "Subiendo {{name}}…", progressLabel: "Avance de {{name}}", quotaLabel: "Espacio usado", processing: "Preparando {{name}}…", done: "Listo: {{name}}.", retry: "Reintentar", remove: "Quitar de la lista", clear: "Limpiar lista",
     retryNamed: "Reintentar {{name}}", removeNamed: "Quitar de la lista {{name}}", takePhoto: "Tomar foto", openSettings: "Abrir ajustes",
     zone: "Subir archivos", zoneMusic: "Subir música", dropHint: "Arrastra tus archivos aquí o elígelos.", dropHintMusic: "Arrastra tu MP3 aquí o elígelo.", dropNow: "Suelta para subir.", dropInvalid: "Eso no se puede subir aquí.",
     pickProblems: {
       libraryDenied: "No tenemos permiso para ver tus fotos. Actívalo en los ajustes del teléfono y vuelve a intentarlo.", cameraDenied: "No tenemos permiso para usar la cámara. Actívalo en los ajustes del teléfono o elige una foto de la galería.",
-      unreadable: "No pudimos abrir esos archivos. Vuelve a elegirlos.", notAFile: "Eso no es un archivo. Si es una imagen de otra página, guárdala en tu equipo y súbela desde ahí."
+      unreadable: "No pudimos abrir esos archivos. Vuelve a elegirlos.", batch: "Se agregan hasta {{max}} archivos por vez. Quedaron {{left}} fuera: elígelos cuando terminen estos.", notAFile: "Eso no es un archivo. Si es una imagen de otra página, guárdala en tu equipo y súbela desde ahí."
     },
     rightsTitle: "Aviso de derechos de autor", rights: "Confirmo que tengo derecho a usar esta música en mi invitación y entiendo que se retirará si recibimos una denuncia de derechos de autor.", rightsRequired: "Acepta el aviso de derechos para subir música.",
     failures: {

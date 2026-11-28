@@ -3,6 +3,7 @@ import { Image, Text, View } from "react-native";
 import { radius, spacing } from "@rsvp/design-tokens";
 import type { QueueItem, UploadFailure } from "@rsvp/query-hooks";
 import { Button, useColors } from "@rsvp/ui";
+import { drawsSvg } from "../../platform/pick-media";
 import { useT } from "../../platform/providers";
 import { Notice, useStyles } from "../ui";
 
@@ -23,9 +24,11 @@ export function Bar({ now, max, label }: { readonly now: number; readonly max: n
 }
 
 /** The address to draw a file from: the picker's on a phone, a temporary one made from the Blob on the web (released with the row). */
-function usePreviewUri({ file, previewUri, type }: QueueItem): string | null {
+function usePreviewUri({ file, previewUri, type, status, retryable }: QueueItem): string | null {
   const [made, setMade] = useState<string | null>(null);
-  const image = type.startsWith("image/");
+  // A refused file gets no preview: nothing to keep, and a huge one is not decoded just to say no.
+  const refused = status === "error" && !retryable;
+  const image = type.startsWith("image/") && !refused && (drawsSvg || type !== "image/svg+xml");
   useEffect(() => {
     if (!image || previewUri || typeof document === "undefined" || typeof URL.createObjectURL !== "function") return undefined;
     const url = URL.createObjectURL(file);

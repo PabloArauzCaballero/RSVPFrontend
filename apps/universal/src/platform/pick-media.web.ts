@@ -7,6 +7,8 @@ export const toPickedDrop = (files: Iterable<File>): readonly PickedMedia[] => A
 
 /** A phone browser (coarse pointer) offers a camera shortcut; on a computer `capture` is ignored, so the button would lie. */
 export const canTakePhoto = (): boolean => typeof window !== "undefined" && (window.matchMedia?.("(pointer: coarse)").matches ?? false);
+/** A browser draws an SVG in an `<img>` (without running anything inside it). */
+export const drawsSvg: boolean = true;
 /** The browser has no settings screen a page can open. */
 export const openPermissionSettings: (() => void) | null = null;
 

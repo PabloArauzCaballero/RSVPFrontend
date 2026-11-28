@@ -83,13 +83,13 @@ export const hostEnUS: DeepStrings<typeof hostEsBO> = {
   },
   media: {
     title: "Files", quota: "{{assets}} of {{maxAssets}} files · {{used}} of {{max}} used", quotaFull: "You reached the file limit of this invitation. Delete one to upload another.",
-    add: "Add files", addMusic: "Upload music (MP3)", help: "JPG, PNG, WebP, GIF, AVIF, SVG or HEIC, up to {{max}} MB each.", helpMusic: "MP3 up to {{max}} MB and {{minutes}} minutes.",
+    add: "Add files", addMusic: "Upload music (MP3)", help: "JPG, PNG, WebP, GIF, AVIF, SVG or HEIC, up to {{max}} MB each (SVG: up to {{svgMax}} MB).", helpMusic: "MP3 up to {{max}} MB and {{minutes}} minutes.",
     queued: "Waiting", uploading: "Uploading {{name}}…", progressLabel: "Progress of {{name}}", quotaLabel: "Space used", processing: "Preparing {{name}}…", done: "Done: {{name}}.", retry: "Retry", remove: "Remove from list", clear: "Clear list",
     retryNamed: "Retry {{name}}", removeNamed: "Remove from list {{name}}", takePhoto: "Take photo", openSettings: "Open settings",
     zone: "Upload files", zoneMusic: "Upload music", dropHint: "Drag your files here or choose them.", dropHintMusic: "Drag your MP3 here or choose it.", dropNow: "Drop to upload.", dropInvalid: "That can't be uploaded here.",
     pickProblems: {
       libraryDenied: "We don't have permission to see your photos. Turn it on in your phone settings and try again.", cameraDenied: "We don't have permission to use the camera. Turn it on in your phone settings or choose a photo from your library.",
-      unreadable: "We couldn't open those files. Choose them again.", notAFile: "That isn't a file. If it's a picture from another page, save it to your device and upload it from there."
+      unreadable: "We couldn't open those files. Choose them again.", batch: "Up to {{max}} files go at a time. {{left}} stayed out: choose them when these finish.", notAFile: "That isn't a file. If it's a picture from another page, save it to your device and upload it from there."
     },
     rightsTitle: "Copyright notice", rights: "I confirm I have the right to use this music in my invitation and I understand it will be removed if we receive a copyright report.", rightsRequired: "Accept the rights notice to upload music.",
     failures: {

@@ -27,6 +27,7 @@ export interface MediaUploadPanelProps {
 function ProblemNotice({ problem }: { readonly problem: PickProblem }): ReactNode {
   const t = useT();
   const styles = useStyles();
+  if (problem.kind === "batch") return <Notice kind="error">{t("host.media.pickProblems.batch", { max: problem.max, left: problem.left })}</Notice>;
   if (problem.kind !== "permission") return <Notice kind="error">{t(`host.media.pickProblems.${problem.kind}`)}</Notice>;
   return (
     <Notice kind="error">
@@ -79,7 +80,7 @@ export function MediaUploadPanel({ uploads, showPickButton = true, dropHint, hid
         style={droppable ? { gap: spacing[3], padding: spacing[5], alignItems: "center", borderWidth: 2, borderStyle: "dashed", borderRadius: radius.lg, borderColor: border, backgroundColor: drag === "idle" ? "transparent" : palette.primaryMuted } : { gap: spacing[3] }}>
         {droppable ? <Text style={[styles.body, { textAlign: "center", fontWeight: "600" }]} aria-live="polite">{hint}</Text> : null}
         <Text nativeID={helpId} style={[styles.muted, droppable ? { textAlign: "center" } : null]}>
-          {music ? t("host.media.helpMusic", { max: Math.round(DEFAULT_LIMITS.audio / MB), minutes: MAX_AUDIO_MINUTES }) : t("host.media.help", { max: Math.round(DEFAULT_LIMITS.image / MB) })}
+          {music ? t("host.media.helpMusic", { max: Math.round(DEFAULT_LIMITS.audio / MB), minutes: MAX_AUDIO_MINUTES }) : t("host.media.help", { max: Math.round(DEFAULT_LIMITS.image / MB), svgMax: Math.round(DEFAULT_LIMITS.svg / MB) })}
         </Text>
         {showPickButton || camera ? (
           <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center", alignSelf: "stretch", gap: spacing[3] }}>

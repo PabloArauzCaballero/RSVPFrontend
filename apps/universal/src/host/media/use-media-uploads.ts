@@ -10,6 +10,8 @@ import { useApiClient } from "../../platform/providers";
  * with its own header action calls `choose` from there.
  */
 export const RIGHTS_NOTICE_VERSION = "2026-11-24";
+/** How many files of one pick or drop become rows: a whole camera roll would draw hundreds of previews at once. */
+export const MAX_FILES_PER_BATCH = 30;
 
 export type MediaPicker = (kind: MediaKind, source?: PickSource) => Promise<readonly PickedMedia[]>;
 
@@ -19,7 +21,9 @@ export type PickProblem =
   /** The picker answered, but the file could not be read. */
   | { readonly kind: "unreadable" }
   /** Something that is not a file was dropped (a picture from another page). It is never downloaded. */
-  | { readonly kind: "notAFile" };
+  | { readonly kind: "notAFile" }
+  /** More files than one batch takes: the first ones went on, `left` stayed out. */
+  | { readonly kind: "batch"; readonly max: number; readonly left: number };
 
 export interface MediaUploadOptions {
   readonly celebrationId: string;
@@ -83,7 +87,10 @@ export function useMediaUploads({ celebrationId, purpose, pick = defaultPick, on
     return !blocked;
   };
   const enqueue = (files: readonly PickedMedia[]): void => {
-    if (files.length) queue.add(files, { purpose, rightsNoticeVersion: music ? rightsNoticeVersion : null });
+    if (!files.length) return;
+    const left = files.length - MAX_FILES_PER_BATCH;
+    if (left > 0) setProblem({ kind: "batch", max: MAX_FILES_PER_BATCH, left });
+    queue.add(files.slice(0, MAX_FILES_PER_BATCH), { purpose, rightsNoticeVersion: music ? rightsNoticeVersion : null });
   };
   const choose = (source: PickSource = "library"): void => {
     setProblem(null);

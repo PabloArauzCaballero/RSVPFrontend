@@ -15,6 +15,8 @@ async function fromUri(uri: string, name: string, declared: string | undefined, 
 
 /** iOS and Android can always take a photo; asking for the permission happens when the person presses the button. */
 export const canTakePhoto = (): boolean => true;
+/** The `Image` of iOS and Android draws no SVG: the screen puts a labelled placeholder in its place. */
+export const drawsSvg: boolean = false;
 /** There is no drag and drop on iOS and Android: nothing ever arrives this way. */
 export const toPickedDrop = (_files: Iterable<File>): readonly PickedMedia[] => [];
 /** The system settings, where a denied permission is turned back on. */

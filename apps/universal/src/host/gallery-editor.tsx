@@ -3,6 +3,7 @@ import { Image, Text, View } from "react-native";
 import { radius, spacing } from "@rsvp/design-tokens";
 import { CheckMark, Enter, Skeleton, SkeletonList, useColors } from "@rsvp/ui";
 import { isGalleryAsset, isMediaProcessingStuck, useDeleteMedia, useMediaAssets, useReorderMedia, type MediaAsset } from "@rsvp/query-hooks";
+import { drawsSvg } from "../platform/pick-media";
 import { useApiClient, useT } from "../platform/providers";
 import { CelebrationScreen, useScreenHeader, type ScreenProps } from "./gate";
 import { CelebrationErrorNotice } from "./celebration-errors";
@@ -24,6 +25,22 @@ function move(ids: readonly string[], index: number, delta: number): string[] {
   if (item) next.splice(index + delta, 0, item);
   return next;
 }
+
+/** The thumbnail; an SVG has none and is drawn as is where the platform can, or named where it cannot. */
+function Thumbnail({ asset }: { readonly asset: MediaAsset }): ReactNode {
+  const styles = useStyles();
+  const uri = asset.variants.thumb ?? (drawsSvg ? asset.variants.svg : undefined);
+  if (uri) return <Image source={{ uri }} style={{ width: "100%", height: "100%" }} resizeMode="cover" accessibilityIgnoresInvertColors />;
+  if (!asset.variants.svg) return null;
+  return (
+    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: spacing[3] }} testID={`svg-placeholder-${asset.id}`}>
+      <Text style={[styles.label, { textAlign: "center" }]} numberOfLines={3}>{asset.filename}</Text>
+    </View>
+  );
+}
+
+/** A drawing without raster variants would leave the shared link without a picture: it is not offered as the cover by hand. */
+const canBeCover = (asset: MediaAsset): boolean => !(asset.variants.svg && !asset.variants.full);
 
 function Gallery({ celebrationId, pick }: { readonly celebrationId: string; readonly pick?: MediaPicker | undefined }): ReactNode {
   const t = useT();
@@ -94,7 +111,7 @@ function Gallery({ celebrationId, pick }: { readonly celebrationId: string; read
             <Enter from="down" delay={Math.min(index, MAX_STAGGER) * STAGGER_MS}>
             <View style={{ gap: spacing[2] }}>
             <View style={{ aspectRatio: 1, borderRadius: radius.lg, overflow: "hidden", backgroundColor: palette.primaryMuted }}>
-              {asset.variants.thumb ?? asset.variants.svg ? <Image source={{ uri: asset.variants.thumb ?? asset.variants.svg }} style={{ width: "100%", height: "100%" }} resizeMode="cover" accessibilityIgnoresInvertColors /> : null}
+              <Thumbnail asset={asset} />
             </View>
             <View style={[styles.row, { justifyContent: "space-between", flexWrap: "nowrap" }]}>
               <View style={[styles.row, { flex: 1, gap: spacing[2] }]}>
@@ -102,7 +119,7 @@ function Gallery({ celebrationId, pick }: { readonly celebrationId: string; read
                 {asset.id === cover ? <View style={[styles.row, { gap: spacing[1] }]}><CheckMark size={18} tone="success" play={false} /><Text style={[styles.label, { color: palette.primary }]}>{t("host.gallery.cover")}</Text></View> : null}
               </View>
               <OverflowMenu label={`${t("ui.moreOptions")}: ${t("host.gallery.photo", { n: index + 1 })}`} items={[
-                ...(asset.id === cover ? [] : [{ key: "cover", label: t("host.gallery.makeCover"), onPress: () => reorder.mutate({ assetIds: ids, coverAssetId: asset.id }, saved()), testID: `cover-${asset.id}` }]),
+                ...(asset.id === cover || !canBeCover(asset) ? [] : [{ key: "cover", label: t("host.gallery.makeCover"), onPress: () => reorder.mutate({ assetIds: ids, coverAssetId: asset.id }, saved()), testID: `cover-${asset.id}` }]),
                 { key: "up", label: t("host.common.moveUp"), onPress: () => reorder.mutate({ assetIds: move(ids, index, -1), coverAssetId: cover }, saved()), disabled: !index || reorder.isPending },
                 { key: "down", label: t("host.common.moveDown"), onPress: () => reorder.mutate({ assetIds: move(ids, index, 1), coverAssetId: cover }, saved()), disabled: index === items.length - 1 || reorder.isPending },
                 { key: "delete", label: t("host.gallery.delete"), onPress: () => { remove.reset(); setToDelete(asset.id); }, destructive: true, testID: `delete-${asset.id}` }
@@ -123,7 +140,8 @@ export function GalleryEditorScreen({ celebrationId, onNavigate, pick }: ScreenP
   const t = useT();
   return (
     <CelebrationScreen celebrationId={celebrationId} onNavigate={onNavigate} current="gallery" editable title={t("host.gallery.title")} intro={t("host.gallery.intro")}>
-      {({ celebration }) => <Gallery celebrationId={celebration.id} pick={pick} />}
+      {/* Another celebration is another queue: what was picked for one never goes up to another. */}
+      {({ celebration }) => <Gallery key={`${celebration.id}:gallery`} celebrationId={celebration.id} pick={pick} />}
     </CelebrationScreen>
   );
 }

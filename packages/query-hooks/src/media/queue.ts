@@ -53,7 +53,7 @@ const CODES: Readonly<Record<string, readonly [UploadFailure, boolean]>> = {
 
 /** Maps what the server or the network said to a failure kind. A 5xx or a dropped connection can be retried as is; a 4xx cannot until the person changes something. */
 export function classifyFailure(error: unknown): { readonly failure: UploadFailure; readonly retryable: boolean } {
-  if (error instanceof UploadError) return error.status === 0 ? { failure: "network", retryable: true } : { failure: error.status === 403 ? "forbidden" : "server", retryable: error.status >= 500 || error.status === 403 };
+  if (error instanceof UploadError) return error.status === 0 ? { failure: "network", retryable: true } : { failure: error.status === 403 ? "forbidden" : "server", retryable: error.status >= 500 || error.status === 429 || error.status === 403 };
   const problem = error as Problem;
   const known = problem.problem?.code ? CODES[problem.problem.code] : undefined;
   if (known) return { failure: known[0], retryable: known[1] };
@@ -79,12 +79,13 @@ export interface UploadQueue {
 }
 
 /** Cheap checks done before a byte is uploaded, with the same limits the server enforces. */
-export function precheck(file: Pick<QueueFile, "type" | "size">, purpose: MediaPurpose, quota: MediaQuota | undefined, pendingBytes: number, pendingCount: number, limits: { readonly image: number; readonly audio: number }): UploadFailure | null {
+export function precheck(file: Pick<QueueFile, "type" | "size">, purpose: MediaPurpose, quota: MediaQuota | undefined, pendingBytes: number, pendingCount: number, limits: UploadLimits): UploadFailure | null {
   const audio = file.type === "audio/mpeg";
   if ((audio) !== (purpose === "music")) return "type";
   if (!ACCEPTED.has(file.type)) return "type";
   if (file.size <= 0) return "invalid";
-  if (file.size > (audio ? limits.audio : limits.image)) return "tooLarge";
+  const limit = audio ? limits.audio : file.type === "image/svg+xml" ? Math.min(limits.svg ?? DEFAULT_LIMITS.svg, limits.image) : limits.image;
+  if (file.size > limit) return "tooLarge";
   if (quota) {
     if (quota.assets + pendingCount + 1 > quota.maxAssets) return "quotaAssets";
     if (quota.bytes + pendingBytes + file.size > quota.maxBytes) return "quotaBytes";
@@ -95,9 +96,10 @@ export function precheck(file: Pick<QueueFile, "type" | "size">, purpose: MediaP
 export const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif", "image/svg+xml", "image/heic", "image/heif"] as const;
 export const ACCEPTED_AUDIO_TYPES = ["audio/mpeg"] as const;
 const ACCEPTED: ReadonlySet<string> = new Set([...ACCEPTED_IMAGE_TYPES, ...ACCEPTED_AUDIO_TYPES]);
-export const DEFAULT_LIMITS = { image: 10 * 1024 * 1024, audio: 15 * 1024 * 1024 } as const;
+export const DEFAULT_LIMITS = { image: 10 * 1024 * 1024, audio: 15 * 1024 * 1024, svg: 5 * 1024 * 1024 } as const;
+export interface UploadLimits { readonly image: number; readonly audio: number; /** The server caps vector drawings below photos. */ readonly svg?: number }
 
-export function createUploadQueue(upload: UploadOne, config: { readonly concurrency?: number; readonly quota?: () => MediaQuota | undefined; readonly limits?: { readonly image: number; readonly audio: number } } = {}): UploadQueue {
+export function createUploadQueue(upload: UploadOne, config: { readonly concurrency?: number; readonly quota?: () => MediaQuota | undefined; readonly limits?: UploadLimits } = {}): UploadQueue {
   const concurrency = config.concurrency ?? 2;
   const limits = config.limits ?? DEFAULT_LIMITS;
   let items: QueueItem[] = [];
@@ -144,8 +146,10 @@ export function createUploadQueue(upload: UploadOne, config: { readonly concurre
     getSnapshot: () => snapshot,
     add: (files, options) => {
       const quota = config.quota?.();
-      let pendingBytes = 0;
-      let pendingCount = 0;
+      // What is still waiting or going up from earlier batches takes room too: the quota that was read does not count it yet.
+      const pending = items.filter((item) => item.status === "queued" || item.status === "uploading");
+      let pendingBytes = pending.reduce((sum, item) => sum + item.size, 0);
+      let pendingCount = pending.length;
       const created = files.map((file): QueueItem => {
         sequence += 1;
         const id = `upload-${sequence}`;
