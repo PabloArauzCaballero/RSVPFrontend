@@ -116,6 +116,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/celebrations/{celebrationId}/moderation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Why and how content was hidden, and the state of the appeal */
+        get: operations["getCelebrationModeration"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/celebrations/{celebrationId}/public-page": {
         parameters: {
             query?: never;
@@ -185,6 +202,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/celebrations/{celebrationId}/takedowns/{takedownId}/appeal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Appeal a moderation decision (once per decision) */
+        post: operations["appealTakedown"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/celebrations/{celebrationId}/template": {
         parameters: {
             query?: never;
@@ -212,6 +246,23 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["unpublishCelebration"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/celebrations/admin/appeals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Appeals waiting for a decision (ADMIN) */
+        get: operations["adminListAppeals"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -268,6 +319,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/celebrations/admin/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Moderation queue (ADMIN) */
+        get: operations["adminListReports"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/celebrations/admin/reports/{reportId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Report detail with its audit trail (ADMIN) */
+        get: operations["adminGetReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/celebrations/admin/reports/{reportId}/resolution": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Dismiss, hide an element or hide the page (ADMIN) */
+        post: operations["adminResolveReport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/celebrations/admin/summary": {
         parameters: {
             query?: never;
@@ -279,6 +381,43 @@ export interface paths {
         get: operations["adminCelebrationSummary"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/celebrations/admin/takedowns/{takedownId}/appeal-decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accept (restores) or reject (keeps hidden) an appeal (ADMIN) */
+        post: operations["adminDecideAppeal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/celebrations/admin/takedowns/{takedownId}/restoration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Restore hidden content directly, without an appeal (ADMIN)
+         * @description Lifts an active hiding. It works whether or not there was an appeal: a pending appeal is resolved as accepted, a rejected one stays in the history. Audited as CONTENT_RESTORED and announced with celebration.moderation.content-restored.v1. A hiding that is already restored is 409 TAKEDOWN_NOT_ACTIVE; two administrators restoring at once get 200 and 409.
+         */
+        post: operations["adminRestoreTakedown"];
         delete?: never;
         options?: never;
         head?: never;
@@ -383,6 +522,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/celebrations/public/{slug}/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Report a published invitation (anonymous)
+         * @description No authentication. Limited per client address and per celebration (429 with Retry-After). The address is never stored: only a salted HMAC.
+         */
+        post: operations["submitPublicReport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/celebrations/ready": {
         parameters: {
             query?: never;
@@ -427,6 +586,34 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AdminReport: {
+            /** Format: uuid */
+            celebrationId: string;
+            comment: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            element: components["schemas"]["ElementRef"] | null;
+            /** Format: uuid */
+            id: string;
+            reason: components["schemas"]["ReportReason"];
+            /** @description First 12 hex characters of the salted HMAC of the reporter address: lets a moderator see repeat reporters without storing or showing the address. */
+            reporterRef: string;
+            resolutionNote: string | null;
+            /** Format: date-time */
+            resolvedAt: string | null;
+            /** Format: uuid */
+            resolvedBy: string | null;
+            slug: string;
+            status: components["schemas"]["ReportStatus"];
+        };
+        AppealDecisionInput: {
+            /** @enum {string} */
+            decision: "ACCEPT" | "REJECT";
+            note?: string | null;
+        };
+        AppealInput: {
+            message: string;
+        };
         AuditEntry: {
             action?: string;
             actorId?: string | null;
@@ -557,6 +744,12 @@ export interface components {
                 [key: string]: Record<string, never> | null;
             };
         };
+        ElementRef: {
+            /** @description SECTION: the section code, one of enabledSections. BLOCK or IMAGE: either the `id` or `key` of an item inside a list of `content` (for example a schedule item `s1` or the venue `ceremony`), or a content path with the prefix `path:` and dot-separated segments, where a list index counts from 0: `path:title`, `path:venueName`, `path:hosts.BRIDE`, `path:venues.0`, `path:faq.2`. A path refers to the published document at the moment of hiding. Files served by Template/Media (photos, backgrounds, logos, own music) are not part of the content, so a file id is not an element: it is answered 422 ELEMENT_NOT_FOUND. To hide gallery photos report the `gallery` SECTION; Template/Media consumes the moderation events (content-hidden, content-restored, appeal-decided) and stops serving them by every route, and hiding the whole page (scope PAGE) stops serving every file of the celebration. The element must exist on the published page or the request is 422 ELEMENT_NOT_FOUND. PL-142-R15: a list position is never what is stored. When an administrator hides a list item addressed by a path ending in an index (`path:venues.0`), the stored Takedown.element.id is the item's own `id` or `key`, or, if it has neither, `hash:<64 hex>` = SHA-256 of the item's canonical JSON (keys sorted); both follow the item wherever the host moves it, so inserting an item at the front neither brings the offending one back nor hides an innocent one. `hash:<64 hex>` is also accepted as input for BLOCK and IMAGE. */
+            id: string;
+            /** @enum {string} */
+            kind: "SECTION" | "BLOCK" | "IMAGE";
+        };
         EventTypeDefinition: components["schemas"]["EventTypeDefinitionInput"] & {
             code: string;
         };
@@ -578,11 +771,56 @@ export interface components {
             locale: string;
             name: string;
         };
+        HostTakedown: {
+            active: boolean;
+            appeal: {
+                /** Format: date-time */
+                decidedAt: string | null;
+                decisionNote: string | null;
+                message: string | null;
+                /** @enum {string} */
+                status: "NONE" | "PENDING" | "ACCEPTED" | "REJECTED";
+            };
+            canAppeal: boolean;
+            element: components["schemas"]["ElementRef"] | null;
+            guidance: string | null;
+            /** Format: date-time */
+            hiddenAt: string;
+            /** Format: uuid */
+            id: string;
+            reason: components["schemas"]["ReportReason"];
+            /** Format: date-time */
+            restoredAt: string | null;
+            /** @enum {string} */
+            scope: "PAGE" | "ELEMENT";
+        };
         LocalDateTime: {
             date: string;
             time: string;
             timeZone: string;
             utcOffset: string;
+        };
+        ModerationAuditEntry: {
+            /** @enum {string} */
+            action: "REPORT_RECEIVED" | "REPORT_DISMISSED" | "ELEMENT_HIDDEN" | "PAGE_HIDDEN" | "APPEAL_FILED" | "APPEAL_ACCEPTED" | "APPEAL_REJECTED";
+            /** Format: uuid */
+            actorId: string | null;
+            /** @enum {string} */
+            actorKind: "ANONYMOUS" | "ADMIN" | "HOST";
+            /** Format: date-time */
+            at: string;
+            /** Format: uuid */
+            celebrationId: string;
+            details: {
+                [key: string]: unknown;
+            };
+            /** Format: uuid */
+            id: string;
+            reason: string | null;
+            /** Format: uuid */
+            reportId: string | null;
+            /** Format: uuid */
+            takedownId: string | null;
         };
         Problem: {
             code?: string;
@@ -618,6 +856,8 @@ export interface components {
                 }[];
                 name?: string;
             };
+            /** @description F7: elements moderation hid. They are already removed from content and enabledSections; empty almost always. */
+            hiddenElements?: components["schemas"]["ElementRef"][];
             /** @description D-1: true only when the host allowed indexing; otherwise clients must send noindex. */
             indexable?: boolean;
             locale?: string;
@@ -634,13 +874,23 @@ export interface components {
         PublicPageStatus: {
             /** Format: uuid */
             celebrationId: string;
+            /** @description The active decision that hides the whole page, or null. It stays reported while the page is unpublished, because republishing does not lift it. The host appeals it with POST /celebrations/{celebrationId}/takedowns/{takedownId}/appeal. */
+            moderation?: null | {
+                /** @description How to fix it, written by the moderator. */
+                guidance: string | null;
+                /** Format: date-time */
+                hiddenAt: string;
+                reason: components["schemas"]["ReportReason"];
+                /** Format: uuid */
+                takedownId: string;
+            };
             /** @description Celebration version the public page was built from; null without page */
             publicVersion: number | null;
             /**
-             * @description LIVE: published and the page exists. PUBLISHING: published, page not built yet. UNPUBLISHING: withdrawn, page still served. OFFLINE: not published and no page.
+             * @description LIVE: published and the page exists. PUBLISHING: published, page not built yet. UNPUBLISHING: withdrawn, page still served. OFFLINE: not published and no page. HIDDEN (F7): published, but moderation hides the whole page (guests get 404); see `moderation`.
              * @enum {string}
              */
-            state: "LIVE" | "PUBLISHING" | "UNPUBLISHING" | "OFFLINE";
+            state: "LIVE" | "PUBLISHING" | "UNPUBLISHING" | "OFFLINE" | "HIDDEN";
             /**
              * @description Publication decision (write model)
              * @enum {string}
@@ -666,6 +916,58 @@ export interface components {
             status: string;
             version: number;
         };
+        ReceivedReport: {
+            /** Format: uuid */
+            id: string;
+            /** @constant */
+            status: "RECEIVED";
+        };
+        ReportDetail: {
+            audit: components["schemas"]["ModerationAuditEntry"][];
+            celebration: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                ownerId: string;
+                slug: string;
+                status: string;
+            };
+            distinctReportersForCelebration: number;
+            openReportsForCelebration: number;
+            report: components["schemas"]["AdminReport"];
+            takedowns: components["schemas"]["Takedown"][];
+        };
+        ReportInput: {
+            /** @description Plain text, stored exactly as sent (nothing is stripped): it is never HTML and every client that shows it, the admin queue first, must escape it. Control and direction characters are refused (422 INVALID_TEXT_CHARACTER); whitespace only counts as no comment. */
+            comment?: string | null;
+            element?: components["schemas"]["ElementRef"] | null;
+            reason: components["schemas"]["ReportReason"];
+        };
+        /**
+         * @description Closed list. SEXUAL_CONTENT, VIOLENCE_OR_HATE, SCAM_OR_IMPERSONATION, COPYRIGHT, PERSONAL_DATA, SPAM; OTHER requires a comment.
+         * @enum {string}
+         */
+        ReportReason: "SEXUAL_CONTENT" | "VIOLENCE_OR_HATE" | "SCAM_OR_IMPERSONATION" | "COPYRIGHT" | "PERSONAL_DATA" | "SPAM" | "OTHER";
+        /** @enum {string} */
+        ReportStatus: "OPEN" | "DISMISSED" | "ACTIONED";
+        Resolution: {
+            report: components["schemas"]["AdminReport"];
+            takedown: components["schemas"]["Takedown"] | null;
+        };
+        ResolveReport: {
+            /** @enum {string} */
+            action: "DISMISS" | "HIDE_ELEMENT" | "HIDE_PAGE";
+            /** @description HIDE_ELEMENT only; defaults to the element the report points at (422 ELEMENT_REQUIRED when neither exists). It must exist on the published page (422 ELEMENT_NOT_FOUND): nothing is hidden, audited or notified otherwise. */
+            element?: components["schemas"]["ElementRef"] | null;
+            /** @description How the host can fix it; sent to the host in celebration.moderation.content-hidden.v1. */
+            guidance?: string | null;
+            /** @description Internal note; kept in the audit log. */
+            note?: string | null;
+        };
+        RestorationInput: {
+            /** @description Shown to the host in the notice; stays in the audit. */
+            note?: string | null;
+        };
         SettingsPatch: {
             /** @enum {string} */
             externalGiftMode?: "AUTO_ACCEPT" | "RESTRICTED";
@@ -678,6 +980,38 @@ export interface components {
             rsvpDeadline?: string | null;
             /** @enum {string} */
             unregisteredRsvpMode?: "AUTO_ACCEPT" | "RESTRICTED";
+        };
+        Takedown: {
+            /** Format: date-time */
+            appealDecidedAt?: string | null;
+            /** Format: uuid */
+            appealDecidedBy?: string | null;
+            appealDecisionNote?: string | null;
+            /** Format: date-time */
+            appealedAt?: string | null;
+            /** Format: uuid */
+            appealedBy?: string | null;
+            appealMessage?: string | null;
+            /** @enum {string} */
+            appealStatus: "NONE" | "PENDING" | "ACCEPTED" | "REJECTED";
+            /** Format: uuid */
+            celebrationId: string;
+            element: components["schemas"]["ElementRef"] | null;
+            guidance: string | null;
+            /** Format: date-time */
+            hiddenAt: string;
+            /** Format: uuid */
+            hiddenBy: string;
+            /** Format: uuid */
+            id: string;
+            reason: components["schemas"]["ReportReason"];
+            /** Format: uuid */
+            reportId: string;
+            /** Format: date-time */
+            restoredAt: string | null;
+            /** @enum {string} */
+            scope: "PAGE" | "ELEMENT";
+            slug: string;
         };
         TranslatedEventType: {
             code?: string;
@@ -698,6 +1032,8 @@ export interface components {
         CelebrationId: string;
         Limit: number;
         Offset: number;
+        ReportId: string;
+        TakedownId: string;
     };
     requestBodies: never;
     headers: never;
@@ -1431,6 +1767,48 @@ export interface operations {
             };
         };
     };
+    getCelebrationModeration: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                celebrationId: components["parameters"]["CelebrationId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Decisions for this celebration; never the reporter comment or origin */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["HostTakedown"][];
+                    };
+                };
+            };
+            /** @description Missing or invalid RS256 bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found or not yours */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
     getPublicPageStatus: {
         parameters: {
             query?: never;
@@ -1442,7 +1820,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Publication decision and public page state */
+            /** @description Publication decision and public page state; HIDDEN with `moderation` while an administrator hides the page */
             200: {
                 headers: {
                     "Cache-Control"?: "no-store";
@@ -1741,6 +2119,87 @@ export interface operations {
             };
         };
     };
+    appealTakedown: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                celebrationId: components["parameters"]["CelebrationId"];
+                takedownId: components["parameters"]["TakedownId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AppealInput"];
+            };
+        };
+        responses: {
+            /** @description Appeal filed; an administrator decides */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HostTakedown"];
+                };
+            };
+            /** @description Body shape invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing or invalid RS256 bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Visible but read-only for this actor */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found or not yours (cross-tenant is 404) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Already appealed (APPEAL_ALREADY_USED) or no longer hidden (TAKEDOWN_NOT_ACTIVE) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Empty or too long message */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
     selectTemplate: {
         parameters: {
             query?: never;
@@ -1934,6 +2393,58 @@ export interface operations {
             };
         };
     };
+    adminListAppeals: {
+        parameters: {
+            query?: {
+                limit?: components["parameters"]["Limit"];
+                offset?: components["parameters"]["Offset"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Takedowns with a PENDING appeal, oldest first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["Takedown"][];
+                    };
+                };
+            };
+            /** @description Limit outside 1-100 or a negative or non-numeric offset */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing or invalid RS256 bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not an administrator */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
     listEventTypeDefinitions: {
         parameters: {
             query?: never;
@@ -2112,6 +2623,188 @@ export interface operations {
             };
         };
     };
+    adminListReports: {
+        parameters: {
+            query?: {
+                limit?: components["parameters"]["Limit"];
+                offset?: components["parameters"]["Offset"];
+                status?: components["schemas"]["ReportStatus"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Reports, oldest first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["AdminReport"][];
+                    };
+                };
+            };
+            /** @description Unknown status, or a limit outside 1-100 or a negative or non-numeric offset */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing or invalid RS256 bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not an administrator */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    adminGetReport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reportId: components["parameters"]["ReportId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Detail */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportDetail"];
+                };
+            };
+            /** @description Missing or invalid RS256 bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not an administrator */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    adminResolveReport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reportId: components["parameters"]["ReportId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResolveReport"];
+            };
+        };
+        responses: {
+            /** @description Resolved; hiding takes effect on the public page at once and the host is notified by event */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Resolution"];
+                };
+            };
+            /** @description Body shape invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing or invalid RS256 bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not an administrator */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Already resolved, also when two administrators resolve it at once (REPORT_ALREADY_RESOLVED), or that content is already hidden (TAKEDOWN_ALREADY_ACTIVE) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Text too long (TEXT_TOO_LONG), control characters (INVALID_TEXT_CHARACTER), no element to hide (ELEMENT_REQUIRED), malformed element (INVALID_REPORT_ELEMENT) or an element the published page does not have (ELEMENT_NOT_FOUND) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
     adminCelebrationSummary: {
         parameters: {
             query?: never;
@@ -2148,6 +2841,166 @@ export interface operations {
             };
             /** @description Not an admin */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    adminDecideAppeal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                takedownId: components["parameters"]["TakedownId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AppealDecisionInput"];
+            };
+        };
+        responses: {
+            /** @description Decided */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Takedown"];
+                };
+            };
+            /** @description Body shape invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing or invalid RS256 bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not an administrator */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description There is no pending appeal (NO_PENDING_APPEAL) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Note too long */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    adminRestoreTakedown: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                takedownId: components["parameters"]["TakedownId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RestorationInput"];
+            };
+        };
+        responses: {
+            /** @description Restored */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Takedown"];
+                };
+            };
+            /** @description Body shape invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing or invalid RS256 bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not an administrator */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The content is no longer hidden (TAKEDOWN_NOT_ACTIVE) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Note too long or with control characters */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2228,7 +3081,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Published, indexable slugs for the sitemap */
+            /** @description Published, indexable slugs for the sitemap; pages hidden by moderation are excluded before limit and offset, so a page is short only at the end */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -2270,6 +3123,79 @@ export interface operations {
             /** @description Not published (reveals nothing) */
             404: {
                 headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    submitPublicReport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReportInput"];
+            };
+        };
+        responses: {
+            /** @description Received; a moderator will review it */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceivedReport"];
+                };
+            };
+            /** @description Body shape invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not published, hidden or unknown (reveals nothing) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Send application/json */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Reason outside the closed list (INVALID_REPORT_REASON), comment too long (REPORT_COMMENT_TOO_LONG), OTHER without comment (REPORT_COMMENT_REQUIRED), control characters in the comment (INVALID_TEXT_CHARACTER), malformed element (INVALID_REPORT_ELEMENT) or an element the published page does not have (ELEMENT_NOT_FOUND) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many reports: per client (IPv6 counted per /64), per client and celebration, or in total for the celebration in the last hour. Retry-After says when. */
+            429: {
+                headers: {
+                    /** @description Seconds until the next report is accepted */
+                    "Retry-After"?: number;
                     [name: string]: unknown;
                 };
                 content: {

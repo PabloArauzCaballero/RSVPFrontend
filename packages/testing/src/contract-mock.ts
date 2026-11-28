@@ -170,7 +170,7 @@ export function createContractMock(options: MockOptions = {}) {
 
     // Contract 1.3.0 (A18): the demo celebration is PUBLISHED and its public page (/celebrations/public/{slug}, above) exists, so it is LIVE.
     if (method === "GET" && path === `/celebrations/${celebrationId}/public-page`) {
-      return json(200, { celebrationId, status: "PUBLISHED", state: "LIVE", version: 3, publicVersion: 3 }, { "cache-control": "no-store" });
+      return json(200, { celebrationId, status: "PUBLISHED", state: "LIVE", version: 3, publicVersion: 3, moderation: null }, { "cache-control": "no-store" });
     }
 
     // ---- guest surface: opaque token as Bearer ----

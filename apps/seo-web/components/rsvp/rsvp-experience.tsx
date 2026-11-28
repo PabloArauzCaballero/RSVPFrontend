@@ -153,15 +153,19 @@ function Flow({ slug, token, fromStored = false, locale, siteOrigin, client: inj
   );
 }
 
-/** One tap to the gift list (the app's `GiftsLink`), shown only when the list has something to give or could not be checked. */
+/**
+ * One tap to the gift list (the app's `GiftsLink`), shown only when the list has something to give or could not be checked. The
+ * line under it invites to reserve only when the list is known to be open; closed by hand it says so.
+ */
 function GiftsLink({ client, celebrationId, slug, token, locale, t }: { client: ApiClient; celebrationId: string; slug: string; token: string; locale: AppLocale; t: Translate }): ReactNode {
   const list = useGiftList(client, celebrationId, token);
   if (list.isSuccess && guestVisible(list.data.items).length === 0) return null;
+  const hint = !list.isSuccess ? null : list.data.closed ? 'rsvp.invite.giftsClosedHint' : 'rsvp.invite.giftsHint';
   return (
     <div className="guest-gifts">
       {/* The credential travels in the fragment (never to a server log); see lib/guest-credential. */}
       <button type="button" className="rsvp-button" onClick={() => window.location.assign(guestGiftPath(slug, token, locale))} data-testid="open-gifts">{t('rsvp.invite.giftsCta')}</button>
-      <p className="rsvp-hint">{t('rsvp.invite.giftsHint')}</p>
+      {hint ? <p className="rsvp-hint">{t(hint)}</p> : null}
     </div>
   );
 }

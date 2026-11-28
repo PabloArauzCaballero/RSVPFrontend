@@ -2,9 +2,10 @@ import { describe, expect, it } from "vitest";
 import { ApiError } from "@rsvp/api-client";
 // Test-only reach into the es-BO resources (query-hooks does not depend on @rsvp/i18n): the keys must exist there.
 import { giftsEsBO } from "../../i18n/locales/es-BO/gifts";
+import { giftsEnUS } from "../../i18n/locales/en-US/gifts";
 import { rsvpEsBO } from "../../i18n/locales/es-BO/rsvp";
 import {
-  COMPANIONS_STEPPER_MAX, companionCount, giftListBlocker, nearCountdown, reserveFailureKind, reserveFailureMessage, rsvpFailureNotice, rsvpIssueKeys, rsvpSubmitKey, stepCompanions
+  COMPANIONS_STEPPER_MAX, companionCount, giftListBlocker, isReserveRetryable, nearCountdown, reserveFailureKind, reserveFailureMessage, rsvpFailureNotice, rsvpIssueKeys, rsvpSubmitKey, stepCompanions
 } from "../src/index.js";
 
 /**
@@ -73,11 +74,22 @@ describe("guest gift wording", () => {
     }
   });
 
+  it("a 409 LIST_CLOSED reads as «closed»: its own message, never retryable, in both languages", () => {
+    const kind = reserveFailureKind(failure(409, "LIST_CLOSED"));
+    expect(kind).toBe("closed");
+    expect(isReserveRetryable(kind)).toBe(false);
+    expect(reserveFailureMessage(kind as "closed")).toEqual({ key: "gifts.guest.reserveError.closed" });
+    expect(reserveFailureKind(failure(409, "GIFT_NOT_AVAILABLE"))).toBe("taken");
+    expect(reserveFailureKind(failure(409, "OTHER"))).toBe("generic");
+    expect(giftsEsBO.guest.reserveError.closed).toMatch(/lista está cerrada/);
+    expect(giftsEnUS.guest.reserveError.closed).toMatch(/list is closed/);
+  });
+
   it("a failed reservation reads as one message key; a long wait is told in minutes", () => {
     expect(reserveFailureMessage(reserveFailureKind(failure(429)) as "busy", 17)).toEqual({ key: "gifts.guest.reserveError.busyWait", params: { seconds: 17 } });
     expect(reserveFailureMessage("busy", 3000)).toEqual({ key: "gifts.guest.reserveError.busyMinutes", params: { minutes: 50 } });
     expect(reserveFailureMessage("busy")).toEqual({ key: "gifts.guest.reserveError.busy" });
     expect(reserveFailureKind(failure(403, "GUEST_RSVP_REQUIRED"))).toBe("attendance");
-    for (const kind of ["limit", "expired", "forbidden", "attendance", "notFound", "busy", "validation", "offline", "generic"] as const) expect(has(reserveFailureMessage(kind).key)).toBe(true);
+    for (const kind of ["limit", "closed", "expired", "forbidden", "attendance", "notFound", "busy", "validation", "offline", "generic"] as const) expect(has(reserveFailureMessage(kind).key)).toBe(true);
   });
 });
