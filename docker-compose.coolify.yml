@@ -34,6 +34,9 @@ services:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
         NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
         NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+        # Lista explicita (separada por comas, sin comodines) de origenes ADICIONALES que pueden embeber /vista-previa, p. ej. el segundo
+        # dominio de la app (https://dev.doneapp.events). Opcional; vacio = solo NEXT_PUBLIC_APP_URL.
+        NEXT_PUBLIC_PREVIEW_EXTRA_ORIGINS: ${NEXT_PUBLIC_PREVIEW_EXTRA_ORIGINS:-}
     environment:
       # Server-side calls (/r) go to the gateway. RSVP_API_INTERNAL_URL (optional) points them at Kong over a shared Docker
       # network instead of the public domain, so no second Traefik hop can drop the visitor address (B1).

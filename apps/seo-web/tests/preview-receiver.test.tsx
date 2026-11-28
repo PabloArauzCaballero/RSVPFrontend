@@ -69,4 +69,25 @@ describe("P10 · /vista-previa draws what the app sends, with the renderer of th
     vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://dev.done.test/");
     expect(previewParentOrigins()).toEqual(["https://dev.done.test"]);
   });
+
+  it("an explicit extra origin (second domain of the app) is admitted next to the app's, deduplicated", () => {
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://dev.done.test");
+    vi.stubEnv("NEXT_PUBLIC_PREVIEW_EXTRA_ORIGINS", " https://dev.doneapp.events/ , https://dev.done.test,https://otra.test ");
+    expect(previewParentOrigins()).toEqual(["https://dev.done.test", "https://dev.doneapp.events", "https://otra.test"]);
+  });
+
+  it("negative: wildcards, paths, credentials, non-http schemes and garbage are dropped, never widened", () => {
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://dev.done.test");
+    vi.stubEnv("NEXT_PUBLIC_PREVIEW_EXTRA_ORIGINS", "*,https://*.doneapp.events,https://a.test/path,https://u:p@b.test,https://c.test?x=1,javascript:alert(1),ftp://d.test,not a url,,null");
+    expect(previewParentOrigins()).toEqual(["https://dev.done.test"]);
+  });
+
+  it("negative: a message from an extra origin is accepted, from an unlisted one is not", () => {
+    framed();
+    render(<PreviewReceiver origins={["https://dev.done.test", "https://dev.doneapp.events"]} />);
+    send({ type: PREVIEW_PAYLOAD, payload: payload() }, "https://evil.test");
+    expect(screen.queryByText("Título del anfitrión")).toBeNull();
+    send({ type: PREVIEW_PAYLOAD, payload: payload() }, "https://dev.doneapp.events");
+    expect(screen.getByText("Título del anfitrión")).toBeTruthy();
+  });
 });
