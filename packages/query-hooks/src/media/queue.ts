@@ -18,6 +18,10 @@ export interface QueueItem {
   readonly size: number;
   readonly type: string;
   readonly purpose: MediaPurpose;
+  /** The bytes themselves, for the screen to draw a preview while the file is in the list. */
+  readonly file: Blob;
+  /** A local address of the file, when the picker has one (iOS and Android, where a Blob cannot be drawn). */
+  readonly previewUri?: string;
   readonly status: QueueStatus;
   /** 0 to 1 while uploading. */
   readonly progress: number;
@@ -26,7 +30,7 @@ export interface QueueItem {
   readonly asset?: MediaAsset;
 }
 
-export interface QueueFile { readonly file: Blob; readonly name: string; readonly type: string; readonly size: number }
+export interface QueueFile { readonly file: Blob; readonly name: string; readonly type: string; readonly size: number; readonly previewUri?: string }
 
 export interface QueueOptions {
   readonly purpose: MediaPurpose;
@@ -79,7 +83,8 @@ export function precheck(file: Pick<QueueFile, "type" | "size">, purpose: MediaP
   const audio = file.type === "audio/mpeg";
   if ((audio) !== (purpose === "music")) return "type";
   if (!ACCEPTED.has(file.type)) return "type";
-  if (file.size <= 0 || file.size > (audio ? limits.audio : limits.image)) return "tooLarge";
+  if (file.size <= 0) return "invalid";
+  if (file.size > (audio ? limits.audio : limits.image)) return "tooLarge";
   if (quota) {
     if (quota.assets + pendingCount + 1 > quota.maxAssets) return "quotaAssets";
     if (quota.bytes + pendingBytes + file.size > quota.maxBytes) return "quotaBytes";
@@ -147,7 +152,7 @@ export function createUploadQueue(upload: UploadOne, config: { readonly concurre
         sources.set(id, { file, options });
         const blocked = precheck(file, options.purpose, quota, pendingBytes, pendingCount, limits);
         if (!blocked) { pendingBytes += file.size; pendingCount += 1; }
-        return { id, name: file.name, size: file.size, type: file.type, purpose: options.purpose, status: blocked ? "error" : "queued", progress: 0, ...(blocked ? { failure: blocked, retryable: false } : {}) };
+        return { id, name: file.name, size: file.size, type: file.type, purpose: options.purpose, file: file.file, ...(file.previewUri ? { previewUri: file.previewUri } : {}), status: blocked ? "error" : "queued", progress: 0, ...(blocked ? { failure: blocked, retryable: false } : {}) };
       });
       items = [...items, ...created];
       publish();

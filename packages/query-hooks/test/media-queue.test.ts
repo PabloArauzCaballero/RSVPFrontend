@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { ApiError } from "@rsvp/api-client";
-import { ACCEPTED_IMAGE_TYPES, classifyFailure, createUploadQueue, precheck, UploadError, type MediaAsset, type MediaQuota, type QueueFile, type UploadOne } from "../src/index.js";
+import { ACCEPTED_IMAGE_TYPES, classifyFailure, createUploadQueue, isGalleryAsset, precheck, UploadError, type MediaAsset, type MediaQuota, type QueueFile, type UploadOne } from "../src/index.js";
 
 const file = (name: string, type = "image/png", size = 1000): QueueFile => ({ file: new Blob(["x"]), name, type, size });
 const asset = (status: MediaAsset["status"] = "PROCESSING"): MediaAsset => ({ id: "a", celebrationId: "c", filename: "f", contentType: "image/png", sizeBytes: 1, status, width: null, height: null, sortOrder: 0, isCover: false, variants: {} });
@@ -140,5 +140,19 @@ describe("upload queue", () => {
     queue.add([file("v.mp3", "audio/mpeg")], { purpose: "music", rightsNoticeVersion: "2026-11-24" });
     await settle();
     expect(upload.mock.calls[0]?.[0]).toMatchObject({ purpose: "music", rightsNoticeVersion: "2026-11-24" });
+  });
+});
+
+describe("gallery assets and empty files", () => {
+  it("only gallery and cover photos belong to the gallery; a list without purpose is from an older server", () => {
+    expect([undefined, "gallery", "cover", "background", "logo", "music"].map((purpose) => isGalleryAsset({ purpose } as Pick<MediaAsset, "purpose">))).toEqual([true, true, true, false, false, false]);
+  });
+
+  it("an empty file is unreadable, not too large, and the item keeps its bytes and local address for the preview", () => {
+    expect(precheck({ type: "image/png", size: 0 }, "gallery", undefined, 0, 0, { image: 10, audio: 10 })).toBe("invalid");
+    const queue = createUploadQueue(async () => asset("PROCESSED"));
+    const picked = { ...file("a.png"), previewUri: "file:///a.png" };
+    queue.add([picked], { purpose: "gallery" });
+    expect(queue.getSnapshot().items[0]).toMatchObject({ file: picked.file, previewUri: "file:///a.png" });
   });
 });

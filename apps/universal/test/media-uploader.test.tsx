@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MediaUploader } from "../src/host/media/media-uploader";
+import { MediaPermissionError } from "../src/platform/media-file";
 import { baseHandlers, fakeClient, HttpFailure, renderApp } from "./support";
 
 const QUOTA = { assets: 3, bytes: 5 * 1024 * 1024, maxAssets: 100, maxBytes: 500 * 1024 * 1024 };
@@ -70,7 +71,7 @@ describe("F6 · MediaUploader", () => {
     fireEvent.click(screen.getByTestId("media-add"));
     expect(await screen.findByText("uno.png: se cortó la conexión. Reintenta cuando vuelva.")).toBeTruthy();
     FakeXhr.failWith = null;
-    fireEvent.click(await screen.findByRole("button", { name: "Reintentar" }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Reintentar / }));
     expect(await screen.findByText("Preparando uno.png…")).toBeTruthy();
   });
 
@@ -88,8 +89,8 @@ describe("F6 · MediaUploader", () => {
     worker = "REJECTED";
     expect(await screen.findByText("No pudimos preparar rota.png. Quítalo e intenta con otro.", {}, { timeout: 8000 })).toBeTruthy();
     expect(screen.queryByText("Preparando rota.png…")).toBeNull();
-    expect(screen.queryByRole("button", { name: "Reintentar" })).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Quitar de la lista" }));
+    expect(screen.queryByRole("button", { name: /^Reintentar / })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /^Quitar de la lista / }));
     expect(screen.queryByText(/rota\.png/)).toBeNull();
   });
 
@@ -127,8 +128,8 @@ describe("F6 · MediaUploader", () => {
     await screen.findByTestId("media-quota");
     fireEvent.click(screen.getByTestId("media-add"));
     expect(await screen.findByText("grande.png no cabe en el espacio que te queda. Elimina algo o sube un archivo más liviano.")).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Reintentar" })).toBeNull();
-    expect(screen.getByRole("button", { name: "Quitar de la lista" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /^Reintentar / })).toBeNull();
+    expect(screen.getByRole("button", { name: /^Quitar de la lista / })).toBeTruthy();
   });
 
   it("checks type and size before sending a byte", async () => {
@@ -161,6 +162,18 @@ describe("F6 · MediaUploader", () => {
     fireEvent.click(screen.getByTestId("media-rights"));
     fireEvent.click(screen.getByTestId("media-add"));
     await waitFor(() => expect(calls.find((call) => call.path === "/media/uploads/presign")?.body).toEqual(expect.objectContaining({ purpose: "music", rightsNoticeVersion: "2026-11-24", contentType: "audio/mpeg" })));
-    expect(pick).toHaveBeenCalledWith("audio");
+    expect(pick).toHaveBeenCalledWith("audio", "library");
+  });
+
+  it("explains a denied permission and a file that could not be read, without uploading anything", async () => {
+    const { client, calls } = fakeClient({ ...baseHandlers(), ...listWithQuota() });
+    const pick = vi.fn().mockRejectedValueOnce(new MediaPermissionError("library")).mockRejectedValueOnce(new Error("blob"));
+    renderApp(<MediaUploader celebrationId="c-1" purpose="gallery" pick={pick} />, client);
+    fireEvent.click(await screen.findByTestId("media-add"));
+    expect(await screen.findByText(/No tenemos permiso para ver tus fotos/)).toBeTruthy();
+    fireEvent.click(screen.getByTestId("media-add"));
+    expect(await screen.findByText("No pudimos abrir esos archivos. Vuelve a elegirlos.")).toBeTruthy();
+    expect(screen.queryByText(/No tenemos permiso/)).toBeNull();
+    expect(calls.some((call) => call.path.includes("presign"))).toBe(false);
   });
 });

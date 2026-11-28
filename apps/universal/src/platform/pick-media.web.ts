@@ -1,24 +1,27 @@
-import type { PickedImage } from "./pick-image";
-import type { MediaKind } from "./pick-media";
+import { ACCEPT, typeOf, type MediaKind, type PickedMedia, type PickSource } from "./media-file";
 
-export type { PickedImage, MediaKind };
-// HEIC is listed by extension too: some browsers give it an empty MIME type.
-const ACCEPT: Readonly<Record<MediaKind, string>> = {
-  image: "image/jpeg,image/png,image/webp,image/gif,image/avif,image/svg+xml,image/heic,image/heif,.heic,.heif",
-  audio: "audio/mpeg,.mp3"
-};
-const EXTENSION_TYPES: Readonly<Record<string, string>> = { heic: "image/heic", heif: "image/heif", mp3: "audio/mpeg", avif: "image/avif", svg: "image/svg+xml" };
+export type { MediaKind, PickedMedia, PickSource };
 
-const typeOf = (file: File): string => file.type || EXTENSION_TYPES[file.name.split(".").pop()?.toLowerCase() ?? ""] || "";
+/** Files that arrived by drag and drop become the same thing the dialog gives. */
+export const toPickedDrop = (files: Iterable<File>): readonly PickedMedia[] => Array.from(files, (file) => ({ file, name: file.name, type: typeOf(file.type, file.name), size: file.size }));
 
-/** Web: a hidden file input that takes several files. Resolves empty when the dialog closes without a file. */
-export async function pickMedia(kind: MediaKind): Promise<readonly PickedImage[]> {
+/** A phone browser (coarse pointer) offers a camera shortcut; on a computer `capture` is ignored, so the button would lie. */
+export const canTakePhoto = (): boolean => typeof window !== "undefined" && (window.matchMedia?.("(pointer: coarse)").matches ?? false);
+/** The browser has no settings screen a page can open. */
+export const openPermissionSettings: (() => void) | null = null;
+
+/**
+ * Web: a hidden file input that takes several files; with `camera` it asks the phone for the rear camera (`capture`, which
+ * needs no getUserMedia permission). Resolves empty when the dialog closes without a file.
+ */
+export async function pickMedia(kind: MediaKind, source: PickSource = "library"): Promise<readonly PickedMedia[]> {
   return new Promise((resolve) => {
     const input = document.createElement("input");
     input.type = "file";
-    input.multiple = kind === "image";
     input.accept = ACCEPT[kind];
-    input.onchange = () => resolve(Array.from(input.files ?? []).map((file) => ({ file, name: file.name, type: typeOf(file), size: file.size })));
+    if (source === "camera") input.setAttribute("capture", "environment");
+    else input.multiple = kind === "image";
+    input.onchange = () => resolve(toPickedDrop(Array.from(input.files ?? [])));
     input.oncancel = () => resolve([]);
     input.click();
   });
