@@ -24,7 +24,7 @@ Revise `apps/universal`, `apps/seo-web` y `packages/*` buscando `imageUrl`, `pho
 Camara: en la web movil el selector abre galeria y camara; en nativo el selector es la galeria (`pickImage`). La camara nativa y `cameraPermission` en `app.config.ts` requieren un binario nuevo y no se tocan aqui.
 
 ## Contrato
-`packages/contracts` re-vendorizado desde el commit `0997f8bf` de `feat/req-imagenes-archivo-be` (provider-catalog 3.14.0, template-media 1.11.0) con `RSVP_BACKEND_REPO=/home/user/wt/be-imagenes-archivo node scripts/generate.mjs --ref 0997f8bf`. **Ese SHA no esta fusionado**: al fusionar hay que volver a fijar `backend.lock.json` al SHA fusionado del backend (`yarn workspace @rsvp/contracts generate --ref <sha>`). Tabla de versiones y choques de contrato: `docs/progress/imagenes-archivo-ronda2-be.md` en RSVPBackend (provider-catalog 3.14.0 y template-media 1.11.0 porque 3.8-3.12 y 1.6-1.9.1 ya las usan #158-#170).
+`packages/contracts` re-vendorizado desde el commit `22450ab6` de `feat/req-imagenes-archivo-be` (provider-catalog 3.14.0, template-media 1.11.0) con `RSVP_BACKEND_REPO=/home/user/wt/be-imagenes-archivo node scripts/generate.mjs --ref 22450ab6`. **Ese SHA no esta fusionado**: al fusionar hay que volver a fijar `backend.lock.json` al SHA fusionado del backend (`yarn workspace @rsvp/contracts generate --ref <sha>`). Tabla de versiones y choques de contrato: `docs/progress/imagenes-archivo-ronda2-be.md` en RSVPBackend (provider-catalog 3.14.0 y template-media 1.11.0 porque 3.8-3.12 y 1.6-1.9.1 ya las usan #158-#170).
 
 ## Evidencia (local)
 - `yarn turbo run typecheck`: 19 de 19.
