@@ -74,17 +74,23 @@ export const hostEnUS: DeepStrings<typeof hostEsBO> = {
     extra: { dressCode: "Dress code", faq: "FAQ", question: "Question", answer: "Answer", addFaq: "Add question", recommendations: "Recommendations", recommendationName: "Name", recommendationDescription: "Description", recommendationKind: "Type", kinds: { lodging: "Lodging", transport: "Transport", other: "Other" }, listingId: "Partner code (optional)", listingHelp: "If it's a partner, its link goes through our redirector.", addRecommendation: "Add recommendation", item: "Item {{n}}" }
   },
   gallery: {
-    processing: "Preparing {{name}}… It will appear here when it's ready.", rejected: "We couldn't prepare {{name}}. Delete this photo and try uploading another.", refreshFailedTitle: "We couldn't refresh your photos",
-    title: "Your photos", intro: "The first one is the cover. You can change it whenever you like.", help: "JPG, PNG or WebP, up to 10 MB each.",
-    add: "Add photo", uploading: "Uploading {{name}}… {{percent}} %", cover: "Cover", makeCover: "Use as cover", delete: "Delete",
+    processing: "Preparing {{name}}… It will appear here when it's ready.", processingSlow: "{{name}} is taking longer than usual. You can check again or delete it and try another photo.", checkAgain: "Check again", rejected: "We couldn't prepare {{name}}. Delete this photo and try uploading another.", refreshFailedTitle: "We couldn't refresh your photos",
+    title: "Your photos", intro: "The first one is the cover. You can change it whenever you like.", dropHint: "Drag your photos here or use “Add photos”.",
+    add: "Add photos", cover: "Cover", makeCover: "Use as cover", delete: "Delete",
     emptyTitle: "Your story's photos go here", emptyBody: "Upload the first one and it becomes your invitation's cover.", loadFailedTitle: "We couldn't load your photos",
     deleteTitle: "Delete this photo?", deleteBody: "It's removed from your invitation and can't be undone.", deleted: "Photo deleted.", orderSaved: "Order saved.",
-    photo: "Photo {{n}}", invalidType: "That file is not a JPG, PNG or WebP image.", tooLarge: "The image is over 10 MB. Try a lighter one.", failed: "We couldn't upload {{name}}. Try again."
+    photo: "Photo {{n}}"
   },
   media: {
     title: "Files", quota: "{{assets}} of {{maxAssets}} files · {{used}} of {{max}} used", quotaFull: "You reached the file limit of this invitation. Delete one to upload another.",
-    add: "Add files", addMusic: "Upload music (MP3)", help: "JPG, PNG, WebP, GIF, AVIF, SVG or HEIC, up to {{max}} MB each.", helpMusic: "MP3 up to {{max}} MB and {{minutes}} minutes.",
-    queued: "Waiting", uploading: "Uploading {{name}}… {{percent}} %", processing: "Preparing {{name}}…", done: "{{name}} is ready.", retry: "Retry", remove: "Remove from list", clear: "Clear list",
+    add: "Add files", addMusic: "Upload music (MP3)", help: "JPG, PNG, WebP, GIF, AVIF, SVG or HEIC, up to {{max}} MB each (SVG: up to {{svgMax}} MB).", helpMusic: "MP3 up to {{max}} MB and {{minutes}} minutes.",
+    queued: "Waiting", uploading: "Uploading {{name}}…", progressLabel: "Progress of {{name}}", quotaLabel: "Space used", processing: "Preparing {{name}}…", done: "Done: {{name}}.", retry: "Retry", remove: "Remove from list", clear: "Clear list",
+    retryNamed: "Retry {{name}}", removeNamed: "Remove from list {{name}}", takePhoto: "Take photo", openSettings: "Open settings",
+    zone: "Upload files", zoneMusic: "Upload music", dropHint: "Drag your files here or choose them.", dropHintMusic: "Drag your MP3 here or choose it.", dropNow: "Drop to upload.", dropInvalid: "That can't be uploaded here.",
+    pickProblems: {
+      libraryDenied: "We don't have permission to see your photos. Turn it on in your phone settings and try again.", cameraDenied: "We don't have permission to use the camera. Turn it on in your phone settings or choose a photo from your library.",
+      unreadable: "We couldn't open those files. Choose them again.", batch: "Up to {{max}} files go at a time. {{left}} stayed out: choose them when these finish.", notAFile: "That isn't a file. If it's a picture from another page, save it to your device and upload it from there."
+    },
     rightsTitle: "Copyright notice", rights: "I confirm I have the right to use this music in my invitation and I understand it will be removed if we receive a copyright report.", rightsRequired: "Accept the rights notice to upload music.",
     failures: {
       type: "{{name}}: this file type cannot be uploaded here.", tooLarge: "{{name}} is too large. Try a lighter version.", quotaAssets: "{{name}}: this invitation has no room for more files.",

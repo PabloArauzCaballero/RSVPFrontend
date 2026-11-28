@@ -1,15 +1,17 @@
-import { useRef, useState, type ReactNode } from "react";
+import { useId, useRef, useState, type ReactNode } from "react";
 import { Image, Text, View } from "react-native";
 import { radius, spacing } from "@rsvp/design-tokens";
 import { useColors } from "@rsvp/ui";
 import {
   MAX_PHOTOS, MAX_PHOTOS_PER_VARIANT, newIdempotencyKey, photoInputProblem, PhotoInputError, useDeleteListingPhoto, useUploadListingPhoto,
-  type ListingPhoto, type PhotoStage, type ProductSheet, type ProductVariant, type UploadPhotoVariables
+  PHOTO_TYPES, type ListingPhoto, type PhotoStage, type ProductSheet, type ProductVariant, type UploadPhotoVariables
 } from "@rsvp/query-hooks";
 import type { AppLocale } from "@rsvp/i18n/server";
 import { useApiClient, useT } from "../../platform/providers";
 import { pickImage } from "../../platform/pick-image";
-import { ActionButton, Field, FilterSelect, useStyles } from "../../host/ui";
+import { FileDropArea, supportsFileDrop, type DragState } from "../../platform/file-drop";
+import { toPickedDrop } from "../../platform/pick-media";
+import { ActionButton, Field, FilterSelect, Notice, useStyles } from "../../host/ui";
 import { SheetErrorNotice } from "./sheet-errors";
 
 const THUMB = 72;
@@ -18,6 +20,8 @@ export const activePhotos = (photos: readonly ListingPhoto[] | undefined): reado
 /** The photos a version already shows, counted like the server does (3 per version, §5.1). */
 export const variantPhotoCount = (photos: readonly ListingPhoto[] | undefined, variantId: string): number => activePhotos(photos).filter((photo) => photo.variantId === variantId).length;
 const WHOLE_PRODUCT = "";
+const NOTHING: readonly string[] = [];
+const ignore = (): void => {};
 
 function PhotoRow({ photo, index, cover, variant, busy, onCover, onDelete }: { readonly photo: ListingPhoto; readonly index: number; readonly cover: boolean; readonly variant: string | null; readonly busy: boolean; readonly onCover: () => void; readonly onDelete: () => void }): ReactNode {
   const t = useT();
@@ -58,6 +62,7 @@ export function PhotoUploader({ sheet, providerId, locale, reordering, onReorder
 }): ReactNode {
   const t = useT();
   const styles = useStyles();
+  const palette = useColors();
   const client = useApiClient();
   const upload = useUploadListingPhoto(client, providerId, sheet.id, locale);
   const remove = useDeleteListingPhoto(client, providerId, sheet.id, locale);
@@ -67,6 +72,10 @@ export function PhotoUploader({ sheet, providerId, locale, reordering, onReorder
   const [readyNote, setReadyNote] = useState(false);
   const [variantId, setVariantId] = useState<string>(WHOLE_PRODUCT);
   const last = useRef<UploadPhotoVariables | null>(null);
+  const helpId = useId();
+  const [drag, setDrag] = useState<DragState>("idle");
+  const [notAFile, setNotAFile] = useState(false);
+  const droppable = supportsFileDrop();
   const photos = sheet.photos ?? [];
   const variants: readonly ProductVariant[] = sheet.variants ?? [];
   // A version removed in «Precio y versiones» cannot be chosen any more; the photo falls back to the whole product.
@@ -86,15 +95,27 @@ export function PhotoUploader({ sheet, providerId, locale, reordering, onReorder
       onSettled: () => setStage(null)
     });
   };
+  const clearProblems = (): void => { setLocalError(null); setNotAFile(false); upload.reset(); remove.reset(); };
+  const take = (file: Blob, type: string, size: number): void => {
+    const problem = photoInputProblem({ type, size });
+    if (problem) { setLocalError(new PhotoInputError(problem)); return; }
+    send({ file, contentType: type, idempotencyKey: newIdempotencyKey(), ...(alt.trim() ? { altText: alt.trim() } : {}), ...(chosen ? { variantId: chosen } : {}), onStage: setStage });
+  };
   const choose = async (): Promise<void> => {
-    setLocalError(null); upload.reset(); remove.reset();
+    clearProblems();
     let picked: Awaited<ReturnType<typeof pickImage>>;
     try { picked = await pickImage({ throwOnDenied: true }); } catch (error) { setLocalError(error); return; }
-    if (!picked) return;
-    const problem = photoInputProblem({ type: picked.type, size: picked.file.size });
-    if (problem) { setLocalError(new PhotoInputError(problem)); return; }
-    send({ file: picked.file, contentType: picked.type, idempotencyKey: newIdempotencyKey(), ...(alt.trim() ? { altText: alt.trim() } : {}), ...(chosen ? { variantId: chosen } : {}), onStage: setStage });
+    if (picked) take(picked.file, picked.type, picked.file.size);
   };
+  // A drop follows the same rules as the button: nothing while another photo is on its way or the chosen version is full.
+  const dropped = (files: readonly File[]): void => {
+    const [first] = toPickedDrop(files);
+    if (!first || busy || variantFull) return;
+    clearProblems();
+    take(first.file, first.type, first.size);
+  };
+  const hint = drag === "valid" ? t("host.media.dropNow") : drag === "invalid" ? t("host.media.dropInvalid") : t("portal.product.photos.dropHint");
+  const border = drag === "valid" ? palette.primary : drag === "invalid" ? palette.danger : palette.fieldBorder;
   const makeCover = (photoId: string): void => onReorder([photoId, ...photos.map((photo) => photo.id).filter((id) => id !== photoId)]);
 
   return (
@@ -106,7 +127,12 @@ export function PhotoUploader({ sheet, providerId, locale, reordering, onReorder
           {photos.map((photo, index) => <PhotoRow key={photo.id} photo={photo} index={index} cover={photo.id === coverId} variant={variantLabel(photo.variantId)} busy={busy} onCover={() => makeCover(photo.id)} onDelete={() => { setReadyNote(false); remove.mutate(photo.id); }} />)}
         </View>
       ) : <Text style={styles.muted}>{t("portal.product.photos.empty")}</Text>}
-      {full ? <Text style={styles.muted} testID="photo-limit">{t("portal.product.photos.limit")}</Text> : (
+      {full ? (
+        // With no room left the zone stays mounted and takes nothing: without it, a dropped file would make the browser leave the app to open it.
+        <FileDropArea label={t("portal.product.photos.zone")} describedBy={helpId} multiple={false} accept={NOTHING} onFiles={ignore} onNoFiles={ignore} onDragState={ignore} testID="photo-dropzone">
+          <Text nativeID={helpId} style={styles.muted} testID="photo-limit">{t("portal.product.photos.limit")}</Text>
+        </FileDropArea>
+      ) : (
         <View style={{ gap: spacing[3] }}>
           {variants.length ? (
             <View style={{ gap: spacing[1] }}>
@@ -118,9 +144,13 @@ export function PhotoUploader({ sheet, providerId, locale, reordering, onReorder
           ) : null}
           <Field label={t("portal.product.photos.alt")} value={alt} onChange={setAlt} help={t("portal.product.photos.altHelp")} maxLength={200} testID="photo-alt" />
           {variantFull ? <Text style={styles.muted} testID="photo-variant-limit">{t("portal.product.photos.variantLimit", { variant: variantLabel(chosen) ?? "", max: MAX_PHOTOS_PER_VARIANT })}</Text> : null}
-          <View style={{ alignSelf: "flex-start" }}>
+          <FileDropArea label={t("portal.product.photos.zone")} describedBy={helpId} multiple={false} accept={PHOTO_TYPES}
+            onFiles={dropped} onNoFiles={() => { clearProblems(); setNotAFile(true); }} onDragState={setDrag} testID="photo-dropzone"
+            style={droppable ? { gap: spacing[3], padding: spacing[5], alignItems: "center", borderWidth: 2, borderStyle: "dashed", borderRadius: radius.lg, borderColor: border, backgroundColor: drag === "idle" ? "transparent" : palette.primaryMuted } : { alignItems: "flex-start" }}>
+            {droppable ? <Text nativeID={helpId} aria-live="polite" style={[styles.body, { textAlign: "center", fontWeight: "600" }]}>{hint}</Text> : null}
             <ActionButton variant="secondary" icon="upload" label={t("portal.product.photos.add")} busy={upload.isPending} disabled={busy || variantFull} onPress={() => { void choose(); }} testID="photo-add" />
-          </View>
+          </FileDropArea>
+          {notAFile ? <Notice kind="error">{t("host.media.pickProblems.notAFile")}</Notice> : null}
         </View>
       )}
       <Text accessibilityLiveRegion="polite" role="status" style={styles.muted} testID="photo-stage">{stage ? t(`portal.product.photos.stage.${stage}`) : readyNote ? t("portal.product.photos.ready") : ""}</Text>

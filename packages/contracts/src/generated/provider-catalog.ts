@@ -8405,8 +8405,8 @@ export interface operations {
                 plan?: string;
                 /** @description Name, slug, legal name (contains, case-insensitive), exact NIT or exact owner id. */
                 q?: string;
-                /** @description kypStatus orders EXPIRED, EXPIRING, PENDING, COMPLETE. */
-                sort?: "name" | "-createdAt" | "-updatedAt" | "kypStatus";
+                /** @description Sorts the filtered results before pagination. Use a leading '-' for descending order. kypStatus orders EXPIRED, EXPIRING, PENDING, COMPLETE; -kypStatus reverses those groups. */
+                sort?: "name" | "-name" | "kypStatus" | "-kypStatus" | "createdAt" | "-createdAt" | "updatedAt" | "-updatedAt";
                 /** @description Repeatable (status=A&status=B), status[] or comma list. */
                 status?: components["schemas"]["ProviderStatus"][];
                 /** @description Partner coverage zone. */

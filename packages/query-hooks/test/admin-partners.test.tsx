@@ -29,8 +29,8 @@ function harness(respond: (seen: Seen) => { status?: number; body?: unknown } = 
 describe("partner list query", () => {
   it("sends only the filters that are set, the sort, the zero-based page and 25 per page", () => {
     expect(admin.adminPartnersPath({})).toBe("/providers/admin/partners?sort=-createdAt&page=0&pageSize=25");
-    expect(admin.adminPartnersPath({ q: "  sol ", status: "SUSPENDED", kypStatus: "EXPIRED", categoryCode: "FLORES", cityCode: "la-paz", personType: "JURIDICA", origin: "ADMIN", plan: "FREE", kypExpiringWithinDays: 30, createdFrom: "2026-01-01", createdTo: "2026-02-01", hasPublishedListings: false, sort: "name", page: 2 }))
-      .toBe("/providers/admin/partners?q=sol&status=SUSPENDED&kypStatus=EXPIRED&categoryCode=FLORES&cityCode=la-paz&personType=JURIDICA&origin=ADMIN&plan=FREE&kypExpiringWithinDays=30&createdFrom=2026-01-01&createdTo=2026-02-01&hasPublishedListings=false&sort=name&page=2&pageSize=25");
+    expect(admin.adminPartnersPath({ q: "  sol ", status: "SUSPENDED", kypStatus: "EXPIRED", categoryCode: "FLORES", cityCode: "la-paz", zoneCode: "centro", personType: "JURIDICA", origin: "ADMIN", plan: "FREE", kypExpiringWithinDays: 30, createdFrom: "2026-01-01", createdTo: "2026-02-01", hasPublishedListings: false, sort: "name", page: 2 }))
+      .toBe("/providers/admin/partners?q=sol&status=SUSPENDED&kypStatus=EXPIRED&categoryCode=FLORES&cityCode=la-paz&zoneCode=centro&personType=JURIDICA&origin=ADMIN&plan=FREE&kypExpiringWithinDays=30&createdFrom=2026-01-01&createdTo=2026-02-01&hasPublishedListings=false&sort=name&page=2&pageSize=25");
   });
 
   it("useAdminPartners reads that path", async () => {
@@ -39,6 +39,16 @@ describe("partner list query", () => {
     await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
     expect(h.calls[0]?.path).toBe("/providers/admin/partners?status=VERIFIED&sort=-createdAt&page=0&pageSize=25");
   });
+
+  it.each(["name", "-name", "kypStatus", "-kypStatus", "createdAt", "-createdAt", "updatedAt", "-updatedAt"] as const)(
+    "sends sort=%s with the active filters and each selected page size",
+    (sort) => {
+      for (const pageSize of [10, 25, 50]) {
+        expect(admin.adminPartnersPath({ status: "VERIFIED", sort, page: 1, pageSize }))
+          .toBe(`/providers/admin/partners?status=VERIFIED&sort=${sort}&page=1&pageSize=${pageSize}`);
+      }
+    }
+  );
 });
 
 describe("identity lookups (one filter per call)", () => {
