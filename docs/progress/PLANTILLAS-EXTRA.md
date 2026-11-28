@@ -95,6 +95,14 @@ Reproducido en este merge: el h1 de `pedida-rosa` mide 47,99 px a 360, 56 px a 7
 - PL-143-R4-5: `plantillas-v2-extra` y `plantillas-v2-sobrio` miden también 390x844 con la aserción PL-130-M2.
 - R4-3, R4-6, R4-7: declarados, sin tocar en esta ronda.
 
+## Integración nube 3 (2026-11-28) · merge de la oficial b04345d2
+- Merge (no rebase) de `origin/chore/deploy-contabo-coolify` b04345d2 sin conflictos; `packages/contracts` y `query-hooks` sin diferencia frente a la oficial (no se re-vendoriza: este PR no cambia contrato; depende de BE #163 solo por las plantillas sembradas).
+- yarn 4.10.3 vía corepack con `COREPACK_NPM_REGISTRY=https://registry.npmjs.org` y `NODE_USE_ENV_PROXY=1` (`repo.yarnpkg.com` bloqueado). `yarn install --immutable` OK.
+- `yarn typecheck` 19/19 OK; `yarn lint:code` rc=0; `node scripts/validate-harness.mjs` OK.
+- `yarn test`: seo-web 224, design-editor 450, query-hooks 210, ui 333, forms 65, auth 89 (1 skipped heredado), design-tokens 91, api-client 17, ui-web 15, i18n 18, telemetry 8, contracts 6. celebration-theme 3293/3293 y universal 853/853 al correrlos solos; bajo turbo en paralelo (4 CPU) un test de cada uno agotó su tiempo (extra.test R4-1 a 5 s; guests.test) y pasó aislado. Es sensibilidad a carga, no regresión; no se tocó el tiempo de espera.
+- Chrome real (chromium 1243 preinstalado) contra `next build` + `next start` sobre `fixture-api.mjs`, `--trace off`: extra 217/217, portadas-existentes 120/120, sobrio 171/171.
+- NO probado: backend real, gateway/Kong, RabbitMQ, MinIO, Docker, iOS/Android, Safari/Firefox, lector de pantalla, gitleaks (sin binario), `test:visual` contra líneas base de macOS.
+
 ## Líneas base macOS que cambian
 Ninguna. Capturas nuevas solo en `docs/progress/evidence/plantillas-extra/` (360/768/1280, claro y oscuro, con y sin foto) y `contraste.md` / `contrast.jsonl`.
 
