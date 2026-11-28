@@ -11,6 +11,8 @@ export interface StickyActionsProps {
   /** Optional line above the buttons (a total, "3 changes"). Keep it to one short line. */
   summary?: ReactNode;
   testID?: string;
+  /** Accessible name of the bar (a localized "Actions"): a screen reader announces the group by it. The package has no copy of its own, so the caller passes it. */
+  label: string;
   /**
    * How far the bar reaches past its column on each side (default `spacing[4]`, for screens whose content sits 16 px from
    * the edge). Pass 0 in a centred column with its own padding, so the top line lines up with the fields above it. Only the
@@ -45,7 +47,7 @@ const DOCKED_MAX_WIDTH = 560;
  * The docked bar is rebuilt from this component's props on every render, so state used by its buttons stays current; React
  * contexts provided between the dock and this component are not visible to the buttons, only those above the dock.
  */
-export function StickyActions({ children, summary, testID, bleed = spacing[4], priority = 1, ground = 'canvas' }: StickyActionsProps) {
+export function StickyActions({ children, summary, testID, label, bleed = spacing[4], priority = 1, ground = 'canvas' }: StickyActionsProps) {
   const { palette } = useTheme();
   const dock = useContext(ActionDockContext);
   const [slot] = useState(() => dock?.claim() ?? 0);
@@ -55,7 +57,7 @@ export function StickyActions({ children, summary, testID, bleed = spacing[4], p
     </ButtonAlignContext.Provider>
   );
   const docked = dock ? (
-    <View role="group" testID={testID} style={{ backgroundColor: palette.canvas, borderTopWidth: 1, borderTopColor: palette.border, paddingTop: spacing[3], paddingBottom: spacing[3], paddingHorizontal: dock.inset }}>
+    <View role="group" aria-label={label} testID={testID} style={{ backgroundColor: palette.canvas, borderTopWidth: 1, borderTopColor: palette.border, paddingTop: spacing[3], paddingBottom: spacing[3], paddingHorizontal: dock.inset }}>
       <View style={{ width: '100%', maxWidth: DOCKED_MAX_WIDTH, alignSelf: 'center', gap: spacing[2] }}>
         {summary}
         {buttons}
@@ -72,6 +74,7 @@ export function StickyActions({ children, summary, testID, bleed = spacing[4], p
   return (
     <View
       role="group"
+      aria-label={label}
       testID={testID}
       style={[{ backgroundColor: Platform.OS === 'web' ? `${palette[ground]}E6` : palette[ground], borderTopWidth: 1, borderTopColor: palette.border, paddingTop: spacing[3], paddingHorizontal: bleed, gap: spacing[2], marginHorizontal: -bleed }, stick]}
     >
