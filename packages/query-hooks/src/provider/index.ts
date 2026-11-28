@@ -219,3 +219,5 @@ export function useDirectorySearch<TPage>(client: ApiClient, query: DirectoryQue
 export * from "./partner-requests.js";
 export * from "./product-sheet.js";
 export * from "./product-sheet-hooks.js";
+export * from "./provider-media.js";
+export * from "./provider-media-hooks.js";

@@ -56,8 +56,10 @@ function PhotoRow({ photo, index, cover, variant, busy, onCover, onDelete }: { r
  * With versions (§5.1, decision 13) the provider says which version a photo shows (`variantId`, 3 per version); the default is
  * the whole product.
  */
-export function PhotoUploader({ sheet, providerId, locale, reordering, onReorder }: {
+export function PhotoUploader({ sheet, providerId, locale, reordering, onReorder, kind = "product" }: {
   readonly sheet: ProductSheet; readonly providerId: string; readonly locale: AppLocale; readonly reordering: boolean; readonly onReorder: (order: readonly string[]) => void;
+  /** A service takes the same photos (up to 5, same worker) with its own wording; it has no versions. */
+  readonly kind?: "product" | "service";
 }): ReactNode {
   const t = useT();
   const styles = useStyles();
@@ -129,7 +131,7 @@ export function PhotoUploader({ sheet, providerId, locale, reordering, onReorder
 
   return (
     <View style={{ gap: spacing[4] }}>
-      <Text style={styles.body}>{t("portal.product.photos.intro")}</Text>
+      <Text style={styles.body}>{t(kind === "service" ? "portal.services.photos.intro" : "portal.product.photos.intro")}</Text>
       <Text style={styles.muted} testID="photo-count">{t("portal.product.photos.count", { count: active.length, max: MAX_PHOTOS })}</Text>
       {photos.length ? (
         <View role="list" aria-label={t("portal.product.steps.photos")}>
@@ -138,7 +140,7 @@ export function PhotoUploader({ sheet, providerId, locale, reordering, onReorder
       ) : <Text style={styles.muted}>{t("portal.product.photos.empty")}</Text>}
       {full ? (
         // With no room left the zone stays mounted and takes nothing: without it, a dropped file would make the browser leave the app to open it.
-        <FileDropArea label={t("portal.product.photos.zone")} describedBy={helpId} multiple={false} accept={PHOTO_TYPES} disabled onFiles={ignore} onNoFiles={ignore} onDragState={ignore} testID="photo-dropzone">
+        <FileDropArea label={t(kind === "service" ? "portal.services.photos.zone" : "portal.product.photos.zone")} describedBy={helpId} multiple={false} accept={PHOTO_TYPES} disabled onFiles={ignore} onNoFiles={ignore} onDragState={ignore} testID="photo-dropzone">
           <Text nativeID={helpId} style={styles.muted} testID="photo-limit">{t("portal.product.photos.limit")}</Text>
         </FileDropArea>
       ) : (
@@ -153,7 +155,7 @@ export function PhotoUploader({ sheet, providerId, locale, reordering, onReorder
           ) : null}
           <Field label={t("portal.product.photos.alt")} value={alt} onChange={setAlt} help={t("portal.product.photos.altHelp")} maxLength={200} testID="photo-alt" />
           {variantFull ? <Text style={styles.muted} testID="photo-variant-limit">{t("portal.product.photos.variantLimit", { variant: variantLabel(chosen) ?? "", max: MAX_PHOTOS_PER_VARIANT })}</Text> : null}
-          <FileDropArea label={t("portal.product.photos.zone")} describedBy={invites ? helpId : undefined} multiple={false} accept={PHOTO_TYPES} disabled={blocked}
+          <FileDropArea label={t(kind === "service" ? "portal.services.photos.zone" : "portal.product.photos.zone")} describedBy={invites ? helpId : undefined} multiple={false} accept={PHOTO_TYPES} disabled={blocked}
             onFiles={dropped} onNoFiles={droppedNothing} onDragState={setDrag} testID="photo-dropzone"
             style={invites ? { gap: spacing[3], padding: spacing[5], alignItems: "center", borderWidth: 2, borderStyle: "dashed", borderRadius: radius.lg, borderColor: border, backgroundColor: shownDrag === "idle" ? "transparent" : palette.primaryMuted } : { alignItems: "flex-start" }}>
             {invites ? <Text nativeID={helpId} aria-live="polite" style={[styles.body, { textAlign: "center", fontWeight: "600" }]}>{hint}</Text> : null}

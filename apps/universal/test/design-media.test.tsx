@@ -28,6 +28,12 @@ describe("design editor photo source", () => {
     expect(await designMediaSource(client, "c-1").list()).toEqual([{ id: "a", name: "a.png", thumbUrl: "https://img.test/t" }, { id: "b", name: "b.png", thumbUrl: "https://img.test/t" }]);
   });
 
+  it("lists the finished MP3s the host owns as music, by name, never as pictures", async () => {
+    const audio = { audio: "https://img.test/a.mp3" };
+    const { client } = fakeClient({ "GET /media/celebrations/c-1/assets": () => ({ items: [asset("m1", { purpose: "music", filename: "vals.mp3", variants: audio }), asset("m2", { purpose: "music", hidden: true, variants: audio }), asset("m3", { purpose: "music", status: "PROCESSING", variants: {} }), asset("a")] }) });
+    expect(await designMediaSource(client, "c-1").listAudio?.()).toEqual([{ id: "m1", name: "vals.mp3" }]);
+  });
+
   it("a file dropped on the editor's uploader is sent as a background and reported once the server finished it", async () => {
     let listed = false;
     const { client, calls } = fakeClient({

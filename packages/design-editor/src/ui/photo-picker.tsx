@@ -1,12 +1,13 @@
-import { useEffect, useId, useState, type ReactNode } from "react";
+import { useEffect, useId, useMemo, useState, type ReactNode } from "react";
 import { ListStatus, useList, type MediaChoice, type MediaSource } from "./basic-panel.js";
 import { useEditor } from "./editor-context.js";
 
-const key = (name: string): string => `designEditor.photoPicker.${name}`;
 
 export interface PhotoPickerProps {
   readonly media: MediaSource;
-  readonly purpose: "background" | "block" | "section" | "element" | "monogram";
+  readonly purpose: "background" | "block" | "section" | "element" | "monogram" | "music";
+  /** A music file (MP3) instead of a picture: listed by name, no thumbnail. */
+  readonly kind?: "image" | "audio";
   /** What can be done with the chosen picture (add a block, set a background, insert into the code). */
   readonly children: (choice: MediaChoice) => ReactNode;
 }
@@ -15,9 +16,12 @@ export interface PhotoPickerProps {
  * Choose a picture without typing an address: upload a new one (the app's own surface: drag and drop, file dialog, camera) or pick
  * one already uploaded, by looking at it. A file that just finished uploading is chosen by itself. Nothing here takes a URL.
  */
-export function PhotoPicker({ media, purpose, children }: PhotoPickerProps) {
+export function PhotoPicker({ media, purpose, kind = "image", children }: PhotoPickerProps) {
   const { t } = useEditor();
-  const [load, retry] = useList(media);
+  const key = (name: string): string => `designEditor.photoPicker.${kind === "audio" ? "audio." : ""}${name}`;
+  // A stable source: the list reloads when the editor asks for it (after an upload), not on every render.
+  const source = useMemo(() => (kind === "audio" ? { list: media.listAudio ?? (async () => []) } : media), [media, kind]);
+  const [load, retry] = useList(source);
   const [chosen, setChosen] = useState<string | null>(null);
   const [uploaded, setUploaded] = useState<MediaChoice | null>(null);
   const group = useId();

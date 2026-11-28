@@ -138,10 +138,12 @@ export const designEditorEsBO = {
     }
   },
   photoPicker: {
+    audio: { loading: "Cargando tu música…", failed: "No pudimos cargar tu música. Revisa tu conexión e inténtalo otra vez.", empty: "Todavía no tienes música subida. Sube tu archivo MP3 arriba.", choose: "Tu música", help: "Elige una canción con el teclado (flechas) o tocándola.", selected: "Elegiste «{{name}}»." },
     loading: "Cargando tus fotos…", failed: "No pudimos cargar tus fotos. Revisa tu conexión e inténtalo otra vez.", empty: "Todavía no tienes fotos subidas. Sube la primera arriba.",
     choose: "Tus fotos", help: "Elige una foto con el teclado (flechas) o tocándola.", selected: "Elegiste «{{name}}»."
   },
   images: {
+    music: { title: "Música", help: "Sube un MP3 tuyo (hasta 15 MB). Al subirlo confirmas que tienes derecho a usarlo.", add: "Agregar como música de la página", added: "la música" },
     use: { title: "¿Para qué es la foto?", image: "Una imagen dentro de la página", background: "El fondo de la página" },
     title: "Imágenes de la invitación", page: "En la página", alt: "Descripción de la imagen (para quien no la ve)", altHelp: "Una frase corta. Déjala vacía si es solo decorativa.",
     defaultText: "Escribe aquí tu mensaje.", added: "Agregaste: {{what}}.", note: "Los fondos y las imágenes se agregan al final de la página; muévelos en el lienzo.",

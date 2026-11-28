@@ -60,6 +60,8 @@ export interface DirectoryCard {
   readonly summary?: string;
   readonly priceFrom?: { readonly amountMinor: number; readonly currency: string };
   readonly imageUrl?: string;
+  /** Provider Catalog 3.13.0: the provider's logo (published microsite), uploaded as a file. */
+  readonly logoUrl?: string;
   /** Destinations enabled for the listing (WHATSAPP, PHONE, EMAIL, INSTAGRAM, OFFICIAL_SITE, LANDING, PRODUCT_PAGE); each is reached through /r/{listingId}. */
   readonly destinations?: readonly string[];
   /** Cities or areas the provider serves (F25 coverage zone). */

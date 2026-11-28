@@ -56,6 +56,19 @@ export function ImagePanel({ media }: { readonly media: MediaSource }) {
           </div>
         )}
       </PhotoPicker>
+      {media.listAudio ? (
+        <fieldset className="de-fieldset" data-testid="music-section">
+          <legend>{t(key("music.title"))}</legend>
+          <p className="de-hint">{t(key("music.help"))}</p>
+          <PhotoPicker media={media} purpose="music" kind="audio">
+            {(choice) => (
+              <div className="de-row de-row--wrap">
+                <button type="button" className="de-btn" onClick={() => { dispatch({ type: "edit", op: addBlock(pageId, "music", { source: "media", ref: choice.id }), at: now() }); done(t(key("music.added"))); }}>{t(key("music.add"))}</button>
+              </div>
+            )}
+          </PhotoPicker>
+        </fieldset>
+      ) : null}
       {background ? <button type="button" className="de-btn" onClick={() => { dispatch({ type: "edit", op: setPageBackgroundPhoto(pageId, null), at: now() }); announce(t(key("backgroundRemoved"), { page: pageName(pageId) })); }}>{t(key("removeBackground"), { page: pageName(pageId) })}</button> : null}
       <p className="de-hint">{t(key("note"))}</p>
     </section>

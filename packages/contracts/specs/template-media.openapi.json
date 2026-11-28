@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "RSVP Template and Media API",
-    "version": "1.5.0",
-    "description": "Template/Media Service (lane 16, Django + DRF). Behind Kong at /media (prefix stripped). Errors are RFC 9457 problems. 1.2.0 (F1, additive; the unmerged 1.1.0 of the same change set is superseded): a template theme is either the v1 theme (unchanged) or the invitation design document v2 (DesignDocumentV2, schemaVersion 2), validated against this contract. A v2 without the gifts block is 422 GIFTS_BLOCK_REQUIRED; the mandatory gifts button cannot be redirected, hidden, shrunk below 44 px, moved out of the canvas, covered or left unreadable (GIFTS_BLOCK_LOCKED, GIFTS_BLOCK_HIDDEN, GIFTS_BLOCK_OUT_OF_CANVAS, GIFTS_BLOCK_TOO_SMALL, GIFTS_BLOCK_COVERED, GIFTS_BLOCK_LOW_CONTRAST). History of 1.2.0 and 1.3.0, superseded in F4 b (see 1.4.1; DESIGN_NOT_PUBLISHABLE no longer exists): until F4/F5 the admin and the renderer could not read a v2: POST/PATCH with a v2 theme was 422 DESIGN_V2_NOT_AVAILABLE, the admin list left v2 rows out and publishing one was 422 DESIGN_NOT_PUBLISHABLE. The gifts button keeps 44 px of useful height after padding and border and a label of at most 32 px. Poppins and IBM Plex leave the font catalogue. Custom HTML/CSS is 422 CUSTOM_CODE_UNAVAILABLE until the F5 sanitiser exists. A JSON body over 1 MB is 413 PAYLOAD_TOO_LARGE. Low-contrast colour pairs come back as non-blocking warnings (P19). 1.3.0 (F1, additive): per-celebration design storage. A design has a working draft, immutable published versions that can be restored into the draft (P15) and may be a host's private template (P21). Endpoints under /designs; publishing a celebration design emits template.design.published.v1 (AsyncAPI 1.23.0). 1.4.0 (F6, additive): more image types (gif, avif, svg, heic), MP3 music, `purpose`, per-celebration quota (409 MEDIA_QUOTA_*), AVIF variants, `POST /embeds/resolve` and `GET /celebrations/{celebrationId}/media-usage`. Nothing was removed or renamed. 1.4.1 (documentation only, no behaviour change): since F4 b the v2 gate DESIGN_V2_ACCEPTED is on by default and DESIGN_NOT_PUBLISHABLE is gone, so POST /templates/{id}/publish no longer lists a 422 and the descriptions that said \"until F4/F5\" now say what the service does. 1.4.2 (F6, narrowing, no endpoint removed): SoundCloud leaves the embeds resolver by product decision; `POST /embeds/resolve` no longer accepts soundcloud.com URLs (they are rejected like any host outside the allowlist) and `provider` loses the `soundcloud` value. The music kind is YouTube, Spotify or an own MP3. 1.5.0 (F7 / PL-142-R4, additive; the storage follow-up of F1 moves to 1.6.0): Template/Media stops serving what an administrator hid in Celebration/Site (decision of 2026-11-25) and serves it again when the hiding is lifted. It consumes celebration.moderation.content-hidden.v1, content-restored.v1 and appeal-decided.v1 (AsyncAPI 1.24.0). A page hidden (scope PAGE) hides every file of the celebration; the `gallery` section hidden hides the gallery photos (purposes gallery and cover, also the ones uploaded afterwards); an element whose id is the id of a file hides that file. A hidden file is no longer in the public gallery, `GET /public/assets/{assetId}/{variant}` answers the same 404 as a file that does not exist, and the host listing returns it with `hidden: true` and no variant URLs, so the editor can explain it and let the host delete it. The new boolean `MediaAsset.hidden` is the only schema change. Presigned URLs issued before the hiding keep working until they expire (MEDIA_PRESIGN_SECONDS, 3600 s by default)."
+    "version": "1.10.0",
+    "description": "Template/Media Service (lane 16, Django + DRF). Behind Kong at /media (prefix stripped). Errors are RFC 9457 problems. 1.2.0 (F1, additive; the unmerged 1.1.0 of the same change set is superseded): a template theme is either the v1 theme (unchanged) or the invitation design document v2 (DesignDocumentV2, schemaVersion 2), validated against this contract. A v2 without the gifts block is 422 GIFTS_BLOCK_REQUIRED; the mandatory gifts button cannot be redirected, hidden, shrunk below 44 px, moved out of the canvas, covered or left unreadable (GIFTS_BLOCK_LOCKED, GIFTS_BLOCK_HIDDEN, GIFTS_BLOCK_OUT_OF_CANVAS, GIFTS_BLOCK_TOO_SMALL, GIFTS_BLOCK_COVERED, GIFTS_BLOCK_LOW_CONTRAST). History of 1.2.0 and 1.3.0, superseded in F4 b (see 1.4.1; DESIGN_NOT_PUBLISHABLE no longer exists): until F4/F5 the admin and the renderer could not read a v2: POST/PATCH with a v2 theme was 422 DESIGN_V2_NOT_AVAILABLE, the admin list left v2 rows out and publishing one was 422 DESIGN_NOT_PUBLISHABLE. The gifts button keeps 44 px of useful height after padding and border and a label of at most 32 px. Poppins and IBM Plex leave the font catalogue. Custom HTML/CSS is 422 CUSTOM_CODE_UNAVAILABLE until the F5 sanitiser exists. A JSON body over 1 MB is 413 PAYLOAD_TOO_LARGE. Low-contrast colour pairs come back as non-blocking warnings (P19). 1.3.0 (F1, additive): per-celebration design storage. A design has a working draft, immutable published versions that can be restored into the draft (P15) and may be a host's private template (P21). Endpoints under /designs; publishing a celebration design emits template.design.published.v1 (AsyncAPI 1.23.0). 1.4.0 (F6, additive): more image types (gif, avif, svg, heic), MP3 music, `purpose`, per-celebration quota (409 MEDIA_QUOTA_*), AVIF variants, `POST /embeds/resolve` and `GET /celebrations/{celebrationId}/media-usage`. Nothing was removed or renamed. 1.4.1 (documentation only, no behaviour change): since F4 b the v2 gate DESIGN_V2_ACCEPTED is on by default and DESIGN_NOT_PUBLISHABLE is gone, so POST /templates/{id}/publish no longer lists a 422 and the descriptions that said \"until F4/F5\" now say what the service does. 1.4.2 (F6, narrowing, no endpoint removed): SoundCloud leaves the embeds resolver by product decision; `POST /embeds/resolve` no longer accepts soundcloud.com URLs (they are rejected like any host outside the allowlist) and `provider` loses the `soundcloud` value. The music kind is YouTube, Spotify or an own MP3. 1.5.0 (F7 / PL-142-R4, additive; the storage follow-up of F1 moves to 1.6.0): Template/Media stops serving what an administrator hid in Celebration/Site (decision of 2026-11-25) and serves it again when the hiding is lifted. It consumes celebration.moderation.content-hidden.v1, content-restored.v1 and appeal-decided.v1 (AsyncAPI 1.24.0). A page hidden (scope PAGE) hides every file of the celebration; the `gallery` section hidden hides the gallery photos (purposes gallery and cover, also the ones uploaded afterwards); an element whose id is the id of a file hides that file. A hidden file is no longer in the public gallery, `GET /public/assets/{assetId}/{variant}` answers the same 404 as a file that does not exist, and the host listing returns it with `hidden: true` and no variant URLs, so the editor can explain it and let the host delete it. The new boolean `MediaAsset.hidden` is the only schema change. Presigned URLs issued before the hiding keep working until they expire (MEDIA_PRESIGN_SECONDS, 3600 s by default). 1.10.0 (additive; the number follows 1.9.1 of the moderation series, the storage follow-up still named 1.6.0 above is not this change): `GET /public/celebrations/{celebrationId}/design` returns the PUBLISHED version of a published celebration's design without a token, so the invitation page renders what the host published and not only the template. It never returns the draft, an older version, a private template or the owner; a celebration that is not published, is archived, has no published design or is hidden entirely by moderation is the same 404. Nothing was removed or renamed. Also in 1.10.0: `DELETE /assets/{assetId}` answers 409 MEDIA_IN_USE (with `designIds`) while a design still uses the file."
   },
   "servers": [
     {
@@ -639,6 +639,16 @@
           },
           "404": {
             "description": "Unknown or not yours",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "MEDIA_IN_USE: the invitation design (the draft or the published version, by mediaId or by an address inside its HTML/CSS) still uses the file. `designIds` lists the designs; remove the file from the design first.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1935,6 +1945,58 @@
           },
           "422": {
             "description": "EMBED_NOT_ALLOWED (any host or shape off the list), EMBED_PROVIDER_NOT_ALLOWED_HERE or EMBED_INTENT_UNKNOWN",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/celebrations/{celebrationId}/design": {
+      "get": {
+        "operationId": "getPublicDesign",
+        "security": [],
+        "summary": "Published design of a published celebration",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CelebrationId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The last published version of the design. Files it references are in the public gallery listing (`GET /public/celebrations/{celebrationId}/assets`); a file hidden by moderation is not there.",
+            "headers": {
+              "Cache-Control": {
+                "description": "public, max-age=15",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicDesign"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown celebration, not published, archived, hidden by moderation or without a published design: always the same answer, it reveals nothing",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error (INTERNAL)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -12551,6 +12613,28 @@
           "allow": {
             "type": "string",
             "description": "Value of the iframe allow attribute"
+          }
+        }
+      },
+      "PublicDesign": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "version",
+          "document",
+          "publishedAt"
+        ],
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "document": {
+            "$ref": "#/components/schemas/DesignDocumentV2"
+          },
+          "publishedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       }

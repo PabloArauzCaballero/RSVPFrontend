@@ -48,8 +48,8 @@ export interface RegisterProviderInput { readonly name: string; readonly slug?: 
 /** Provider Catalog 2.1.0: microsite and verification documents. */
 export interface BusinessHours { readonly weekly: readonly { readonly weekdays: readonly number[]; readonly opens: string; readonly closes: string }[]; readonly note?: string }
 export interface BusinessAddress { readonly line: string; readonly city?: string; readonly reference?: string; readonly latitude?: number; readonly longitude?: number }
-export interface MicrositeInput { readonly descriptions?: Readonly<Record<string, string>>; readonly gallery?: readonly { readonly mediaId: string; readonly url: string; readonly alt?: Readonly<Record<string, string>> }[]; readonly hours?: BusinessHours; readonly social?: Readonly<Record<string, string>>; readonly address?: BusinessAddress }
-export interface Microsite { readonly providerId: string; readonly version: number; readonly descriptions: Readonly<Record<string, string>>; readonly gallery: MicrositeInput["gallery"] & readonly unknown[]; readonly hours: BusinessHours; readonly social: Readonly<Record<string, string>>; readonly address: BusinessAddress | null;
+export interface MicrositeInput { readonly descriptions?: Readonly<Record<string, string>>; /** Imagenes por archivo (3.13.0): a gallery entry names an uploaded photo by `mediaId`; the server derives the address (`url` is only an entry stored before uploads, sent back unchanged). `logo` names an uploaded LOGO photo, null removes it. */ readonly gallery?: readonly { readonly mediaId: string; readonly url?: string; readonly alt?: Readonly<Record<string, string>> }[]; readonly logo?: { readonly mediaId: string } | null; readonly hours?: BusinessHours; readonly social?: Readonly<Record<string, string>>; readonly address?: BusinessAddress }
+export interface Microsite { readonly providerId: string; readonly version: number; readonly descriptions: Readonly<Record<string, string>>; readonly gallery: readonly { readonly mediaId: string; readonly url: string; readonly alt?: Readonly<Record<string, string>> }[]; readonly logo?: { readonly mediaId: string; readonly url: string } | null; readonly hours: BusinessHours; readonly social: Readonly<Record<string, string>>; readonly address: BusinessAddress | null;
   /** Provider Catalog 3.0.0 (A20), owner and admin only: the last moderation of the microsite; a REJECTED microsite is not public until a newer version is approved. */
   readonly moderation?: MicrositeModeration }
 export interface MicrositeModeration { readonly status: "PENDING" | "APPROVED" | "REJECTED"; readonly reason: string | null; readonly submittedAt: string; readonly published: boolean }
@@ -68,7 +68,7 @@ export const DOCUMENT_TYPES: readonly DocumentContentType[] = ["application/pdf"
 export interface ProviderCard {
   readonly listingId: string; readonly providerSlug: string; readonly name: string; readonly category: string; readonly city: string; readonly department: string; readonly verified: boolean;
   readonly providerId: string; readonly providerName: string; readonly destinations: readonly Destination[];
-  readonly summary?: string; readonly priceFrom?: { readonly amountMinor: number; readonly currency: string }; readonly imageUrl?: string; readonly score?: number; readonly capReached?: boolean;
+  readonly summary?: string; readonly priceFrom?: { readonly amountMinor: number; readonly currency: string }; readonly imageUrl?: string; /** 3.13.0: the provider's logo (uploaded, from its published microsite). */ readonly logoUrl?: string; readonly score?: number; readonly capReached?: boolean;
   readonly fulfillment?: FulfillmentView; readonly address?: BusinessAddress; readonly hours?: BusinessHours;
 }
 export interface ProviderPage { readonly items: readonly ProviderCard[]; readonly total: number; readonly page: number; readonly pageSize: number }

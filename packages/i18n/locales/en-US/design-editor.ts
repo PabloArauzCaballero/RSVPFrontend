@@ -141,10 +141,12 @@ export const designEditorEnUS: DeepStrings<typeof designEditorEsBO> = {
     }
   },
   photoPicker: {
+    audio: { loading: "Loading your music…", failed: "We could not load your music. Check your connection and try again.", empty: "You have no music uploaded yet. Upload your MP3 file above.", choose: "Your music", help: "Choose a song with the keyboard (arrow keys) or by tapping it.", selected: "You chose “{{name}}”." },
     loading: "Loading your photos…", failed: "We could not load your photos. Check your connection and try again.", empty: "You have not uploaded any photos yet. Upload the first one above.",
     choose: "Your photos", help: "Choose a photo with the keyboard (arrow keys) or by tapping it.", selected: "You chose \"{{name}}\"."
   },
   images: {
+    music: { title: "Music", help: "Upload your own MP3 (up to 15 MB). By uploading it you confirm you have the right to use it.", add: "Add as the page's music", added: "the music" },
     use: { title: "What is the photo for?", image: "An image inside the page", background: "The background of the page" },
     title: "Invitation images", page: "On the page", alt: "Image description (for someone who cannot see it)", altHelp: "A short sentence. Leave it empty if it is only decoration.",
     defaultText: "Write your message here.", added: "You added: {{what}}.", note: "Backgrounds and images are added at the end of the page; move them on the canvas.",

@@ -7,6 +7,8 @@ import { useMediaUploads } from "./media/use-media-uploads";
 
 /** What the editor may offer as a picture: finished, visible, not music and with something to draw. */
 const usable = (asset: MediaAsset): boolean => asset.status === "PROCESSED" && asset.purpose !== "music" && !asset.hidden && Boolean(asset.variants);
+/** A finished MP3 the host owns (not hidden by moderation): what can be offered as the invitation's music. */
+const usableAudio = (asset: MediaAsset): boolean => asset.status === "PROCESSED" && asset.purpose === "music" && !asset.hidden && Boolean(asset.variants.audio);
 export const toChoice = (asset: MediaAsset): MediaChoice => ({ id: asset.id, name: asset.filename, ...(asset.variants.thumb ? { thumbUrl: asset.variants.thumb } : {}) });
 
 /**
@@ -30,5 +32,6 @@ export function DesignMediaUploader({ celebrationId, onUploaded, purpose = "back
 /** The editor's photo source for one celebration: its processed files, and the upload surface above. */
 export const designMediaSource = (client: ApiClient, celebrationId: string): MediaSource => ({
   list: async () => (await mediaApi(client).list(celebrationId)).items.filter(usable).map(toChoice),
+  listAudio: async () => (await mediaApi(client).list(celebrationId)).items.filter(usableAudio).map((asset) => ({ id: asset.id, name: asset.filename })),
   renderUploader: (props) => <DesignMediaUploader celebrationId={celebrationId} {...props} />
 });

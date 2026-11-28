@@ -15,12 +15,14 @@ export interface DrawingSource { readonly list: () => Promise<readonly DrawingCh
 export interface MediaChoice { readonly id: string; readonly name: string; /** Small version of the picture, to choose by looking and not by file name. */ readonly thumbUrl?: string }
 export interface MediaUploaderProps {
   /** What the file is for, so the app files it right (`block` for an image block, `background` for a page background). */
-  readonly purpose?: "background" | "block" | "section" | "element" | "monogram";
+  readonly purpose?: "background" | "block" | "section" | "element" | "monogram" | "music";
   /** Called once per file the server accepted and finished processing, so the editor can offer it and use it as the cover. */
   readonly onUploaded: (choice: MediaChoice) => void;
 }
 export interface MediaSource {
   readonly list: () => Promise<readonly MediaChoice[]>;
+  /** The music files already uploaded (an MP3 the host owns), to use as the invitation's music; without it the editor offers no uploaded music. */
+  readonly listAudio?: () => Promise<readonly MediaChoice[]>;
   /**
    * The screen's own upload surface (drag and drop, file dialog, camera, progress and errors per file). The editor is plain DOM and
    * knows nothing about the upload queue or the API, so the app injects it; without it the host can only pick what is already uploaded.

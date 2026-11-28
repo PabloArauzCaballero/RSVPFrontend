@@ -19,6 +19,32 @@ function openAdvanced(media: MediaSource) {
 }
 const source = (items: MediaChoice[] = [{ id: ID, name: "boda.jpg", thumbUrl: PHOTO }], uploader?: (props: MediaUploaderProps) => React.ReactNode): MediaSource => ({ list: async () => items, ...(uploader ? { renderUploader: uploader } : {}) });
 
+describe("music in the advanced level", () => {
+  const AUDIO = "9c1e7a40-2222-4c3a-9d33-bbbbbbbbbbbb";
+  it("the section appears only when the app can list uploaded music; the song is chosen by name and added as a music block that points at the file", async () => {
+    const panel = openAdvanced({ list: async () => [], listAudio: async () => [{ id: AUDIO, name: "vals.mp3" }] });
+    const music = await within(panel).findByTestId("music-section");
+    const radio = await within(music).findByRole("radio", { name: /vals\.mp3/ });
+    expect(music.querySelector("img")).toBeNull();
+    expect(within(music).queryByRole("button", { name: "Agregar como música de la página" })).toBeNull();
+    fireEvent.click(radio);
+    expect(await within(music).findByText("Elegiste «vals.mp3».")).toBeTruthy();
+    fireEvent.click(within(music).getByRole("button", { name: "Agregar como música de la página" }));
+    expect(await screen.findByText("Agregaste: la música.")).toBeTruthy();
+    expect((screen.getByRole("button", { name: "Deshacer" }) as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it("without uploaded music it says so and asks the app's uploader for a file of purpose music; without listAudio there is no section", async () => {
+    const asked: (string | undefined)[] = [];
+    const panel = openAdvanced({ list: async () => [], listAudio: async () => [], renderUploader: ({ purpose }) => { asked.push(purpose); return <button type="button">Elegir archivo</button>; } });
+    const music = await within(panel).findByTestId("music-section");
+    expect(await within(music).findByText(/Todavía no tienes música subida/)).toBeTruthy();
+    expect(asked).toContain("music");
+    cleanup();
+    expect(within(openAdvanced(source())).queryByTestId("music-section")).toBeNull();
+  });
+});
+
 describe("images in the advanced level (E4)", () => {
   it("chooses a photo by looking at it, with its thumbnail and a radio the keyboard can reach, and adds it as an image block", async () => {
     const panel = openAdvanced(source());

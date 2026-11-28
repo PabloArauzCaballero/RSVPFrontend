@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ApiError, type ApiClient } from "@rsvp/api-client";
 import { cityBySlug, PAGE_SIZE, providerSearchPath, type DirectoryCard, type DirectoryPage } from "./directory.js";
 import { retryTransient } from "../policy.js";
+import type { Microsite } from "./types.js";
 
 /**
  * Partner microsite data (F25), shared by the public site and the app: the partner is built from GET /providers?slug=
@@ -12,6 +13,7 @@ import { retryTransient } from "../policy.js";
 const MAX_SLUG_PAGES = 20;
 export const PARTNER_CONTACT_ORDER = ["WHATSAPP", "PHONE", "EMAIL", "INSTAGRAM", "OFFICIAL_SITE"] as const;
 
+export interface PartnerPicture { readonly url: string; readonly alt: string }
 export interface Partner {
   readonly slug: string;
   readonly name: string;
@@ -20,6 +22,10 @@ export interface Partner {
   readonly department: string;
   readonly summary?: string;
   readonly imageUrl?: string;
+  /** The provider's logo, uploaded as a file and chosen in its microsite (provider-catalog 3.13.0). */
+  readonly logoUrl?: string;
+  /** Photos of the published microsite, in the order the provider chose. `alt` may be empty: the provider did not describe it. */
+  readonly gallery?: readonly PartnerPicture[];
   readonly address?: string;
   readonly hours: readonly string[];
   readonly coverage: readonly string[];
@@ -80,6 +86,7 @@ export function partnerFromListings(slug: string, cards: readonly DirectoryCard[
     department: head.department,
     ...(head.summary ? { summary: head.summary } : {}),
     ...(head.imageUrl ? { imageUrl: head.imageUrl } : {}),
+    ...(own.find((card) => card.logoUrl)?.logoUrl ? { logoUrl: own.find((card) => card.logoUrl)?.logoUrl as string } : {}),
     ...(addressText(head.address) ? { address: addressText(head.address) } : {}),
     hours: head.hours ?? [],
     coverage: uniqueZones(own.flatMap((card) => [...(card.coverage ?? []), ...(card.fulfillment?.coverageZones ?? [])])),
@@ -157,6 +164,23 @@ async function providerIdOf(client: ApiClient, partner: Partner): Promise<string
   } catch { return null; }
 }
 
+/** The gallery and the logo of a microsite as a partner shows them; the alt text is the one in the reader's language, else Spanish, else any. */
+export function micrositePictures(microsite: { readonly gallery?: readonly { readonly url: string; readonly alt?: Readonly<Record<string, string>> }[]; readonly logo?: { readonly url: string } | null }, locale = "es-BO"): Pick<Partner, "logoUrl" | "gallery"> {
+  const alt = (value: Readonly<Record<string, string>> | undefined): string => value?.[locale] ?? value?.["es-BO"] ?? Object.values(value ?? {})[0] ?? "";
+  const gallery = (microsite.gallery ?? []).filter((entry) => entry.url).map((entry) => ({ url: entry.url, alt: alt(entry.alt) }));
+  return { ...(microsite.logo?.url ? { logoUrl: microsite.logo.url } : {}), ...(gallery.length ? { gallery } : {}) };
+}
+
+/** Adds the logo and gallery of the provider's published microsite. A microsite that cannot be read leaves the partner as it is. */
+export async function withMicrositePictures(client: ApiClient, partner: Partner, providerId: string, locale = "es-BO", signal?: AbortSignal): Promise<Partner> {
+  try {
+    const microsite = await client.request<Pick<Microsite, "gallery" | "logo">>(`/providers/${providerId}/microsite`, { auth: false, ...(signal ? { signal } : {}) });
+    return { ...partner, ...micrositePictures(microsite, locale) };
+  } catch {
+    return partner;
+  }
+}
+
 /**
  * The microsite as the app reads it: partner + provider profile. A partner whose provider is not VERIFIED (or 404) is
  * not-found; a profile that cannot be read leaves the partner visible (its cards are public) but marks quote/agenda unavailable.
@@ -172,7 +196,8 @@ export async function loadPartnerContext(client: ApiClient, slug: string, signal
     const profile = await client.request<PartnerProfile>(`/providers/${providerId}`, { auth: false, signal });
     if (profile.status !== "VERIFIED") return { state: "not-found" };
     // The public card's `name` is the listing title; the business name is the provider's own.
-    return { state: "ok", partner: { ...found, providerId, name: profile.name || found.name }, profile };
+    const named = { ...found, providerId, name: profile.name || found.name };
+    return { state: "ok", partner: await withMicrositePictures(client, named, providerId, "es-BO", signal), profile };
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) return { state: "not-found" };
     return { state: "unavailable", partner: found };

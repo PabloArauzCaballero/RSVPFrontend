@@ -44,6 +44,7 @@ export function PartnerMicrosite({ partner, t, locale }: { readonly partner: Par
           <div className="partner-hero">
             <div className="partner-hero__media">{partner.imageUrl ? <img src={partner.imageUrl} alt={t("partner.imageAlt", { name: partner.name, category, city: partner.city })} width={960} height={540} decoding="async" fetchPriority="high" /> : <Monogram name={partner.name} />}</div>
             <div className="partner-hero__text">
+              {partner.logoUrl ? <img className="partner-logo" src={partner.logoUrl} alt={t("partner.logoAlt", { name: partner.name })} width={96} height={96} decoding="async" /> : null}
               <h1>{partner.name}</h1>
               <p className="partner-eyebrow">{category} · {partner.city}</p>
               <p className="directory-verified" title={t("partner.verifiedHint")}><CheckMark size={16} />{t("directory.verified")}</p>
@@ -98,6 +99,15 @@ export function PartnerMicrosite({ partner, t, locale }: { readonly partner: Par
             {partner.hours.length ? <ul className="partner-hours">{partner.hours.map((line) => <li key={line}>{line}</li>)}</ul> : null}
           </section>
         </div>
+
+        {partner.gallery?.length ? (
+          <section aria-labelledby="partner-gallery" className="partner-section">
+            <h2 id="partner-gallery">{t("partner.gallery")}</h2>
+            <ul className="partner-gallery">
+              {partner.gallery.map((picture) => <li key={picture.url}><img src={picture.url} alt={picture.alt} width={480} height={360} loading="lazy" decoding="async" /></li>)}
+            </ul>
+          </section>
+        ) : null}
 
         <section aria-labelledby="partner-contact" className="partner-section partner-contact">
           <h2 id="partner-contact">{t("partner.contact")}</h2>

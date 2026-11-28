@@ -42,6 +42,22 @@ describe("F25 · partner microsite /p/{slug}", () => {
     expect(document.body.textContent).toContain("Desde");
   });
 
+  it("imagenes por archivo · the logo and the gallery the provider uploaded show on its page, with the alt text it wrote; none of them without a microsite", () => {
+    const base = partnerFromListings("hotel-andino", [card({ logoUrl: "https://media.test/logo/card.webp" })]);
+    if (!base) throw new Error("expected partner");
+    expect(base.logoUrl).toBe("https://media.test/logo/card.webp");
+    const withGallery = { ...base, gallery: [{ url: "https://media.test/a/card.webp", alt: "Salón principal" }, { url: "https://media.test/b/card.webp", alt: "" }] };
+    const document = dom(renderToStaticMarkup(<PartnerMicrosite partner={withGallery} t={t} locale="es-BO" />));
+    expect(document.querySelector("img.partner-logo")?.getAttribute("src")).toBe("https://media.test/logo/card.webp");
+    expect(document.querySelector("img.partner-logo")?.getAttribute("alt")).toBe("Logo de Hotel Andino");
+    const pictures = [...document.querySelectorAll(".partner-gallery img")];
+    expect(pictures.map((img) => img.getAttribute("src"))).toEqual(["https://media.test/a/card.webp", "https://media.test/b/card.webp"]);
+    expect(pictures[0]?.getAttribute("alt")).toBe("Salón principal");
+    const plain = dom(renderToStaticMarkup(<PartnerMicrosite partner={{ ...base, logoUrl: undefined as never }} t={t} locale="es-BO" />));
+    expect(plain.querySelector(".partner-gallery")).toBeNull();
+    expect(plain.querySelector("img.partner-logo")).toBeNull();
+  });
+
   it("REQ-F25-05 · the platform disclaimer comes before the contact buttons, and every contact goes through /r/", async () => {
     const partner = partnerFromListings("hotel-andino", [card()]);
     if (!partner) throw new Error("expected partner");

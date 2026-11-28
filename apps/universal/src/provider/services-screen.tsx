@@ -4,7 +4,7 @@ import { radius, spacing } from "@rsvp/design-tokens";
 import { formatMinor } from "@rsvp/i18n";
 import { Chip, Enter, Stagger, fonts, useColors } from "@rsvp/ui";
 import { useRouter, type Href } from "expo-router";
-import { newIdempotencyKey, useCreateOwnListing, useDuplicateListing, useOfferCategories, useOwnListings, useProviderGeo, usePublishListing, type CreateListingInput, type OwnListing, type Provider, type ProviderGeoCity } from "@rsvp/query-hooks";
+import { newIdempotencyKey, useCreateOwnListing, useDuplicateListing, useListingSheet, useOfferCategories, useOwnListings, usePatchListing, useProviderGeo, usePublishListing, type CreateListingInput, type OwnListing, type Provider, type ProviderGeoCity } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../platform/providers";
 import { ActionButton, ChoiceGroup, EmptyState, Field, FilterSelect, Illustration, Notice, OverflowMenu, PageIntro, Section, SuccessNote, useStyles } from "../host/ui";
 import { PortalErrorNotice as ErrorNotice, PortalErrorState } from "./errors";
@@ -18,11 +18,33 @@ import { CompletenessChip, productHref } from "./product-editor/product-editor-s
 import { missingShort, MissingList } from "./product-editor/missing-list";
 import { MISSING_STEP } from "./product-editor/model";
 import { SheetErrorNotice } from "./product-editor/sheet-errors";
+import { PhotoUploader } from "./product-editor/photo-uploader";
+import type { AppLocale } from "@rsvp/i18n/server";
 
 const MAX_TITLE = 120;
 const HTTPS = /^https:\/\/[^\s]+$/i;
 type Kind = CreateListingInput["type"];
 const DEFAULT_CITY = "la-paz";
+
+/**
+ * Photos of a SERVICE (provider-catalog 3.13.0): the same uploader as a product's (up to 5, drag and drop or the device's gallery and camera),
+ * never a link. The first READY photo is the cover the directory shows; «Usar como portada» reorders through the PATCH with the loaded version.
+ */
+function ServicePhotos({ providerId, listingId }: { readonly providerId: string; readonly listingId: string }): ReactNode {
+  const client = useApiClient();
+  const locale = useLocale() as AppLocale;
+  const sheet = useListingSheet(client, providerId, listingId, locale);
+  const patch = usePatchListing(client, providerId, listingId, locale);
+  if (sheet.isPending) return <RowsSkeleton count={1} minHeight={80} trailing={false} />;
+  if (sheet.isError) return <ErrorNotice error={sheet.error} onRetry={() => { void sheet.refetch(); }} />;
+  return (
+    <View testID={`service-photos-${listingId}`} style={{ gap: spacing[3] }}>
+      <PhotoUploader kind="service" sheet={sheet.data} providerId={providerId} locale={locale} reordering={patch.isPending}
+        onReorder={(order) => { if (sheet.data.version !== undefined) patch.mutate({ version: sheet.data.version, input: { photoOrder: [...order] } }); }} />
+      <SheetErrorNotice error={patch.error} />
+    </View>
+  );
+}
 
 /** One offer as a row: the name, its state and ONE line of delivery terms. "Publicar" lives in the row's "⋯" menu (a draft without terms shows it off, with the reason under the terms). */
 function OfferRow({ provider, listing, cities, publishing, duplicating, onPublish, onDuplicate }: { readonly provider: Provider; readonly listing: OwnListing; readonly cities: readonly ProviderGeoCity[] | undefined; readonly publishing: boolean; readonly duplicating: boolean; readonly onPublish: () => void; readonly onDuplicate: () => void }): ReactNode {
@@ -38,6 +60,7 @@ function OfferRow({ provider, listing, cities, publishing, duplicating, onPublis
   const styles = useStyles();
   const palette = useColors();
   const f = listing.fulfillment;
+  const [photosOpen, setPhotosOpen] = useState(false);
   // The platform hid it (type and category disagree): it cannot be published until the provider creates it again.
   const hidden = listing.hiddenReason === "CATEGORY_TYPE_MISMATCH";
   const terms = f ? [
@@ -70,6 +93,14 @@ function OfferRow({ provider, listing, cities, publishing, duplicating, onPublis
       {!sheet && !hidden && !listing.published && !listing.fulfillment ? <Text style={styles.muted} testID={`publish-blocked-${listing.id}`}>{t("portal.services.needsTerms")}</Text> : null}
       {sheet && !hidden && missing.length ? <Text style={styles.muted} testID={`listing-missing-${listing.id}`}>{missingShort(missing, t)}</Text> : null}
       {sheet && !hidden && (noSheet || listing.completeness === "INCOMPLETE") ? <Text style={styles.muted} testID={`listing-not-gift-${listing.id}`}>{t("portal.product.notGift")}</Text> : null}
+      {listing.type === "SERVICE" && !hidden ? (
+        <View style={{ gap: spacing[3] }}>
+          <View style={{ alignSelf: "flex-start" }}>
+            <ActionButton variant="secondary" icon="upload" label={t(photosOpen ? "portal.services.photos.hide" : "portal.services.photos.show")} onPress={() => setPhotosOpen((current) => !current)} testID={`listing-photos-${listing.id}`} />
+          </View>
+          {photosOpen ? <ServicePhotos providerId={provider.id} listingId={listing.id} /> : null}
+        </View>
+      ) : null}
       {sheet && !hidden && !noSheet ? (
         <View style={{ alignSelf: "flex-start" }}>
           <ActionButton variant="secondary" icon="arrow" label={t("portal.product.actions.edit")} onPress={() => router.push(productHref(listing.id, missing[0] ? MISSING_STEP[missing[0]] : "summary") as Href)} testID={`listing-edit-${listing.id}`} />
