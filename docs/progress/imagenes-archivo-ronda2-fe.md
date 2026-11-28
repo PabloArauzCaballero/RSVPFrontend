@@ -56,3 +56,10 @@ Chromium/Safari/Firefox reales contra el backend real (lista abajo), camara y ga
 - D2/D3 aplicadas como lo recomienda el inventario; si el dueno decide otra cosa se retira la seccion del perfil o el boton de servicios sin tocar el resto.
 - HEIC en servicio/micrositio sigue la decision de producto: se rechaza en el cliente (convertir en el dispositivo).
 - Camara nativa y permisos (`app.config.ts`) y el poster de video: siguientes PR.
+
+## Hallazgos del recorrido real (F-1 a F-4, corregidos)
+- F-1: varias fotos arrastradas juntas a la galeria solo dejaban la ultima en el borrador. `MicrositePhotos.onChange` ahora recibe un ACTUALIZADOR que parte del ultimo borrador (galeria, logo, quitar, descripcion). Prueba de componente con 3 archivos a la vez.
+- F-2: una foto subida viaja solo por `mediaId` (sin `url`); la direccion solo vuelve en una entrada guardada antes de las subidas. El FE distingue con la lista de fotos del proveedor (`useProviderMedia`); el logo ya iba solo por id. Sin cambio de contrato.
+- F-3: con 5 de 5 fotos ya no se muestra «Foto lista.» junto al aviso de limite.
+- F-4: cada foto de la galeria del micrositio tiene su campo «Descripcion de la foto N» (es-BO y en-US, hasta 200 caracteres, en el idioma de la persona); vacio queda como decorativa. No se inventa un alt a partir del nombre del negocio.
+- Evidencia: typecheck 19/19, eslint limpio, vitest universal 875, seo-web 227, i18n 18, build web ok. Contrato sin cambios (BE `22450ab6`).

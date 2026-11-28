@@ -164,7 +164,7 @@ export function PhotoUploader({ sheet, providerId, locale, reordering, onReorder
           {notAFile ? <Notice kind="error">{t("host.media.pickProblems.notAFile")}</Notice> : null}
         </View>
       )}
-      <Text accessibilityLiveRegion="polite" role="status" style={styles.muted} testID="photo-stage">{stage ? t(`portal.product.photos.stage.${stage}`) : readyNote ? t("portal.product.photos.ready") : ""}</Text>
+      <Text accessibilityLiveRegion="polite" role="status" style={styles.muted} testID="photo-stage">{stage ? t(`portal.product.photos.stage.${stage}`) : readyNote && !full ? t("portal.product.photos.ready") : ""}</Text>
       <SheetErrorNotice error={localError ?? upload.error ?? remove.error} {...(upload.error && last.current ? { onRetry: () => { if (last.current) send(last.current); } } : {})} />
     </View>
   );

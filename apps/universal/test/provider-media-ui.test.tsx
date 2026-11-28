@@ -85,7 +85,65 @@ describe("photos of a service", () => {
   });
 });
 
+describe("photo limit notice", () => {
+  it("the fifth photo shows the limit and not «Foto lista.» beside it", async () => {
+    const photo = (id: string) => ({ id, listingId: SID, variantId: null, status: "READY", rejectReason: null, contentType: "image/png", altText: null, position: 0, renditions: rendition(id), createdAt: "x", updatedAt: "x" });
+    let fifth = false;
+    const { client } = fakeClient(handlers({
+      [`GET /providers/${PID}/listings/${SID}`]: () => ({ ...SERVICE, photos: [1, 2, 3, 4, ...(fifth ? [5] : [])].map((n) => photo(`p${n}`)) }),
+      [`POST /providers/${PID}/listings/${SID}/photos/uploads`]: () => ({ ...photo("p5"), status: "PENDING_UPLOAD", renditions: null, upload: { method: "PUT", url: "https://s3.test/up", headers: {}, expiresAt: "x" } }),
+      [`POST /providers/${PID}/listings/${SID}/photos/p5/complete`]: () => { fifth = true; return { ...photo("p5"), status: "QUEUED" }; }
+    }));
+    renderApp(<ServicesScreen />, client, HOST);
+    fireEvent.click(await screen.findByTestId(`listing-photos-${SID}`));
+    drag("drop", await screen.findByTestId("photo-dropzone"), [png("quinta.png")]);
+    expect((await screen.findByTestId("photo-limit")).textContent).toMatch(/Ya tienes 5 fotos/);
+    await waitFor(() => expect(screen.getByTestId("photo-stage").textContent).toBe(""));
+    expect(screen.queryByText("Foto lista.")).toBeNull();
+  });
+});
+
 describe("gallery and logo of the microsite", () => {
+  it("three files dropped together all join the draft (each starts from the latest draft), save by id only, and each takes its own description", async () => {
+    const ids = ["g1", "g2", "g3"];
+    const ready = new Set<string>();
+    let next = 0;
+    let saved: unknown;
+    const { client } = fakeClient(handlers({
+      [`POST /providers/${PID}/media/uploads`]: () => ({ ...mediaItem(ids[next++] as string, "GALLERY", "PENDING_UPLOAD"), upload: { method: "PUT", url: "https://s3.test/up", headers: {}, expiresAt: "x" } }),
+      ...Object.fromEntries(ids.map((id) => [`POST /providers/${PID}/media/${id}/complete`, () => { ready.add(id); return mediaItem(id, "GALLERY", "QUEUED"); }])),
+      [`GET /providers/${PID}/media`]: () => ({ items: ids.filter((id) => ready.has(id)).map((id) => mediaItem(id, "GALLERY")) }),
+      [`PUT /providers/${PID}/microsite`]: (call) => { saved = call.body; return { ...MICROSITE, version: 5 }; }
+    }));
+    renderApp(<MicrositeScreen />, client, HOST);
+    const zone = await screen.findByTestId("microsite-GALLERY-zone");
+    drag("drop", zone, [png("a.png", "1"), png("b.png", "22"), png("c.png", "333")]);
+    await waitFor(() => expect(screen.getByTestId("microsite-gallery-count").textContent).toBe("3 de 12 fotos"), { timeout: 8000 });
+    for (const id of ids) expect(screen.getByTestId(`microsite-photo-${id}`)).toBeTruthy();
+    fireEvent.change(screen.getByTestId("microsite-photo-alt-g2"), { target: { value: "Mesa principal" } });
+    fireEvent.click(screen.getByTestId("microsite-save"));
+    await waitFor(() => expect(saved).toBeTruthy());
+    expect((saved as { gallery: unknown[] }).gallery).toEqual([{ mediaId: "g1" }, { mediaId: "g2", alt: { "es-BO": "Mesa principal" } }, { mediaId: "g3" }]);
+  });
+
+  it("an entry saved before uploads goes back with its address; an uploaded photo never carries one", async () => {
+    let saved: unknown;
+    const legacy = { mediaId: "old-1", url: "https://cdn.example/vieja.jpg", alt: { "es-BO": "Vieja" } };
+    const uploaded = { mediaId: "up-1", url: "https://media.test/up-1/card.webp", alt: {} };
+    const { client } = fakeClient(handlers({
+      [`GET /providers/${PID}/microsite`]: () => ({ ...MICROSITE, gallery: [legacy, uploaded] }),
+      [`GET /providers/${PID}/media`]: () => ({ items: [mediaItem("up-1", "GALLERY")] }),
+      [`PUT /providers/${PID}/microsite`]: (call) => { saved = call.body; return { ...MICROSITE, version: 5 }; }
+    }));
+    renderApp(<MicrositeScreen />, client, HOST);
+    await screen.findByTestId("microsite-photo-up-1");
+    await waitFor(() => expect(screen.getByTestId("microsite-photo-alt-old-1")).toBeTruthy());
+    await new Promise((resolve) => { setTimeout(resolve, 50); });
+    fireEvent.click(screen.getByTestId("microsite-save"));
+    await waitFor(() => expect(saved).toBeTruthy());
+    expect((saved as { gallery: unknown[] }).gallery).toEqual([{ mediaId: "old-1", url: "https://cdn.example/vieja.jpg", alt: { "es-BO": "Vieja" } }, { mediaId: "up-1" }]);
+  });
+
   it("shows the zones and no link field; a dropped gallery photo joins the profile and the save sends its id (and the logo), never a typed address", async () => {
     const seen: unknown[] = [];
     let saved: unknown;

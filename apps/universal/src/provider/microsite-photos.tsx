@@ -6,17 +6,17 @@ import {
   activeMedia, MAX_GALLERY_PHOTOS, MAX_LOGOS, newIdempotencyKey, PHOTO_TYPES, photoInputProblem, PhotoInputError, useDeleteProviderMedia, useProviderMedia, useUploadProviderMedia,
   type Microsite, type PhotoStage, type ProviderMedia, type ProviderMediaPurpose
 } from "@rsvp/query-hooks";
-import { useApiClient, useT } from "../platform/providers";
+import { useApiClient, useLocale, useT } from "../platform/providers";
 import { pickImage } from "../platform/pick-image";
 import { FileDropArea, supportsFileDrop, type DragState } from "../platform/file-drop";
 import { toPickedDrop } from "../platform/pick-media";
-import { ActionButton, Notice, useStyles } from "../host/ui";
+import { ActionButton, Field, Notice, useStyles } from "../host/ui";
 import { SheetErrorNotice } from "./product-editor/sheet-errors";
 
 const THUMB = 72;
 /** What the profile shows: the gallery (in order) and the logo. The photos are uploaded files named by id; the server derives their address. */
 export interface Pictures {
-  readonly gallery: Microsite["gallery"];
+  readonly gallery: readonly { readonly mediaId: string; readonly url?: string; readonly alt?: Readonly<Record<string, string>> }[];
   readonly logo: Microsite["logo"];
 }
 export const picturesOf = (microsite: Microsite): Pictures => ({ gallery: microsite.gallery, logo: microsite.logo ?? null });
@@ -89,7 +89,11 @@ function UploadZone({ providerId, purpose, room, onReady }: { readonly providerI
  * of the profile at once and reach the public page when the profile is saved (and approved). A photo the SAVED profile still shows cannot be
  * deleted: remove it from the profile, save, then delete the file.
  */
-export function MicrositePhotos({ providerId, pictures, onChange }: { readonly providerId: string; readonly pictures: Pictures; readonly onChange: (next: Pictures) => void }): ReactNode {
+/**
+ * `onChange` takes an UPDATER, never a finished value: several files dropped together finish one after the other, each from a render that
+ * does not yet hold the one before, so every change must start from the latest draft (a finished value would keep only the last photo).
+ */
+export function MicrositePhotos({ providerId, pictures, onChange }: { readonly providerId: string; readonly pictures: Pictures; readonly onChange: (update: (current: Pictures) => Pictures) => void }): ReactNode {
   const t = useT();
   const styles = useStyles();
   const palette = useColors();
@@ -102,8 +106,15 @@ export function MicrositePhotos({ providerId, pictures, onChange }: { readonly p
   const pending = items.filter((item) => item.status !== "READY" && item.status !== "DELETING");
   const galleryRoom = MAX_GALLERY_PHOTOS - pictures.gallery.length;
   const logoCount = activeMedia(items, "LOGO").length;
-  const addToGallery = (photo: ProviderMedia): void => onChange({ ...pictures, gallery: [...pictures.gallery, { mediaId: photo.id, url: cardOf(photo), ...(photo.altText ? { alt: { "es-BO": photo.altText } } : {}) }] });
-  const useAsLogo = (photo: ProviderMedia): void => onChange({ ...pictures, logo: { mediaId: photo.id, url: cardOf(photo) } });
+  const locale = useLocale();
+  const addToGallery = (photo: ProviderMedia): void => onChange((current) => (current.gallery.length >= MAX_GALLERY_PHOTOS || current.gallery.some((entry) => entry.mediaId === photo.id) ? current
+    : { ...current, gallery: [...current.gallery, { mediaId: photo.id, url: cardOf(photo), ...(photo.altText ? { alt: { [locale]: photo.altText } } : {}) }] }));
+  const useAsLogo = (photo: ProviderMedia): void => onChange((current) => ({ ...current, logo: { mediaId: photo.id, url: cardOf(photo) } }));
+  const describe = (mediaId: string, text: string): void => onChange((current) => ({ ...current, gallery: current.gallery.map((entry) => {
+    if (entry.mediaId !== mediaId) return entry;
+    const { alt: _before, ...rest } = entry;
+    return text.trim() ? { ...rest, alt: { ...(_before ?? {}), [locale]: text } } : { ...rest, ...(Object.keys(_before ?? {}).filter((key) => key !== locale).length ? { alt: Object.fromEntries(Object.entries(_before ?? {}).filter(([key]) => key !== locale)) } : {}) };
+  }) }));
   const urlOf = (id: string): string | undefined => items.find((item) => item.id === id)?.renditions?.card.url;
 
   return (
@@ -115,7 +126,7 @@ export function MicrositePhotos({ providerId, pictures, onChange }: { readonly p
       {pictures.logo ? (
         <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[3] }} testID="microsite-logo">
           <Thumb url={pictures.logo.url} name={t("portal.microsite.photos.LOGO.title")} />
-          <ActionButton variant="secondary" icon="trash" label={t("portal.microsite.photos.LOGO.remove")} onPress={() => onChange({ ...pictures, logo: null })} testID="microsite-logo-remove" />
+          <ActionButton variant="secondary" icon="trash" label={t("portal.microsite.photos.LOGO.remove")} onPress={() => onChange((current) => ({ ...current, logo: null }))} testID="microsite-logo-remove" />
         </View>
       ) : <Text style={styles.muted}>{t("portal.microsite.photos.LOGO.none")}</Text>}
       <UploadZone providerId={providerId} purpose="LOGO" room={MAX_LOGOS - logoCount} onReady={useAsLogo} />
@@ -125,10 +136,13 @@ export function MicrositePhotos({ providerId, pictures, onChange }: { readonly p
       {pictures.gallery.length ? (
         <View role="list" aria-label={t("portal.microsite.photos.GALLERY.title")}>
           {pictures.gallery.map((entry, index) => (
-            <View key={entry.mediaId} role="listitem" style={{ flexDirection: "row", alignItems: "center", gap: spacing[3], paddingVertical: spacing[2], borderTopWidth: index === 0 ? 0 : 1, borderTopColor: palette.border }} testID={`microsite-photo-${entry.mediaId}`}>
-              <Thumb url={urlOf(entry.mediaId) ?? entry.url} name={t("portal.product.photos.photo", { n: index + 1 })} />
-              <Text style={[styles.body, { flex: 1 }]}>{t("portal.product.photos.photo", { n: index + 1 })}</Text>
-              <ActionButton variant="secondary" icon="trash" label={t("portal.microsite.photos.GALLERY.remove", { n: index + 1 })} onPress={() => onChange({ ...pictures, gallery: pictures.gallery.filter((other) => other.mediaId !== entry.mediaId) })} testID={`microsite-photo-remove-${entry.mediaId}`} />
+            <View key={entry.mediaId} role="listitem" style={{ gap: spacing[2], paddingVertical: spacing[2], borderTopWidth: index === 0 ? 0 : 1, borderTopColor: palette.border }} testID={`microsite-photo-${entry.mediaId}`}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[3] }}>
+                <Thumb url={urlOf(entry.mediaId) ?? entry.url} name={entry.alt?.[locale] || t("portal.product.photos.photo", { n: index + 1 })} />
+                <Text style={[styles.body, { flex: 1 }]}>{t("portal.product.photos.photo", { n: index + 1 })}</Text>
+                <ActionButton variant="secondary" icon="trash" label={t("portal.microsite.photos.GALLERY.remove", { n: index + 1 })} onPress={() => onChange((current) => ({ ...current, gallery: current.gallery.filter((other) => other.mediaId !== entry.mediaId) }))} testID={`microsite-photo-remove-${entry.mediaId}`} />
+              </View>
+              <Field label={t("portal.microsite.photos.GALLERY.alt", { n: index + 1 })} help={t("portal.microsite.photos.GALLERY.altHelp")} value={entry.alt?.[locale] ?? ""} onChange={(text) => describe(entry.mediaId, text)} maxLength={200} testID={`microsite-photo-alt-${entry.mediaId}`} />
             </View>
           ))}
         </View>
