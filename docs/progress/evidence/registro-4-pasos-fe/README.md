@@ -1,6 +1,6 @@
 # Evidencia · Registro en 4 pasos, frontend (FE-S1 a FE-S6) · 2026-11-28
 
-Base: `origin/chore/deploy-contabo-coolify` @ `1045ff8a`, más FE #177 (`fix/movil-sin-backend`, por merge, sin rebase). Contratos: Identity **2.3.1** vendorizado de RSVPBackend @ `343419b3` (BE #181, sobre `62e133f0`, que ya trae BE #177). Lo que no tenía recomendación escrita: `docs/progress/registro-4-pasos-fe-sin-recomendacion.md`.
+Base: `origin/chore/deploy-contabo-coolify` @ `1045ff8a`, más FE #177 (`fix/movil-sin-backend`, por merge, sin rebase). Contratos: Identity **2.3.1** vendorizado de RSVPBackend oficial @ `96d7fbb4` (ya con BE #177 y #181). Lo que no tenía recomendación escrita: `docs/progress/registro-4-pasos-fe-sin-recomendacion.md`.
 
 Nivel alcanzado: **TESTED** (Vitest) y **VERIFIED en Chromium web a 360 y 1280 px contra Identity y Notification reales** (Postgres 16 no superusuario, Redis, RabbitMQ; solo `api.resend.com` es un simulador local que guarda los correos). **iOS y Android: NO verificados.** Nada es `DONE`.
 
