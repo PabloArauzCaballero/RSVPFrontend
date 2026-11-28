@@ -17,3 +17,16 @@ Rama `feat/req-imagenes-archivo-fe`. Depende de BE `feat/req-imagenes-archivo-be
 
 ## Pendiente
 Fotos de servicio y galeria del micrositio (necesitan BE), bloques/fondos del editor, "insertar imagen" en HTML/CSS, vista previa del anfitrion con el borrador.
+
+## Segunda tanda (2026-11-28)
+- E4: panel "Imágenes de la invitación" (nivel Avanzado, solo con fuente de medios): subir o elegir una foto mirando su miniatura (radios accesibles) y agregarla como bloque imagen, imagen con texto, monograma o fondo de cualquier página; quitar fondo. Referencia por `mediaId`, sin direcciones. `PhotoPicker` reutiliza el panel de subida de la galería.
+- E5: en el panel de código, «Insertar una imagen» escribe la única referencia que el saneador admite (`/media/public/assets/{id}/medium` en HTML, `url(.../full)` en una regla CSS) sin que la persona escriba direcciones.
+- Póster de video (E4): NO hecho; el esquema base no tiene `posterMediaId` (llega con BE #164, sin fusionar).
+- Vista previa del anfitrión: `usePreviewTheme` dibuja el BORRADOR del diseño sobre la plantilla (vista previa del editor de contenido y pantalla de vista previa); sin diseño o con error vuelve a la plantilla.
+- HEIC (decisión): Template/Media lo acepta y convierte en el servidor, así que la galería y el editor lo suben tal cual. KYP NO lo admite (el servidor no lo decodifica ni lo firma): se rechaza en el cliente con un mensaje propio que explica cómo mandarlo como PDF/JPG o volver a tomar la foto. No se mete conversor WASM (peso y CSP `script-src 'self'` sin medir). Fotos de producto: sin cambio (R2 sigue con su decisión de convertir en dispositivo).
+- `CreateListingInput` ya no tiene `imageUrl` (BE B8 lo rechaza para todos los tipos).
+- Pruebas: universal 865, design-editor 457, i18n 18, seo-web y celebration-theme sin cambios desde la tanda 1; tsc y eslint limpios en lo tocado.
+- Sigue sin probarse en navegador real (Playwright/Chrome), Safari, Firefox ni dispositivos.
+
+## Bloqueado por decisión del dueño (D2/D3)
+Fotos de servicio (B6), galería del micrositio con `provider_media` (B7), UI de fotos de servicio y micrositio (F10) y logo de proveedor.
