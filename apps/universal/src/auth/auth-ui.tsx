@@ -1,7 +1,7 @@
 import { useState, type PropsWithChildren, type ReactNode } from "react";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions, type TextInputProps } from "react-native";
 import { colors, radius, spacing, typography, type ColorTheme } from "@rsvp/design-tokens";
-import { ActionDock, CheckMark, Enter, Illustration, Logo, NoticeMark, PressFeedback, fonts, useTheme, type IllustrationName } from "@rsvp/ui";
+import { ActionDock, CheckMark, Enter, ILLUSTRATION_GROUPS, ILLUSTRATION_PASTEL, Illustration, Logo, NoticeMark, PressFeedback, StickyActions, fonts, useTheme, type IllustrationName } from "@rsvp/ui";
 import type { AppLocale } from "@rsvp/i18n";
 import { useLocalePreference, useT } from "../platform/providers";
 
@@ -37,6 +37,7 @@ function createAuthStyles(palette: (typeof colors)[ColorTheme]) {
   panelNarrow: { backgroundColor: palette.surface },
   panelWide: { flexGrow: 0, flexShrink: 0, flexBasis: "auto", width: 560 },
   panelContent: { flexGrow: 1 },
+  narrowHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingBottom: spacing[6] },
   panelContentNarrow: { padding: spacing[6], paddingTop: spacing[8], paddingBottom: spacing[12], alignItems: "center" },
   panelContentWide: { alignItems: "center", justifyContent: "center", paddingHorizontal: spacing[8], paddingVertical: spacing[12] },
   column: { width: "100%", maxWidth: FORM_WIDTH, gap: spacing[8] },
@@ -101,8 +102,24 @@ export function LanguageSwitch(): ReactNode {
   );
 }
 
+/**
+ * The primary action of a short form (sign in, recover, reset). MV-D1: on a phone it is the fixed bar at the bottom edge, whatever the length of the form; from the wide layout it follows the fields.
+ * `summary` (status or error) goes with the bar so a failure stays in view next to the button.
+ */
+export function FormActions({ children, summary }: { readonly children: ReactNode; readonly summary?: ReactNode }): ReactNode {
+  const t = useT();
+  const compact = useWindowDimensions().width < WIDE_BREAKPOINT;
+  if (compact) return <StickyActions label={t("common.actions")} bleed={0} ground="surface" {...(summary ? { summary } : {})}>{children}</StickyActions>;
+  return <View style={{ gap: spacing[5] }}>{children}{summary}</View>;
+}
+
+/** MV-D4: "never yellow". The host group's pastel is yellow, so a host figure on these screens takes the blue one; the other groups keep theirs. Tokens and the rest of the product are untouched. */
+function authPastel(name: IllustrationName): "blue" | undefined {
+  return ILLUSTRATION_PASTEL[ILLUSTRATION_GROUPS[name]] === "yellow" ? "blue" : undefined;
+}
+
 /** Wide: a quiet editorial column (logo, serif pitch, one line illustration) beside the form. Narrow: a plain header with the logo, then the form. */
-export function AuthLayout({ title, intro, illustration = "invitation", children }: PropsWithChildren<{ readonly title: string; readonly intro: string; /** Line illustration of the editorial column (wide screens only); decorative. */ readonly illustration?: IllustrationName }>): ReactNode {
+export function AuthLayout({ title, intro, illustration = "invitation", progress, children }: PropsWithChildren<{ readonly title: string; readonly intro: string; /** Line illustration, decorative: large in the editorial column on wide screens and small beside the logo on a phone (MV-D4). */ readonly illustration?: IllustrationName; /** A progress bar kept above the title (the sign-up steps, MV-D2). */ readonly progress?: ReactNode }>): ReactNode {
   const authStyles = useAuthStyles();
   const t = useT();
   const { width } = useWindowDimensions();
@@ -113,7 +130,7 @@ export function AuthLayout({ title, intro, illustration = "invitation", children
         <View style={authStyles.brand}>
           <Logo tone="auto" height={32} />
           <View style={{ gap: spacing[6] }}>
-            <Illustration name={illustration} tone="auto" size="lg" />
+            <Illustration name={illustration} tone="auto" size="lg" pastel={authPastel(illustration)} />
             <Text accessibilityElementsHidden aria-hidden style={authStyles.pitch}>{t("auth.brandPitch")}</Text>
             <Text accessibilityElementsHidden aria-hidden style={authStyles.pitchBody}>{t("auth.brandBody")}</Text>
           </View>
@@ -122,8 +139,9 @@ export function AuthLayout({ title, intro, illustration = "invitation", children
       ) : null}
       <ActionDock inset={spacing[6]} style={wide ? authStyles.panelWide : undefined}>
       <ScrollView role="main" tabIndex={0} style={[authStyles.panel, !wide && authStyles.panelNarrow, wide && Platform.OS === "web" && authStyles.panelWide]} contentContainerStyle={[authStyles.panelContent, wide ? authStyles.panelContentWide : authStyles.panelContentNarrow]} keyboardShouldPersistTaps="handled">
-        {wide ? null : <View style={[authStyles.column, { paddingBottom: spacing[8] }]}><Logo tone="auto" height={28} /></View>}
+        {wide ? null : <View style={[authStyles.column, authStyles.narrowHead]}><Logo tone="auto" height={28} /><Illustration name={illustration} tone="auto" size="sm" pastel={authPastel(illustration)} /></View>}
         <View style={authStyles.column}>
+          {progress}
           <Enter from="down"><View style={{ gap: spacing[3] }}>
             <Text accessibilityRole="header" aria-level={1} style={authStyles.title}>{title}</Text>
             <Text style={authStyles.intro}>{intro}</Text>

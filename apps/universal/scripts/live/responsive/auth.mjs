@@ -6,6 +6,7 @@
 // (b) no horizontal scroll, (c) no raw i18n key or other-language string, (d) axe WCAG 2.1 A/AA without serious/critical,
 // (e) controls >= 44 px at 360. Then, in en-US, valid end-to-end flows driven by testID/role and verified against the API,
 // plus one network-down flow. Also asserts that the effective background follows the colour scheme (dark under `dark`, light under `light`).
+import { registerThroughSteps } from "../register-steps.mjs";
 import { readFileSync, writeFileSync } from "node:fs";
 import assert from "node:assert/strict";
 import { chromium } from "playwright";
@@ -160,10 +161,7 @@ const flow = async (id, width, fn) => {
 for (const width of WIDTHS) {
   await flow("register account", width, async (page, seen) => {
     const email = uniq("reg");
-    await page.goto(`${APP}/registro`); await byId(page, "register-email").waitFor();
-    await byId(page, "register-email").fill(email); await byId(page, "register-password").fill(PASSWORD);
-    await vis(page, '[role="radio"]').first().click(); // first role = HOST, whatever the language
-    await byId(page, "register-submit").click();
+    await registerThroughSteps(page, { app: APP, email, password: PASSWORD }); // MV-D2: the sign-up has four steps
     await page.waitForURL((url) => !url.pathname.startsWith("/registro"), { timeout: 25000 });
     assert.ok(seen.includes("POST /identity/auth/register 201"), seen.join(" ; "));
     const login = await apiJson("POST", "/identity/auth/login", { email, password: PASSWORD });

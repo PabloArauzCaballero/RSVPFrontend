@@ -6,6 +6,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import assert from "node:assert/strict";
+import { registerThroughSteps } from "./live/register-steps.mjs";
 import { chromium } from "playwright";
 import AxeBuilder from "@axe-core/playwright";
 
@@ -57,12 +58,7 @@ const shot = async (page, name) => page.screenshot({ path: `${OUT}${name}.png`, 
 const waitPath = async (page, pattern) => page.waitForURL(pattern, { timeout: 15000 });
 // The web session lives in memory, so a full page load signs the person out: move inside the running app like a link would.
 const navigateInApp = (page, path) => page.evaluate((target) => { window.history.pushState({}, "", target); window.dispatchEvent(new PopStateEvent("popstate")); }, path);
-const registerViaUi = async (page, email, roleName) => {
-  await page.goto(`${APP}/registro`);
-  await fill(page, "Correo electrónico", email); await fill(page, "Contraseña", PASSWORD);
-  if (roleName) await page.getByRole("radio", { name: new RegExp(roleName) }).click();
-  await page.getByRole("button", { name: "Crear cuenta" }).filter({ visible: true }).click();
-};
+const registerViaUi = async (page, email, roleName) => registerThroughSteps(page, { app: APP, email, password: PASSWORD, ...(roleName ? { role: /PROVIDER|proveedor|servicios/i.test(roleName) ? "PROVIDER" : /PLANNER|organizar/i.test(roleName) ? "PLANNER" : "HOST" } : {}) });
 
 console.log("\n== Anonymous guard and sign-in with return to origin ==");
 const host = await newPage();
@@ -95,24 +91,27 @@ await check("offline: a dead network says so instead of blaming the password", a
 await check("sign up (real Identity, role HOST) from the deep link flow returns to the page that was asked for", async () => {
   await host.page.getByRole("link", { name: "Crear cuenta" }).filter({ visible: true }).click();
   await waitPath(host.page, /\/registro\?returnTo=/);
-  await fill(host.page, "Correo electrónico", hostEmail); await fill(host.page, "Contraseña", PASSWORD);
-  await host.page.getByRole("button", { name: "Crear cuenta" }).filter({ visible: true }).click();
+  await registerThroughSteps(host.page, { app: APP, email: hostEmail, password: PASSWORD });
   await waitPath(host.page, /\/editor\/general\?.*c=abc-123/); // expo-router also appends the dynamic segment (section=general)
 });
-await check("duplicate e-mail (409) is explained", async () => {
+await check("an existing address gets the same neutral code screen as a new one (MV-D3: the screen never says the account exists)", async () => {
   const other = await newPage();
-  await registerViaUi(other.page, hostEmail);
-  await other.page.getByText("Ya existe una cuenta con este correo. Inicia sesión o recupera tu contraseña.").waitFor();
+  await other.page.goto(`${APP}/registro`);
+  await other.page.getByTestId("register-email").fill(hostEmail); await other.page.getByTestId("register-next").click();
+  await other.page.getByText("Si el correo es válido, te enviamos un código de 6 dígitos. Escríbelo aquí.").waitFor();
+  assert.equal(await other.page.getByText(/ya existe|ya tiene una cuenta/i).count(), 0);
   await shot(other.page, "registro-correo-existente-1280");
   await other.context.close();
 });
 await check("password shorter than 12 is stopped before the network with a field error", async () => {
   const other = await newPage(); const before = seen.length;
-  await other.page.goto(`${APP}/registro`); await fill(other.page, "Correo electrónico", `short-${stamp}@example.com`); await fill(other.page, "Contraseña", "corta");
-  await other.page.getByRole("button", { name: "Crear cuenta" }).filter({ visible: true }).click();
-  await other.page.getByText("La contraseña debe tener al menos 12 caracteres.").waitFor();
+  await registerThroughSteps(other.page, { app: APP, email: `short-${stamp}@example.com`, password: "corta", stopAtPassword: true });
+  const afterCode = seen.length;
+  await other.page.getByRole("checkbox", { name: /Acepto los Términos/ }).click();
+  await other.page.getByTestId("register-submit").click();
+  await other.page.getByText("Usa al menos 12 caracteres. Una frase corta funciona bien.").waitFor();
   // A page load may probe POST /auth/refresh (cookie restore); no other request may leave.
-  assert.deepEqual(seen.slice(before).filter((entry) => !/\/auth\/refresh$/.test(entry)), []);
+  assert.deepEqual(seen.slice(afterCode).filter((entry) => !/\/auth\/refresh$/.test(entry)), []);
   await other.context.close();
 });
 

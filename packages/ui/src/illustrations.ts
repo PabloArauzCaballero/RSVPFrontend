@@ -23,7 +23,9 @@ export type IllustrationName =
   // Access and system
   | 'noAccess' | 'searching' | 'serverError' | 'maintenance' | 'notFound'
   // Public home (site and web app): the promise and the three taps
-  | 'landingSend' | 'landingCreate' | 'landingShare' | 'landingReplies';
+  | 'landingSend' | 'landingCreate' | 'landingShare' | 'landingReplies'
+  // Sign-up in four steps (MV-D4): one drawing per step, none with a face
+  | 'emailCode' | 'nameBadge' | 'cityPin' | 'accessKey';
 
 /**
  * Semantic tone, never a hex. `ink` draws dark ink on a light ground, `onDark` draws light ink on a dark ground and `auto`
@@ -44,7 +46,9 @@ export const ILLUSTRATION_GROUPS: Record<IllustrationName, IllustrationGroup> = 
   noOffers: 'provider', offerPublished: 'provider', freeAgenda: 'provider', newClient: 'provider', verifying: 'provider', verified: 'provider', suspended: 'provider', welcomeProvider: 'provider',
   nothingPending: 'admin', importDone: 'admin',
   noAccess: 'access', searching: 'system', serverError: 'system', maintenance: 'system', notFound: 'system',
-  landingSend: 'guest', landingCreate: 'host', landingShare: 'guest', landingReplies: 'host'
+  landingSend: 'guest', landingCreate: 'host', landingShare: 'guest', landingReplies: 'host',
+  // The sign-up drawings are 'guest' so their one piece of colour is blue, never the host group's yellow (MV-D4).
+  emailCode: 'guest', nameBadge: 'guest', cityPin: 'guest', accessKey: 'guest'
 };
 export const ILLUSTRATION_NAMES = Object.keys(ILLUSTRATION_GROUPS) as IllustrationName[];
 export const ILLUSTRATION_VIEWBOX = 120;
@@ -459,6 +463,43 @@ const RAW: Record<IllustrationName, readonly Shape[]> = {
     { layer: 'stone', d: rect(46, 15, 28, 13, 5) },
     { layer: 'knock', w: 3, d: `${check(41, 46, 0.7)}${check(41, 64, 0.7)}M54 46H80M54 64H76M54 82H70` },
     { layer: 'soft', d: circle(41, 82, 5.5) }
+  ],
+
+  // ---- Sign-up in four steps (MV-D2, MV-D4): the envelope with the code, the name badge, the city pin and the key ------
+  /** Step one, e-mail and code: the open envelope whose card shows six marks, the code, on a pastel strip. */
+  emailCode: [
+    ...stage(),
+    { layer: 'stone', d: rect(30, 18, 60, 46, 6) },
+    { layer: 'soft', d: rect(34, 30, 52, 16, 6) },
+    { layer: 'line', w: 3, d: 'M39 38h3M47 38h3M55 38h3M63 38h3M71 38h3M79 38h3' },
+    { layer: 'solid', d: rect(24, 50, 72, 48, 8) },
+    { layer: 'knock', w: 3, d: 'M28 56L60 78L92 56' }
+  ],
+  /** Step two, account type and name: a name badge, its clip slot, the name as the pastel line and two lines of detail. No face. */
+  nameBadge: [
+    ...stage(30),
+    { layer: 'solid', d: rect(30, 20, 60, 78, 10) },
+    { layer: 'knockFill', d: rect(48, 28, 24, 8, 4) },
+    { layer: 'soft', d: rect(40, 50, 40, 13, 6.5) },
+    { layer: 'knock', w: 3, d: 'M42 77H78M50 87H70' }
+  ],
+  /** Step three, mobile and city: a folded map with its pastel pin. */
+  cityPin: [
+    ...stage(34),
+    { layer: 'solid', d: 'M18 42L44 34L76 46L102 38V86L76 94L44 82L18 90Z' },
+    { layer: 'knock', w: 2.5, d: 'M44 34V82M76 46V94' },
+    { layer: 'knockFill', d: 'M60 18C47 18 38 28 38 40C38 55 60 78 60 78C60 78 82 55 82 40C82 28 73 18 60 18Z' },
+    { layer: 'soft', d: 'M60 21C49 21 41 29.5 41 40C41 53 60 73 60 73C60 73 79 53 79 40C79 29.5 71 21 60 21Z' },
+    { layer: 'solid', d: circle(60, 40, 7) }
+  ],
+  /** Step four, password: a key, its bow pierced by a pastel hole. */
+  accessKey: [
+    ...stage(32),
+    { layer: 'solid', d: circle(38, 56, 24) },
+    { layer: 'knockFill', d: circle(38, 56, 12) },
+    { layer: 'soft', d: circle(38, 56, 8) },
+    { layer: 'solid', d: rect(58, 50, 48, 12, 4) },
+    { layer: 'solid', d: rect(84, 60, 8, 16, 2) + rect(96, 60, 8, 11, 2) }
   ]
 };
 

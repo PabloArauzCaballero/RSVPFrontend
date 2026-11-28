@@ -1,0 +1,106 @@
+{
+  "date": "2026-11-28T17:00:31.062Z",
+  "api": "real Identity jar + real Notification, Resend stand-in",
+  "widths": [
+    360,
+    1280
+  ],
+  "results": [
+    {
+      "id": "L1 360: the whole sign-up, step by step, creates a verified account and lands on the first step of the invitation",
+      "ok": true
+    },
+    {
+      "id": "L2 360: MV-D3 the screen after asking for a code is identical for a new and an existing address, in a real browser",
+      "ok": true
+    },
+    {
+      "id": "L3 360: MV-D3 a wrong code says the same thing for a new and an existing address; the person can ask for another",
+      "ok": true
+    },
+    {
+      "id": "L4 360: MV-D3 \"ya tengo cuenta\" opens /login with the typed e-mail already there and NOT in the URL",
+      "ok": true
+    },
+    {
+      "id": "L5 360: focus moves to each step and it is announced; the progress bar tells where the person is",
+      "ok": true
+    },
+    {
+      "id": "L6 360: the action is always reachable (fixed bar on a phone) and the page never scrolls sideways",
+      "ok": true
+    },
+    {
+      "id": "L7 360: reduced motion: a step swaps with no slide and the task works the same",
+      "ok": true
+    },
+    {
+      "id": "L8 360: axe finds no critical or serious violation on any step or on the code screen (light and dark)",
+      "ok": true
+    },
+    {
+      "id": "L9 360: the draft is only in memory: a reload starts over and nothing of it is in storage or the URL",
+      "ok": true
+    },
+    {
+      "id": "L10 360: the terms are required on step 4 and the page for them can be opened and left without losing the verified e-mail",
+      "ok": true
+    },
+    {
+      "id": "L11 360: INJECTED 429 from the gateway: the wait is shown and the e-mail typed is kept",
+      "ok": true
+    },
+    {
+      "id": "L12 360: the wrong-code path of five attempts ends the code (real Identity), and a new code works",
+      "ok": true
+    },
+    {
+      "id": "L1 1280: the whole sign-up, step by step, creates a verified account and lands on the first step of the invitation",
+      "ok": true
+    },
+    {
+      "id": "L2 1280: MV-D3 the screen after asking for a code is identical for a new and an existing address, in a real browser",
+      "ok": true
+    },
+    {
+      "id": "L3 1280: MV-D3 a wrong code says the same thing for a new and an existing address; the person can ask for another",
+      "ok": true
+    },
+    {
+      "id": "L4 1280: MV-D3 \"ya tengo cuenta\" opens /login with the typed e-mail already there and NOT in the URL",
+      "ok": true
+    },
+    {
+      "id": "L5 1280: focus moves to each step and it is announced; the progress bar tells where the person is",
+      "ok": true
+    },
+    {
+      "id": "L6 1280: the action is always reachable (fixed bar on a phone) and the page never scrolls sideways",
+      "ok": true
+    },
+    {
+      "id": "L7 1280: reduced motion: a step swaps with no slide and the task works the same",
+      "ok": true
+    },
+    {
+      "id": "L8 1280: axe finds no critical or serious violation on any step or on the code screen (light and dark)",
+      "ok": true
+    },
+    {
+      "id": "L9 1280: the draft is only in memory: a reload starts over and nothing of it is in storage or the URL",
+      "ok": true
+    },
+    {
+      "id": "L10 1280: the terms are required on step 4 and the page for them can be opened and left without losing the verified e-mail",
+      "ok": true
+    },
+    {
+      "id": "L11 1280: INJECTED 429 from the gateway: the wait is shown and the e-mail typed is kept",
+      "ok": true
+    },
+    {
+      "id": "L12 1280: the wrong-code path of five attempts ends the code (real Identity), and a new code works",
+      "ok": true
+    }
+  ]
+}

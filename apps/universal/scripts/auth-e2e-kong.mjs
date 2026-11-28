@@ -2,6 +2,7 @@
 // Kong's CORS plugin only allows http://localhost:3000 and :8081) against the REAL gateway and Identity. No stand-in:
 // this is what observes CORS with credentials in Chrome (preflight, Allow-Origin/Credentials, httpOnly cookie, reload restore).
 //   APP=http://localhost:8081 API=http://localhost:28000 node apps/universal/scripts/auth-e2e-kong.mjs
+import { registerThroughSteps } from "./live/register-steps.mjs";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import assert from "node:assert/strict";
@@ -36,8 +37,7 @@ await check("the app reaches the gateway from its origin (the real preflight is 
   assert.notEqual(pre, null);
 });
 await check("register through the UI: cross-origin credentialed POST succeeds (no CORS error), roles land the host", async () => {
-  await field("Correo electrónico").fill(email); await field("Contraseña").fill(PASSWORD);
-  await page.getByRole("button", { name: "Crear cuenta" }).filter({ visible: true }).click();
+  await registerThroughSteps(page, { app: APP, email, password: PASSWORD }); // MV-D2: four steps, the e-mail is proven with a code first
   await page.waitForURL(/\/celebraciones|\/inicio|\/onboarding/, { timeout: 20000 });
   const reg = exchanges.find((e) => e.method === "POST" && e.path.endsWith("/auth/register"));
   assert.ok(reg, "no register exchange seen");

@@ -205,3 +205,11 @@ Decisiones que NO toma un agente. El código hace hoy lo más conservador y qued
 
 - **Decidido por Pablo (M41): el invitado NO ve un producto UNAVAILABLE, ni en web ni en app; el anfitrión sí, con los reemplazos.** `guestVisible` (`packages/query-hooks/src/gift/index.ts`) es el único filtro del invitado y lo usan `arrangeGifts`, el título y el enlace directo de ambas superficies. La guarda `isGiftUnavailable` de `guestGiftState` se conserva solo para fallar en cerrado. Se revirtieron las tres pruebas de R1 que R7 había reescrito.
 - **Pendiente de Pablo (F5 de la revisión): reserva activa sobre un regalo que se apaga.** Con M41, un invitado con una reserva ACTIVA sobre un regalo que pasa a UNAVAILABLE deja de verlo en la lista y no puede cancelarla desde ahí. El anfitrión sí puede liberarla y quitar el regalo solo tras cancelar (409 `GIFT_HAS_RESERVATIONS`). No se implementó nada. Pregunta: ¿«Mis reservas» debe seguir mostrando esa reserva y permitir cancelarla (con qué texto), o se avisa al invitado de otra forma? Ubicación: `apps/universal/src/guest/gifts-screen.tsx`, `apps/seo-web/components/gift/gift-experience.tsx` y `my-reservations`. Falta registrarlo como hallazgo nuevo en `bugs/catalogo`.
+
+
+## Registro en 4 pasos (FE) · 2026-11-28
+
+- **El borrador del registro vive en la memoria del módulo (`registration-draft.ts`), no en el estado del componente ni en almacenamiento.** Motivo: leer los términos navega fuera del formulario y perdería la prueba del correo; `localStorage` está prohibido para datos personales (R6, PF-1). La contraseña queda fuera. Alternativas: estado del componente (pierde la prueba al leer los términos) y `sessionStorage` (persiste PII). Alcance: se olvida al recargar.
+- **El correo llega al login por memoria, nunca por URL** (PF-1, Q4a tercera opción). Límite: el enlace del correo «ya tienes cuenta» no precarga (ver `registro-4-pasos-fe-sin-recomendacion.md`).
+- **`StepProgress` se importa de `host/`** (precedente: `admin/stepper-dialog.tsx`); moverlo a `packages/ui` es un cambio aparte (§2.4).
+- **Movimiento:** se reutiliza `StepTransition` (deslizar 16 px y aparecer, foco al paso, sin movimiento con Reduce Motion). Sin animación nueva.
