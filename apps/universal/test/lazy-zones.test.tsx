@@ -85,7 +85,9 @@ describe("M13 · lazyScreen", () => {
       renderApp(<Lazy name="Ana" />, client);
       expect(screen.getByTestId("screen-loading")).toBeTruthy();
       expect(screen.getByRole("heading", { name: "Modos de control" })).toBeTruthy();
-      expect(screen.getByTestId("loading-modes")).toBeTruthy();
+      // Title and menu are there at once; the skeleton only after MOTION.loadingDelayMs, so a cached chunk never flashes it.
+      expect(screen.queryByTestId("loading-modes")).toBeNull();
+      expect(await screen.findByTestId("loading-modes")).toBeTruthy();
       expect(screen.getByRole("status").textContent).toBe("Cargando…");
       expect(calls).toEqual([]);
       await act(async () => { resolve({ Screen: ({ name }) => <Text>hola {name}</Text> }); });

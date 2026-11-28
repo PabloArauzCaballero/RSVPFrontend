@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, type ReactNode } from "react";
 import { WebView } from "react-native-webview";
+import { useColors } from "@rsvp/ui";
 import type { WebViewMessageEvent } from "react-native-webview";
 import type { ShouldStartLoadRequest, WebViewHttpErrorEvent } from "react-native-webview/lib/WebViewTypes";
 import { PREVIEW_BRIDGE, PREVIEW_PATH, PREVIEW_READY, type PreviewPayload } from "@rsvp/celebration-theme/model";
@@ -33,6 +34,8 @@ const isFailureStatus = (status: number): "notFound" | "unavailable" | null => (
 function PageFrame({ origin, url, slug, credential, title, testID, onApp, onExternal, onPhase }: PageFrameProps): ReactNode {
   // The web view fires `onLoadEnd` after an error too; the failure stays the answer.
   const failed = useRef(false);
+  // The web view paints its own white until the page does: give it the app's canvas so dark mode never flashes.
+  const canvas = useColors().canvas;
   const fail = (phase: "notFound" | "unavailable" | "offline"): void => { failed.current = true; onPhase(phase); };
   // Runs before the page loads, main frame only; the page's own origin is checked inside the script too.
   const before = useMemo(() => (credential ? credentialScript(origin, slug, credential) : undefined), [origin, slug, credential]);
@@ -60,7 +63,8 @@ function PageFrame({ origin, url, slug, credential, title, testID, onApp, onExte
       onLoadEnd={() => { if (!failed.current) onPhase("ready"); }}
       onError={() => fail("offline")}
       onHttpError={(event: WebViewHttpErrorEvent) => { const failure = isFailureStatus(event.nativeEvent.statusCode); if (failure) fail(failure); }}
-      style={{ flex: 1, backgroundColor: "transparent" }}
+      style={{ flex: 1, backgroundColor: canvas }}
+      containerStyle={{ backgroundColor: canvas }}
     />
   );
 }
@@ -68,6 +72,7 @@ function PageFrame({ origin, url, slug, credential, title, testID, onApp, onExte
 const inject = (payload: PreviewPayload): string => `window.${PREVIEW_BRIDGE}&&window.${PREVIEW_BRIDGE}(${JSON.stringify(payload)});true;`;
 
 function PreviewWebFrame({ origin, payload, title, testID, onPhase }: PreviewFrameProps): ReactNode {
+  const canvas = useColors().canvas;
   const ref = useRef<WebView>(null);
   const ready = useRef(false);
   const send = useCallback(() => { if (ready.current) ref.current?.injectJavaScript(inject(payload)); }, [payload]);
@@ -94,7 +99,8 @@ function PreviewWebFrame({ origin, payload, title, testID, onPhase }: PreviewFra
       onLoadStart={() => { ready.current = false; onPhase("loading"); }}
       onError={() => onPhase("offline")}
       onHttpError={(event: WebViewHttpErrorEvent) => { if (event.nativeEvent.statusCode >= 400) onPhase("unavailable"); }}
-      style={{ flex: 1, backgroundColor: "transparent" }}
+      style={{ flex: 1, backgroundColor: canvas }}
+      containerStyle={{ backgroundColor: canvas }}
     />
   );
 }

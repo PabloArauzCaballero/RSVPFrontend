@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { radius, spacing } from "@rsvp/design-tokens";
 import { useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "@rsvp/api-client";
-import { Chip, StepTransition, pressVisual, useColors, useReducedMotion } from "@rsvp/ui";
+import { Chip, StepTransition, StickyActions, pressVisual, useColors, useReducedMotion } from "@rsvp/ui";
 import {
   fetchGiftIdeas, msUntilLeadContextRenewal, newIdempotencyKey, useCreateProduct, useDuplicateListing, useGiftIdeas, useLeadContext, useListingSheet, usePatchListing, useProductCategories, useProviderGeo, usePublishListing, useWhatsappTemplate,
   type LeadContext, type ProductSheet, type Provider
@@ -17,7 +17,7 @@ import { portalRedirectUrl } from "../../platform/partner-link";
 import { ActionButton, EmptyState, Notice, PageIntro, Section, SuccessNote, useStyles } from "../../host/ui";
 import { PortalErrorNotice, PortalErrorState } from "../errors";
 import { PORTAL_ROUTES, PortalScreen, usePortalHeader } from "../frame";
-import { RowsSkeleton, StickyActions } from "../parts";
+import { RowsSkeleton } from "../parts";
 import {
   createBody, draftFromSheet, ideasAllowed, EMPTY_DRAFT, keepSteps, nextStep, patchBody, previousStep, STEP_SLUG, stepFromSlug, stepProblems, STEPS, stepsMissing,
   type EditorStep, type LocalProblem, type SheetDraft, type StepKey
@@ -257,7 +257,7 @@ function ProductEditor({ provider, listingId, initialStep, duplicated }: EditorP
             {versionLost ? <Notice kind="error"><View style={{ gap: spacing[2] }} testID="sheet-no-version"><Text style={styles.body}>{t("portal.product.errors.noVersion")}</Text><ActionButton icon="refresh" variant="secondary" label={t("portal.product.actions.reload")} onPress={() => { setVersionLost(false); reload(); }} testID="sheet-reload" /></View></Notice> : null}
             {ideasFailed ? <Notice kind="error"><View style={{ gap: spacing[2] }} testID="ideas-load-error"><Text style={styles.body}>{t("portal.product.errors.ideasLoad")}</Text><ActionButton icon="refresh" variant="secondary" label={t("portal.errors.retry")} onPress={() => save("basic")} testID="ideas-load-retry" /></View></Notice> : null}
             <SheetErrorNotice error={create.error ?? patch.error ?? duplicate.error} onReload={reload} onRetry={() => { if (duplicate.error && !create.error && !patch.error) duplicateNow(); else if (step !== "photos") save(step); else if (failedOrder) reorder(failedOrder); }} />
-            <StickyActions ground="surface">
+            <StickyActions label={t("common.actions")} ground="surface">
               {step === "photos" ? (
                 <ActionButton icon="arrow" label={t("portal.product.actions.next")} disabled={busy} onPress={() => open(nextStep(step))} testID="step-next" />
               ) : (

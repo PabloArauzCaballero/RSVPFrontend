@@ -1,7 +1,7 @@
 import type { PropsWithChildren, ReactNode, RefObject } from "react";
 import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { radius, spacing } from "@rsvp/design-tokens";
-import { ButtonAlignContext, Enter, Logo, fonts, useThemedStyles, type Palette } from "@rsvp/ui";
+import { ActionDock, ButtonAlignContext, Enter, Logo, fonts, useThemedStyles, type Palette } from "@rsvp/ui";
 import { LanguageSwitch } from "../auth/auth-ui";
 
 /**
@@ -39,6 +39,7 @@ export function GuestFrame({ heading, lead, meta, scrollRef, children }: PropsWi
   const pad = compact ? spacing[6] : spacing[12];
   const size = compact ? 40 : 56;
   return (
+    <ActionDock inset={spacing[4]}>
     <ScrollView ref={scrollRef} role="main" tabIndex={0} style={s.page} contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
       <View style={s.inner} testID="guest-column">
         <View style={s.top}><Logo tone="auto" height={26} /></View>
@@ -60,5 +61,6 @@ export function GuestFrame({ heading, lead, meta, scrollRef, children }: PropsWi
         <LanguageSwitch />
       </View>
     </ScrollView>
+    </ActionDock>
   );
 }

@@ -2,7 +2,7 @@ import { useRef, useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
 import { radius, spacing } from "@rsvp/design-tokens";
 import { formatMinor } from "@rsvp/i18n";
-import { Chip, Enter, Stagger, fonts, useColors } from "@rsvp/ui";
+import { Chip, Enter, Stagger, StickyActions, fonts, useColors } from "@rsvp/ui";
 import { useRouter, type Href } from "expo-router";
 import { newIdempotencyKey, useCreateOwnListing, useDuplicateListing, useOfferCategories, useOwnListings, useProviderGeo, usePublishListing, type CreateListingInput, type OwnListing, type Provider, type ProviderGeoCity } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../platform/providers";
@@ -12,7 +12,7 @@ import { parseMinor } from "../host/gifts/money";
 import { PortalScreen, usePortalHeader, type PortalRoute } from "./frame";
 import { PRODUCT_NEW_ROUTE } from "./routes";
 import { useSingleMutation } from "../platform/single-flight";
-import { MoreToggle, RowsSkeleton, StickyActions } from "./parts";
+import { MoreToggle, RowsSkeleton } from "./parts";
 import { CoveragePicker, cityLabel, cityName } from "./coverage-picker";
 import { CompletenessChip, productHref } from "./product-editor/product-editor-screen";
 import { missingShort, MissingList } from "./product-editor/missing-list";
@@ -147,13 +147,14 @@ function NewOffer({ providerId, onClose, onCreated }: { readonly providerId: str
     <Section title={t("portal.services.new.title")}>
       {kindChoice}
       <Text style={styles.body}>{t("portal.product.newOffer.productHint")}</Text>
-      <StickyActions ground="surface">
+      <StickyActions label={t("common.actions")} ground="surface">
         <ActionButton icon="arrow" label={t("portal.product.newOffer.productStart")} onPress={() => router.push(PRODUCT_NEW_ROUTE as Href)} testID="product-start" />
         <ActionButton icon="close" variant="secondary" label={t("portal.services.new.cancel")} onPress={onClose} testID="offer-new-close" />
       </StickyActions>
     </Section>
   );
   return (
+    <>
     <Section title={t("portal.services.new.title")}>
       {kindChoice}
       <Field label={t(isProduct ? "portal.services.new.productName" : "portal.services.new.name")} value={name} onChange={setName} testID="listing-name" />
@@ -187,11 +188,12 @@ function NewOffer({ providerId, onClose, onCreated }: { readonly providerId: str
       ) : null}
       {errors.length ? <Notice kind="error">{errors.map((message) => <Text key={message} style={styles.body}>{message}</Text>)}</Notice> : null}
       <ErrorNotice error={create.error} onRetry={submit} />
-      <StickyActions ground="surface">
-        <ActionButton icon="plus" label={create.isPending ? t("portal.services.new.creating") : t("portal.services.new.submit")} busy={create.isPending} disabled={create.isPending || !category} onPress={submit} testID="listing-submit" />
-        <ActionButton icon="close" variant="secondary" label={t("portal.services.new.cancel")} disabled={create.isPending} onPress={onClose} testID="offer-new-close" />
-      </StickyActions>
     </Section>
+    <StickyActions label={t("common.actions")}>
+      <ActionButton icon="plus" label={create.isPending ? t("portal.services.new.creating") : t("portal.services.new.submit")} busy={create.isPending} disabled={create.isPending || !category} onPress={submit} testID="listing-submit" />
+      <ActionButton icon="close" variant="secondary" label={t("portal.services.new.cancel")} disabled={create.isPending} onPress={onClose} testID="offer-new-close" />
+    </StickyActions>
+    </>
   );
 }
 
