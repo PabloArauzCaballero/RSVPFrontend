@@ -68,7 +68,7 @@ export function LocationView({ name, lines, location, labels, mapConfigUrl }: Lo
 
   return (
     <div className="celebration-location" data-has-point={location ? "true" : "false"}>
-      {lines.map((line) => <p key={line}>{line}</p>)}
+      {lines.map((line, index) => <p key={`${index}-${line}`}>{line}</p>)}
       {location?.source === "legacy-link" ? <p className="celebration-note">{labels.unverified}</p> : null}
       {location ? (
         <div className="celebration-location-actions">

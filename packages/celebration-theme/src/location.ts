@@ -137,7 +137,8 @@ const SEARCH_MAX = 200;
  * public text of the place. `null` when nothing in the text can be searched for. Ported from FE #169 (`packages/location`).
  */
 export function osmSearchHref(written: string): string | null {
-  const cleaned = written.replace(PASTED_LINK, " ").replace(UNSENDABLE, " ").replace(/\s+/g, " ").trim();
+  // Bounded first: the pasted-link pattern is not linear on long runs of "a@a@…" (the editors already cap the text at 200).
+  const cleaned = written.slice(0, 600).replace(PASTED_LINK, " ").replace(UNSENDABLE, " ").replace(/\s+/g, " ").trim();
   // By code points, so the cut never leaves half a character behind.
   const query = Array.from(cleaned).slice(0, SEARCH_MAX).join("").trim();
   return SEARCHABLE.test(query) ? `https://www.openstreetmap.org/search?query=${encodeURIComponent(query)}` : null;
