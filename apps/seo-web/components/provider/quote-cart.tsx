@@ -5,10 +5,11 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react
 import { ApiError } from '@rsvp/api-client';
 import { createTranslator, formatMinor, type AppLocale } from '@rsvp/i18n/server';
 import { isFutureDate, quoteSchema, toMinor } from '@rsvp/forms';
-import { quoteFailureMessage, useQuote, zoneName, type QuoteReceipt } from '@rsvp/query-hooks';
+import { MARKETPLACE_ORIGIN_KEY, parseMarketplaceOrigin, providerService, quoteFailureMessage, quoteOriginFrom, useQuote, zoneName, type QuoteAccess, type QuoteProofAnswer, type QuoteReceipt } from '@rsvp/query-hooks';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { appUrl } from '../../lib/app-url';
 import { createVisitorClient, readVisitorToken } from '../../lib/visitor-client';
+import { solveQuoteProof } from '../../lib/quote-proof';
 import { CAPTCHA_SITE_KEY, QuoteCaptcha } from './quote-captcha';
 import './provider.css';
 
@@ -37,9 +38,20 @@ function QuoteBody({ slug, providerId, providerName, offers, preselected, locale
   const retryAfter = quote.error instanceof ApiError ? quote.error.retryAfterSeconds : undefined;
   const [signedIn, setSignedIn] = useState(false);
   useEffect(() => { setSignedIn(readVisitorToken() !== null); }, []);
+  // 3.15.0: how anonymous quotes work in this deployment. A failure to ask changes nothing: the form behaves as before and the service answers.
+  const [access, setAccess] = useState<QuoteAccess['anonymousQuotes'] | undefined>(undefined);
+  const [proving, setProving] = useState(false);
+  const [proofFailed, setProofFailed] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    providerService(api).quoteAccess().then((answer) => { if (alive) setAccess(answer.anonymousQuotes); }, () => undefined);
+    return () => { alive = false; };
+  }, [api]);
+  const anonymousClosed = !signedIn && access === 'off';
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (proving) return;
     const data = new FormData(event.currentTarget);
     const text = (name: string): string => String(data.get(name) ?? '');
     const parsed = quoteSchema.safeParse({ listingIds: selected, eventDate: text('eventDate'), guestCount: text('guestCount'), budget: text('budget'), eventCity: text('eventCity'), name: text('name'), email: text('email'), phone: text('phone'), message: text('message') });
@@ -52,7 +64,18 @@ function QuoteBody({ slug, providerId, providerName, offers, preselected, locale
     const v = parsed.data;
     const honeypot = text('website');
     const budgetMinor = toMinor(v.budget ?? '');
-    quote.mutate({ listingIds: v.listingIds, eventDate: v.eventDate, guestCount: v.guestCount, ...(budgetMinor !== undefined ? { budgetMinor } : {}), ...(v.eventCity ? { eventCity: v.eventCity } : {}), contact: { name: v.name, email: v.email, ...(v.phone ? { phone: v.phone } : {}) }, ...(v.message ? { message: v.message } : {}), locale, ...(captcha && !signedIn ? { captchaToken: captcha } : {}), ...(honeypot ? { website: honeypot } : {}) }, { onSuccess: setReceipt, onError: () => { if (CAPTCHA_SITE_KEY) setCaptchaReset((count) => count + 1); } });
+    // Where the guest came from, if they came from the tab of a celebration: read from this tab's sessionStorage, never from the address (no slug, guest or token in the URL).
+    let origin: ReturnType<typeof quoteOriginFrom>;
+    try { origin = quoteOriginFrom(parseMarketplaceOrigin(window.sessionStorage.getItem(MARKETPLACE_ORIGIN_KEY), Date.now())); } catch { origin = undefined; }
+    const send = (proof?: QuoteProofAnswer) => quote.mutate({ listingIds: v.listingIds, eventDate: v.eventDate, guestCount: v.guestCount, ...(budgetMinor !== undefined ? { budgetMinor } : {}), ...(v.eventCity ? { eventCity: v.eventCity } : {}), contact: { name: v.name, email: v.email, ...(v.phone ? { phone: v.phone } : {}) }, ...(v.message ? { message: v.message } : {}), locale, ...(captcha && !signedIn ? { captchaToken: captcha } : {}), ...(honeypot ? { website: honeypot } : {}), ...(origin ? { origin } : {}), ...(proof ? { proof } : {}) }, { onSuccess: setReceipt, onError: () => { if (CAPTCHA_SITE_KEY) setCaptchaReset((count) => count + 1); } });
+    if (signedIn || access === 'open' || access === 'captcha') { send(); return; }
+    // Anonymous, and the mode is proof or not known yet: a fresh challenge now (each is used once and lasts minutes). Solved here, then the request.
+    // If the service cannot be asked, the request goes without proof and the service decides (403 PROOF_FAILED says what to do).
+    setProving(true); setProofFailed(false);
+    providerService(api).quoteAccess().then<QuoteProofAnswer | undefined, undefined>(
+      async (fresh) => (fresh.anonymousQuotes === 'proof' && fresh.proof ? { challenge: fresh.proof.challenge, nonce: await solveQuoteProof(fresh.proof.challenge, fresh.proof.difficulty) } : undefined),
+      () => undefined,
+    ).then((proof) => send(proof), () => setProofFailed(true)).finally(() => setProving(false));
   };
 
   const err = (field: string) => (errors[field] ? t(`quote.errors.${errors[field]}`) : null);
@@ -73,7 +96,7 @@ function QuoteBody({ slug, providerId, providerName, offers, preselected, locale
     <main className="directory partner">
       <h1>{t('quote.title', { name: providerName })}</h1>
       <p>{t('quote.intro', { name: providerName })}</p>
-      <form className="provider-form" onSubmit={submit} noValidate aria-busy={quote.isPending}>
+      <form className="provider-form" onSubmit={submit} noValidate aria-busy={quote.isPending || proving}>
         <fieldset aria-describedby="quote-items-help">
           <legend>{t('quote.items')}</legend>
           <span id="quote-items-help" className="rsvp-hint">{t('quote.itemsHelp')}</span>
@@ -105,10 +128,12 @@ function QuoteBody({ slug, providerId, providerName, offers, preselected, locale
         {signedIn ? null : <p className="rsvp-hint" data-testid="quote-anon-note">{t('quote.anonymousNote')}</p>}
         {CAPTCHA_SITE_KEY && !signedIn ? <QuoteCaptcha onToken={onCaptcha} resetKey={captchaReset} label={t('quote.captcha.label')} /> : null}
         {captchaMissing ? <p className="rsvp-error" role="alert">{t('quote.captcha.required')}</p> : null}
-        {status === 401 ? (
+        {proving ? <p role="status" className="rsvp-hint" data-testid="quote-proof-working">{t('quote.proofWorking')}</p> : null}
+        {proofFailed ? <p className="rsvp-error" role="alert" data-error="proof-unavailable">{t('quote.errors.proof')}</p> : null}
+        {status === 401 || anonymousClosed ? (
           <div role="alert" className="rsvp-card rsvp-card--quiet"><h2>{t('quote.signIn.title')}</h2><p>{t('quote.signIn.body')}</p><a className="rsvp-button" href={appUrl(`/login?returnTo=${encodeURIComponent(`/p/${slug}/cotizar`)}`)}>{t('quote.signIn.action')}</a></div>
         ) : quote.isError ? <p className="rsvp-error" role="alert" data-error={problem ?? status}>{quoteFailure(status, problem, retryAfter, t)}</p> : null}
-        <div className="rsvp-actions"><button type="submit" className="rsvp-button" disabled={quote.isPending}>{quote.isPending ? t('quote.submitting') : t('quote.submit')}</button></div>
+        <div className="rsvp-actions"><button type="submit" className="rsvp-button" disabled={quote.isPending || proving || anonymousClosed}>{quote.isPending || proving ? t('quote.submitting') : t('quote.submit')}</button></div>
       </form>
     </main>
   );

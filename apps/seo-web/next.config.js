@@ -67,7 +67,9 @@ const nextConfig = {
       { key: 'Content-Security-Policy', value: `frame-ancestors 'self' ${appOrigin === "'none'" ? '' : appOrigin}`.trim() },
       { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' }
     ];
-    return [{ source: '/((?!vista-previa$|mapa/incrustado$).*)', headers: securityHeaders }, { source: '/vista-previa', headers: previewHeaders }, { source: '/mapa/incrustado', headers: mapHeaders }, { source: '/c/:slug/rsvp/:path*', headers: privateHeaders }, { source: '/c/:slug/rsvp', headers: privateHeaders }, { source: '/rsvp/:path*', headers: privateHeaders }];
+    // The tab's art is versioned by folder (/marketplace/v1): the files never change, so they are cached for a year.
+    const immutable = [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }];
+    return [{ source: '/marketplace/v1/:file', headers: immutable }, { source: '/((?!vista-previa$|mapa/incrustado$).*)', headers: securityHeaders }, { source: '/vista-previa', headers: previewHeaders }, { source: '/mapa/incrustado', headers: mapHeaders }, { source: '/c/:slug/rsvp/:path*', headers: privateHeaders }, { source: '/c/:slug/proveedores', headers: privateHeaders }, { source: '/c/:slug/rsvp', headers: privateHeaders }, { source: '/rsvp/:path*', headers: privateHeaders }];
   },
   webpack: (config) => {
     // Workspace packages use NodeNext-style "./x.js" imports that point to .ts sources.

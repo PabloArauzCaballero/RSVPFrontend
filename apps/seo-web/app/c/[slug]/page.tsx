@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { createTranslator, defaultLocale } from "@rsvp/i18n/server";
 import { PublicCelebration } from "../../../components/public-celebration";
 import { loadPublicPage } from "../../../lib/celebration";
+import { showMarketplaceEntry } from "../../../lib/marketplace";
 import { requestedLanguage, uiLocale } from "../../../lib/locale";
 import { celebrationMetadata } from "../../../lib/metadata";
 
@@ -28,5 +29,5 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 export default async function CelebrationPage(props: Props) {
   const page = await load(props);
   if (!page) notFound();
-  return <PublicCelebration page={page} />;
+  return <PublicCelebration page={page} providersEntry={await showMarketplaceEntry()} />;
 }

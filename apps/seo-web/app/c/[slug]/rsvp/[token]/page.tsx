@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { RsvpExperience } from '../../../../../components/rsvp/rsvp-experience';
 import { requestedLanguage, uiLocale } from '../../../../../lib/locale';
+import { marketplacePath } from '@rsvp/query-hooks';
+import { showMarketplaceEntry } from '../../../../../lib/marketplace';
 import { siteUrl } from '../../../../../lib/metadata';
 
 /**
@@ -16,5 +18,5 @@ interface Props { readonly params: Promise<{ slug: string }>; readonly searchPar
 export default async function RsvpTokenPage({ params, searchParams }: Props) {
   const [{ slug }, { lang }, requestHeaders] = await Promise.all([params, searchParams, headers()]);
   const locale = uiLocale(requestedLanguage(lang, requestHeaders.get('accept-language')));
-  return <main className="rsvp-shell"><RsvpExperience slug={slug} locale={locale} siteOrigin={siteUrl()} /></main>;
+  return <main className="rsvp-shell"><RsvpExperience slug={slug} locale={locale} siteOrigin={siteUrl()} {...((await showMarketplaceEntry()) ? { providersHref: marketplacePath(slug) } : {})} /></main>;
 }

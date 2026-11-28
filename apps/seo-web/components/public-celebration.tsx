@@ -1,5 +1,6 @@
 import { CelebrationRenderer, fontStylesheet, themeFromTemplate, type SectionId } from "@rsvp/celebration-theme";
 import { createTranslator, supportedLocales } from "@rsvp/i18n/server";
+import { marketplacePath } from "@rsvp/query-hooks";
 import type { PublicPage } from "../lib/celebration";
 import { visualTestNow } from "../lib/dev-surfaces";
 import { eventJsonLd, jsonLdScript } from "../lib/json-ld";
@@ -13,7 +14,7 @@ import { RsvpCredentialIsland } from "./rsvp-credential-island";
 const mapConfigUrl = (): string => `${guestApiBase().replace(/\/$/, "")}/providers/geo/map-config`;
 
 /** The public celebration (A1) or one of its sections (A2–A8), server-rendered with its theme. */
-export function PublicCelebration({ page, only }: { readonly page: PublicPage; readonly only?: SectionId }) {
+export function PublicCelebration({ page, only, providersEntry = false }: { readonly page: PublicPage; readonly only?: SectionId; /** The deployment offers the guest marketplace and the catalogue has providers (lib/marketplace `showMarketplaceEntry`). */ readonly providersEntry?: boolean }) {
   const { view, template, gallery } = page;
   const locale = uiLocale(view.locale);
   const t = createTranslator(locale);
@@ -45,6 +46,13 @@ export function PublicCelebration({ page, only }: { readonly page: PublicPage; r
           token is never put in the markup. The guest arriving by the personal link goes to `/c/{slug}/rsvp/{token}` directly.
           The gifts button needs nothing: it is always `/c/{slug}/regalos`. */}
       <CelebrationRenderer theme={theme} view={view} gallery={gallery} t={t} only={only} basePath={basePath} rsvpHelpHref={celebrationPath(view.slug, "rsvp")} rsvpAdaptive mapConfigUrl={mapConfigUrl()} now={visualTestNow()} />
+      {/* A quiet block after everything else (never in the dock, never a button): vendors for the guest's own celebration. No query, no fragment, no token. */}
+      {providersEntry && !only ? (
+        <aside className="celebration-providers" data-testid="providers-entry">
+          <p>{t("directory.guestMarketplace.entryBody")}</p>
+          <a href={`${marketplacePath(view.slug)}?lang=${locale}`} data-link-kind="internal">{t("directory.guestMarketplace.entry")}</a>
+        </aside>
+      ) : null}
       <RsvpCredentialIsland slug={view.slug} />
     </>
   );

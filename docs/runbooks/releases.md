@@ -41,3 +41,8 @@ Si cambia código nativo, se requiere una nueva build de producción, no una act
 - Un build de release sin `EXPO_PUBLIC_API_URL`, o con una URL `http://`, falla al arrancar (`resolveApiUrl`, A8).
 - Primer build y envío (interactivo, requiere la cuenta de Apple Developer y su 2FA): `cd apps/universal && eas build -p ios --profile production --auto-submit`. EAS registra el bundle id, crea certificado y perfil, y `--auto-submit` crea la app en App Store Connect si no existe y sube el build a TestFlight.
 - Ficha de la tienda: `docs/release/app-store-connect.md`.
+
+## Interruptor `GUEST_MARKETPLACE` (seo-web)
+
+Variable de runtime del contenedor `seo-web` (declarada en `docker-compose.coolify.yml`, valor por defecto `off`). Con `on` se abren `/c/{slug}/proveedores` y sus entradas (invitación y RSVP); con cualquier otro valor la ruta responde 404 y no hay entradas. Encender primero en TEST, y solo con el backend `provider-catalog` 3.15.0 o superior ya desplegado. Apagarla revierte al instante. No encender en producción hasta cumplir los requisitos de `docs/progress/marketplace-invitado-fe.md`.
+
