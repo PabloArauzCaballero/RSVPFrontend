@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Image, Platform, Share, Text, View } from "react-native";
-import { isPublicPageInTransition, missingFieldsOf, useEditCelebration, useMediaAssets, usePublicationAction, usePublicPageStatus, usePublishCheck, type Celebration, type TranslatedEventType } from "@rsvp/query-hooks";
+import { isGalleryAsset, isPublicPageInTransition, missingFieldsOf, useEditCelebration, useMediaAssets, usePublicationAction, usePublicPageStatus, usePublishCheck, type Celebration, type TranslatedEventType } from "@rsvp/query-hooks";
 import type { Translate } from "@rsvp/i18n";
 import { formatDate } from "@rsvp/celebration-theme/model";
 import { useApiClient, useT } from "../platform/providers";
@@ -71,7 +71,9 @@ function Checklist({ celebration, eventType, onNavigate, refetch }: { readonly c
   const title = asText(celebration.content["title"]);
   const eventDate = asText(celebration.content["eventDate"]);
   const description = [eventType?.name, eventDate ? formatDate(eventDate, celebration.timeZone, celebration.defaultLocale) : "", asText(celebration.content["venueName"])].filter(Boolean).join(" · ");
-  const cover = media.data?.items.find((asset) => asset.isCover)?.variants.medium;
+  // The card previews the shared link: the cover or, when it has no raster variant (SVG), the first gallery photo that has one.
+  const photos = (media.data?.items ?? []).filter(isGalleryAsset);
+  const cover = [...photos.filter((asset) => asset.isCover), ...photos].map((asset) => asset.variants.medium ?? asset.variants.full).find(Boolean);
 
   const reasonExcess = overLimit(reason, LIMITS.reason);
   const run = (kind: Exclude<Dialog, null>): void => {

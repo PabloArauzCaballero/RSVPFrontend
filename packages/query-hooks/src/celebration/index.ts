@@ -135,6 +135,12 @@ export function isMediaProcessingStuck(celebrationId: string, asset: Pick<MediaA
   return isProcessingStuck(processingAge.ageMs(celebrationId, asset.id), asset.createdAt, wallNow);
 }
 
+/** The photos of the gallery and its cover. Backgrounds, logos and the rest share the list but are not gallery photos, and
+ * reordering refuses them (the server asks for exactly the gallery ones). An older server sends no purpose: those are photos. */
+export function isGalleryAsset(asset: Pick<MediaAsset, "purpose">): boolean {
+  return asset.purpose === undefined || asset.purpose === "gallery" || asset.purpose === "cover";
+}
+
 export function useMediaAssets(client: ApiClient, celebrationId: string) {
   return useQuery({
     queryKey: queryKeys.media.list(celebrationId),
