@@ -102,6 +102,39 @@ describe("targeted resource refresh", () => {
     expect(view.result.current.isSuccess).toBe(true);
   });
 
+  it("keeps existing PROCESSED variant URLs stable across polling when MinIO signatures rotate", async () => {
+    vi.useFakeTimers();
+    let poll = 0;
+    const h = setup(() => {
+      poll += 1;
+      return {
+        items: [
+          { id: "ready-1", status: "PROCESSED", variants: { thumb: `https://api.test/rsvp-media/uploads/c-1/ready-1/a-thumb.webp?X-Amz-Signature=sig-${poll}` } },
+          { id: "pending-1", status: "PROCESSING", variants: {} }
+        ]
+      };
+    });
+    const view = renderHook(() => useMediaAssets(h.client, "c-1"), { wrapper: h.wrapper });
+    await act(async () => { await vi.advanceTimersByTimeAsync(10); });
+    const firstUrl = view.result.current.data?.items[0]?.variants.thumb;
+    expect(firstUrl).toContain("sig-1");
+    await act(async () => { await vi.advanceTimersByTimeAsync(2_010); });
+    expect(poll).toBeGreaterThanOrEqual(2);
+    expect(view.result.current.data?.items[0]?.variants.thumb).toBe(firstUrl);
+  });
+
+  it("stops polling automatically when a PROCESSING asset is stale", async () => {
+    vi.useFakeTimers();
+    const h = setup(() => ({ items: [{ id: "stuck-1", status: "PROCESSING", variants: {} }] }));
+    const view = renderHook(() => useMediaAssets(h.client, "stale-celebration"), { wrapper: h.wrapper });
+    await act(async () => { await vi.advanceTimersByTimeAsync(10); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(3 * 60_000 + 10_000); });
+    expect(view.result.current.data?.items[0]?.status).toBe("PROCESSING");
+    const count = h.calls.length;
+    await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
+    expect(h.calls).toHaveLength(count);
+  });
+
   it("adding a gift updates the active list without refetching another celebration", async () => {
     const items: { id: string; source: string; status: string }[] = [];
     const h = setup((method, path) => {

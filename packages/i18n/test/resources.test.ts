@@ -24,6 +24,15 @@ describe("translation resources", () => {
   });
 });
 
+describe("R8a · gifts button on the invitation", () => {
+  it("publishes one label per gifts summary status in both languages", () => {
+    const es = createTranslator("es-BO");
+    const en = createTranslator("en-US");
+    expect([es("gifts.guest.cta.open"), es("gifts.guest.cta.empty"), es("gifts.guest.cta.closed")]).toEqual(["Ver regalos", "Lista de regalos (pronto)", "Ver regalos"]);
+    expect([en("gifts.guest.cta.open"), en("gifts.guest.cta.empty"), en("gifts.guest.cta.closed")]).toEqual(["View gifts", "Gift list (coming soon)", "View gifts"]);
+  });
+});
+
 describe("B6 · legal texts", () => {
   it("every section of both documents has a heading and a body in both languages, and both carry the same version", async () => {
     const { LEGAL_DOCUMENTS, legalBlocks } = await import("../src/index.js");
@@ -50,5 +59,18 @@ describe("B6 · legal texts", () => {
   it("splits a body into paragraphs and lists", async () => {
     const { legalBlocks } = await import("../src/index.js");
     expect(legalBlocks("Intro:\n- uno\n- dos\n\nCierre.")).toEqual([{ kind: "paragraph", text: "Intro:" }, { kind: "list", items: ["uno", "dos"] }, { kind: "paragraph", text: "Cierre." }]);
+  });
+
+  it.each(["es-BO", "en-US"] as const)("WCAG 2.5.3 · %s: the accessible name of each media button starts with the text the button shows", (locale) => {
+    const t = createTranslator(locale);
+    const title = "Vals de los novios";
+    const pairs: ReadonlyArray<readonly [string, string]> = [
+      ["celebration.media.playShort", "celebration.media.play"], ["celebration.media.pauseShort", "celebration.media.pause"],
+      ["celebration.media.openVideo", "celebration.media.playVideo"], ["celebration.media.openMusic", "celebration.media.playMusic"], ["celebration.media.openMap", "celebration.media.showMap"],
+      ["celebration.media.retryShort", "celebration.media.retry"]
+    ];
+    for (const [visible, name] of pairs) expect(t(name, { title }).toLowerCase().startsWith(t(visible).toLowerCase()), `${locale} ${name}`).toBe(true);
+    // The MP3 button and the Spotify one do not show the same word: two "Listen" buttons side by side would not say which is which.
+    expect(t("celebration.media.playShort")).not.toBe(t("celebration.media.openMusic"));
   });
 });

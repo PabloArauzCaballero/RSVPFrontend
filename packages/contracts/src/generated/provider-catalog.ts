@@ -115,7 +115,7 @@ export interface paths {
         };
         /**
          * Published listings of verified providers by title (consumed by gift-list-service)
-         * @description R2 (3.5.0, decision 11) and R3 (3.6.0, §5.5): a PRODUCT is listed only when eligible for the gift recommendation: published, COMPLETE and not hidden, stock other than OUT_OF_STOCK, from a VERIFIED provider below its monthly lead cap; SERVICE listings as before. imageUrl of a product is the card of its cover photo. With city, products that deliver there come first. ORDER (3.6.0, decision pending for the product owner): the city comes BEFORE relevance, so a product that delivers to the city but matches fewer words is listed above a better match that does not deliver there; the alternative (relevance first, city as a tie-break) is not decided.
+         * @description R2 (3.5.0, decision 11) and R3 (3.7.0, §5.5): a PRODUCT is listed only when eligible for the gift recommendation: published, COMPLETE and not hidden, stock other than OUT_OF_STOCK, from a VERIFIED provider below its monthly lead cap; SERVICE listings as before. imageUrl of a product is the card of its cover photo. With city, products that deliver there come first. ORDER (3.7.0, decision pending for the product owner): the city comes BEFORE relevance, so a product that delivers to the city but matches fewer words is listed above a better match that does not deliver there; the alternative (relevance first, city as a tie-break) is not decided.
          */
         get: operations["searchListings"];
         put?: never;
@@ -3332,7 +3332,7 @@ export interface components {
             /** Format: uuid */
             id?: string;
             /**
-             * @description Why the lead is not billable (absent when valid). dup: same visitor, listing and destination inside the deduplication window. bot: automated traffic. Since 3.7.0 (R6a): PREVIEW (preview surface), NOT_ELIGIBLE (product not COMPLETE or hidden), PROVIDER_SELF (the provider's owner) and HOST_OR_PLANNER (a member of the celebration).
+             * @description Why the lead is not billable (absent when valid). dup: same visitor, listing and destination inside the deduplication window. bot: automated traffic. Since 3.8.0 (R6a): PREVIEW (preview surface), NOT_ELIGIBLE (product not COMPLETE or hidden), PROVIDER_SELF (the provider's owner) and HOST_OR_PLANNER (a member of the celebration).
              * @enum {string}
              */
             invalidReason?: "dup" | "bot" | "PREVIEW" | "NOT_ELIGIBLE" | "PROVIDER_SELF" | "HOST_OR_PLANNER";
@@ -3486,11 +3486,11 @@ export interface components {
         };
         ListingSummary: {
             category?: string;
-            /** @description 3.6.0: only on PRODUCT items of GET /listings?city=; true when the product delivers to that city. */
+            /** @description 3.7.0: only on PRODUCT items of GET /listings?city=; true when the product delivers to that city. */
             deliversToCity?: boolean;
             /** @description Destination types available through the public redirector. Returned by GET /listings/{listingId} without target URLs. */
             destinationTypes?: components["schemas"]["Destination"][];
-            /** @description 3.6.0: only on GET /listings/{listingId}. True when the listing is a product a host can add as a gift now (VERIFIED provider below its lead cap, PRODUCT published, COMPLETE, not hidden, not OUT_OF_STOCK). A non-eligible listing still answers 200 so gifts already added keep reading it. */
+            /** @description 3.7.0: only on GET /listings/{listingId}. True when the listing is a product a host can add as a gift now (VERIFIED provider below its lead cap, PRODUCT published, COMPLETE, not hidden, not OUT_OF_STOCK). A non-eligible listing still answers 200 so gifts already added keep reading it. */
             giftEligible?: boolean;
             /** Format: uuid */
             id: string;
@@ -5173,7 +5173,7 @@ export interface operations {
     searchListings: {
         parameters: {
             query?: {
-                /** @description 3.6.0 (M26): city slug of the event (GET /providers/geo). Products that deliver there (delivery.coverageCities) come first, and every product item carries deliversToCity. An unknown slug only means nobody delivers there. */
+                /** @description 3.7.0 (M26): city slug of the event (GET /providers/geo). Products that deliver there (delivery.coverageCities) come first, and every product item carries deliversToCity. An unknown slug only means nobody delivers there. */
                 city?: string;
                 limit?: number;
                 /** @description Overrides Accept-Language. */
@@ -8582,8 +8582,8 @@ export interface operations {
                 plan?: string;
                 /** @description Name, slug, legal name (contains, case-insensitive), exact NIT or exact owner id. */
                 q?: string;
-                /** @description kypStatus orders EXPIRED, EXPIRING, PENDING, COMPLETE. */
-                sort?: "name" | "-createdAt" | "-updatedAt" | "kypStatus";
+                /** @description Sorts the filtered results before pagination. Use a leading '-' for descending order. kypStatus orders EXPIRED, EXPIRING, PENDING, COMPLETE; -kypStatus reverses those groups. */
+                sort?: "name" | "-name" | "kypStatus" | "-kypStatus" | "createdAt" | "-createdAt" | "updatedAt" | "-updatedAt";
                 /** @description Repeatable (status=A&status=B), status[] or comma list. */
                 status?: components["schemas"]["ProviderStatus"][];
                 /** @description Partner coverage zone. */
@@ -9726,7 +9726,7 @@ export interface operations {
                 city?: string;
                 correlationId?: string;
                 country?: string;
-                /** @description R6a (3.7.0): signed lead context of a celebration member, copied as is from gift-list listGiftItems leadContext. Only an authentic, unexpired token whose celebration equals celebrationId counts: the click is then an invalid lead (HOST_OR_PLANNER, or PROVIDER_SELF when the member owns the provider). Any other value is ignored and the click is classified as an anonymous visitor's; more than 512 characters is 422 INVALID_LEAD_CONTEXT. Carries no personal data. */
+                /** @description R6a (3.8.0): signed lead context of a celebration member, copied as is from gift-list listGiftItems leadContext. Only an authentic, unexpired token whose celebration equals celebrationId counts: the click is then an invalid lead (HOST_OR_PLANNER, or PROVIDER_SELF when the member owns the provider). Any other value is ignored and the click is classified as an anonymous visitor's; more than 512 characters is 422 INVALID_LEAD_CONTEXT. Carries no personal data. */
                 ctx?: string;
                 /** @description Absent means the primary destination of the listing: PRODUCT_PAGE of a product, otherwise the first stored and enabled destination in this enum order. */
                 destination?: "OFFICIAL_SITE" | "LANDING" | "WHATSAPP" | "PHONE" | "EMAIL" | "INSTAGRAM" | "PRODUCT_PAGE";
@@ -9740,9 +9740,9 @@ export interface operations {
                 quantity?: number;
                 /** @description Referrer; defaults to the Referer header. */
                 ref?: string;
-                /** @description Visitor session; derived from IP and user agent when absent. With the listing and the destination it is the deduplication key of billable leads (24 h on GIFT_LIST since 3.7.0). */
+                /** @description Visitor session; derived from IP and user agent when absent. With the listing and the destination it is the deduplication key of billable leads (24 h on GIFT_LIST since 3.8.0). */
                 sessionId?: string;
-                /** @description Where the link was shown. PREVIEW (R6a, 3.7.0): a preview in the provider portal or in moderation; the click is recorded as an invalid lead with reason PREVIEW. */
+                /** @description Where the link was shown. PREVIEW (R6a, 3.8.0): a preview in the provider portal or in moderation; the click is recorded as an invalid lead with reason PREVIEW. */
                 surface?: "PUBLIC_SITE" | "SEARCH" | "CELEBRATION_SITE" | "GIFT_LIST" | "EMAIL" | "APP" | "QUOTE_FORM" | "PREVIEW";
                 /** @description Since 3.8.0 (R5): the id of the product version (gift-list variantCode). Sets {version} and the price of the WhatsApp message; an id that is not a version of the product is ignored (the product's price, no version). */
                 variant?: string;

@@ -717,7 +717,7 @@ await check("P8-gallery-real502", "galeria: /media/.../assets devuelve 502 real 
 await check("P8-gallery-limits", "galeria: archivo no imagen y >10 MB se rechazan localmente sin ninguna peticion", async () => {
   await open("/editor/galeria", gl.id);
   const before = requests.filter((line) => line.includes("/media/uploads")).length;
-  for (const [name, mimeType, size, message] of [["x.pdf", "application/pdf", 10, /no es una imagen JPG, PNG o WebP/], ["big.png", "image/png", 10_485_761, /supera los 10 MB/]]) {
+  for (const [name, mimeType, size, message] of [["x.pdf", "application/pdf", 10, /x\.pdf: este tipo de archivo no se puede subir/], ["big.png", "image/png", 10_485_761, /big\.png es demasiado grande/]]) {
     const [chooser] = await Promise.all([page.waitForEvent("filechooser"), page.getByTestId("add-photo").click()]);
     await chooser.setFiles({ name, mimeType, buffer: Buffer.alloc(size, 1) });
     await text(message).waitFor();

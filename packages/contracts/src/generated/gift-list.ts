@@ -942,7 +942,7 @@ export interface components {
             title: string;
         };
         DevCompatProblem: {
-            /** @description Stable machine code, for example GIFT_NOT_AVAILABLE, HOST_REQUIRED, GIFT_LIST_EXISTS, INVALID_GIFT_TRANSITION, CATALOG_PRODUCT_UNAVAILABLE, INVALID_EXTERNAL_URL, INVALID_MONEY, PARTNER_CATALOG_FIRST, RESERVATION_NOT_PENDING; since 1.14.0 also GIFT_LISTING_NOT_PRODUCT (422 of addGiftItem: the CATALOGED listing is a SERVICE, only products can be gifts) */
+            /** @description Stable machine code, for example GIFT_NOT_AVAILABLE, HOST_REQUIRED, GIFT_LIST_EXISTS, INVALID_GIFT_TRANSITION, CATALOG_PRODUCT_UNAVAILABLE, INVALID_EXTERNAL_URL, INVALID_MONEY, PARTNER_CATALOG_FIRST, RESERVATION_NOT_PENDING; since 1.14.0 also GIFT_LISTING_NOT_PRODUCT (422 of addGiftItem: the CATALOGED listing is a SERVICE, only products can be gifts); since 1.15.0 also LIST_CLOSED (409 of reserveGift: the gift list is closed by hand) */
             code?: string;
             correlationId?: string;
             detail?: string;
@@ -1841,7 +1841,7 @@ export interface components {
                 "application/problem+json": components["schemas"]["DevCompatProblem"];
             };
         };
-        /** @description The gift is no longer available */
+        /** @description The gift is no longer available (GIFT_NOT_AVAILABLE; since 1.15.0 also LIST_CLOSED from reserveGift when the host or the organizer closed the gift list by hand) */
         DevCompatGiftNotAvailable: {
             headers: {
                 [name: string]: unknown;
@@ -7075,7 +7075,7 @@ export interface operations {
                     };
                 };
             };
-            /** @description GiftNotAvailable */
+            /** @description GiftNotAvailable, or LIST_CLOSED while the host holds the gift list closed (since 1.15.0; new reservations are refused, existing ones are untouched) */
             409: {
                 headers: {
                     /** @description Responses are never stored. */
@@ -7087,7 +7087,7 @@ export interface operations {
                 content: {
                     "application/problem+json": components["schemas"]["ReservationProblem"] & {
                         /** @enum {unknown} */
-                        code?: "GiftNotAvailable";
+                        code?: "GiftNotAvailable" | "LIST_CLOSED";
                         /** @constant */
                         status?: 409;
                         /** @constant */
@@ -7314,7 +7314,7 @@ export interface operations {
                     };
                 };
             };
-            /** @description GiftNotAvailable */
+            /** @description GiftNotAvailable, or LIST_CLOSED while the host holds the gift list closed (since 1.15.0; new reservations are refused, existing ones are untouched) */
             409: {
                 headers: {
                     /** @description Responses are never stored. */
@@ -7326,7 +7326,7 @@ export interface operations {
                 content: {
                     "application/problem+json": components["schemas"]["ReservationProblem"] & {
                         /** @enum {unknown} */
-                        code?: "GiftNotAvailable";
+                        code?: "GiftNotAvailable" | "LIST_CLOSED";
                         /** @constant */
                         status?: 409;
                         /** @constant */
