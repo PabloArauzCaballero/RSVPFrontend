@@ -18,7 +18,7 @@ export { CheckMark, type CheckMarkProps } from './scheme-check';
 export { NoticeMark, type NoticeMarkProps, type NoticeMarkTone } from './notice-mark';
 export { NavIcon, type NavIconProps } from './nav-icon';
 export { Illustration, type IllustrationProps } from './illustration';
-export { ILLUSTRATION_NAMES, type IllustrationName, type IllustrationTone } from './illustrations';
+export { ILLUSTRATION_GROUPS, ILLUSTRATION_NAMES, ILLUSTRATION_PASTEL, type IllustrationName, type IllustrationTone } from './illustrations';
 export * from './identity';
 export { fonts } from './fonts';
 export { EmptyState, PageIntro, SuccessNote, Celebrate, type EmptyStateProps } from './personality';

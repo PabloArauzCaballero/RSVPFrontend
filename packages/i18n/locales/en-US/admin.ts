@@ -53,7 +53,7 @@ export const adminEnUS: DeepStrings<typeof adminEsBO> = {
   },
   products: {
     title: "Products", intro: "What providers published recently and what is already hidden. If a product breaks the rules, hide it: it stops being recommended and accepted as a gift, and its owner sees the reason.",
-    views: { label: "Product view", RECENT: "Recent", HIDDEN: "Hidden" }, tabCount: "{{label}}: {{count}}",
+    views: { label: "Product view", RECENT: "Recent", HIDDEN: "Hidden" },
     filters: { label: "Product filters", days: "Published in the last", daysOption_one: "{{count}} day", daysOption_other: "{{count}} days", category: "Category", all: "All", featured: "Featured", allFeatured: "All", featuredOn: "Featured", featuredOff: "Not featured", completeness: "Sheet", provider: "Provider", providerHelp: "Paste the provider's identifier (UUID). Leave it empty to see everyone.", providerInvalid: "Use a valid identifier, for example 3f2b8c1e-5a47-4d0e-9b6a-1c2d3e4f5a6b.", apply: "Filter", clear: "Clear filters" },
     completeness: { COMPLETE: "Complete sheet", INCOMPLETE: "Incomplete sheet", HIDDEN_BY_ADMIN: "Hidden" },
     empty: { RECENT: "No products were published in the last {{days}} days with these filters.", HIDDEN: "There are no hidden products with these filters." },

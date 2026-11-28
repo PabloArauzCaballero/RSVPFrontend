@@ -95,10 +95,16 @@ describe("rendered public page", () => {
     const view = { ...VIEW, enabledSections: VIEW.enabledSections.filter((section) => section !== "gifts") };
     const template = { ...(TEMPLATES[4] as NonNullable<typeof page.template>) };
     const document = dom(renderToStaticMarkup(<PublicCelebration page={{ ...page, view, template }} />));
-    const button = document.querySelector('section[data-section="gifts"] a[data-action="gifts"]');
+    // Decision 8: the gifts button is in the same block as the reply, not in a section of its own.
+    const button = document.querySelector('section[data-section="rsvp"] [data-actions-block] a[data-action="gifts"]');
     expect(button?.getAttribute("href")).toBe("/c/ana-y-luis/regalos");
     expect(button?.textContent).toBe("Ver regalos");
-    expect(document.querySelector('section[data-section="gifts"] h2')?.textContent).toBe("Regalos");
+    // The corporate layout draws the gifts section's drawing, so the section stays (PL-139-01) without a button.
+    expect(document.querySelector('section[data-section="gifts"] svg[data-art="regalo"]')).toBeTruthy();
+    expect(document.querySelector('section[data-section="gifts"] a')).toBeNull();
+    expect(document.querySelectorAll('main a[data-action="gifts"]')).toHaveLength(1);
+    expect(document.querySelector('section[data-section="rsvp"] h2')?.textContent).toBe("Confirma y elige tu regalo");
+    expect(document.querySelector('section[data-section="rsvp"] [data-actions-block] a[data-action^="rsvp"]')).toBeTruthy();
     expect(document.querySelector('.celebration-nav a[href="/c/ana-y-luis/regalos"]')?.textContent).toBe("Regalos");
     expect(document.documentElement.innerHTML).not.toMatch(/token|rsvp\/[A-Za-z0-9_-]{16,}/);
   });

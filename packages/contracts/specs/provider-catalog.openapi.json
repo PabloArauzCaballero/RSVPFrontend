@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "RSVP Provider Catalog API",
-    "version": "3.12.0",
-    "description": "2.0.0: real service (port 3005). Paths now include the gateway prefixes (/providers, /r) and /listings; bodies and responses are defined. GET /providers keeps the query contract of RSVPFrontend seo-web (category, city, verified, maxPriceMinor, availableOn, page, pageSize) and adds coverage, near and locale. Errors are RFC 9457 problems. Disclaimer: RSVP brokers contact, it does not deliver the service. 2.1.0 (additive): ProviderCard adds providerId, providerName, destinations, address and hours and GET /providers accepts ?slug=; GET /providers/mine; microsite profile (GET/PUT /providers/{id}/microsite, REQ-F28-02); verification documents with presigned upload to object storage (/providers/{id}/documents...); POST /providers/impressions returns {recorded, ignored}; POST /providers/{id}/quotes accepts anonymous requests only when the deployment enables them (captcha or open mode, with per-address and per-contact caps); GET /listings text search matches any word, accent-insensitively, by title, category or description. 2.2.0 (additive, back office, ADMIN only: 401 without token, 403 to any other role): GET/PUT /providers/admin/categories[/{code}], GET/PUT /providers/admin/geography[/{code}], GET /providers/admin/verification-queue, POST /providers/{providerId}/reject (reason required), POST /providers/{providerId}/suspend now takes {reason} (required when an administrator suspends; the owner may still pause its own provider), GET /providers/admin/moderation and POST /providers/admin/moderation/{id}/approve|reject, GET /providers/admin/metrics/leads, GET /providers/admin/summary. ProviderStatus gains REJECTED (a rejected provider may resubmit). Every decision is audited (actor, time, reason) and emits an outbox event. Inactive categories and cities disappear from the public lists. City coordinates were verified against GeoNames. 2.3.0 (additive): the provider-owned routes of the Nest runtime (/private/*, /catalog/*, /public/products*) and, later in the same version, GET/PUT /providers/{providerId}/notification-settings and the internal GET /internal/v1/providers/{providerId}/notification-profile (that addition did not bump the version; from 2.9.1 the contract version lock in packages/contracts-openapi/versions.lock.json refuses a content change without a version change). 2.4.0 (additive): listing categories and catalog photos. 2.9.0 (additive, A23): GET /listings/{listingId} exposes enabled destination types. WhatsApp links support an optional prefilled message. 2.9.1 (correction, no runtime change): removes GET/POST /, POST /{providerId}/verify, POST /{providerId}/listings, GET /{providerId}/calendar, POST /{providerId}/bookings and POST /{providerId}/quotes. The service never served those unprefixed paths (it serves the same operations under /providers/...), and they duplicated seven operationIds (searchProviders, registerProvider, verifyProvider, createListing, getProviderCalendar, requestBooking, requestQuote), which OpenAPI requires to be unique. 2.10.0 (B11, additive): the provider's quote inbox. GET /providers/{providerId}/quotes (newest first, keyset cursor) and GET /providers/{providerId}/quotes/{quoteId} with the contact the requester gave. Owner with the PROVIDER role only (administrators and other providers get 403), under the provider's row-level scope. 2.10.1 (correction, no runtime change): the /private/*, /catalog/* and /public/products* operations declare their own server http://localhost:8000/providers. The service has always served them under /providers (Nest controllers providers/private, providers/catalog and providers/public/products), and the gateway reaches them there; resolved against the global server they pointed to paths that answer 404. Path keys and operationIds are unchanged, so generated clients keep their types and only the base URL of these 18 operations moves. 2.11.0 (additive, A24; PR #42: partner creation moves to the admin panel; ADMIN only, every route calls requireAdmin in the service: 401 without token, 403 to any other role): partner intake (server-side draft) POST/GET/PATCH/DELETE /providers/admin/intakes[/{intakeId}], its KYP documents (/documents, /complete, DELETE) and the atomic POST /providers/admin/intakes/{intakeId}/commit (Idempotency-Key) that creates the provider VERIFIED with origin ADMIN and KYP COMPLETE, moves the documents (review ACCEPTED), writes admin_audit provider.created-by-admin and enqueues provider.provider.registered.v2; partner administration GET /providers/admin/partners (server-side filters, sort, pagination), GET/PATCH /providers/admin/partners/{providerId} (If-Match), documents with review, kyp/complete, suspend, reactivate and change-owner (409 OWNER_CHANGE_UNAVAILABLE until F4), GET /providers/admin/documents/{documentId}/download (5-minute presigned URL, audited). Document kinds gain POWER_OF_ATTORNEY and BANK_CERTIFICATE and documents carry reviewStatus. The CI and the bank account are encrypted at rest and masked (****1234) in every response; only GET ...?reveal=ci returns the CI, and that read is audited. KYP_INCOMPLETE carries details.missing (list of failing kyp.<path> and documents.<KIND>); Problem.details stays an object. 3.0.0 (frente F8, A20): the provider has one state machine, the marketplace one (POST /providers/{providerId}/submit|verify|suspend|reject), which audits every decision and returns its reason to the owner (Provider.statusReason, statusChangedAt). The duplicated Nest lifecycle routes are retired (incompatible change, hence the major version): GET /private/providers/{providerId}/verification, POST /private/providers/{providerId}/verification-requests, GET /private/admin/providers/{providerId} and POST /private/admin/providers/{providerId}/verify|suspend. No client used them; the private registration POST /private/providers stays until phase 4 of the partner hand-over. Microsite.moderation tells the owner that a rejected microsite is unpublished and why. 3.1.0 (additive, A23; PR #69): GET /r/{listingId} is one redirector routed by the listing: destination is optional (absent = the primary destination: PRODUCT_PAGE of a product, otherwise the first stored and enabled one); every destination is checked against its whitelist when published and again when resolved (tel:+E.164, mailto:, https://wa.me/<number>, https://instagram.com, canonical https), so a stored target that no longer passes answers 404. 3.2.0 (additive, L4; PR #67): GET /providers/{providerId}/bookings and GET /providers/me/bookings are keyset pages ordered by (date, id): ?limit (1 to 100, default 50) and the opaque ?cursor of the previous page; the response adds nextCursor (null on the last page). Until 2.4.x both lists stopped at 200 bookings without saying so; a client that ignores nextCursor now sees a bounded first page and an explicit cursor instead of a silent cut. A malformed limit or cursor is 422 (INVALID_QUERY, INVALID_CURSOR). 3.3.0 (additive, A24/DPA-10; provisional version pending VERSIONES.md): partner requests. A signed-in user who owns no provider sends POST /providers/partner-requests (business name, category, department and city codes of /providers/categories and /providers/geo, WhatsApp or phone, message up to 1000 characters, contact consent), sees status and statusReason in GET /providers/partner-requests/mine and may withdraw an OPEN request (DELETE /providers/partner-requests/{requestId}, REJECTED with reason WITHDRAWN_BY_REQUESTER). One live (OPEN or IN_REVIEW) request per user (409 REQUEST_ALREADY_OPEN), at most 3 in 30 days (429 REQUEST_LIMIT), never for a user who already owns a provider (409 ALREADY_PARTNER_OWNER). The administrator lists the queue (GET /providers/admin/partner-requests, with OPEN / IN_REVIEW counts for the tab badge), takes (OPEN -> IN_REVIEW), rejects with a mandatory reason, or converts a request (POST .../convert: one transaction opens a partner intake owned by the requester with identity, contact and coverage prefilled). Transitions take an optional If-Match version (409 PARTNER_REQUEST_VERSION_CONFLICT) and are audited. 3.4.0 (additive, R1 of the gift series: A28, A29, M23): GET /providers/categories accepts ?type=PRODUCT|SERVICE and keeps the categories that can hold that listing type (the ones typed that way plus the untyped ones, listingType null, which hold both); another value is 422 INVALID_QUERY. Creating or publishing a listing whose type differs from its category's listingType is 422 CATEGORY_TYPE_MISMATCH (details: type, category, categoryType); the database enforces the same rule. The legacy POST /private/providers/{providerId}/products keeps its closed problem catalogue and answers PROVIDER_VALIDATION (422) for a product in a SERVICE category. Eighteen PRODUCT categories of the gift catalogue are added as data (no schema change). ListingSummary (GET /listings, GET /listings/{listingId}) declares type as required with enum PRODUCT|SERVICE; the service always sent it, so consumers only gain a narrower type. Listings stored before the rule whose type does not match their category (a SERVICE in a PRODUCT category, or a PRODUCT in a SERVICE category) are not converted: a data migration hides them (published false) and marks them with hiddenReason CATEGORY_TYPE_MISMATCH in the provider's own listings (Listing.hiddenReason); existing gift reservations keep pointing at them. 3.5.0 (additive, PR #171): GET /providers/admin/partners accepts sort in both directions (name, -name, kypStatus, -kypStatus, createdAt, -createdAt, updatedAt, -updatedAt; default -createdAt) and sorts the filtered results before pagination; -kypStatus reverses the groups of kypStatus. 3.6.0 (additive, R2 of the gift series: A30, L23): the product sheet of a marketplace PRODUCT (exact priceMinor, stock, giftIdeas, variants, delivery with city slugs, details, whatsappTemplate) with completeness and missing; GET and PATCH /providers/{providerId}/listings/{listingId} (If-Match, 428/409); POST /providers/{providerId}/listings takes Idempotency-Key and refuses imageUrl for a PRODUCT; POST .../duplicate; PUT /providers/admin/listings/{listingId}/featured (ADMIN); GET/PUT /providers/{providerId}/whatsapp-template; public GET /providers/gift-ideas; publishing a PRODUCT requires COMPLETE (422 LISTING_INCOMPLETE); GET /listings lists only eligible products; product photos (presigned upload signing Content-Length, complete, delete). BEHAVIOUR CHANGE (PF-6), with no change to existing shapes: a client of 3.5.0 or earlier that sends imageUrl for a PRODUCT now gets 422 IMAGE_URL_NOT_ALLOWED, publishing a PRODUCT without a complete sheet is 422 LISTING_INCOMPLETE, and GET /listings no longer lists incomplete or hidden products; the provider portal must move to 3.6.0 in the same deployment (BE R2 and FE R2 go together). Product texts, delivery conditions, variant labels, photo altText and the WhatsApp template refuse phones and web addresses (422 CONTACT_IN_TEXT with details {field, fragment}; decision 7). Listing (owner view) adds incompleteReason OWN_CATALOG_NO_SHEET to products of the own gift catalog (SNAPSHOT_V1), which have completeness INCOMPLETE and no editable sheet yet. The photo cap of 5 per product counts the photos of its variants too. Decoration and invitations categories have gift ideas (provider migration 20261125000400). ProductSheet.adminHiddenReason carries the administrator's text while a product is HIDDEN_BY_ADMIN; Listing.hiddenReason stays the platform's CATEGORY_TYPE_MISMATCH (3.4.0). 3.7.0 (additive, R3 of the gift series: A32, M25, M26): public GET /providers/gift-ideas/recommendations (Cache-Control: public, max-age=60; Vary: Accept-Language) answers, for the event type and city of a celebration, the gift ideas of that event type (every idea when the type has none, or exactly the ideas requested) that have eligible products, in the approved table order, each with productCount, priceRange and up to 12 product cards, paginated per idea with offset and nextOffset; ideas without eligible products are not sent. Eligible product: VERIFIED provider below its monthly lead cap, PRODUCT published, COMPLETE, not hidden, stock other than OUT_OF_STOCK. Order inside an idea: featured, delivers to the event city, catalog score (location tier of the listing against the event city, then plan), shorter lead time, older. The card carries destination types only, never URLs. GET /listings applies the same eligibility to products (it also drops OUT_OF_STOCK products and providers over their lead cap), accepts ?city= (products that deliver there first, each product then carrying deliversToCity), matches words of 1 or 2 letters as whole words (never in descriptions; articles ignored) and also searches the names of the product's gift ideas. GET /listings/{listingId} adds giftEligible (the same predicate) and keeps answering 200 for a published listing that is not eligible, so gifts already in a list still read it; Gift decides on add. Notes of 3.7.0: the recommendation endpoint accepts only eventType, city, ideas, productsPerIdea, offset and locale, and any other parameter (?_=1 included) is 422 INVALID_QUERY; locale outside es-BO and en-US is 422 INVALID_QUERY; ideas takes at most 25 entries counted as sent; an unknown eventType falls back to scope ALL_IDEAS; GET /listings orders by city before relevance (decision pending). BEHAVIOUR CHANGE (PF-6), with no change to existing shapes: a client of 3.6.0 sees that GET /listings no longer lists OUT_OF_STOCK products or products of providers that reached their monthly lead cap; a search word of 1 or 2 letters now finds (as a whole word, never in descriptions) where it used to find nothing; the search also matches the names of the product's gift ideas; ?city= changes the order of the items (products that deliver there first); and a write that contradicts the stock rule below is refused with 422 STOCK_MISMATCH_DEFAULT_VARIANT (a stock sent with variants that differs from the default variant's, or a PATCH of stock alone that contradicts it), which 3.6.0 accepted. Stock rule (review B1): with variants, the stock of a product is the stock of its default variant, as the price is. A stock sent with variants that differs from the default variant's is 422 STOCK_MISMATCH_DEFAULT_VARIANT (details: field, defaultVariantStock), a PATCH of stock alone that contradicts the stored default variant is the same 422, a product whose stock contradicts its default variant is never COMPLETE (missing STOCK), and a product whose default variant is OUT_OF_STOCK is not eligible. Provider migration 20261126000400 aligns the stock of rows stored before the rule, except products marked OUT_OF_STOCK whose default variant is in stock: those stay unchanged (not eligible) and are flagged to moderation (LISTING_STOCK_REVIEW_NEEDED). GET /listings?city= with an empty value is treated as absent. GET /listings/{listingId} declares giftEligible as required (it was always sent; schema ListingDetail). 3.8.0 (additive, R6a of the gift series: D-10 #31 and #32, plan §5.9): GET /r/{listingId} keeps answering 302 for every click and records more invalid (non-billable) leads. Lead.invalidReason adds PREVIEW (surface=PREVIEW, the new preview surface of the portal and of moderation), NOT_ELIGIBLE (a PRODUCT that is not COMPLETE or that an administrator hid), PROVIDER_SELF (the visitor owns the listing's provider) and HOST_OR_PLANNER (the visitor is a member of the celebration: host, organizer or collaborator); dup (DUPLICATE) and bot (BOT) are unchanged. PROVIDER_SELF and HOST_OR_PLANNER are decided only from the new optional query parameter ctx, a short-lived token signed by Gift List (gift-list listGiftItems leadContext) and bound to the click's celebrationId; a missing, forged, expired or foreign ctx is ignored and never an error. A GIFT_LIST click is billed at most once per 24 h for the same visitor, listing and destination (configurable, never shorter than the provider's dedupeMinutes; a repeat on any other surface inside that window is also a duplicate). POST /providers/impressions does not accept PREVIEW. 3.9.0 (R5 of the gift series: A31, M27; additive): the redirector resolves the WhatsApp message of a PRODUCT on the server. GET /r/{listingId}?destination=WHATSAPP answers 302 to https://wa.me/<number>?text=<message> (text encoded with %20, at most 1000 characters before encoding, no tracking parameters), where the message is the product's whatsappTemplate, else the provider's, else the platform default (R2 stores them, by language), with {proveedor}, {producto}, {version}, {precio}, {cantidad}, {celebracion}, {fecha}, {ciudad} and {entrega} filled by the server: product, version and its price now, provider name and quantity from the catalog and the query; the celebration's title, event date and the host's delivery notes from the public views of Celebration and Gift List (read by celebrationSlug, which needs celebrationId and is ignored without it, and only if it belongs to that celebration; cached 5 minutes); the city from the city slug. A variable without a source is removed without leaving double spaces or empty brackets. Nothing about the guest is ever part of the message: there is no variable for the guest and guestId, name, phone or text parameters are never read into it. The new optional parameters giftItemId, variant, quantity (a positive integer, cut to 200: 422 INVALID_QUANTITY when it is not one) and celebrationSlug are validated (422 INVALID_LEAD_CONTEXT) and giftItemId, variant and quantity are stored with the lead; giftItemId is never shown to the provider. The redirect never fails because the celebration's views are down: the message goes without those variables. Other destinations, and the WhatsApp destination of a SERVICE, redirect as before. New public operation getCurrentPrices (GET /listings/current-prices?ids=, at most 50 ids): the price charged now of each ELIGIBLE product (the predicate of GET /listings and giftEligible: published, COMPLETE, not hidden, in stock, VERIFIED provider under its lead cap) and of each of its versions, so a gift list can show the current price instead of the one copied when the gift was added; listings that are not public are absent. 3.10.0 (R6b of the gift series: D-10 #33 to #35, M34, M-1, M-2, A35; additive except where noted): GET /providers/admin/leads/report and /report.csv (ADMIN only) give the monthly lead report per provider, product and button: valid and invalid leads by reason and the total billable by billing model, no personal data; the CSV neutralises spreadsheet formulas. GET /providers/{providerId}/leads/report is the same report for one provider (owner or admin), and GET /providers/{providerId}/leads takes the filters month, listingId and destination. A35 (privacy fix, still additive): Lead.context is now a closed object (surface, locale, device, country, city, eventType) without celebrationId or guestId, and Lead gains listingTitle, eventType, city, surface and device. POST /providers/{providerId}/lead-context issues the signed ctx of the portal: PROVIDER_OWNER (M-1: the owner's clicks are always PROVIDER_SELF) and PREVIEW of one listing (M-2: surface=PREVIEW only counts with it; without it the click is evaluated normally and recorded as PUBLIC_SITE). GET /r/{listingId}: M34, the sessionId query parameter is ignored (the billing key is always the server's hash of address and user agent) and eventType is a new optional parameter. 3.11.0 (R7 of the gift series: plan §5.10, decision 28; additive): the provider's own product responses (GET/PATCH /providers/{providerId}/listings/{listingId}) add giftAvailability {available, reason, unavailableVariants}: whether gift lists can still offer the product and why not (the first that applies of HIDDEN_BY_ADMIN, PROVIDER_SUSPENDED, PROVIDER_REJECTED, PROVIDER_NOT_VERIFIED, UNPUBLISHED, INCOMPLETE and OUT_OF_STOCK) and the ids of the versions out of stock. The same change is announced by the event provider.listing.availability-changed.v1 (AsyncAPI 1.29.0) to Gift List, which hides the gift from guests and tells the host with replacements. It is derived and read only: nothing a client sends changes it. 3.12.0 (additive, R8b of the gift series: D-10 #17 and #18, plan §5.13): moderation of products by an administrator. GET /providers/admin/moderation/listings is the inbox (view RECENT = published in the last `days`, 7 by default, or HIDDEN; filters providerId, category, featured and completeness; keyset pages with `cursor`; counters of both tabs). POST /providers/admin/listings/{listingId}/hide takes {reason} (3 to 500 characters) and puts the product in HIDDEN_BY_ADMIN, POST .../show lifts it; both are ADMIN only (401 / 403), audited (admin_audit listing.hidden / listing.shown with the actor and the reason) and idempotent by state: repeating a decision answers 200 with replayed=true and changes nothing, hiding with another reason while hidden is 409 LISTING_ALREADY_HIDDEN, a service is 422 MODERATION_PRODUCT_ONLY. Hiding also unpublishes the product (the row remembers whether it was published; show restores that state; visibility still follows the provider, which every public read also requires to be VERIFIED), so a hidden product behaves like any unpublished listing: it leaves GET /listings and every recommendation, GET /listings/{listingId} and GET /r/{listingId} answer 404 (on GET /listings/{listingId} Gift List reads that as «not eligible» and stops accepting it as a new gift; see the limitation below for the gifts already in a list), it is no longer featured (featured is also refused while hidden, 409 LISTING_HIDDEN) and its owner cannot publish or duplicate it. The provider is told through provider.listing.completeness-changed.v1, which already declares HIDDEN_BY_ADMIN (and, with published=false, the unpublishing); no event is added and the reason never travels in an event. PUT /providers/admin/listings/{listingId}/featured is idempotent (a repeat is not audited again) and featured stays off by default. No shape of an existing response changes. Gifts already in a list (with 3.11.0, R7): hiding a marketplace product with a sheet announces provider.listing.availability-changed.v1 with reason HIDDEN_BY_ADMIN in the transaction of the hide (showing it announces it available again; a repeated decision announces nothing), and Gift List then marks the gifts that point at it UNAVAILABLE, so they are no longer reservable (409), and tells the host with replacements; the reason of the hiding never travels. Limitation: a hidden product of the provider's own catalog (no sheet) has no availability event; and where 3.11.0 is not deployed, a gift already in a list stays visible and its GET /r/{listingId} button answers 404. Order of publication: 3.11.0 (R7) before 3.12.0 (R8b), so the versions grow 3.10.0, 3.11.0, 3.12.0."
+    "version": "3.15.0",
+    "description": "2.0.0: real service (port 3005). Paths now include the gateway prefixes (/providers, /r) and /listings; bodies and responses are defined. GET /providers keeps the query contract of RSVPFrontend seo-web (category, city, verified, maxPriceMinor, availableOn, page, pageSize) and adds coverage, near and locale. Errors are RFC 9457 problems. Disclaimer: RSVP brokers contact, it does not deliver the service. 2.1.0 (additive): ProviderCard adds providerId, providerName, destinations, address and hours and GET /providers accepts ?slug=; GET /providers/mine; microsite profile (GET/PUT /providers/{id}/microsite, REQ-F28-02); verification documents with presigned upload to object storage (/providers/{id}/documents...); POST /providers/impressions returns {recorded, ignored}; POST /providers/{id}/quotes accepts anonymous requests only when the deployment enables them (captcha or open mode, with per-address and per-contact caps); GET /listings text search matches any word, accent-insensitively, by title, category or description. 2.2.0 (additive, back office, ADMIN only: 401 without token, 403 to any other role): GET/PUT /providers/admin/categories[/{code}], GET/PUT /providers/admin/geography[/{code}], GET /providers/admin/verification-queue, POST /providers/{providerId}/reject (reason required), POST /providers/{providerId}/suspend now takes {reason} (required when an administrator suspends; the owner may still pause its own provider), GET /providers/admin/moderation and POST /providers/admin/moderation/{id}/approve|reject, GET /providers/admin/metrics/leads, GET /providers/admin/summary. ProviderStatus gains REJECTED (a rejected provider may resubmit). Every decision is audited (actor, time, reason) and emits an outbox event. Inactive categories and cities disappear from the public lists. City coordinates were verified against GeoNames. 2.3.0 (additive): the provider-owned routes of the Nest runtime (/private/*, /catalog/*, /public/products*) and, later in the same version, GET/PUT /providers/{providerId}/notification-settings and the internal GET /internal/v1/providers/{providerId}/notification-profile (that addition did not bump the version; from 2.9.1 the contract version lock in packages/contracts-openapi/versions.lock.json refuses a content change without a version change). 2.4.0 (additive): listing categories and catalog photos. 2.9.0 (additive, A23): GET /listings/{listingId} exposes enabled destination types. WhatsApp links support an optional prefilled message. 2.9.1 (correction, no runtime change): removes GET/POST /, POST /{providerId}/verify, POST /{providerId}/listings, GET /{providerId}/calendar, POST /{providerId}/bookings and POST /{providerId}/quotes. The service never served those unprefixed paths (it serves the same operations under /providers/...), and they duplicated seven operationIds (searchProviders, registerProvider, verifyProvider, createListing, getProviderCalendar, requestBooking, requestQuote), which OpenAPI requires to be unique. 2.10.0 (B11, additive): the provider's quote inbox. GET /providers/{providerId}/quotes (newest first, keyset cursor) and GET /providers/{providerId}/quotes/{quoteId} with the contact the requester gave. Owner with the PROVIDER role only (administrators and other providers get 403), under the provider's row-level scope. 2.10.1 (correction, no runtime change): the /private/*, /catalog/* and /public/products* operations declare their own server http://localhost:8000/providers. The service has always served them under /providers (Nest controllers providers/private, providers/catalog and providers/public/products), and the gateway reaches them there; resolved against the global server they pointed to paths that answer 404. Path keys and operationIds are unchanged, so generated clients keep their types and only the base URL of these 18 operations moves. 2.11.0 (additive, A24; PR #42: partner creation moves to the admin panel; ADMIN only, every route calls requireAdmin in the service: 401 without token, 403 to any other role): partner intake (server-side draft) POST/GET/PATCH/DELETE /providers/admin/intakes[/{intakeId}], its KYP documents (/documents, /complete, DELETE) and the atomic POST /providers/admin/intakes/{intakeId}/commit (Idempotency-Key) that creates the provider VERIFIED with origin ADMIN and KYP COMPLETE, moves the documents (review ACCEPTED), writes admin_audit provider.created-by-admin and enqueues provider.provider.registered.v2; partner administration GET /providers/admin/partners (server-side filters, sort, pagination), GET/PATCH /providers/admin/partners/{providerId} (If-Match), documents with review, kyp/complete, suspend, reactivate and change-owner (409 OWNER_CHANGE_UNAVAILABLE until F4), GET /providers/admin/documents/{documentId}/download (5-minute presigned URL, audited). Document kinds gain POWER_OF_ATTORNEY and BANK_CERTIFICATE and documents carry reviewStatus. The CI and the bank account are encrypted at rest and masked (****1234) in every response; only GET ...?reveal=ci returns the CI, and that read is audited. KYP_INCOMPLETE carries details.missing (list of failing kyp.<path> and documents.<KIND>); Problem.details stays an object. 3.0.0 (frente F8, A20): the provider has one state machine, the marketplace one (POST /providers/{providerId}/submit|verify|suspend|reject), which audits every decision and returns its reason to the owner (Provider.statusReason, statusChangedAt). The duplicated Nest lifecycle routes are retired (incompatible change, hence the major version): GET /private/providers/{providerId}/verification, POST /private/providers/{providerId}/verification-requests, GET /private/admin/providers/{providerId} and POST /private/admin/providers/{providerId}/verify|suspend. No client used them; the private registration POST /private/providers stays until phase 4 of the partner hand-over. Microsite.moderation tells the owner that a rejected microsite is unpublished and why. 3.1.0 (additive, A23; PR #69): GET /r/{listingId} is one redirector routed by the listing: destination is optional (absent = the primary destination: PRODUCT_PAGE of a product, otherwise the first stored and enabled one); every destination is checked against its whitelist when published and again when resolved (tel:+E.164, mailto:, https://wa.me/<number>, https://instagram.com, canonical https), so a stored target that no longer passes answers 404. 3.2.0 (additive, L4; PR #67): GET /providers/{providerId}/bookings and GET /providers/me/bookings are keyset pages ordered by (date, id): ?limit (1 to 100, default 50) and the opaque ?cursor of the previous page; the response adds nextCursor (null on the last page). Until 2.4.x both lists stopped at 200 bookings without saying so; a client that ignores nextCursor now sees a bounded first page and an explicit cursor instead of a silent cut. A malformed limit or cursor is 422 (INVALID_QUERY, INVALID_CURSOR). 3.3.0 (additive, A24/DPA-10; provisional version pending VERSIONES.md): partner requests. A signed-in user who owns no provider sends POST /providers/partner-requests (business name, category, department and city codes of /providers/categories and /providers/geo, WhatsApp or phone, message up to 1000 characters, contact consent), sees status and statusReason in GET /providers/partner-requests/mine and may withdraw an OPEN request (DELETE /providers/partner-requests/{requestId}, REJECTED with reason WITHDRAWN_BY_REQUESTER). One live (OPEN or IN_REVIEW) request per user (409 REQUEST_ALREADY_OPEN), at most 3 in 30 days (429 REQUEST_LIMIT), never for a user who already owns a provider (409 ALREADY_PARTNER_OWNER). The administrator lists the queue (GET /providers/admin/partner-requests, with OPEN / IN_REVIEW counts for the tab badge), takes (OPEN -> IN_REVIEW), rejects with a mandatory reason, or converts a request (POST .../convert: one transaction opens a partner intake owned by the requester with identity, contact and coverage prefilled). Transitions take an optional If-Match version (409 PARTNER_REQUEST_VERSION_CONFLICT) and are audited. 3.4.0 (additive, R1 of the gift series: A28, A29, M23): GET /providers/categories accepts ?type=PRODUCT|SERVICE and keeps the categories that can hold that listing type (the ones typed that way plus the untyped ones, listingType null, which hold both); another value is 422 INVALID_QUERY. Creating or publishing a listing whose type differs from its category's listingType is 422 CATEGORY_TYPE_MISMATCH (details: type, category, categoryType); the database enforces the same rule. The legacy POST /private/providers/{providerId}/products keeps its closed problem catalogue and answers PROVIDER_VALIDATION (422) for a product in a SERVICE category. Eighteen PRODUCT categories of the gift catalogue are added as data (no schema change). ListingSummary (GET /listings, GET /listings/{listingId}) declares type as required with enum PRODUCT|SERVICE; the service always sent it, so consumers only gain a narrower type. Listings stored before the rule whose type does not match their category (a SERVICE in a PRODUCT category, or a PRODUCT in a SERVICE category) are not converted: a data migration hides them (published false) and marks them with hiddenReason CATEGORY_TYPE_MISMATCH in the provider's own listings (Listing.hiddenReason); existing gift reservations keep pointing at them. 3.5.0 (additive, PR #171): GET /providers/admin/partners accepts sort in both directions (name, -name, kypStatus, -kypStatus, createdAt, -createdAt, updatedAt, -updatedAt; default -createdAt) and sorts the filtered results before pagination; -kypStatus reverses the groups of kypStatus. 3.6.0 (additive, R2 of the gift series: A30, L23): the product sheet of a marketplace PRODUCT (exact priceMinor, stock, giftIdeas, variants, delivery with city slugs, details, whatsappTemplate) with completeness and missing; GET and PATCH /providers/{providerId}/listings/{listingId} (If-Match, 428/409); POST /providers/{providerId}/listings takes Idempotency-Key and refuses imageUrl for a PRODUCT; POST .../duplicate; PUT /providers/admin/listings/{listingId}/featured (ADMIN); GET/PUT /providers/{providerId}/whatsapp-template; public GET /providers/gift-ideas; publishing a PRODUCT requires COMPLETE (422 LISTING_INCOMPLETE); GET /listings lists only eligible products; product photos (presigned upload signing Content-Length, complete, delete). BEHAVIOUR CHANGE (PF-6), with no change to existing shapes: a client of 3.5.0 or earlier that sends imageUrl for a PRODUCT now gets 422 IMAGE_URL_NOT_ALLOWED, publishing a PRODUCT without a complete sheet is 422 LISTING_INCOMPLETE, and GET /listings no longer lists incomplete or hidden products; the provider portal must move to 3.6.0 in the same deployment (BE R2 and FE R2 go together). Product texts, delivery conditions, variant labels, photo altText and the WhatsApp template refuse phones and web addresses (422 CONTACT_IN_TEXT with details {field, fragment}; decision 7). Listing (owner view) adds incompleteReason OWN_CATALOG_NO_SHEET to products of the own gift catalog (SNAPSHOT_V1), which have completeness INCOMPLETE and no editable sheet yet. The photo cap of 5 per product counts the photos of its variants too. Decoration and invitations categories have gift ideas (provider migration 20261125000400). ProductSheet.adminHiddenReason carries the administrator's text while a product is HIDDEN_BY_ADMIN; Listing.hiddenReason stays the platform's CATEGORY_TYPE_MISMATCH (3.4.0). 3.7.0 (additive, R3 of the gift series: A32, M25, M26): public GET /providers/gift-ideas/recommendations (Cache-Control: public, max-age=60; Vary: Accept-Language) answers, for the event type and city of a celebration, the gift ideas of that event type (every idea when the type has none, or exactly the ideas requested) that have eligible products, in the approved table order, each with productCount, priceRange and up to 12 product cards, paginated per idea with offset and nextOffset; ideas without eligible products are not sent. Eligible product: VERIFIED provider below its monthly lead cap, PRODUCT published, COMPLETE, not hidden, stock other than OUT_OF_STOCK. Order inside an idea: featured, delivers to the event city, catalog score (location tier of the listing against the event city, then plan), shorter lead time, older. The card carries destination types only, never URLs. GET /listings applies the same eligibility to products (it also drops OUT_OF_STOCK products and providers over their lead cap), accepts ?city= (products that deliver there first, each product then carrying deliversToCity), matches words of 1 or 2 letters as whole words (never in descriptions; articles ignored) and also searches the names of the product's gift ideas. GET /listings/{listingId} adds giftEligible (the same predicate) and keeps answering 200 for a published listing that is not eligible, so gifts already in a list still read it; Gift decides on add. Notes of 3.7.0: the recommendation endpoint accepts only eventType, city, ideas, productsPerIdea, offset and locale, and any other parameter (?_=1 included) is 422 INVALID_QUERY; locale outside es-BO and en-US is 422 INVALID_QUERY; ideas takes at most 25 entries counted as sent; an unknown eventType falls back to scope ALL_IDEAS; GET /listings orders by city before relevance (decision pending). BEHAVIOUR CHANGE (PF-6), with no change to existing shapes: a client of 3.6.0 sees that GET /listings no longer lists OUT_OF_STOCK products or products of providers that reached their monthly lead cap; a search word of 1 or 2 letters now finds (as a whole word, never in descriptions) where it used to find nothing; the search also matches the names of the product's gift ideas; ?city= changes the order of the items (products that deliver there first); and a write that contradicts the stock rule below is refused with 422 STOCK_MISMATCH_DEFAULT_VARIANT (a stock sent with variants that differs from the default variant's, or a PATCH of stock alone that contradicts it), which 3.6.0 accepted. Stock rule (review B1): with variants, the stock of a product is the stock of its default variant, as the price is. A stock sent with variants that differs from the default variant's is 422 STOCK_MISMATCH_DEFAULT_VARIANT (details: field, defaultVariantStock), a PATCH of stock alone that contradicts the stored default variant is the same 422, a product whose stock contradicts its default variant is never COMPLETE (missing STOCK), and a product whose default variant is OUT_OF_STOCK is not eligible. Provider migration 20261126000400 aligns the stock of rows stored before the rule, except products marked OUT_OF_STOCK whose default variant is in stock: those stay unchanged (not eligible) and are flagged to moderation (LISTING_STOCK_REVIEW_NEEDED). GET /listings?city= with an empty value is treated as absent. GET /listings/{listingId} declares giftEligible as required (it was always sent; schema ListingDetail). 3.8.0 (additive, R6a of the gift series: D-10 #31 and #32, plan §5.9): GET /r/{listingId} keeps answering 302 for every click and records more invalid (non-billable) leads. Lead.invalidReason adds PREVIEW (surface=PREVIEW, the new preview surface of the portal and of moderation), NOT_ELIGIBLE (a PRODUCT that is not COMPLETE or that an administrator hid), PROVIDER_SELF (the visitor owns the listing's provider) and HOST_OR_PLANNER (the visitor is a member of the celebration: host, organizer or collaborator); dup (DUPLICATE) and bot (BOT) are unchanged. PROVIDER_SELF and HOST_OR_PLANNER are decided only from the new optional query parameter ctx, a short-lived token signed by Gift List (gift-list listGiftItems leadContext) and bound to the click's celebrationId; a missing, forged, expired or foreign ctx is ignored and never an error. A GIFT_LIST click is billed at most once per 24 h for the same visitor, listing and destination (configurable, never shorter than the provider's dedupeMinutes; a repeat on any other surface inside that window is also a duplicate). POST /providers/impressions does not accept PREVIEW. 3.9.0 (R5 of the gift series: A31, M27; additive): the redirector resolves the WhatsApp message of a PRODUCT on the server. GET /r/{listingId}?destination=WHATSAPP answers 302 to https://wa.me/<number>?text=<message> (text encoded with %20, at most 1000 characters before encoding, no tracking parameters), where the message is the product's whatsappTemplate, else the provider's, else the platform default (R2 stores them, by language), with {proveedor}, {producto}, {version}, {precio}, {cantidad}, {celebracion}, {fecha}, {ciudad} and {entrega} filled by the server: product, version and its price now, provider name and quantity from the catalog and the query; the celebration's title, event date and the host's delivery notes from the public views of Celebration and Gift List (read by celebrationSlug, which needs celebrationId and is ignored without it, and only if it belongs to that celebration; cached 5 minutes); the city from the city slug. A variable without a source is removed without leaving double spaces or empty brackets. Nothing about the guest is ever part of the message: there is no variable for the guest and guestId, name, phone or text parameters are never read into it. The new optional parameters giftItemId, variant, quantity (a positive integer, cut to 200: 422 INVALID_QUANTITY when it is not one) and celebrationSlug are validated (422 INVALID_LEAD_CONTEXT) and giftItemId, variant and quantity are stored with the lead; giftItemId is never shown to the provider. The redirect never fails because the celebration's views are down: the message goes without those variables. Other destinations, and the WhatsApp destination of a SERVICE, redirect as before. New public operation getCurrentPrices (GET /listings/current-prices?ids=, at most 50 ids): the price charged now of each ELIGIBLE product (the predicate of GET /listings and giftEligible: published, COMPLETE, not hidden, in stock, VERIFIED provider under its lead cap) and of each of its versions, so a gift list can show the current price instead of the one copied when the gift was added; listings that are not public are absent. 3.10.0 (R6b of the gift series: D-10 #33 to #35, M34, M-1, M-2, A35; additive except where noted): GET /providers/admin/leads/report and /report.csv (ADMIN only) give the monthly lead report per provider, product and button: valid and invalid leads by reason and the total billable by billing model, no personal data; the CSV neutralises spreadsheet formulas. GET /providers/{providerId}/leads/report is the same report for one provider (owner or admin), and GET /providers/{providerId}/leads takes the filters month, listingId and destination. A35 (privacy fix, still additive): Lead.context is now a closed object (surface, locale, device, country, city, eventType) without celebrationId or guestId, and Lead gains listingTitle, eventType, city, surface and device. POST /providers/{providerId}/lead-context issues the signed ctx of the portal: PROVIDER_OWNER (M-1: the owner's clicks are always PROVIDER_SELF) and PREVIEW of one listing (M-2: surface=PREVIEW only counts with it; without it the click is evaluated normally and recorded as PUBLIC_SITE). GET /r/{listingId}: M34, the sessionId query parameter is ignored (the billing key is always the server's hash of address and user agent) and eventType is a new optional parameter. 3.11.0 (R7 of the gift series: plan §5.10, decision 28; additive): the provider's own product responses (GET/PATCH /providers/{providerId}/listings/{listingId}) add giftAvailability {available, reason, unavailableVariants}: whether gift lists can still offer the product and why not (the first that applies of HIDDEN_BY_ADMIN, PROVIDER_SUSPENDED, PROVIDER_REJECTED, PROVIDER_NOT_VERIFIED, UNPUBLISHED, INCOMPLETE and OUT_OF_STOCK) and the ids of the versions out of stock. The same change is announced by the event provider.listing.availability-changed.v1 (AsyncAPI 1.29.0) to Gift List, which hides the gift from guests and tells the host with replacements. It is derived and read only: nothing a client sends changes it. 3.12.0 (additive, R8b of the gift series: D-10 #17 and #18, plan §5.13): moderation of products by an administrator. GET /providers/admin/moderation/listings is the inbox (view RECENT = published in the last `days`, 7 by default, or HIDDEN; filters providerId, category, featured and completeness; keyset pages with `cursor`; counters of both tabs). POST /providers/admin/listings/{listingId}/hide takes {reason} (3 to 500 characters) and puts the product in HIDDEN_BY_ADMIN, POST .../show lifts it; both are ADMIN only (401 / 403), audited (admin_audit listing.hidden / listing.shown with the actor and the reason) and idempotent by state: repeating a decision answers 200 with replayed=true and changes nothing, hiding with another reason while hidden is 409 LISTING_ALREADY_HIDDEN, a service is 422 MODERATION_PRODUCT_ONLY. Hiding also unpublishes the product (the row remembers whether it was published; show restores that state; visibility still follows the provider, which every public read also requires to be VERIFIED), so a hidden product behaves like any unpublished listing: it leaves GET /listings and every recommendation, GET /listings/{listingId} and GET /r/{listingId} answer 404 (on GET /listings/{listingId} Gift List reads that as «not eligible» and stops accepting it as a new gift; see the limitation below for the gifts already in a list), it is no longer featured (featured is also refused while hidden, 409 LISTING_HIDDEN) and its owner cannot publish or duplicate it. The provider is told through provider.listing.completeness-changed.v1, which already declares HIDDEN_BY_ADMIN (and, with published=false, the unpublishing); no event is added and the reason never travels in an event. PUT /providers/admin/listings/{listingId}/featured is idempotent (a repeat is not audited again) and featured stays off by default. No shape of an existing response changes. Gifts already in a list (with 3.11.0, R7): hiding a marketplace product with a sheet announces provider.listing.availability-changed.v1 with reason HIDDEN_BY_ADMIN in the transaction of the hide (showing it announces it available again; a repeated decision announces nothing), and Gift List then marks the gifts that point at it UNAVAILABLE, so they are no longer reservable (409), and tells the host with replacements; the reason of the hiding never travels. Limitation: a hidden product of the provider's own catalog (no sheet) has no availability event; and where 3.11.0 is not deployed, a gift already in a list stays visible and its GET /r/{listingId} button answers 404. Order of publication: 3.11.0 (R7) before 3.12.0 (R8b), so the versions grow 3.10.0, 3.11.0, 3.12.0. 3.13.0 (additive, MAP-03 mapas OpenStreetMap; numbered after 3.12.0 of the open regalos PRs): GET /providers/geo/search?q=&lang= (JWT; q 3 to 200 characters; lang es-BO or en-US; at most 5 places, Bolivia first but any country) is the only way the apps search places: the service queries Nominatim behind one global queue (one request per second), caches results by the hash of the normalised text (30 days, 10 minutes when empty) and never logs what was searched; 429 with Retry-After when the per-user or global budget is spent; 503 GEOCODING_UNAVAILABLE when the search is off (GEOCODING_ENABLED=false) or the geocoder fails, and the apps then offer the pin or plain text. GET /providers/geo/map-config (public, cacheable 300 s) returns the tile URL, attribution, max zoom and the search switch, so the map provider changes without publishing apps. Search is explicit only (never autocomplete) and the response carries the attribution that must be shown. Migration 20261128000600 adds geocode_cache. 3.14.0 (images by file, B8/B2 and the photos of services, microsite and logo; the number follows 3.13.0 of the maps series; BEHAVIOUR CHANGE with no change to any shape): `imageUrl` of CreateListing and PatchListing is deprecated and every listing type refuses it with 422 IMAGE_URL_NOT_ALLOWED (3.6.0 refused it only for a PRODUCT); an image already stored is kept and still read, and a PATCH that sends back the stored value unchanged (GET then PATCH by an older client) is accepted; only a different value is refused. Responses keep `imageUrl` as the derived address of the image. Verification documents (provider, intake and partner): the presigned PUT signs Content-Length, so the store accepts exactly the declared size, and POST .../complete reads the first bytes of the object: they must carry the signature of the declared type (%PDF-, JPEG, PNG or WebP), otherwise the object is deleted and the answer is 422 DOCUMENT_MISMATCH, as it already was for a different Content-Type or size. Also in 3.14.0 (additive): a SERVICE takes up to 5 uploaded photos with the same three steps as a product (the SERVICE restriction of PHOTOS_PRODUCT_ONLY is lifted; the SNAPSHOT_V1 gift catalog still takes none), GET/PATCH of a SERVICE return `photos` and PATCH accepts `photoOrder` for it. The photos of the provider itself: GET /providers/{providerId}/media, POST /providers/{providerId}/media/uploads (purpose GALLERY, up to 12, or LOGO, up to 2 so a new logo can be chosen before the old one is deleted), POST .../media/{photoId}/complete and DELETE .../media/{photoId} (409 MEDIA_IN_USE while the microsite still uses the photo). They share the pipeline, the 5 MB limit, the quota and the worker of listing photos. The microsite no longer takes addresses for pictures: each gallery entry and the new `logo` name a READY photo of this provider by `mediaId` and the server derives the address (the card rendition); `url` of a gallery entry becomes optional and is ignored when the mediaId is an uploaded photo. An entry stored before uploads existed is accepted only when sent back unchanged; anything else is 422 MICROSITE_MEDIA_NOT_FOUND. ProviderCard.imageUrl is the offer's uploaded cover photo (card rendition) with the stored address only as fallback, and ProviderCard adds `logoUrl` (the logo of the provider's published microsite). 3.15.0 (additive, provisional version, to be renumbered at merge if R5 to R8b change; proveedores para mi evento, marketplace del invitado; it was first written as 3.8.0 before the gift series took 3.8.0 to 3.11.0): GET /providers accepts view=marketplace (the guest marketplace: only categories with a marketplace position; SERVICE offers, and PRODUCT offers only when COMPLETE and in stock; a provider over its lead cap still ranks lower and is not hidden), type=SERVICE|PRODUCT, groupBy=provider (one card per provider, its best offer, SERVICE first), eventType (an event type code of celebration-site; only breaks ties between equal scores by the category order of that event type, never filters) and lat, lng and radiusKm (default 25, 1 to 500; keeps the offers whose city is within the radius of the point and orders ties by distance; lat and lng go together, otherwise 422 INVALID_QUERY). The FE of seo-web already sent lat, lng and radiusKm, which the service ignored, so Cerca de mi returned all of Bolivia. BEHAVIOUR CHANGE (PF-6): from 3.15.0 those parameters filter, and the default radius is 25 km (the radius the clients already sent by default). More than 8 decimals in lat/lng are accepted and truncated; outside view=marketplace a malformed or half point is ignored (never 422, as before), with view=marketplace it is 422 INVALID_QUERY. ProviderCard adds listingType and sponsored (true when the FEATURED or PREMIUM plan raised the card). GET /providers/categories?view=marketplace[&eventType=][&city=] answers the marketplace categories in the order of the event type (WEDDING order when absent or unknown), each with order and count (providers with an eligible offer, optionally in the city); categories without providers are not listed; type cannot be combined with view. Six categories are added as data (BRIDAL_ATTIRE, EVENT_RENTALS, SOUND_LIGHTING, BEVERAGE_SERVICE, ENTERTAINMENT, PARTY_FAVORS; migration 20261201000100) and the display names of seven service categories are updated. PF-1 (leads): GET /r/{listingId} ignores guestId (accepted, no error, never stored and never the actor of the event) and keeps only the origin of a referrer under /c/ (the invitation page carries the celebration slug and the guest's token). A click whose surface is CELEBRATION_SITE is one valid lead per visitor, offer and button every 24 hours, whatever dedupeMinutes the provider configured and whatever surface the next click claims (otherwise it is invalid with reason dup). Without parameters, every response of 3.7.0 is unchanged. GUEST_MARKETPLACE (BE-5): the deployment switch of the guest marketplace is off by default; while it is off GET /providers?view=marketplace and GET /providers/categories?view=marketplace answer 404 MARKETPLACE_DISABLED (the rest of both operations is unchanged). Quote origin and antiabuse (BE-5, additive): POST /providers/{providerId}/quotes accepts an optional origin {surface, celebrationId, eventType} (statistics only, client supplied: it never decides whether a lead is valid or billable; the celebration id is stored where the erasure of a deleted celebration finds it; guestId, tokens and slugs are ignored and never stored), an optional proof {challenge, nonce} (anonymous requests when PROVIDER_ANON_QUOTES=proof: self-hosted proof of work, no third-party service; 403 PROOF_FAILED when missing, wrong, expired or already used) and sanitises the name and message (invisible and control characters removed; a message with more than 2 links is 422 QUOTE_REJECTED). The quote is always saved and delivered, but its lead is billable only once per contact (case, +tag and Gmail dots ignored) or signed-in requester and provider every 24 hours, whatever origin it claims (otherwise invalid with reason dup), not from automated traffic (bot) and only within the daily budget of billable quote leads of the celebration it names (50 by default, reason bot beyond it). Anonymous requests are also limited per device (address, user agent and language; 3 per hour by default, 429 + Retry-After). New GET /providers/quote-access (public) answers {anonymousQuotes: off|captcha|proof|open, proof?: {challenge, difficulty, expiresAt}} so a client knows whether to show the form to an anonymous visitor and gets a challenge to solve (sha256 of challenge, a colon and the nonce must start with difficulty zero bits)."
   },
   "servers": [
     {
@@ -85,6 +85,9 @@
                 }
               }
             }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
           },
           "422": {
             "$ref": "#/components/responses/Validation"
@@ -202,6 +205,87 @@
               "maxLength": 80
             },
             "description": "Provider slug; returns only that provider's published listings (empty page when unknown or not VERIFIED)."
+          },
+          {
+            "name": "view",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "marketplace"
+              ]
+            },
+            "description": "Guest marketplace rules (see 3.15.0 in info.description). Another value is 422 INVALID_QUERY."
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "SERVICE",
+                "PRODUCT"
+              ]
+            },
+            "description": "Keeps only offers of this type."
+          },
+          {
+            "name": "groupBy",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "provider"
+              ]
+            },
+            "description": "One card per provider (its best offer); total counts providers."
+          },
+          {
+            "name": "eventType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Z][A-Z0-9_]{1,59}$"
+            },
+            "description": "Event type code of celebration-site (WEDDING, QUINCEANERA...). Breaks ties between equal scores using the category order of that event type; never filters."
+          },
+          {
+            "name": "lat",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "minimum": -90,
+              "maximum": 90
+            },
+            "description": "Latitude of the point; send with lng. More than 8 decimals are truncated. Outside view=marketplace a malformed value is ignored."
+          },
+          {
+            "name": "lng",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "minimum": -180,
+              "maximum": 180
+            },
+            "description": "Longitude of the point; send with lat. More than 8 decimals are truncated. Outside view=marketplace a malformed value is ignored."
+          },
+          {
+            "name": "radiusKm",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500,
+              "default": 25
+            },
+            "description": "Radius around lat/lng; only with lat and lng."
           }
         ]
       },
@@ -270,6 +354,9 @@
               }
             }
           },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
           "422": {
             "$ref": "#/components/responses/Validation"
           }
@@ -300,6 +387,37 @@
               ]
             },
             "description": "Keeps the categories that accept this listing type: listingType equal to it or null (null accepts both). Another value is 422 INVALID_QUERY."
+          },
+          {
+            "name": "view",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "marketplace"
+              ]
+            },
+            "description": "Categories of the guest marketplace with order and count; cannot be combined with type."
+          },
+          {
+            "name": "eventType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Z][A-Z0-9_]{1,59}$"
+            },
+            "description": "With view=marketplace: order of the categories for this event type."
+          },
+          {
+            "name": "city",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "With view=marketplace: count only providers with an offer in this city (slug)."
           }
         ]
       }
@@ -321,6 +439,31 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/providers/quote-access": {
+      "get": {
+        "operationId": "getQuoteAccess",
+        "summary": "Whether anonymous quote requests are open, and a proof-of-work challenge (public, not cacheable)",
+        "tags": [
+          "provider-catalog"
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Quote access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteAccess"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           }
         }
       }
@@ -1137,7 +1280,7 @@
             "bearerAuth": []
           }
         ],
-        "description": "R2 (A30). Flow: (1) this call; (2) PUT the image bytes to upload.url with upload.headers directly against the object store, no bearer token; the URL also signs Content-Length, so the body must be exactly `bytes` long (declare the file's real size; the store answers 403 to any other length); (3) POST .../photos/{photoId}/complete. Only a marketplace PRODUCT takes photos (not SERVICE, not the SNAPSHOT_V1 gift catalog). JPEG, PNG, WebP or HEIC up to 5 MB; at most 5 photos per product and 3 per variant; a per-provider storage quota (PROVIDER_MEDIA_MAX_BYTES_PER_PROVIDER, 200 MB by default) reserves the declared size until the upload completes or is abandoned (1 hour). The object key is built from ids only. With Idempotency-Key, repeating the same request returns the same photo (200), with a fresh upload link while it is still PENDING_UPLOAD and upload null afterwards; the same key with another listing, type, size, variantId or altText is 409 IDEMPOTENCY_KEY_REUSED. Another provider gets 403 whether the listing exists or not.",
+        "description": "R2 (A30). Flow: (1) this call; (2) PUT the image bytes to upload.url with upload.headers directly against the object store, no bearer token; the URL also signs Content-Length, so the body must be exactly `bytes` long (declare the file's real size; the store answers 403 to any other length); (3) POST .../photos/{photoId}/complete. A marketplace PRODUCT or a SERVICE takes photos (not the SNAPSHOT_V1 gift catalog). JPEG, PNG, WebP or HEIC up to 5 MB; at most 5 photos per product or service and 3 per variant; a per-provider storage quota (PROVIDER_MEDIA_MAX_BYTES_PER_PROVIDER, 200 MB by default) reserves the declared size until the upload completes or is abandoned (1 hour). The object key is built from ids only. With Idempotency-Key, repeating the same request returns the same photo (200), with a fresh upload link while it is still PENDING_UPLOAD and upload null afterwards; the same key with another listing, type, size, variantId or altText is 409 IDEMPOTENCY_KEY_REUSED. Another provider gets 403 whether the listing exists or not.",
         "parameters": [
           {
             "name": "providerId",
@@ -2046,7 +2189,7 @@
           },
           {}
         ],
-        "description": "Decision (DECISIONS.md 2026-11-05): quotes may be anonymous only when PROVIDER_ANON_QUOTES is `captcha` (default when a captcha verifier is configured) or `open` (local development). Anonymous requests need contact.email, are limited to 5 per hour per client address (429 + Retry-After) and 3 per day per contact e-mail and provider (429 QUOTE_LIMIT_REACHED), reject a filled honeypot `website` (422 QUOTE_REJECTED) and, in captcha mode, a valid captchaToken (403 CAPTCHA_FAILED). With mode `off` (default without a verifier) anonymous requests answer 401 ANONYMOUS_QUOTES_DISABLED. Date requests (bookings) always require an account."
+        "description": "Decision (DECISIONS.md 2026-11-05): quotes may be anonymous only when PROVIDER_ANON_QUOTES is `captcha` (default when a captcha verifier is configured) or `open` (local development). Anonymous requests need contact.email, are limited to 5 per hour per client address (429 + Retry-After) and 3 per day per contact e-mail and provider (429 QUOTE_LIMIT_REACHED), reject a filled honeypot `website` (422 QUOTE_REJECTED) and, in captcha mode, a valid captchaToken (403 CAPTCHA_FAILED). With mode `off` (default without a verifier) anonymous requests answer 401 ANONYMOUS_QUOTES_DISABLED. Date requests (bookings) always require an account. 3.15.0: mode `proof` (self-hosted proof of work, 403 PROOF_FAILED) joins captcha and open; origin, proof and the lead rules of the 24 h window are described in info.description. Anonymous requests are also limited per device."
       },
       "get": {
         "operationId": "listProviderQuotes",
@@ -2290,6 +2433,56 @@
             "description": "Absent means the primary destination of the listing: PRODUCT_PAGE of a product, otherwise the first stored and enabled destination in this enum order."
           },
           {
+            "name": "celebrationId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": ""
+          },
+          {
+            "name": "guestId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Deprecated and ignored since 3.15.0 (PF-1): accepted so old clients do not fail, never stored and never the actor of the lead event."
+          },
+          {
+            "name": "country",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z]{2}$"
+            },
+            "description": ""
+          },
+          {
+            "name": "ref",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Referrer; defaults to the Referer header. Only the origin is kept when the path is under /c/ (invitation and guest pages)."
+          },
+          {
+            "name": "correlationId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": ""
+          },
+          {
             "name": "sessionId",
             "in": "query",
             "required": false,
@@ -2315,17 +2508,7 @@
                 "PREVIEW"
               ]
             },
-            "description": "Where the link was shown. PREVIEW (R6a, 3.8.0): a preview in the provider portal or in moderation; since 3.10.0 (M-2) it only counts with a ctx issued for that listing (issueLeadContext, relation PREVIEW). Without it the click is evaluated like any other and recorded as PUBLIC_SITE."
-          },
-          {
-            "name": "celebrationId",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": ""
+            "description": "Where the link was shown. PREVIEW (R6a, 3.8.0): a preview in the provider portal or in moderation; since 3.10.0 (M-2) it only counts with a ctx issued for that listing (issueLeadContext, relation PREVIEW). Without it the click is evaluated like any other and recorded as PUBLIC_SITE. CELEBRATION_SITE (guest marketplace tab) is one valid lead per visitor, offer and button every 24 hours."
           },
           {
             "name": "ctx",
@@ -2338,16 +2521,6 @@
             "description": "R6a (3.8.0): signed lead context of a celebration member, copied as is from gift-list listGiftItems leadContext. Only an authentic, unexpired token whose celebration equals celebrationId counts: the click is then an invalid lead (HOST_OR_PLANNER, or PROVIDER_SELF when the member owns the provider). Any other value is ignored and the click is classified as an anonymous visitor's; more than 512 characters is 422 INVALID_LEAD_CONTEXT. Carries no personal data. Since 3.10.0 it can also be the portal's token of issueLeadContext: PROVIDER_OWNER (the click is PROVIDER_SELF without any celebration, M-1) or PREVIEW (M-2). A token of one kind never passes for the other."
           },
           {
-            "name": "guestId",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "Requires celebrationId."
-          },
-          {
             "name": "locale",
             "in": "query",
             "required": false,
@@ -2355,16 +2528,6 @@
               "type": "string"
             },
             "description": "es-BO or en-US (or an Accept-Language value). Since 3.9.0 it picks the template language and the formats of price and date of the WhatsApp message."
-          },
-          {
-            "name": "country",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "pattern": "^[A-Za-z]{2}$"
-            },
-            "description": ""
           },
           {
             "name": "city",
@@ -2384,26 +2547,6 @@
               "pattern": "^[A-Z][A-Z0-9_]{1,59}$"
             },
             "description": "Type of the celebration (a code such as WEDDING). Stored with the click so the provider sees it without seeing the celebration (D-10 #34)."
-          },
-          {
-            "name": "ref",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "format": "uri"
-            },
-            "description": "Referrer; defaults to the Referer header."
-          },
-          {
-            "name": "correlationId",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": ""
           },
           {
             "name": "giftItemId",
@@ -10983,8 +11126,8 @@
           "404": {
             "$ref": "#/components/responses/NotFound"
           },
-          "422": {
-            "description": "FEATURED_PRODUCT_ONLY or VALIDATION_FAILED",
+          "409": {
+            "description": "LISTING_HIDDEN",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -10993,8 +11136,8 @@
               }
             }
           },
-          "409": {
-            "description": "LISTING_HIDDEN",
+          "422": {
+            "description": "FEATURED_PRODUCT_ONLY or VALIDATION_FAILED",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -11914,6 +12057,445 @@
           }
         }
       }
+    },
+    "/providers/{providerId}/media": {
+      "get": {
+        "operationId": "listProviderMedia",
+        "summary": "Photos of the provider itself: microsite gallery and logo (owner/admin)",
+        "tags": [
+          "provider-catalog"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Gallery photos then logos, not DELETING",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "items"
+                  ],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ProviderMedia"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "description": "PROVIDER_NOT_FOUND",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "MEDIA_STORAGE_NOT_CONFIGURED",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/providers/{providerId}/media/uploads": {
+      "post": {
+        "operationId": "requestProviderMediaUpload",
+        "summary": "Step 1 of 3: register a gallery or logo photo and get a presigned PUT URL (owner/admin)",
+        "tags": [
+          "provider-catalog"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "description": "Same flow, limits (JPEG, PNG, WebP or HEIC up to 5 MB, exact Content-Length signed), quota and Idempotency-Key as the photos of an offer. purpose GALLERY (at most 12 active photos per provider) or LOGO (at most 2). The photo is shown publicly only once the owner puts its id in the microsite (PUT /providers/{providerId}/microsite), which goes through moderation.",
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.:-]{1,128}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProviderMediaUploadInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Idempotent replay",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderMediaUpload"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "PENDING_UPLOAD",
+            "headers": {
+              "Location": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderMediaUpload"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "description": "PROVIDER_NOT_FOUND",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "PHOTO_LIMIT_REACHED (details.scope GALLERY or LOGO), MEDIA_QUOTA_EXCEEDED or IDEMPOTENCY_KEY_REUSED",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "UNSUPPORTED_MEDIA_TYPE, PHOTO_TOO_LARGE, CONTACT_IN_TEXT or VALIDATION_FAILED (purpose, bytes, variantId)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "MEDIA_STORAGE_NOT_CONFIGURED",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/providers/{providerId}/media/{photoId}/complete": {
+      "post": {
+        "operationId": "completeProviderMedia",
+        "summary": "Step 3 of 3: the object was uploaded; queue it for processing (owner/admin)",
+        "tags": [
+          "provider-catalog"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "photoId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "QUEUED (or the current state when it was already completed)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderMedia"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "description": "PHOTO_NOT_FOUND",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "UPLOAD_NOT_FOUND",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "PHOTO_MISMATCH: the first bytes are not the declared type or the object is larger than declared; it was discarded",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/providers/{providerId}/media/{photoId}": {
+      "delete": {
+        "operationId": "deleteProviderMedia",
+        "summary": "Delete a gallery or logo photo (owner/admin)",
+        "tags": [
+          "provider-catalog"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "photoId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted (also when it does not exist)"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "description": "MEDIA_IN_USE: the microsite still uses this photo as a gallery image or as the logo (details.usedBy MICROSITE)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/providers/geo/search": {
+      "get": {
+        "operationId": "searchPlaces",
+        "summary": "Search a place by name or address (explicit search only, never autocomplete)",
+        "tags": [
+          "provider-catalog"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 3,
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "lang",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "es-BO",
+                "en-US"
+              ],
+              "default": "es-BO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Up to 5 places",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "private, no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaceSearchResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "description": "GEOCODING_UNAVAILABLE: the search is off or the geocoder failed; offer the pin or plain text.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/providers/geo/map-config": {
+      "get": {
+        "operationId": "getMapConfig",
+        "summary": "Tile URL, attribution and search switch for the map",
+        "tags": [
+          "provider-catalog"
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Map settings",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "public, max-age=300"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MapConfig"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -12657,7 +13239,8 @@
             "$ref": "#/components/schemas/Money"
           },
           "imageUrl": {
-            "type": "string"
+            "type": "string",
+            "description": "The offer's uploaded cover photo (card rendition); the address stored before uploads existed only as fallback."
           },
           "score": {
             "type": "integer"
@@ -12689,6 +13272,22 @@
           },
           "hours": {
             "$ref": "#/components/schemas/BusinessHours"
+          },
+          "listingType": {
+            "type": "string",
+            "enum": [
+              "SERVICE",
+              "PRODUCT"
+            ],
+            "description": "Type of the offer shown (additive in 3.15.0)."
+          },
+          "sponsored": {
+            "type": "boolean",
+            "description": "True when the provider plan (FEATURED or PREMIUM) raised this card in the ranking; clients must say so (additive in 3.15.0)."
+          },
+          "logoUrl": {
+            "type": "string",
+            "description": "The provider's logo (published microsite), when it has one."
           }
         }
       },
@@ -12752,6 +13351,16 @@
                     "PRODUCT",
                     null
                   ]
+                },
+                "order": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Only with view=marketplace: position for the requested event type."
+                },
+                "count": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Only with view=marketplace: providers with an eligible offer in the category."
                 }
               }
             }
@@ -13385,6 +13994,53 @@
           "website": {
             "type": "string",
             "description": "Honeypot for anonymous requests: must be empty or absent (a filled value is rejected as a bot)."
+          },
+          "origin": {
+            "type": "object",
+            "required": [
+              "surface"
+            ],
+            "description": "Where the guest was before the form (statistics only; see 3.15.0). Unknown keys (guestId, token, slug) are ignored.",
+            "properties": {
+              "surface": {
+                "type": "string",
+                "enum": [
+                  "PUBLIC_SITE",
+                  "SEARCH",
+                  "CELEBRATION_SITE",
+                  "GIFT_LIST",
+                  "EMAIL",
+                  "APP"
+                ]
+              },
+              "celebrationId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "eventType": {
+                "type": "string",
+                "pattern": "^[A-Z][A-Z0-9_]{1,59}$",
+                "description": "Type of the celebration of origin, not of the event the guest wants to hire."
+              }
+            }
+          },
+          "proof": {
+            "type": "object",
+            "required": [
+              "challenge",
+              "nonce"
+            ],
+            "description": "Anonymous requests when PROVIDER_ANON_QUOTES=proof: the challenge of GET /providers/quote-access and the nonce that solves it (accepted once).",
+            "properties": {
+              "challenge": {
+                "type": "string",
+                "maxLength": 400
+              },
+              "nonce": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{1,64}$"
+              }
+            }
           }
         }
       },
@@ -13533,19 +14189,18 @@
             "items": {
               "type": "object",
               "required": [
-                "mediaId",
-                "url"
+                "mediaId"
               ],
               "additionalProperties": false,
               "properties": {
                 "mediaId": {
                   "type": "string",
                   "format": "uuid",
-                  "description": "Media asset id in Template-Media"
+                  "description": "Id of a READY GALLERY photo of this provider (POST /providers/{providerId}/media/uploads). A mediaId that is no uploaded photo is accepted only for an entry already stored, sent back unchanged."
                 },
                 "url": {
                   "type": "string",
-                  "description": "https URL or a /media/ path; never javascript: or data:"
+                  "description": "Ignored when mediaId is an uploaded photo (the server derives the address). Only for an entry stored before uploads existed, sent back unchanged: https URL or a /media/ path."
                 },
                 "alt": {
                   "type": "object",
@@ -13592,6 +14247,31 @@
           },
           "address": {
             "$ref": "#/components/schemas/BusinessAddress"
+          },
+          "logo": {
+            "oneOf": [
+              {
+                "type": "object",
+                "required": [
+                  "mediaId"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "mediaId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Id of a READY LOGO photo of this provider"
+                  },
+                  "url": {
+                    "type": "string",
+                    "description": "Ignored"
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         }
       },
@@ -13699,6 +14379,30 @@
                 "type": "boolean"
               }
             }
+          },
+          "logo": {
+            "oneOf": [
+              {
+                "type": "object",
+                "required": [
+                  "mediaId",
+                  "url"
+                ],
+                "properties": {
+                  "mediaId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "url": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The provider's logo: an uploaded photo (card rendition address), null when it has none."
           }
         }
       },
@@ -18329,6 +19033,18 @@
           },
           "hours": {
             "$ref": "#/components/schemas/DevCompatBusinessHours"
+          },
+          "listingType": {
+            "type": "string",
+            "enum": [
+              "SERVICE",
+              "PRODUCT"
+            ],
+            "description": "Type of the offer shown (additive in 3.15.0)."
+          },
+          "sponsored": {
+            "type": "boolean",
+            "description": "True when the provider plan (FEATURED or PREMIUM) raised this card in the ranking; clients must say so (additive in 3.15.0)."
           }
         },
         "description": "Canonical directory profile: absent historical or minimal registration names/slugs remain null; no synthetic identity is inferred."
@@ -21184,6 +21900,47 @@
           }
         }
       },
+      "QuoteAccess": {
+        "type": "object",
+        "required": [
+          "anonymousQuotes"
+        ],
+        "properties": {
+          "anonymousQuotes": {
+            "type": "string",
+            "enum": [
+              "off",
+              "captcha",
+              "proof",
+              "open"
+            ],
+            "description": "How anonymous visitors may request quotes in this deployment (off: they must sign in)."
+          },
+          "proof": {
+            "type": "object",
+            "required": [
+              "challenge",
+              "difficulty",
+              "expiresAt"
+            ],
+            "description": "Present in proof mode: a fresh challenge. Find a nonce so that SHA-256(challenge + ':' + nonce) starts with `difficulty` zero bits.",
+            "properties": {
+              "challenge": {
+                "type": "string"
+              },
+              "difficulty": {
+                "type": "integer",
+                "minimum": 8,
+                "maximum": 24
+              },
+              "expiresAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        }
+      },
       "CurrentPriceList": {
         "type": "object",
         "additionalProperties": false,
@@ -21779,6 +22536,362 @@
             "items": {
               "$ref": "#/components/schemas/ModerationListing"
             }
+          }
+        }
+      },
+      "ProviderMedia": {
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "rejectReason",
+          "contentType",
+          "altText",
+          "position",
+          "renditions",
+          "createdAt",
+          "updatedAt",
+          "purpose"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "enum": [
+              "PENDING_UPLOAD",
+              "QUEUED",
+              "PROCESSING",
+              "READY",
+              "REJECTED",
+              "DELETING"
+            ]
+          },
+          "rejectReason": {
+            "enum": [
+              "UNREADABLE",
+              "HEIC_UNSUPPORTED",
+              "TOO_MANY_PIXELS",
+              "PROCESSING_FAILED",
+              null
+            ],
+            "description": "Only with REJECTED. REJECTED photos are removed after 7 days."
+          },
+          "contentType": {
+            "enum": [
+              "image/jpeg",
+              "image/png",
+              "image/webp",
+              "image/heic"
+            ],
+            "description": "Type of the uploaded original; renditions are always WebP."
+          },
+          "altText": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "position": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 99,
+            "description": "Order among the provider's photos of the same purpose."
+          },
+          "renditions": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "thumb",
+                  "card",
+                  "full"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "thumb": {
+                    "type": "object",
+                    "required": [
+                      "url",
+                      "width",
+                      "height"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                      "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "Anonymous URL: <object-store public origin>/provider-media/public/providers/{providerId}/media/{photoId}/{size}.webp, immutable."
+                      },
+                      "width": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "height": {
+                        "type": "integer",
+                        "minimum": 1
+                      }
+                    }
+                  },
+                  "card": {
+                    "type": "object",
+                    "required": [
+                      "url",
+                      "width",
+                      "height"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                      "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "Anonymous URL: <object-store public origin>/provider-media/public/providers/{providerId}/media/{photoId}/{size}.webp, immutable."
+                      },
+                      "width": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "height": {
+                        "type": "integer",
+                        "minimum": 1
+                      }
+                    }
+                  },
+                  "full": {
+                    "type": "object",
+                    "required": [
+                      "url",
+                      "width",
+                      "height"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                      "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "Anonymous URL: <object-store public origin>/provider-media/public/providers/{providerId}/media/{photoId}/{size}.webp, immutable."
+                      },
+                      "width": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "height": {
+                        "type": "integer",
+                        "minimum": 1
+                      }
+                    }
+                  }
+                }
+              }
+            ],
+            "description": "WebP renditions without EXIF/GPS; present only when READY."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "purpose": {
+            "enum": [
+              "GALLERY",
+              "LOGO"
+            ],
+            "description": "What the photo is for: an image of the microsite gallery or the provider's logo."
+          }
+        }
+      },
+      "ProviderMediaUpload": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ProviderMedia"
+          },
+          {
+            "type": "object",
+            "required": [
+              "upload"
+            ],
+            "properties": {
+              "upload": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "method",
+                      "url",
+                      "headers",
+                      "expiresAt"
+                    ],
+                    "properties": {
+                      "method": {
+                        "const": "PUT"
+                      },
+                      "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "Presigned (AWS SigV4, 10 minutes). PUT the raw image bytes from the browser, sending exactly `headers`."
+                      },
+                      "headers": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "string"
+                        }
+                      },
+                      "expiresAt": {
+                        "type": "string",
+                        "format": "date-time"
+                      }
+                    }
+                  }
+                ],
+                "description": "Null on an idempotent replay once the photo left PENDING_UPLOAD."
+              }
+            }
+          }
+        ]
+      },
+      "ProviderMediaUploadInput": {
+        "type": "object",
+        "required": [
+          "purpose",
+          "contentType",
+          "bytes"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "purpose": {
+            "enum": [
+              "GALLERY",
+              "LOGO"
+            ]
+          },
+          "contentType": {
+            "enum": [
+              "image/jpeg",
+              "image/png",
+              "image/webp",
+              "image/heic"
+            ]
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5242880,
+            "description": "The file's real size: the presigned PUT signs it."
+          },
+          "altText": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      },
+      "PlaceResult": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "label",
+          "lat",
+          "lng"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "description": "osm type/id (node/123) or the coordinates when OSM gave none."
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 240,
+            "description": "Full display name, shown as the address line."
+          },
+          "lat": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "lng": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          },
+          "osmType": {
+            "type": "string",
+            "enum": [
+              "node",
+              "way",
+              "relation"
+            ]
+          },
+          "osmId": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
+      "PlaceSearchResult": {
+        "type": "object",
+        "required": [
+          "items",
+          "attribution"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "maxItems": 5,
+            "items": {
+              "$ref": "#/components/schemas/PlaceResult"
+            }
+          },
+          "attribution": {
+            "type": "string",
+            "description": "Must be visible next to the results."
+          }
+        }
+      },
+      "MapConfig": {
+        "type": "object",
+        "required": [
+          "tileUrl",
+          "attribution",
+          "maxZoom",
+          "searchEnabled"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "tileUrl": {
+            "type": "string",
+            "description": "Tile template with {z}/{x}/{y}."
+          },
+          "attribution": {
+            "type": "string"
+          },
+          "maxZoom": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 22
+          },
+          "searchEnabled": {
+            "type": "boolean"
           }
         }
       }

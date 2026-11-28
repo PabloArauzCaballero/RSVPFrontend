@@ -29,10 +29,14 @@ Un bloqueo de pop-up no se puede detectar (`noopener` devuelve null); en Safari 
 - `.gitleaksignore` ignora 2 huellas exactas de `ca4e81b0` (fixture falso con forma de JWT, corregido en `9918fdfd`). Preferible: squash al fusionar y quitar el archivo (pregunta 4 del PR).
 
 ## Sin implementar (decisión de Pablo o de otro PR)
-- **PREVIEW sin token (M1):** hoy cualquiera puede añadir `surface=PREVIEW` a un enlace y generar clics no cobrados (subcobra). Restringirlo al `ctx` del portal llega con BE R6b (#166); este PR no pinea a #166. Decisión abierta para Pablo: aceptar el riesgo hasta #166 o condicionar la fusión.
+- **PREVIEW sin token (M1):** sobre BE `b44a5cb3` (3.8.0) cualquiera podía añadir `surface=PREVIEW` a un enlace y generar clics no cobrados (subcobra): un clic PREVIEW sin token era lead inválido `PREVIEW`. Sobre el BE oficial (`cecb3a9a`, con #166/R6b) `classifyLead` solo da `PREVIEW` si `surface=PREVIEW` **y** el clic trae un `ctx` emitido por el portal o por moderación para ese listing (`previewProven`); sin ese `ctx` el clic cuenta como de visitante normal. Verificado leyendo `lead-policy.ts` en `cecb3a9a` y observado en el recorrido real.
 - **Sin llamador de `refreshLeadContext` (m1):** ninguna pantalla real lo activa; el objetivo «el clic del miembro no se cobra» no se cumple en producción hasta que exista la pantalla de miembro. Decisión 1 del PR.
 - **`useAppStateFocus` global en Expo (m2):** cambia la relectura de toda consulta al volver de segundo plano. Separarlo en su propio PR con prueba de regresión, o activarlo con el llamador, es decisión de Pablo.
 - **TTL (m3):** el intervalo de 240 s exige un `GIFT_LEAD_CONTEXT_TTL_SECONDS` de al menos 300 s (documentado en `query-hooks/src/gift/index.ts`). Derivarlo de un `leadContextExpiresAt` requiere un cambio de contrato en BE (decisión 5 del PR).
 
 ## Reversión
 Revertir el PR. Sin `ctx` los clics de miembros se cobran como antes. Los contratos vuelven por sí solos al lock de la base (`188d08f8`, BE #157); no hace falta ejecutar `generate`.
+
+## Hallazgo del recorrido real contra BE `fc68da23` (2026-11-28)
+- La cabecera `Referrer-Policy: no-referrer` que `route.ts` pone en la página de error de `/r/` **no llega al navegador**: la regla global de `next.config.js` (`strict-origin-when-cross-origin`) la reemplaza (observado con `next start` real; el test de la ruta solo miraba la respuesta del handler). No se cambia la regla global porque también afectaría al 302 y con ello lo que ve el proveedor. Corrección: la página lleva `<meta name="referrer" content="no-referrer">` y una prueba lo exige. Con la política servida (origen solo en cruces de sitio) el `ctx` no sale por Referer a otros orígenes, pero la defensa documentada ahora sí existe.
+- Corrección de la expectativa del caso 3 con BE de la cadena (#166, R6b): `surface=PREVIEW` sin `ctx` de vista previa ya NO se registra como inválido `PREVIEW`: se ignora y el clic cuenta como de visitante normal; con el `ctx` PREVIEW del dueño sí queda inválido `PREVIEW`; `ctx` PROVIDER_OWNER del dueño queda `PROVIDER_SELF`.

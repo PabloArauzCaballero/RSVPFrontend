@@ -218,7 +218,7 @@ describe("the six extra templates as documents v2", () => {
       const template = extraTemplate(name);
       expect(markup({ ...template, theme: withHeading(template.theme, "great-vibes") }), `${name} with Great Vibes`).toContain('data-heading-face="script"');
     }
-  });
+  }, 30_000); // 24 documents x 7 script faces, rendered twice: ~3 s alone, over the 5 s default when the whole workspace tests in parallel
 
   it("PL-FE143-R2-2 · the photo-on-the-text-axis rule reaches the six extra templates only: the older templates (even those that centre the cover) keep the markup and the geometry they had", () => {
     const dir = join(__dirname, "documents");

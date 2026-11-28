@@ -44,6 +44,7 @@ export * from "./purchase-attempts.js";
 export * from "./purchase-prompt.js";
 export * from "./replacements.js";
 export * from "./replacements-hooks.js";
+export * from "./closure-hooks.js";
 export { giftApi as giftService, isGiftListMissing, suggestionsOf, problemCode } from "./api.js";
 import { suggestionsOf, problemCode } from "./api.js";
 

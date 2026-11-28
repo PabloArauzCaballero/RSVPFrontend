@@ -3,11 +3,12 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Text, View, useWindowDimensions } from "react-native";
 import { radius, spacing } from "@rsvp/design-tokens";
 import { formatMinor } from "@rsvp/i18n";
-import { activeReservationsByItem, catalogedFirst, createBodyKeys, isGiftListMissing, isGiftUnavailable, unavailableReasonOf, isReservationNotActive, newIdempotencyKey, problemCode, useApproveExternalGift, useCancelGiftReservation, useAddGiftBatch, useGiftList, useHostReservations, useRejectExternalGift, useRemoveGiftItem, useGiftSettings, useUpdateGiftSettings, type GiftItem, type GiftReservation } from "@rsvp/query-hooks";
+import { activeReservationsByItem, catalogedFirst, createBodyKeys, isGiftListMissing, isGiftUnavailable, isProductGone, unavailableReasonOf, isReservationNotActive, newIdempotencyKey, problemCode, useApproveExternalGift, useCancelGiftReservation, useAddGiftBatch, useGiftList, useHostReservations, useRejectExternalGift, useRemoveGiftItem, useGiftSettings, useUpdateGiftSettings, type GiftItem, type GiftReservation } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../../platform/providers";
 import { CelebrationScreen, useScreenHeader, type ScreenProps } from "../gate";
 import { HOST_ROUTES, withCelebration } from "../routes";
 import { GiftErrorNotice } from "./gift-errors";
+import { ClosurePanel } from "./closure-panel";
 import { ReplacementsPanel, ReplacementsToggle, type SwapMutation } from "./replacements-panel";
 import { ActionButton, ConfirmDialog, EmptyState, ErrorNotice, Loading, Notice, useStyles } from "../ui";
 import { Figure } from "../figures";
@@ -45,6 +46,9 @@ function GiftRow({ item, first, currencyLocale, onApprove, onReject, approving, 
   const unavailable = isGiftUnavailable(item);
   const status = shownStatus(item);
   const reason = unavailable ? unavailableReasonOf(item) ?? "unknown" : null;
+  // 1.21.0 · a gift somebody holds keeps its reservation when its product leaves: `availability` stays AVAILABLE, `productUnavailable` says it. Not the «No disponible» section: the reservation is alive.
+  const soldOut = isProductGone(item) && !unavailable;
+  const soldOutReason = soldOut ? unavailableReasonOf({ unavailableReason: item.productUnavailableReason }) : null;
   const [replacementsOpen, setReplacementsOpen] = useState(false);
   // After a swap the panel closes and its buttons leave: focus goes back to the control that opened it, not to the page.
   const toggleRef = useRef<View>(null);
@@ -61,6 +65,15 @@ function GiftRow({ item, first, currencyLocale, onApprove, onReject, approving, 
           {item.groupGiftEnabled ? <Text style={styles.muted} testID={`gift-group-${item.id}`}>{t("gifts.host.wizard.list.group")}</Text> : null}
           {reason ? <Text style={styles.body} testID={`gift-unavailable-reason-${item.id}`}>{t(`gifts.host.replacements.reason.${reason}`)}</Text> : null}
           {unavailable ? <Text style={styles.muted} testID={`gift-unavailable-${item.id}`}>{t("gifts.host.list.unavailableNote")}</Text> : null}
+          {soldOut ? (
+            <View testID={`gift-soldout-${item.id}`} style={{ paddingTop: spacing[1] }}>
+              <Notice kind="info">
+                <Text style={styles.itemTitle}>{t(soldOutReason === null || soldOutReason === "OUT_OF_STOCK" || soldOutReason === "VARIANT_OUT_OF_STOCK" ? "gifts.host.soldOut.title" : "gifts.host.soldOut.titleOther")}</Text>
+                <Text style={styles.body} testID={`gift-soldout-reason-${item.id}`}>{t(`gifts.host.replacements.reason.${soldOutReason ?? "unknown"}`)}</Text>
+                <Text style={styles.body}>{t("gifts.host.soldOut.body")}</Text>
+              </Notice>
+            </View>
+          ) : null}
           {item.reservedByName ? <Text style={styles.muted} testID={`gift-by-${item.id}`}>{t("gifts.host.list.reservedBy", { name: item.reservedByName })}</Text> : null}
           {narrow ? <View testID={`gift-status-${item.id}`} style={{ alignSelf: "flex-start", paddingTop: spacing[1] }}><Chip tone={STATUS_TONE[status]}>{t(`gifts.host.status.${status}`)}</Chip></View> : null}
         </View>
@@ -207,12 +220,14 @@ function GiftsBody({ celebrationId, eventType, content, onNavigate }: { readonly
       {all.length === 0 ? (
         <>
           <EmptyState illustration="noGifts" title={t("gifts.host.list.emptyTitle")} body={t("gifts.host.list.emptyBody")} />
+          {list.data ? <ClosurePanel celebrationId={celebrationId} closed={list.data.closed === true} /> : null}
           <RequesterVisibility celebrationId={celebrationId} />
         </>
       ) : (
         <>
           <GiftFigures items={items} />
           {list.data?.deliveryNotes ? <Text style={styles.body} testID="gift-delivery-notes">{t("gifts.host.wizard.list.delivery", { notes: list.data.deliveryNotes })}</Text> : null}
+          {list.data ? <ClosurePanel celebrationId={celebrationId} closed={list.data.closed === true} /> : null}
           <RequesterVisibility celebrationId={celebrationId} />
           {items.length > 0 ? (
             <View testID="gift-list">

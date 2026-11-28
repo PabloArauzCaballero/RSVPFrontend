@@ -1,0 +1,192 @@
+[
+ {
+  "name": "backend: sin token -> 401",
+  "ok": true,
+  "detail": "401"
+ },
+ {
+  "name": "backend: un invitado (credencial de enlace) -> 403 HOST_REQUIRED",
+  "ok": true,
+  "detail": "403 HOST_REQUIRED"
+ },
+ {
+  "name": "backend: la lista sigue abierta tras los intentos rechazados",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "anfitrión: lista «Abierta» y botón «Cerrar la lista» · 360",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "confirmación visible antes de cerrar · 360",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "«Mantenerla abierta» no cierra (backend sigue abierto) · 360",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "403 HOST_REQUIRED (interceptado en la red): mensaje claro, sigue «Abierta» · 360",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "409 CONFLICT (interceptado en la red): mensaje claro, sigue «Abierta» · 360",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "cerrar: aviso de éxito · 360",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "cerrar: estado «Cerrada» visible y «Reabrir la lista» · 360",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "backend: closed=true y la reserva existente intacta · 360",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "sin scroll horizontal · anfitrión 360",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "axe sin violaciones · panel cerrada 360",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "backend: reservar con la lista cerrada -> 409 LIST_CLOSED · 360",
+  "ok": true,
+  "detail": "409 LIST_CLOSED"
+ },
+ {
+  "name": "invitado (app): ve «La lista de regalos está cerrada» y no puede reservar · 360",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "invitado (web): lista cerrada, sin botón «Reservar» · 360",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "recargar: el estado «Cerrada» persiste · 360",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "reabrir: aviso y «Abierta» · 360",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "backend: closed=false tras reabrir · 360",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "backend: PUT idempotente (repetir reabrir = 200) · 360",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "anfitrión: lista «Abierta» y botón «Cerrar la lista» · 1280",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "confirmación visible antes de cerrar · 1280",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "«Mantenerla abierta» no cierra (backend sigue abierto) · 1280",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "403 HOST_REQUIRED (interceptado en la red): mensaje claro, sigue «Abierta» · 1280",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "409 CONFLICT (interceptado en la red): mensaje claro, sigue «Abierta» · 1280",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "cerrar: aviso de éxito · 1280",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "cerrar: estado «Cerrada» visible y «Reabrir la lista» · 1280",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "backend: closed=true y la reserva existente intacta · 1280",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "sin scroll horizontal · anfitrión 1280",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "axe sin violaciones · panel cerrada 1280",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "backend: reservar con la lista cerrada -> 409 LIST_CLOSED · 1280",
+  "ok": true,
+  "detail": "409 LIST_CLOSED"
+ },
+ {
+  "name": "invitado (app): ve «La lista de regalos está cerrada» y no puede reservar · 1280",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "invitado (web): lista cerrada, sin botón «Reservar» · 1280",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "recargar: el estado «Cerrada» persiste · 1280",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "reabrir: aviso y «Abierta» · 1280",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "backend: closed=false tras reabrir · 1280",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "backend: PUT idempotente (repetir reabrir = 200) · 1280",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "anfitrión en-US: textos en inglés",
+  "ok": true,
+  "detail": ""
+ }
+]

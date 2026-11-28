@@ -7,7 +7,7 @@ import { Flourish } from "../flourish.js";
 import { formatDate } from "../format.js";
 import type { CelebrationRendererProps } from "../renderer.js";
 import { SectionNav } from "../section-nav.js";
-import { GiftsAction, RsvpAction, SECTIONS } from "../sections/index.js";
+import { ActionsBlock, GiftsAction, RsvpAction, SECTIONS } from "../sections/index.js";
 import { AudioPlayer, EmbedFacade, MediaBackdrop, MediaImage } from "../media/components.js";
 import { embedFromConfig, mapEmbed } from "../media/embed.js";
 import { clampScrim, hasImage, type PublicMedia } from "../media/variants.js";
@@ -45,6 +45,10 @@ interface Context {
   readonly media: readonly GalleryImage[];
   /** Veil opacity each scheme needs over any picture so the text on it reads at AA. */
   readonly veil: { readonly light: number; readonly dark: number };
+  /** The reply's one actions block is on the page (not a section's own page). */
+  readonly merged: boolean;
+  /** The gifts page stays, without its buttons, because it has content of its own. */
+  readonly giftsApart: boolean;
   readonly cover?: GalleryImage;
   readonly t: Translate;
   readonly giftsHref: string;
@@ -258,7 +262,24 @@ function fontSize(size: number): string {
   return size >= BIG_TEXT ? `clamp(${Math.round(size / 2)}px, ${(size / FLUID_DIVISOR).toFixed(2)}vw, ${size}px)` : `${size}px`;
 }
 
-function elementStyle(element: DesignElement, mobile: DesignElement | undefined, desktop: DesignElement | undefined, decorate: boolean): CSSProperties {
+/**
+ * The typography an element carries on one canvas, as custom properties (`--tm-*` for the phone canvas, `--td-*` for the desktop one).
+ * They are variables, not inline declarations, because an inline value always beats a media query: the stylesheet picks the desktop value
+ * from 900 px and falls back to the phone value for anything the desktop canvas leaves out (PLA-02: what is missing on desktop is inherited).
+ */
+function typographyVariables(prefix: "tm" | "td", typography: DesignElement["typography"]): Record<string, string | number> {
+  if (!typography) return {};
+  const out: Record<string, string | number> = {};
+  if (typography.size !== undefined) out[`--${prefix}-size`] = fontSize(typography.size);
+  if (typography.weight !== undefined) out[`--${prefix}-weight`] = typography.weight;
+  if (typography.align !== undefined) out[`--${prefix}-align`] = typography.align;
+  if (typography.lineHeight !== undefined) out[`--${prefix}-lh`] = typography.lineHeight;
+  if (typography.letterSpacing !== undefined) out[`--${prefix}-ls`] = `${typography.letterSpacing}em`;
+  if (typography.transform !== undefined) out[`--${prefix}-tt`] = typography.transform;
+  return out;
+}
+
+function elementStyle(element: DesignElement, mobile: DesignElement | undefined, desktop: DesignElement | undefined, desktopTypography: DesignElement["typography"], decorate: boolean): CSSProperties {
   const style: Record<string, string | number | undefined> = {};
   const set = (prefix: string, item: DesignElement | undefined): void => {
     if (!item) return;
@@ -268,11 +289,11 @@ function elementStyle(element: DesignElement, mobile: DesignElement | undefined,
   set("d", desktop);
   const box = (value: DesignElement["padding"]): string | undefined => (value ? `${value.top}px ${value.right}px ${value.bottom}px ${value.left}px` : undefined);
   const { typography, border } = element;
-  const sized = typography?.size !== undefined;
   return {
     ...style,
+    ...typographyVariables("tm", typography),
+    ...typographyVariables("td", desktopTypography),
     ...(typography?.colour ? { "--cd-ink": role(typography.colour) } : {}),
-    ...(sized ? { "--cd-size": fontSize(typography.size as number) } : {}),
     zIndex: element.z,
     margin: box(element.margin),
     padding: box(element.padding),
@@ -281,11 +302,7 @@ function elementStyle(element: DesignElement, mobile: DesignElement | undefined,
     opacity: element.opacity,
     transform: element.rotation ? `rotate(${element.rotation}deg)` : undefined,
     ...backgroundStyle(element.background),
-    ...(typography ? {
-      fontFamily: typography.role ? FONT_VAR[typography.role] : undefined, fontSize: sized ? fontSize(typography.size as number) : undefined, fontWeight: typography.weight,
-      textAlign: typography.align === "start" ? "start" : typography.align === "end" ? "end" : typography.align, lineHeight: typography.lineHeight,
-      letterSpacing: typography.letterSpacing === undefined ? undefined : `${typography.letterSpacing}em`, textTransform: typography.transform, color: role(typography.colour)
-    } : {}),
+    ...(typography ? { fontFamily: typography.role ? FONT_VAR[typography.role] : undefined, color: role(typography.colour) } : {}),
     // A named animation (1.8.0) takes its duration from the motion tokens in the stylesheet; only its delay comes from the document.
     ...(element.animation ? { "--cdesign-delay": `${element.animation.delayMs ?? 0}ms`, ...(element.animation.name ? {} : { "--cdesign-duration": `${element.animation.durationMs ?? 700}ms` }) } : {}),
     ...(decorate && element.frame && Object.hasOwn(ROLE_VAR, element.frame.colour) ? { "--cd-frame": role(element.frame.colour) } : {})
@@ -316,13 +333,29 @@ function Doors({ kind }: { readonly kind: "abrir-puertas" | "revelar-telon" }): 
   return <span className="cdesign-doors" data-kind={kind} aria-hidden="true"><span className="cdesign-door" data-side="l" />{kind === "abrir-puertas" ? <span className="cdesign-door" data-side="r" /> : null}</span>;
 }
 
+/** The reply page carries the one actions block (decision 8): the document's own gifts and reply buttons are replaced by it, so they never appear twice or apart. */
+const isActionsBlock = (page: DesignPage): boolean => page.kind === "section" && page.section === "rsvp";
+const isButton = (type: string | undefined): boolean => type === "giftsCta" || type === "rsvpCta";
+
+/** The gifts page keeps whatever is its own (its illustration, texts, background): its two action buttons, gifts or reply, are the block's (PL-139-01, PL-139-R2-04). */
+function hasOwnContent(page: DesignPage, design: DesignDocumentV2): boolean {
+  const types = new Map(design.blocks.map((block) => [block.id, block.type]));
+  const elements = [...page.canvases.mobile.elements, ...(page.canvases.desktop?.elements ?? [])];
+  return Boolean(page.background) || elements.some((item) => item.visible && !isButton(types.get(item.block)));
+}
+
 function Canvas({ page, context }: { readonly page: DesignPage; readonly context: Context }): ReactNode {
   const { mobile, desktop } = page.canvases;
   const byId = (canvas: DesignCanvas | undefined): Map<string, DesignElement> => new Map((canvas?.elements ?? []).filter((item) => item.visible).map((item) => [item.id, item]));
-  const phone = byId(mobile);
-  const wide = byId(desktop);
-  const ids = [...new Set([...phone.keys(), ...wide.keys()])];
   const blocks = new Map(context.design.blocks.map((block) => [block.id, block]));
+  // The block has both buttons: the reply page loses its own, and so does the gifts page when the block is on the page. On the gifts section's own page there is no block, so its buttons stay.
+  const dropped = isActionsBlock(page) || (context.merged && page.section === "gifts") ? isButton : undefined;
+  const without = (map: Map<string, DesignElement>): Map<string, DesignElement> => (dropped ? new Map([...map].filter(([, item]) => !dropped(blocks.get(item.block)?.type))) : map);
+  const phone = without(byId(mobile));
+  const wide = without(byId(desktop));
+  const ids = [...new Set([...phone.keys(), ...wide.keys()])];
+  // A canvas whose only element was a button that moved into the block has nothing left to draw: no empty box (PL-139-07).
+  if (dropped && ids.length === 0) return null;
   const vars = { "--cd-cols-m": mobile.columns, "--cd-row-m": `${mobile.rowHeight}px`, "--cd-cols-d": desktop?.columns ?? mobile.columns, "--cd-row-d": `${(desktop ?? mobile).rowHeight}px` } as CSSProperties;
   return (
     <div className="cdesign-canvas" data-mode={mobile.mode} data-desktop={desktop ? "" : undefined} style={vars}>
@@ -331,6 +364,8 @@ function Canvas({ page, context }: { readonly page: DesignPage; readonly context
         const element = (phone.get(id) ?? wide.get(id)) as DesignElement;
         const block = blocks.get(element.block);
         if (!block) return null;
+        // Only a desktop canvas of its own can carry desktop typography; without one the phone values apply at every width.
+        const desktopTypography = desktop ? wide.get(id)?.typography : undefined;
         // F7: an own MP3 that moderation hid, or that the media service no longer lists, leaves no empty box in the grid (the rest of the page and the buttons stay).
         if (ownMusicGone(block, context)) return null;
         const protectedBlock = block.type === "giftsCta" || block.type === "rsvpCta";
@@ -347,8 +382,8 @@ function Canvas({ page, context }: { readonly page: DesignPage; readonly context
         };
         return (
           <div key={id} className={block.type === "giftsCta" || block.type === "rsvpCta" ? "cdesign-el rsvp-protected" : "cdesign-el"} data-block={block.type} data-m={phone.has(id) ? "" : undefined} data-d={wide.has(id) || (!desktop && phone.has(id)) ? "" : undefined}
-            data-entrance={entrance} data-sized={element.typography?.size !== undefined ? "" : undefined} data-round={element.radius ? "" : undefined} data-bg-media={element.background?.kind === "media" ? "" : undefined} data-text={TEXT_BLOCKS.has(block.type) ? "" : undefined} {...decorated}
-            style={elementStyle(element, phone.get(id), wide.get(id) ?? (desktop ? undefined : phone.get(id)), !protectedBlock)}>
+            data-entrance={entrance} data-sized={element.typography?.size !== undefined ? "" : undefined} data-sized-d={(desktopTypography?.size ?? element.typography?.size) !== undefined ? "" : undefined} data-round={element.radius ? "" : undefined} data-bg-media={element.background?.kind === "media" ? "" : undefined} data-text={TEXT_BLOCKS.has(block.type) ? "" : undefined} {...decorated}
+            style={elementStyle(element, phone.get(id), wide.get(id) ?? (desktop ? undefined : phone.get(id)), desktopTypography, !protectedBlock)}>
             <BackgroundMedia background={element.background} context={context} textZone={TEXT_BLOCKS.has(block.type)} />
             {href ? <a href={href} className="cdesign-el-link" {...linkAttributes(element.link)}>{body}</a> : body}
           </div>
@@ -403,9 +438,11 @@ function PageBlock({ page, context, only }: { readonly page: DesignPage; readonl
   const headingId = `section-${section}`;
   return (
     <section id={section} className="cdesign-page" data-page-kind="section" data-section={section} data-page={page.id} {...shared} aria-labelledby={headingId} style={{ ...backgroundStyle(page.background), ...veil.style }}>
-      <h2 id={headingId} className={only ? "celebration-visually-hidden" : "cdesign-page-title"}>{t(sectionTitleKey(section))}</h2>
-      {section === "gifts" || section === "rsvp" ? <div className="cdesign-intro"><p>{t(`celebration.${section}.${section === "gifts" ? "intro" : "body"}`)}</p></div> : null}
+      <h2 id={headingId} className={only ? "celebration-visually-hidden" : "cdesign-page-title"}>{t(section === "rsvp" ? "celebration.actions.title" : sectionTitleKey(section))}</h2>
+      {section === "gifts" ? <div className="cdesign-intro"><p>{t("celebration.gifts.intro")}</p></div> : null}
+      {section === "rsvp" ? <div className="cdesign-intro"><p>{t("celebration.rsvp.body")}</p>{context.giftsApart ? null : <p>{t("celebration.gifts.intro")}</p>}</div> : null}
       {inner}
+      {section === "rsvp" ? <div className="cdesign-actions"><ActionsBlock t={t} giftsHref={context.giftsHref} giftsStatus={context.props.giftsStatus} rsvpHref={context.props.rsvpHref} rsvpHelpHref={context.props.rsvpHelpHref} rsvpAdaptive={context.props.rsvpAdaptive} /></div> : null}
     </section>
   );
 }
@@ -420,7 +457,6 @@ export function DesignRenderer(props: DesignRendererProps): ReactNode {
   const palette = designPalette(design, scheme ?? "light");
   const cover = gallery.find((image) => image.isCover);
   const veil = { light: requiredScrim(designPalette(design, "light")), dark: requiredScrim(designPalette(design, "dark")) };
-  const context: Context = { props, design, theme, view, content, gallery, media, veil, ...(cover ? { cover } : {}), t, giftsHref: giftsPath(view.slug), now: props.now ?? new Date() };
   const available = theme.sections.filter((section) => hasSectionContent(section, content, gallery));
   const monogram = design.tokens.typography.monogram;
   // Following the system, the colours live in `SystemColours` rules; a forced scheme sets them inline.
@@ -433,7 +469,12 @@ export function DesignRenderer(props: DesignRendererProps): ReactNode {
     ...(scheme ? artVariables(artPalette(palette)) : {})
   } as CSSProperties;
   const placed = design.pages.filter((page) => page.kind === "cover" || (page.section && available.includes(page.section as SectionId)));
-  const pages = props.only ? placed.filter((page) => page.kind === "section" && page.section === props.only) : placed;
+  // Decision 8: the button of the gifts page lives in the reply page's one block. The page itself stays when it has anything of its own (PL-139-01); without it, there is nothing to keep and it folds into the block.
+  const merged = !props.only && placed.some((page) => isActionsBlock(page));
+  const giftsPage = placed.find((page) => page.kind === "section" && page.section === "gifts");
+  const giftsApart = merged && giftsPage !== undefined && hasOwnContent(giftsPage, design);
+  const context: Context = { props, design, theme, view, content, gallery, media, veil, ...(cover ? { cover } : {}), t, giftsHref: giftsPath(view.slug), now: props.now ?? new Date(), merged, giftsApart };
+  const pages = props.only ? placed.filter((page) => page.kind === "section" && page.section === props.only) : placed.filter((page) => !(merged && page === giftsPage && !giftsApart));
   return (
     <article className="celebration celebration-design" data-design="2" data-layout={theme.layout} data-color-scheme={scheme ?? "light"} data-scheme-source={scheme ? "prop" : "system"}
       data-section-style={theme.sectionStyle} data-divider={layout.divider} data-images={layout.imageTreatment} data-heading-face={SCRIPT_TITLE_FACTS_IN_BODY.has(theme.id) && familyById(design.tokens.typography.heading.family)?.category === "script" ? "script" : undefined} lang={view.locale} style={style}>

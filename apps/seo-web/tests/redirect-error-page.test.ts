@@ -40,6 +40,8 @@ describe("R6a · the failure page of /r/{id} never leaves the lead context in th
     vi.stubGlobal("fetch", vi.fn(async () => new Response("{}", { status: 503 })));
     const failure = await GET(new Request(`http://site.test/r/${LISTING}?ctx=token-secreto`), params);
     expect(failure.headers.get("referrer-policy")).toBe("no-referrer");
+    // The served header is replaced by the global rule of next.config.js (seen with a real `next start`), so the page itself must say it too.
+    expect(await failure.text()).toContain('<meta name="referrer" content="no-referrer">');
     vi.stubGlobal("fetch", vi.fn(async () => new Response(null, { status: 302, headers: { location: "https://hotel.example/" } })));
     const redirect = await GET(new Request(`http://site.test/r/${LISTING}?ctx=token-secreto`), params);
     expect(redirect.headers.get("referrer-policy")).toBeNull();

@@ -93,3 +93,41 @@ describe("es-BO addresses the reader with tuteo, never voseo", () => {
     for (const sample of ["vuelve a tu respuesta", "confirma que asistirás", "elige un regalo", "podrás cambiarlo", "está aquí", "después"]) expect(VOSEO.test(sample)).toBe(false);
   });
 });
+
+describe("R5 · WCAG 2.5.3 on the guest's gift card", () => {
+  it.each(["es-BO", "en-US"] as const)("%s: the accessible name of each card button contains the text the button shows", (locale) => {
+    const t = createTranslator(locale);
+    const title = "Vajilla de porcelana";
+    const pairs: ReadonlyArray<readonly [string, string]> = [
+      ["gifts.guest.reserve", "gifts.guest.reserveFor"], ["gifts.guest.group.start", "gifts.guest.group.startFor"], ["gifts.guest.group.join", "gifts.guest.group.joinFor"],
+      ["gifts.guest.group.leave", "gifts.guest.group.leaveFor"], ["gifts.guest.mine.cancel", "gifts.guest.mine.cancelFor"], ["gifts.guest.prompt.yes", "gifts.guest.prompt.yesFor"],
+      ["gifts.guest.prompt.later", "gifts.guest.prompt.laterFor"], ["gifts.guest.prompt.no", "gifts.guest.prompt.noFor"], ["gifts.guest.prompt.ack", "gifts.guest.prompt.ackFor"]
+    ];
+    for (const [visible, name] of pairs) expect(new RegExp(`(^|[^\\p{L}])${t(visible).replace(/[.:]$/, "")}([^\\p{L}]|$)`, "iu").test(t(name, { title })), `${locale} ${name}`).toBe(true);
+  });
+});
+
+describe("R7 · WCAG 2.5.3 on the host's unavailable-gift controls", () => {
+  it.each(["es-BO", "en-US"] as const)("%s: the accessible name of each control contains, in order, the text the control shows", (locale) => {
+    const t = createTranslator(locale);
+    const params = { title: "Vajilla dorada", old: "Vajilla dorada", new: "Vajilla azul" };
+    const pairs: ReadonlyArray<readonly [string, string]> = [
+      ["gifts.host.remove.action", "gifts.host.remove.actionFor"], ["gifts.host.replacements.open", "gifts.host.replacements.openLabel"],
+      ["gifts.host.replacements.close", "gifts.host.replacements.closeLabel"], ["gifts.host.replacements.swap", "gifts.host.replacements.swapLabel"]
+    ];
+    for (const [visible, name] of pairs) expect(t(name, params).toLowerCase().includes(t(visible).toLowerCase()), `${locale} ${name}`).toBe(true);
+  });
+});
+
+describe("portal.errors.state · the titles of a whole section that failed", () => {
+  // `PortalErrorState` composes `portal.errors.state.<kind>` at run time, so the type system cannot see a missing key: it would show the raw key.
+  it.each(["es-BO", "en-US"] as const)("%s: every title the portal can ask for resolves to text, never to the key", (locale) => {
+    const t = createTranslator(locale);
+    for (const kind of ["network", "server", "storage", "unavailable"]) {
+      const key = `portal.errors.state.${kind}`;
+      const text = t(key as never);
+      expect(text, `${locale} ${key}`).not.toBe(key);
+      expect(text.trim().length, `${locale} ${key}`).toBeGreaterThan(0);
+    }
+  });
+});

@@ -16,6 +16,13 @@ type MissingReasons = Exclude<GiftUnavailableReason, (typeof GIFT_UNAVAILABLE_RE
 export const GIFT_UNAVAILABLE_REASONS_COMPLETE: [MissingReasons] extends [never] ? true : never = true;
 /** The gift cannot be reserved or bought any more: its provider stopped offering it. Reads `availability` only: a legacy `status: "UNAVAILABLE"` marks nothing (R1). */
 export const isGiftUnavailable = (item: { readonly availability?: string }): boolean => item.availability === "UNAVAILABLE";
+/**
+ * 1.21.0 (agotado con reserva, decisión de Pablo 2026-11-28 #1): the product of this gift can no longer be bought. A gift somebody holds keeps its status
+ * and its reservations when its product leaves the gift lists (D-3), so `availability` stays AVAILABLE; `productUnavailable` is the flag for it, sent to the
+ * guest and to the host. The reservation stays: only the purchase is gone. Also true for a gift that is UNAVAILABLE (`availability`), in case an older server
+ * sends only that.
+ */
+export const isProductGone = (item: { readonly availability?: string; readonly productUnavailable?: boolean }): boolean => item.productUnavailable === true || item.availability === "UNAVAILABLE";
 /** The reason to show, only for one the contract knows (a newer server may add one: the screen then says it generically). */
 export const unavailableReasonOf = (item: { readonly unavailableReason?: string | null }): GiftUnavailableReason | null =>
   (GIFT_UNAVAILABLE_REASONS as readonly string[]).includes(item.unavailableReason ?? "") ? (item.unavailableReason as GiftUnavailableReason) : null;
@@ -31,6 +38,10 @@ export interface GiftItem {
   readonly availability?: GiftAvailability;
   /** 1.19.0 (R7): why the gift is unavailable; present only with `availability: "UNAVAILABLE"` and only in the host's lists. */
   readonly unavailableReason?: GiftUnavailableReason | null;
+  /** 1.21.0: the product can no longer be bought, also while the gift keeps its reservation (guest and host). Read it with `isProductGone`. */
+  readonly productUnavailable?: boolean;
+  /** 1.21.0: why, only for the host (MANAGE); always null for a guest (PF-1). */
+  readonly productUnavailableReason?: GiftUnavailableReason | null;
   /** 1.17.0 (R4): units wanted (1 before the assistant), the coordinated-gift switch, and the idea and version the host picked. */
   readonly quantity?: number; readonly groupGiftEnabled?: boolean; readonly giftIdeaCode?: string | null; readonly variantCode?: string | null;
   /** 1.18.0 (R5, GiftItemParticipation): what a guest may see of the units of the gift. Counts only; a name appears only when its owner chose to show it (PF-1). */

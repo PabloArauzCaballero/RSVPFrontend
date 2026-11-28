@@ -215,7 +215,7 @@ html:has(.celebration-gallery-dialog[open]) { overflow: hidden; }
 .celebration[data-section-style="bands"] .celebration-sections > section[data-section="rsvp"] { border-radius: 0; border-inline: 0; background: color-mix(in srgb, var(--celebration-accent) 9%, var(--celebration-surface)); }
 /* Gifts (P22): on every invitation, quiet like the other sections, with the same filled button as the reply. */
 .celebration-sections > section[data-section="gifts"] p { max-width: 40rem; }
-.celebration-sections > section[data-section="gifts"] .celebration-cta, .celebration-sections > section[data-section="rsvp"] .celebration-cta { margin-top: .5rem; }
+.celebration-sections > section[data-section="gifts"] .celebration-cta { margin-top: .5rem; }
 
 /* ---------------------------------------------------------------------------------------------------------------------
    Design document v2 (F4 b). Everything below is keyed to `.celebration-design`; v1 templates never match it.
@@ -267,6 +267,16 @@ body:has(.cdesign-dock) { padding-bottom: 5.5rem; }
   .celebration-design .cdesign-el[data-m]:not([data-d]) { display: none; }
   .celebration-design .cdesign-el[data-d] { display: block; }
 }
+/* Typography of an element: the phone canvas's values (`--tm-*`) at every width, the desktop canvas's (`--td-*`) from 900 px. A property the desktop canvas leaves out keeps the phone value (PLA-02); one neither sets is inherited. */
+.celebration-design .cdesign-el { font-size: var(--tm-size); font-weight: var(--tm-weight); text-align: var(--tm-align); line-height: var(--tm-lh); letter-spacing: var(--tm-ls); text-transform: var(--tm-tt); }
+.celebration-design .cdesign-el[data-sized] { --cd-size: var(--tm-size); }
+@media (min-width: 56.25rem) {
+  .celebration-design .cdesign-el { font-size: var(--td-size, var(--tm-size)); font-weight: var(--td-weight, var(--tm-weight)); text-align: var(--td-align, var(--tm-align)); line-height: var(--td-lh, var(--tm-lh)); letter-spacing: var(--td-ls, var(--tm-ls)); text-transform: var(--td-tt, var(--tm-tt)); }
+  .celebration-design .cdesign-el[data-sized-d] { --cd-size: var(--td-size, var(--tm-size)); }
+  .celebration-design .cdesign-el[data-sized-d] :is(h1, h2, h3, .cdesign-monogram) { font-size: 1em; }
+  .celebration-design .cdesign-el[data-sized-d] :is(.celebration-date, .celebration-hosts) { font-size: max(1.1rem, calc(var(--cd-size, 16px) * .3)); }
+  .celebration-design .cdesign-el[data-sized-d] .celebration-venue { font-size: max(1rem, calc(var(--cd-size, 16px) * .22)); }
+}
 /* An element with its own size: the cover title scales with it and the lines under it stay readable. */
 .celebration-design .cdesign-el[data-sized] :is(h1, h2, h3, .cdesign-monogram) { font-size: 1em; }
 .celebration-design .cdesign-el[data-sized] :is(.celebration-date, .celebration-hosts) { font-size: max(1.1rem, calc(var(--cd-size, 16px) * .3)); }
@@ -302,7 +312,15 @@ body:has(.cdesign-dock) { padding-bottom: 5.5rem; }
 .celebration-design .cdesign-cover[data-align="center"] picture { display: flex; justify-content: center; width: 100%; }
 .celebration-design .cdesign-intro { width: min(100%, var(--celebration-max-width)); margin: 0 auto .5rem; padding-inline: var(--celebration-space); box-sizing: border-box; }
 .celebration-design .cdesign-intro p { max-width: 40rem; }
-.celebration-design .cdesign-page[data-section="gifts"] .celebration-cta, .celebration-design .cdesign-page[data-section="rsvp"] .celebration-cta { width: 100%; max-width: 22rem; }
+.celebration-design .cdesign-page[data-section="gifts"] .celebration-cta { width: 100%; max-width: 22rem; }
+/* The reply and the gifts button are ONE block (FE #114 follow-up, decision 8): two primaries of the same weight, stacked on the phone and side by side from 768 px. Each one fills its half, so both have the same width and height; the block is renderer chrome, outside every canvas. */
+.celebration .celebration-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: .75rem; width: 100%; max-width: 44rem; box-sizing: border-box; align-items: stretch; margin-top: .5rem; }
+.celebration[data-align="center"] .celebration-actions, .celebration-design .celebration-actions { margin-inline: auto; }
+.celebration .celebration-actions .celebration-cta { width: 100%; max-width: none; min-height: 3rem; margin-top: 0; box-sizing: border-box; }
+@media (min-width: 48rem) { .celebration .celebration-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.celebration-design .cdesign-actions { width: min(100%, var(--celebration-max-width)); margin: 0 auto; padding: .5rem var(--celebration-space) max(1.5rem, calc(var(--celebration-gap, 3rem) / 2)); box-sizing: border-box; }
+/* The block sits on the axis of the page's title and text (they start at the left edge of the content column), not centred under them (PL-139-R2-V3). */
+.celebration-design .cdesign-actions .celebration-actions { margin-inline: 0; }
 
 /* Buttons of the document (gifts, reply, link). Solid is the default of .celebration-cta; outline and link are quieter. */
 .celebration .celebration-cta[data-variant="outline"] { background: transparent; color: var(--celebration-accent) !important; border: 2px solid var(--celebration-accent); }
@@ -312,12 +330,12 @@ body:has(.cdesign-dock) { padding-bottom: 5.5rem; }
 .celebration .cdesign-dock { position: fixed; z-index: 40; inset: auto 0 0 0; display: flex; gap: .5rem; padding: .5rem max(.75rem, env(safe-area-inset-right)) max(.5rem, env(safe-area-inset-bottom)) max(.75rem, env(safe-area-inset-left));
   background: var(--celebration-canvas); border-top: 1px solid var(--cd-line); box-sizing: border-box; }
 .celebration .cdesign-dock .celebration-cta { flex: 1 1 0; min-width: 0; padding: .6rem .75rem; font-size: .95rem; line-height: 1.2; }
-.celebration .cdesign-dock .celebration-cta[data-action="rsvp"], .celebration .cdesign-dock .celebration-cta[data-action="rsvp-help"] { background: transparent; color: var(--celebration-accent) !important; border: 2px solid var(--celebration-accent); }
 @media (max-width: 25rem) { .celebration .cdesign-dock .celebration-icon { display: none; } }
 @media (min-width: 56.25rem) {
   body:has(.cdesign-dock) { padding-bottom: 0; }
   .celebration .cdesign-dock { position: sticky; inset: 0 0 auto 0; justify-content: flex-end; border-top: 0; border-bottom: 1px solid var(--cd-line); padding-inline: var(--celebration-space); }
-  .celebration .cdesign-dock .celebration-cta { flex: 0 0 auto; padding-inline: 1.25rem; }
+  /* Same weight (decision 8): both buttons of the dock are the same width too, not the width of their words. */
+  .celebration .cdesign-dock .celebration-cta { flex: 0 0 16rem; padding-inline: 1.25rem; }
 }
 
 /* Entrance (P18): one time, transform and opacity only. Without motion preference the final state is what you get. */
@@ -340,10 +358,7 @@ body:has(.cdesign-dock) { padding-bottom: 5.5rem; }
 @media (min-width: 37.5rem) and (max-width: 56.1875rem) {
   .celebration-design .cdesign-page[data-page-kind="cover"] .cdesign-art { max-height: 13rem; width: auto; max-width: 100%; margin-inline: auto; }
 }
-/* The three states of «Ver regalos» (`giftsStatus`): the button stays and keeps its link; OPEN is the solid accent button, EMPTY (no gifts yet) a dashed accent outline on the surface, CLOSED a quiet line-and-muted one. Colours are palette roles, so each holds its contrast in both schemes. */
-.celebration .celebration-cta[data-action="gifts"][data-gifts-status="EMPTY"] { background: var(--celebration-surface); color: var(--celebration-accent) !important; border: 2px dashed var(--celebration-accent); }
-.celebration .celebration-cta[data-action="gifts"][data-gifts-status="CLOSED"] { background: var(--celebration-surface); color: var(--celebration-muted) !important; border: 2px solid var(--cd-line); }
-@media (hover: hover) { .celebration .celebration-cta[data-action="gifts"]:is([data-gifts-status="EMPTY"], [data-gifts-status="CLOSED"]):hover { background: color-mix(in srgb, var(--celebration-accent) 8%, var(--celebration-surface)); } }
+/* The states of «Ver regalos» (`giftsStatus`: OPEN, EMPTY, CLOSED) change its words (`celebration.gifts.cta*`), never its weight: the button leads to /c/{slug}/regalos in every state and is a primary of the same fill as the reply (decision 8; PL-139-R2-V1). A quieter look in any state would be a change to that decision, which only the product owner makes. */
 /* A photo that did not load (`Photo`): the same box on the palette's surface with the camera drawing, never a broken hole. */
 .celebration [data-photo-failed] { display: grid; place-items: center; box-sizing: border-box; background: var(--celebration-surface); border: 1px solid var(--cd-line); aspect-ratio: 4 / 3; width: 100%; overflow: clip; }
 .celebration .celebration-photo-art { display: block; width: min(40%, 6rem); height: auto; }
@@ -407,7 +422,7 @@ html:has(.cdesign-dock) { scroll-padding-bottom: 6rem; }
    the author's stylesheet is scoped to that container (see CustomCss), so it cannot match the page, the canvas, `main` or these blocks, nor inherit anything into them. Whatever the
    author draws inside a container is clipped to it (plus a small margin for shadows) and lives in its own stacking context, below the protected blocks. */
 .celebration .cdesign-dock { z-index: 2000 !important; }
-.celebration-design .cdesign-el.rsvp-protected { position: relative; z-index: 1000; }
+.celebration-design .cdesign-el.rsvp-protected, .celebration .celebration-actions.rsvp-protected { position: relative; z-index: 1000; }
 .celebration-design .cdesign-author { position: relative; display: block; min-height: 100%; min-width: 0; isolation: isolate; contain: layout; overflow: clip; overflow-clip-margin: 1.5rem; border-radius: inherit; }
 /* Blocks that are a picture or a shape, not text, fill their cell. */
 .celebration-design .cdesign-el:is([data-block="image"], [data-block="spacer"], [data-block="illustration"], [data-block="ornament"]) .cdesign-author { height: 100%; }

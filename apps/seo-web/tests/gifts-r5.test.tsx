@@ -182,7 +182,7 @@ describe("R5 · coordinated contribution («Entre varios»)", () => {
     expect(row.getByTestId(`gift-badge-${ID}`).textContent).toBe("Entre varios");
     expect(row.getByTestId(`gift-group-${ID}`).textContent).toBe("Todavía nadie se sumó");
     expect(row.queryByRole("link", { name: "Pedir por WhatsApp" })).toBeNull();
-    fireEvent.click(row.getByRole("button", { name: "Coordinar Vajilla" }));
+    fireEvent.click(row.getByRole("button", { name: "Coordinar este regalo: Vajilla" }));
     expect(screen.getByTestId("reserve-group-note").textContent).toContain("Quien se anota primero lo coordina");
     expect(screen.queryByTestId(`units-${ID}`)).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Confirmar reserva" }));
