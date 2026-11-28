@@ -293,8 +293,7 @@ function AnswerForm({ celebrationId, token, state, allowed, mode, onSaved, onClo
       {draft.status === "CONFIRMED" ? <CompanionsStepper value={draft.requestedCompanions} onChange={(requestedCompanions) => change({ requestedCompanions })} allowed={allowed} error={errors.requestedCompanions} /> : null}
       {draft.status ? <ExtrasFields dietaryNotes={draft.dietaryNotes} message={draft.message} onChange={change} errors={errors} /> : null}
       {Object.keys(errors).length ? <Text accessibilityRole="alert" style={[styles.muted, { color: palette.danger }]}>{t("rsvp.invite.errors.summary")}</Text> : null}
-      {failure ? <FailureNotice failure={failure} busy={busy} onRetry={() => { void submit(); }} /> : null}
-      <StickyActions>
+      <StickyActions label={t("common.actions")} summary={failure ? <FailureNotice failure={failure} busy={busy} onRetry={() => { void submit(); }} /> : undefined}>
         <ActionButton testID="rsvp-submit" label={label} busy={busy} onPress={() => { void submit(); }} />
         {onCancel ? <ActionButton icon="close" variant="secondary" label={t("rsvp.invite.cancelEdit")} disabled={busy} onPress={onCancel} testID="rsvp-cancel-edit" /> : null}
       </StickyActions>
@@ -386,7 +385,7 @@ function PublicRegistrationForm({ view, slug, cover, hosts, contact }: { readonl
         <Text testID="rsvp-privacy-link" accessibilityRole="link" style={[styles.body, { fontWeight: "600", textDecorationLine: "underline" }]} onPress={() => router.push("/privacidad")}>{t("legal.links.privacy")}</Text>
         {errors.consent ? <Text accessibilityRole="alert" style={[styles.muted, { color: palette.danger }]}>{errors.consent}</Text> : null}
         {Object.keys(errors).length ? <Text accessibilityRole="alert" style={[styles.muted, { color: palette.danger }]}>{t("rsvp.invite.errors.summary")}</Text> : null}
-        <StickyActions summary={failure ? <FailureNotice failure={failure} busy={busy} onRetry={() => { void submit(); }} /> : undefined}>
+        <StickyActions label={t("common.actions")} summary={failure ? <FailureNotice failure={failure} busy={busy} onRetry={() => { void submit(); }} /> : undefined}>
           <ActionButton testID="rsvp-register" label={busy ? t("rsvp.invite.submitting") : t("rsvp.invite.open.submit")} busy={busy} onPress={() => { void submit(); }} />
         </StickyActions>
       </View>

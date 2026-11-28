@@ -175,3 +175,37 @@ Reproducir: exportar con `EXPO_PUBLIC_API_URL=http://localhost:28000 npx expo ex
 2. Usa una pieza existente. Si necesitas un valor nuevo, agrégalo a `MOTION` aquí, no en la pantalla.
 3. Solo `transform` y `opacity`. Transición, no keyframes, salvo el pulso de carga.
 4. Prueba reduced-motion, interrupción y (si hay lista) el tope. Mide en Chrome real.
+
+## 8. Navegación entre pantallas (`fix/app-transiciones-suaves`)
+
+Quién decide cada movimiento al pasar de una pantalla a otra en las áreas con sesión (`(host)`, `(provider)`, `(admin)`). Código: `apps/universal/src/platform/navigation.tsx` y `PersistentShell` en `apps/universal/src/host/shell.tsx`. (Los valores de `screenMs`/`sectionMs` de la sección 2 son los de `packages/ui/src/motion-tokens.ts`: 360 / 220 ms; la tabla de arriba quedó atrasada.)
+
+| Momento | Frecuencia | Propósito | Decisión |
+|---|---|---|---|
+| Barra lateral, barra superior e inferior | decenas/día | continuidad | No se mueven ni se remontan: el marco se monta una vez en el layout del grupo y solo cambia el resaltado. Una pantalla informa al marco (`ShellPublisher`, solo mientras es la enfocada; el `Stack` conserva las anteriores montadas y no deben pisar el resaltado) |
+| Destino o pestaña hermana | decenas/día | evitar el salto | Sin deslizamiento del `Stack` (`animation: "none"`); el único movimiento es el fundido del contenido (`ScreenTransition`) |
+| Pantalla de detalle (un invitado, un ítem) | ocasional | dirección | Empuje nativo de la plataforma y gesto de volver |
+| Cruzar el ancho de escritorio (960 px) | raro | estabilidad | Un solo árbol para el marco y para la pantalla: ni el `Stack` ni el contenido se remontan; lo escrito, su estado y el foco dentro del contenido se conservan. La cabecera cambia de sitio (franja fija en ancho, parte de la página que se desplaza en estrecho) y se dibuja de nuevo: el foco que estaba en el título o en la pestaña activa se les devuelve; el de otro control de la cabecera (otra pestaña, una acción, un menú abierto) no |
+| Esqueleto de carga | ocasional | estado | Aparece solo si la espera supera `MOTION.loadingDelayMs` (150 ms): un chunk o dato en caché nunca lo muestra |
+| Movimiento reducido (sistema) | siempre | accesibilidad | Sin deslizamiento en ninguna pantalla; el fundido del contenido también se anula |
+
+**Llegada a una pantalla (foco y anuncio)**, en `apps/universal/src/platform/screen-arrival.ts`. La decide el **foco del navegador** (`focus`/`blur`), no el montaje: el `Stack` conserva montadas las pantallas anteriores, así que volver a una no monta nada. Esto sustituye lo que la sección 2 atribuía a `ScreenTransition` dentro de `Screen` (que ahora le pasa `focusHeading={false}`).
+
+| Caso | Foco | Nombre del documento (web) |
+|---|---|---|
+| Primera pantalla de la sesión | No se mueve | `<título> · DOne` |
+| Navegación por menú, enlace, atrás o adelante | Título (h1) de la pantalla que queda delante | `<título> · DOne` |
+| Pestaña de sección | La pestaña activa de la pantalla que se abre | `<título> · DOne` |
+| El esqueleto de código cede a la pantalla | Se devuelve solo si se fue con el nodo anterior | sin cambio |
+| Volver desde una ruta que no dibuja `Screen` | Título (h1): también es una navegación | `<título> · DOne` |
+| Redibujado (datos nuevos, cruce de 960 px) | No se mueve (en el cruce, título y pestaña activa conservan el foco que tenían) | sin cambio |
+
+El nombre del documento tiene dueño por **identidad** (la última pantalla que lo escribió), nunca por su texto: en un `push`, la pantalla nueva escribe el suyo antes de que la anterior reciba `blur`, y varias comparten título (secciones del editor, las dos pestañas de Regalos).
+
+En nativo el mismo contrato usa `AccessibilityInfo` (`moveScreenFocus`); no se ejecutó en dispositivo.
+
+Límite conocido: con «adelante» del navegador, expo-router 6.0.24 reconstruye el estado desde el historial y **remonta el área** (marco incluido). Ocurre también en la rama oficial con sus pantallas. Resaltado, foco y título quedan bien; el estado local de la pantalla restaurada no se conserva.
+
+Las zonas se precargan en segundo plano al montar el marco (`usePrefetchZone`) para que el primer cambio de pestaña no espere un chunk. Interrupción: el `Stack` resuelve cada toque contra el estado actual; navegar a mitad de otra transición termina en el último destino, una sola pantalla visible.
+
+Pruebas: `apps/universal/test/shell-persistence.test.tsx` (vitest: varias pantallas montadas como en el `Stack`) y `apps/universal/e2e/transitions.spec.ts` (Playwright, proyecto `transitions`, no corre en CI): marco sin remontes, primer pintado con menú, cruce de ancho con lo escrito, foco y título por menú, hoja «Más» y pestañas (incluidas pantallas que comparten título), foco en el título al cruzar 960 px, enlaces profundos y atrás/adelante, movimiento reducido (con control no vacío), interrupción, esqueleto solo en destinos lentos, 360/768/1280 × claro/oscuro × es-BO/en-US con axe. La medición de cuadros no es una puerta salvo con `TRANSITION_BUDGET_MS`. No se prueba en iOS/Android nativos.
