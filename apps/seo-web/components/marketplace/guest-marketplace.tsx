@@ -90,7 +90,7 @@ function ProviderCard({ card, categoryName, t, locale, celebrationId }: { readon
         {card.imageUrl ? <img src={card.imageUrl} alt="" width={480} height={360} loading="lazy" decoding="async" /> : <Monogram name={business} />}
       </div>
       <div className="mkt-card__body">
-        <h3><a href={`/p/${encodeURIComponent(card.providerSlug)}`} data-link-kind="internal">{business}</a></h3>
+        <h2><a href={`/p/${encodeURIComponent(card.providerSlug)}`} data-link-kind="internal">{business}</a></h2>
         <p className="mkt-card__meta">{card.name !== business ? t("directory.guestMarketplace.offerOf", { offer: card.name, category: categoryName }) : categoryName} · {card.city}</p>
         {card.summary ? <p className="mkt-card__summary">{card.summary}</p> : null}
         <p className="mkt-card__tags">
