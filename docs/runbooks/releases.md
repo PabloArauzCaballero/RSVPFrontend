@@ -44,5 +44,5 @@ Si cambia código nativo, se requiere una nueva build de producción, no una act
 
 ## Interruptor `GUEST_MARKETPLACE` (seo-web)
 
-Variable de runtime del contenedor `seo-web` (declarada en `docker-compose.coolify.yml`, valor por defecto `off`). Con `on` se abren `/c/{slug}/proveedores` y sus entradas (invitación y RSVP); con cualquier otro valor la ruta responde 404 y no hay entradas. Encender primero en TEST, y solo con el backend `provider-catalog` 3.8.0 o superior ya desplegado. Apagarla revierte al instante. No encender en producción hasta cumplir los requisitos de `docs/progress/marketplace-invitado-fe.md`.
+Variable de runtime del contenedor `seo-web` (declarada en `docker-compose.coolify.yml`, valor por defecto `off`). Con `on` se abren `/c/{slug}/proveedores` y sus entradas (invitación y RSVP); con cualquier otro valor la ruta responde 404 y no hay entradas. Encender primero en TEST, y solo con el backend `provider-catalog` 3.15.0 o superior ya desplegado. Apagarla revierte al instante. No encender en producción hasta cumplir los requisitos de `docs/progress/marketplace-invitado-fe.md`.
 

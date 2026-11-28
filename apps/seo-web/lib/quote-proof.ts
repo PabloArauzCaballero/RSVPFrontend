@@ -1,5 +1,5 @@
 /**
- * Browser side of the anonymous quote's proof of work (Provider Catalog 3.12.0, PROVIDER_ANON_QUOTES=proof): find a nonce so that
+ * Browser side of the anonymous quote's proof of work (Provider Catalog 3.15.0, PROVIDER_ANON_QUOTES=proof): find a nonce so that
  * SHA-256(`${challenge}:${nonce}`) starts with `difficulty` zero bits. It costs the sender a moment of CPU and nothing else: no third-party
  * script, no cookie, no identifier. The work yields to the page often, so the form stays responsive and the screen reader hears the status.
  */

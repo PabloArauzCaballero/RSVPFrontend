@@ -115,7 +115,7 @@ export interface paths {
         };
         /**
          * Published listings of verified providers by title (consumed by gift-list-service)
-         * @description R2 (3.5.0, decision 11): a PRODUCT is listed only when published, COMPLETE and not hidden, from a VERIFIED provider; SERVICE listings as before. imageUrl of a product is the card of its cover photo.
+         * @description R2 (3.5.0, decision 11) and R3 (3.7.0, §5.5): a PRODUCT is listed only when eligible for the gift recommendation: published, COMPLETE and not hidden, stock other than OUT_OF_STOCK, from a VERIFIED provider below its monthly lead cap; SERVICE listings as before. imageUrl of a product is the card of its cover photo. With city, products that deliver there come first. ORDER (3.7.0, decision pending for the product owner): the city comes BEFORE relevance, so a product that delivers to the city but matches fewer words is listed above a better match that does not deliver there; the alternative (relevance first, city as a tie-break) is not decided.
          */
         get: operations["searchListings"];
         put?: never;
@@ -519,7 +519,7 @@ export interface paths {
         put?: never;
         /**
          * Create an unpublished listing
-         * @description 422 CATEGORY_TYPE_MISMATCH when the listing type differs from the category's listingType (R1, 3.4.0). R2 (3.5.0): Idempotency-Key; PRODUCT sheet fields; 422 IMAGE_URL_NOT_ALLOWED, PRICE_OUT_OF_RANGE, GIFT_IDEA_NOT_ALLOWED, UNKNOWN_CITY, CONTACT_IN_TEXT, DESCRIPTION_REPEATS_TITLE, PRODUCT_FIELDS_ONLY. The response is the ProductSheet (a superset of Listing) with completeness and missing.
+         * @description 422 CATEGORY_TYPE_MISMATCH when the listing type differs from the category's listingType (R1, 3.4.0). R2 (3.5.0): Idempotency-Key; PRODUCT sheet fields; 422 IMAGE_URL_NOT_ALLOWED, PRICE_OUT_OF_RANGE, GIFT_IDEA_NOT_ALLOWED, UNKNOWN_CITY, CONTACT_IN_TEXT, DESCRIPTION_REPEATS_TITLE, PRODUCT_FIELDS_ONLY. The response is the ProductSheet (a superset of Listing) with completeness and missing. 422 STOCK_MISMATCH_DEFAULT_VARIANT (3.6.0): with variants, stock must be the default variant's stock or be left out; a PATCH of stock alone is checked against the stored default variant.
          */
         post: operations["createListing"];
         delete?: never;
@@ -544,7 +544,7 @@ export interface paths {
         head?: never;
         /**
          * Edit a listing (R2); a published product stays published and its completeness is recomputed
-         * @description variants[] replaces the list (kept ids keep their photos), photoOrder reorders the photos. provider.listing.completeness-changed.v1 is emitted only when the state or missing[] changes. HIDDEN_BY_ADMIN survives the edit. The own gift catalog (SNAPSHOT_V1) is 409 LISTING_NOT_EDITABLE.
+         * @description variants[] replaces the list (kept ids keep their photos), photoOrder reorders the photos. provider.listing.completeness-changed.v1 is emitted only when the state or missing[] changes. HIDDEN_BY_ADMIN survives the edit. The own gift catalog (SNAPSHOT_V1) is 409 LISTING_NOT_EDITABLE. 422 STOCK_MISMATCH_DEFAULT_VARIANT (3.6.0): with variants, stock must be the default variant's stock or be left out; a PATCH of stock alone is checked against the stored default variant.
          */
         patch: operations["patchListing"];
         trace?: never;
@@ -711,7 +711,7 @@ export interface paths {
         put?: never;
         /**
          * Persist a quote request, create a form lead and emit QuoteRequested (signed in, or anonymous where enabled)
-         * @description Decision (DECISIONS.md 2026-11-05): quotes may be anonymous only when PROVIDER_ANON_QUOTES is `captcha` (default when a captcha verifier is configured) or `open` (local development). Anonymous requests need contact.email, are limited to 5 per hour per client address (429 + Retry-After) and 3 per day per contact e-mail and provider (429 QUOTE_LIMIT_REACHED), reject a filled honeypot `website` (422 QUOTE_REJECTED) and, in captcha mode, a valid captchaToken (403 CAPTCHA_FAILED). With mode `off` (default without a verifier) anonymous requests answer 401 ANONYMOUS_QUOTES_DISABLED. Date requests (bookings) always require an account.
+         * @description Decision (DECISIONS.md 2026-11-05): quotes may be anonymous only when PROVIDER_ANON_QUOTES is `captcha` (default when a captcha verifier is configured) or `open` (local development). Anonymous requests need contact.email, are limited to 5 per hour per client address (429 + Retry-After) and 3 per day per contact e-mail and provider (429 QUOTE_LIMIT_REACHED), reject a filled honeypot `website` (422 QUOTE_REJECTED) and, in captcha mode, a valid captchaToken (403 CAPTCHA_FAILED). With mode `off` (default without a verifier) anonymous requests answer 401 ANONYMOUS_QUOTES_DISABLED. Date requests (bookings) always require an account. 3.15.0: mode `proof` (self-hosted proof of work, 403 PROOF_FAILED) joins captcha and open; origin, proof and the lead rules of the 24 h window are described in info.description. Anonymous requests are also limited per device.
          */
         post: operations["requestQuote"];
         delete?: never;
@@ -1452,6 +1452,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/providers/gift-ideas/recommendations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Gift ideas with eligible products for an event type and a city (public, Cache-Control: public, max-age=60)
+         * @description R3 (§5.5). Anonymous and read-only: it takes only the event type and the city of the celebration. Eligible product: VERIFIED provider below its monthly lead cap, PRODUCT published, COMPLETE, not hidden, stock other than OUT_OF_STOCK, declaring the idea. Order inside an idea: featured, delivers to the city, catalog score (location tier of the listing against the city, then plan), shorter lead time, older. Query parameters: only eventType, city, ideas, productsPerIdea, offset and locale are accepted; ANY other parameter (a cache-buster such as ?_=1 included) or one given twice is 422 INVALID_QUERY (details.parameters lists the unknown ones), so a client must not append parameters. An eventType that is well formed but unknown to the catalog is not an error: it falls back to scope ALL_IDEAS (every idea with eligible products).
+         */
+        get: operations["recommendGiftIdeas"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/providers/health": {
         parameters: {
             query?: never;
@@ -1575,6 +1595,23 @@ export interface paths {
         };
         /** The caller's partner requests, newest first, with status and statusReason */
         get: operations["listMyPartnerRequests"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/quote-access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Whether anonymous quote requests are open, and a proof-of-work challenge (public, not cacheable) */
+        get: operations["getQuoteAccess"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1789,6 +1826,12 @@ export interface components {
                 weekdays: number[];
             }[];
         };
+        /** @description Exact price in bolivianos (decision 30), in minor units. */
+        BobPrice: {
+            amountMinor: number;
+            /** @constant */
+            currency: "BOB";
+        };
         Booking: {
             /** Format: date */
             date: string;
@@ -1888,6 +1931,11 @@ export interface components {
             imageUrl?: string;
             /** Format: uuid */
             listingId: string;
+            /**
+             * @description Type of the offer shown (additive in 3.15.0).
+             * @enum {string}
+             */
+            listingType?: "SERVICE" | "PRODUCT";
             name: string | null;
             priceFrom?: components["schemas"]["DevCompatMoney"];
             /**
@@ -1899,6 +1947,8 @@ export interface components {
             providerName: string | null;
             providerSlug: string | null;
             score?: number;
+            /** @description True when the provider plan (FEATURED or PREMIUM) raised this card in the ranking; clients must say so (additive in 3.15.0). */
+            sponsored?: boolean;
             summary?: string;
             verified: boolean;
         };
@@ -2343,6 +2393,8 @@ export interface components {
         CategoryList: {
             items?: {
                 code?: string;
+                /** @description Only with view=marketplace: providers with an eligible offer in the category. */
+                count?: number;
                 /**
                  * @description Offer type for this category. Null means that services and products can use it.
                  * @enum {string|null}
@@ -2352,6 +2404,8 @@ export interface components {
                 names?: {
                     [key: string]: string;
                 };
+                /** @description Only with view=marketplace: position for the requested event type. */
+                order?: number;
                 slug?: string;
             }[];
         };
@@ -2409,6 +2463,7 @@ export interface components {
             priceFromMinor?: number;
             /** @description R2: exact price in BOB minor units, greater than 0 and below PROVIDER_LISTING_MAX_PRICE_MINOR (20 000 000 = Bs 200 000 by default, §5.13; otherwise 422 PRICE_OUT_OF_RANGE). With variants it is the default variant's price. */
             priceMinor?: number;
+            /** @description Stock: with variants it is the default variant's stock (422 STOCK_MISMATCH_DEFAULT_VARIANT when a different one is sent). */
             stock?: components["schemas"]["Stock"];
             titles: {
                 [key: string]: string;
@@ -3112,6 +3167,38 @@ export interface components {
             /** @description null in every idea for now (decision 10). */
             priceHintMinor: number | null;
         };
+        GiftRecommendation: {
+            idea: {
+                code: string;
+                /** @description In the requested locale. */
+                name: string;
+            };
+            /** @description offset of the next page of this idea (send it with ideas=<this code>), or null. */
+            nextOffset: number | null;
+            /** @description Lowest and highest price among the products of the idea and their versions in stock. */
+            priceRange: {
+                /** @constant */
+                currency: "BOB";
+                maxMinor: number;
+                minMinor: number;
+            };
+            /** @description Eligible products of the idea (all pages). */
+            productCount: number;
+            /** @description This page of the idea, in recommendation order (empty past the last product). */
+            products: components["schemas"]["RecommendedProductCard"][];
+        };
+        GiftRecommendations: {
+            city: string | null;
+            /** @description The eventType asked for, upper-cased. */
+            eventType: string | null;
+            /** @description Only ideas with eligible products (decision 3), in the order of the approved table (§5.4). */
+            items: components["schemas"]["GiftRecommendation"][];
+            /**
+             * @description EVENT_TYPE: the ideas of the event type. ALL_IDEAS: no event type, or one without ideas yet (every idea, §5.4). REQUESTED: exactly the ideas asked for.
+             * @enum {string}
+             */
+            scope: "EVENT_TYPE" | "ALL_IDEAS" | "REQUESTED";
+        };
         /** @description A whole directory page in one request: 1 to 50 distinct listing ids (duplicates collapse). Ids that are unknown, unpublished or of a non-VERIFIED provider are skipped, not rejected. */
         ImpressionsRequest: {
             listingIds: string[];
@@ -3303,6 +3390,7 @@ export interface components {
             /** @description R2: optimistic-lock version (ETag). */
             version?: number;
         };
+        ListingDetail: components["schemas"]["ListingSummary"] & Record<string, never>;
         ListingPhoto: {
             altText: string | null;
             /**
@@ -3391,8 +3479,12 @@ export interface components {
         };
         ListingSummary: {
             category?: string;
+            /** @description 3.7.0: only on PRODUCT items of GET /listings?city=; true when the product delivers to that city. */
+            deliversToCity?: boolean;
             /** @description Destination types available through the public redirector. Returned by GET /listings/{listingId} without target URLs. */
             destinationTypes?: components["schemas"]["Destination"][];
+            /** @description 3.7.0: only on GET /listings/{listingId}. True when the listing is a product a host can add as a gift now (VERIFIED provider below its lead cap, PRODUCT published, COMPLETE, not hidden, not OUT_OF_STOCK). A non-eligible listing still answers 200 so gifts already added keep reading it. */
+            giftEligible?: boolean;
             /** Format: uuid */
             id: string;
             /** Format: uri */
@@ -3805,6 +3897,7 @@ export interface components {
             priceFromMinor?: number;
             /** @description R2: exact price in BOB minor units, greater than 0 and below PROVIDER_LISTING_MAX_PRICE_MINOR (20 000 000 = Bs 200 000 by default, §5.13; otherwise 422 PRICE_OUT_OF_RANGE). With variants it is the default variant's price. */
             priceMinor?: number;
+            /** @description Stock: with variants it is the default variant's stock (422 STOCK_MISMATCH_DEFAULT_VARIANT when a different one is sent). */
             stock?: components["schemas"]["Stock"];
             titles?: {
                 [key: string]: string;
@@ -4081,6 +4174,11 @@ export interface components {
             imageUrl?: string;
             /** Format: uuid */
             listingId: string;
+            /**
+             * @description Type of the offer shown (additive in 3.15.0).
+             * @enum {string}
+             */
+            listingType?: "SERVICE" | "PRODUCT";
             name: string;
             priceFrom?: components["schemas"]["Money"];
             /**
@@ -4092,6 +4190,8 @@ export interface components {
             providerName: string;
             providerSlug: string;
             score?: number;
+            /** @description True when the provider plan (FEATURED or PREMIUM) raised this card in the ranking; clients must say so (additive in 3.15.0). */
+            sponsored?: boolean;
             summary?: string;
             verified: boolean;
         };
@@ -4202,6 +4302,20 @@ export interface components {
             };
             quotes: number;
         };
+        QuoteAccess: {
+            /**
+             * @description How anonymous visitors may request quotes in this deployment (off: they must sign in).
+             * @enum {string}
+             */
+            anonymousQuotes: "off" | "captcha" | "proof" | "open";
+            /** @description Present in proof mode: a fresh challenge. Find a nonce so that SHA-256(challenge + ':' + nonce) starts with `difficulty` zero bits. */
+            proof?: {
+                challenge: string;
+                difficulty: number;
+                /** Format: date-time */
+                expiresAt: string;
+            };
+        };
         QuoteInput: {
             budgetMinor?: number;
             /** @description Anonymous requests only, when the deployment runs PROVIDER_ANON_QUOTES=captcha */
@@ -4219,6 +4333,20 @@ export interface components {
             listingIds: string[];
             locale?: string;
             message?: string;
+            /** @description Where the guest was before the form (statistics only; see 3.15.0). Unknown keys (guestId, token, slug) are ignored. */
+            origin?: {
+                /** Format: uuid */
+                celebrationId?: string;
+                /** @description Type of the celebration of origin, not of the event the guest wants to hire. */
+                eventType?: string;
+                /** @enum {string} */
+                surface: "PUBLIC_SITE" | "SEARCH" | "CELEBRATION_SITE" | "GIFT_LIST" | "EMAIL" | "APP";
+            };
+            /** @description Anonymous requests when PROVIDER_ANON_QUOTES=proof: the challenge of GET /providers/quote-access and the nonce that solves it (accepted once). */
+            proof?: {
+                challenge: string;
+                nonce: string;
+            };
             /** @description Honeypot for anonymous requests: must be empty or absent (a filled value is rejected as a bot). */
             website?: string;
         };
@@ -4241,6 +4369,55 @@ export interface components {
         };
         ReasonRequest: {
             reason: string;
+        };
+        /** @description What a host or planner needs to choose a product (§5.5). Never carries destination URLs, the WhatsApp template, the owner or lead data (PF-1). */
+        RecommendedProductCard: {
+            /** @description The product delivers to the requested city (delivery.coverageCities). Products of other cities are shown after, never hidden. */
+            deliversToCity: boolean;
+            /** @description Redirect destination types enabled for the product; open them through GET /r/{listingId}?destination=…, never directly. */
+            destinations: components["schemas"]["Destination"][];
+            /** @description Sponsored placement, set only by an administrator (decision 18). */
+            featured: boolean;
+            leadTimeDays: number;
+            /** Format: uuid */
+            listingId: string;
+            /** @description Cover photo (the first READY photo). Null only when the deployment has no media bucket configured. */
+            photo: null | {
+                altText: string | null;
+                /**
+                 * Format: uri
+                 * @description WebP, 480 px.
+                 */
+                card: string;
+                /**
+                 * Format: uri
+                 * @description WebP, 160 px.
+                 */
+                thumb: string;
+            };
+            price: components["schemas"]["BobPrice"];
+            provider: {
+                name: string;
+                slug: string;
+                /** @constant */
+                verified: true;
+            };
+            /** @description 0 = free shipping. */
+            shippingCostMinor: number;
+            stock: components["schemas"]["Stock"];
+            /** @description In the requested locale. */
+            title: string;
+            /** @description Versions in position order, including those OUT_OF_STOCK (marked). */
+            variants: {
+                /**
+                 * Format: uuid
+                 * @description The version a gift stores (R4).
+                 */
+                id: string;
+                label: string;
+                price: components["schemas"]["BobPrice"];
+                stock: components["schemas"]["Stock"];
+            }[];
         };
         RegisterProvider: {
             /** @default BOB */
@@ -5024,9 +5201,12 @@ export interface operations {
     searchListings: {
         parameters: {
             query?: {
+                /** @description 3.7.0 (M26): city slug of the event (GET /providers/geo). Products that deliver there (delivery.coverageCities) come first, and every product item carries deliversToCity. An unknown slug only means nobody delivers there. */
+                city?: string;
                 limit?: number;
                 /** @description Overrides Accept-Language. */
                 locale?: "es-BO" | "en-US";
+                /** @description Words of 3 or more characters match as substrings of the title, the names of the product's gift ideas, the category names or the description; words of 1 or 2 characters (Spanish and English articles and prepositions are ignored) match only whole words of the title, gift ideas or category. A listing matches when any word matches and ranks by title, then gift idea and category, then description. */
                 q?: string;
                 type?: "SERVICE" | "PRODUCT";
             };
@@ -5070,7 +5250,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ListingSummary"];
+                    "application/json": components["schemas"]["ListingDetail"];
                 };
             };
             404: components["responses"]["NotFound"];
@@ -6188,6 +6368,14 @@ export interface operations {
                 city?: string;
                 /** @description Coverage zone declared in fulfillment. */
                 coverage?: string;
+                /** @description Event type code of celebration-site (WEDDING, QUINCEANERA...). Breaks ties between equal scores using the category order of that event type; never filters. */
+                eventType?: string;
+                /** @description One card per provider (its best offer); total counts providers. */
+                groupBy?: "provider";
+                /** @description Latitude of the point; send with lng. More than 8 decimals are truncated. Outside view=marketplace a malformed value is ignored. */
+                lat?: number;
+                /** @description Longitude of the point; send with lat. More than 8 decimals are truncated. Outside view=marketplace a malformed value is ignored. */
+                lng?: number;
                 /** @description Overrides Accept-Language. */
                 locale?: "es-BO" | "en-US";
                 maxPriceMinor?: number;
@@ -6195,10 +6383,16 @@ export interface operations {
                 near?: string;
                 page?: number;
                 pageSize?: number;
+                /** @description Radius around lat/lng; only with lat and lng. */
+                radiusKm?: number;
                 /** @description Provider slug; returns only that provider's published listings (empty page when unknown or not VERIFIED). */
                 slug?: string;
+                /** @description Keeps only offers of this type. */
+                type?: "SERVICE" | "PRODUCT";
                 /** @description Accepted for compatibility; every result is verified. */
                 verified?: boolean;
+                /** @description Guest marketplace rules (see 3.15.0 in info.description). Another value is 422 INVALID_QUERY. */
+                view?: "marketplace";
             };
             header?: never;
             path?: never;
@@ -6215,6 +6409,7 @@ export interface operations {
                     "application/json": components["schemas"]["CanonicalCompatProviderPage"];
                 };
             };
+            404: components["responses"]["NotFound"];
             422: components["responses"]["Validation"];
         };
     };
@@ -8853,10 +9048,16 @@ export interface operations {
     listCategories: {
         parameters: {
             query?: {
+                /** @description With view=marketplace: count only providers with an offer in this city (slug). */
+                city?: string;
+                /** @description With view=marketplace: order of the categories for this event type. */
+                eventType?: string;
                 /** @description Overrides Accept-Language. */
                 locale?: "es-BO" | "en-US";
                 /** @description Keeps the categories that accept this listing type: listingType equal to it or null (null accepts both). Another value is 422 INVALID_QUERY. */
                 type?: "PRODUCT" | "SERVICE";
+                /** @description Categories of the guest marketplace with order and count; cannot be combined with type. */
+                view?: "marketplace";
             };
             header?: never;
             path?: never;
@@ -8873,6 +9074,7 @@ export interface operations {
                     "application/json": components["schemas"]["CategoryList"];
                 };
             };
+            404: components["responses"]["NotFound"];
             422: components["responses"]["Validation"];
         };
     };
@@ -8920,6 +9122,42 @@ export interface operations {
                     "application/json": {
                         items: components["schemas"]["GiftIdea"][];
                     };
+                };
+            };
+            422: components["responses"]["Validation"];
+        };
+    };
+    recommendGiftIdeas: {
+        parameters: {
+            query?: {
+                /** @description City slug of the celebration (GET /providers/geo). Without it nobody delivers to the city and every listing is in the country tier. */
+                city?: string;
+                /** @description Event type code of the celebration (WEDDING, QUINCEANERA, BAUTIZO, ANNIVERSARY, BIRTHDAY, CORPORATE…), any case. A type without ideas yet gets every idea (scope ALL_IDEAS). */
+                eventType?: string;
+                /** @description Comma-separated gift-idea codes (GET /providers/gift-ideas); when present only these ideas are answered (scope REQUESTED). At most 25 entries, counted as sent (duplicates included; more is 422 INVALID_QUERY); repeated codes are answered once. An unknown or inactive code is 422 UNKNOWN_GIFT_IDEA (details.giftIdeas). */
+                ideas?: string;
+                /** @description Overrides Accept-Language. Any value other than es-BO or en-US is 422 INVALID_QUERY. */
+                locale?: "es-BO" | "en-US";
+                /** @description Page of ONE idea: an offset above 0 needs exactly one code in ideas (422 INVALID_QUERY otherwise). */
+                offset?: number;
+                productsPerIdea?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Recommendation */
+            200: {
+                headers: {
+                    "Cache-Control"?: "public, max-age=60";
+                    /** @description The language is chosen by Accept-Language when ?locale= is absent. */
+                    Vary?: "Accept-Language";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GiftRecommendations"];
                 };
             };
             422: components["responses"]["Validation"];
@@ -9127,6 +9365,27 @@ export interface operations {
                 };
             };
             401: components["responses"]["Unauthorized"];
+        };
+    };
+    getQuoteAccess: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Quote access */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuoteAccess"];
+                };
+            };
+            429: components["responses"]["RateLimited"];
         };
     };
     ready: {
@@ -9512,13 +9771,14 @@ export interface operations {
                 country?: string;
                 /** @description Absent means the primary destination of the listing: PRODUCT_PAGE of a product, otherwise the first stored and enabled destination in this enum order. */
                 destination?: "OFFICIAL_SITE" | "LANDING" | "WHATSAPP" | "PHONE" | "EMAIL" | "INSTAGRAM" | "PRODUCT_PAGE";
-                /** @description Requires celebrationId. */
+                /** @description Deprecated and ignored since 3.15.0 (PF-1): accepted so old clients do not fail, never stored and never the actor of the lead event. */
                 guestId?: string;
                 locale?: string;
-                /** @description Referrer; defaults to the Referer header. */
+                /** @description Referrer; defaults to the Referer header. Only the origin is kept when the path is under /c/ (invitation and guest pages). */
                 ref?: string;
                 /** @description Visitor session; derived from IP and user agent when absent. */
                 sessionId?: string;
+                /** @description CELEBRATION_SITE (guest marketplace tab) is one valid lead per visitor, offer and button every 24 hours. */
                 surface?: "PUBLIC_SITE" | "SEARCH" | "CELEBRATION_SITE" | "GIFT_LIST" | "EMAIL" | "APP" | "QUOTE_FORM";
             };
             header?: never;

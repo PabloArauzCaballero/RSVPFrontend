@@ -41,3 +41,7 @@ Contra el backend real, en la base de datos de la prueba: con un Chrome normal l
 5. Anfitrión: que su propia pestaña de vista previa no cobra (queda como limitación declarada en la web anónima; ver el documento del backend).
 6. Interruptor: apagar `GUEST_MARKETPLACE` en seo-web y en el backend, y comprobar 404 de la pestaña, ausencia de entradas y de la lectura `view=marketplace`.
 7. App instalada (iOS y Android): la ruta `/c/{slug}/proveedores` abre dentro de la vista web; el formulario nativo de cotización no manda `origin`.
+
+## Contratos y pin del backend (requisito de la cola de fusión)
+
+`packages/contracts` (spec vendorizado `provider-catalog` 3.15.0 y tipos generados) se regeneró con `generate --ref 28e570072c75…`, el SHA de la **rama** del backend `feat/req-proveedores-evento-be`; sirve para tipar y para que `check:generated` pase. `backend.lock.json` debe fijar el backend **desplegado**: al fusionar el BE hay que volver a correr `RSVP_BACKEND_REPO=../RSVPBackend yarn workspace @rsvp/contracts generate --ref <SHA fusionado>` y abrir el PR de FE con ese lock; mientras tanto este FE **no puede fusionarse antes que el BE** (orden: mapas → imágenes → proveedores). Los textos «3.15.0» (compose, runbook, este documento) siguen la decisión de coordinación de versiones.

@@ -76,7 +76,7 @@ export function providerService(client: ApiClient) {
     quotes: (providerId: string, limit = 20, cursor?: string) => client.request<ProviderQuotePage>(`${base(providerId)}/quotes${qs({ limit, cursor })}`),
     /** GET /providers/{id}/quotes/{quoteId}: the contact the requester gave, to answer them. */
     quote: (providerId: string, quoteId: string) => client.request<ProviderQuote>(`${base(providerId)}/quotes/${encodeURIComponent(quoteId)}`),
-    /** GET /providers/quote-access (3.12.0): public. A fresh challenge every call; it is solved once. */
+    /** GET /providers/quote-access (3.15.0): public. A fresh challenge every call; it is solved once. */
     quoteAccess: () => client.request<QuoteAccess>("/providers/quote-access", { auth: false }),
     requestQuote: (providerId: string, body: QuoteInput, locale: string) => client.request<QuoteReceipt, QuoteInput>(`${base(providerId)}/quotes${qs({ locale })}`, { method: "POST", body }),
     /**

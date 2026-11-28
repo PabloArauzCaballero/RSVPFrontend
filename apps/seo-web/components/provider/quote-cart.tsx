@@ -38,7 +38,7 @@ function QuoteBody({ slug, providerId, providerName, offers, preselected, locale
   const retryAfter = quote.error instanceof ApiError ? quote.error.retryAfterSeconds : undefined;
   const [signedIn, setSignedIn] = useState(false);
   useEffect(() => { setSignedIn(readVisitorToken() !== null); }, []);
-  // 3.12.0: how anonymous quotes work in this deployment. A failure to ask changes nothing: the form behaves as before and the service answers.
+  // 3.15.0: how anonymous quotes work in this deployment. A failure to ask changes nothing: the form behaves as before and the service answers.
   const [access, setAccess] = useState<QuoteAccess['anonymousQuotes'] | undefined>(undefined);
   const [proving, setProving] = useState(false);
   const [proofFailed, setProofFailed] = useState(false);

@@ -4,7 +4,7 @@
  * thumbnails are static art keyed by the category slug (see `MARKETPLACE_THUMBS`). A category the art does not know (one an admin
  * created) gets the generic tile: the row never breaks.
  *
- * Consumer contract: provider-catalog 3.8.0 (provisional; assigned at merge). Nothing here sends a guest identifier.
+ * Consumer contract: provider-catalog 3.15.0 (provisional; assigned at merge). Nothing here sends a guest identifier.
  */
 
 /** Slugs of the 20 categories that have a 3D thumbnail (files under apps/seo-web/public/marketplace/v1). Same order as the wedding order. */
@@ -38,7 +38,7 @@ export interface MarketplaceCategory {
   readonly count: number;
 }
 
-/** One card of the marketplace: the directory card plus the two additive fields of 3.8.0. */
+/** One card of the marketplace: the directory card plus the two additive fields of 3.15.0. */
 export interface MarketplaceCard {
   readonly listingId: string;
   readonly providerId?: string;
@@ -130,7 +130,7 @@ export function parseMarketplaceOrigin(raw: string | null, now: number): Marketp
 }
 
 /**
- * What /cotizar sends as `origin` when the guest came from the tab (Provider Catalog 3.12.0): the surface, the celebration's own public id and the type of
+ * What /cotizar sends as `origin` when the guest came from the tab (Provider Catalog 3.15.0): the surface, the celebration's own public id and the type of
  * the celebration. It comes from sessionStorage, never from the address bar: the URL of the quote carries no celebration, no slug, no guest and no token.
  */
 export function quoteOriginFrom(origin: MarketplaceOrigin | undefined): { readonly surface: "CELEBRATION_SITE"; readonly celebrationId: string; readonly eventType?: string } | undefined {
