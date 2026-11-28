@@ -148,17 +148,21 @@ function FailureNotice({ failure, onRetry, busy }: { readonly failure: RsvpFailu
   );
 }
 
-/** One tap to the gift list, shown only when the list has something to give (or could not be checked). */
+/**
+ * One tap to the gift list, shown only when the list has something to give (or could not be checked). The line under it
+ * invites to reserve only when the list is known to be open; closed by hand it says so (the guest can still see their own).
+ */
 function GiftsLink({ client, celebrationId, slug, token }: { readonly client: ReturnType<typeof useApiClient>; readonly celebrationId: string; readonly slug: string; readonly token: string }): ReactNode {
   const styles = useStyles();
   const t = useT();
   const list = useGiftList(client, celebrationId, token);
   const empty = list.isSuccess && guestVisible(list.data.items).length === 0;
   if (empty) return null;
+  const hint = !list.isSuccess ? null : list.data.closed ? "rsvp.invite.giftsClosedHint" : "rsvp.invite.giftsHint";
   return (
     <Enter from="down"><View style={{ alignSelf: "stretch", gap: spacing[2] }}>
       <ActionButton icon="arrow" label={t("rsvp.invite.giftsCta")} onPress={() => { saveGiftCredential(slug, token); router.push(`/c/${encodeURIComponent(slug)}/regalos` as never); }} testID="open-gifts" />
-      <Text style={[styles.muted, { textAlign: "center" }]}>{t("rsvp.invite.giftsHint")}</Text>
+      {hint ? <Text style={[styles.muted, { textAlign: "center" }]}>{t(hint)}</Text> : null}
     </View></Enter>
   );
 }

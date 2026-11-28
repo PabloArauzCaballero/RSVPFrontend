@@ -45,11 +45,13 @@ const search: readonly NavShape[] = [{ t: 'circle', cx: 11, cy: 11, r: 6.5 }, { 
 const share: readonly NavShape[] = [{ t: 'path', d: 'M12 15 V4.5 M8 8.5 L12 4.5 L16 8.5' }, { t: 'path', d: 'M5 13 V18 A1.5 1.5 0 0 0 6.5 19.5 H17.5 A1.5 1.5 0 0 0 19 18 V13' }];
 const upload: readonly NavShape[] = [{ t: 'path', d: 'M12 16 V5 M8 9 L12 5 L16 9 M5 19.5 H19' }];
 const pin: readonly NavShape[] = [{ t: 'path', d: 'M12 21 C8 16.5 5.5 13.6 5.5 10 A6.5 6.5 0 0 1 18.5 10 C18.5 13.6 16 16.5 12 21 Z' }, { t: 'circle', cx: 12, cy: 10, r: 2.3 }];
+const clock: readonly NavShape[] = [{ t: 'circle', cx: 12, cy: 12, r: 8.5 }, { t: 'path', d: 'M12 7.5 V12 H16' }];
+const source: readonly NavShape[] = [{ t: 'circle', cx: 6, cy: 6, r: 2 }, { t: 'circle', cx: 6, cy: 18, r: 2 }, { t: 'circle', cx: 18, cy: 8, r: 2 }, { t: 'path', d: 'M6 8 V16 M18 10 C18 15 14 18 8 18' }];
 
 export const NAV_ICONS: Readonly<Record<string, readonly NavShape[]>> = {
   home, guests: people, gifts: gift, invitation: envelope, alerts: bell, settings: sliders,
   overview: home, offers: tag, agenda: calendar, clients: people, profile: user,
   review: shield, catalog: grid, people, operation: sliders, more,
-  plus, check, close, trash, arrow, back, refresh, copy, logout, moon, search, share, upload, pin
+  plus, check, close, trash, arrow, back, refresh, copy, logout, moon, search, share, upload, pin, clock, source
 };
 export const NAV_ICON_STROKE = 1.75;

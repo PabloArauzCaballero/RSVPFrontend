@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ApiClient } from "@rsvp/api-client";
 import { providerService } from "./api.js";
-import type { UpdateProviderInput, ProviderDiscoveryQuery, DocumentInput, MicrositeInput, Availability, BookingRequestInput, BookingStatus, CreateListingInput, LeadConfig, QuoteInput, RegisterProviderInput } from "./types.js";
+import type { UpdateProviderInput, DocumentInput, MicrositeInput, Availability, BookingRequestInput, BookingStatus, CreateListingInput, LeadConfig, QuoteInput, RegisterProviderInput } from "./types.js";
 export * from "./types.js";
 export { BOOKINGS_PAGE_SIZE, providerService } from "./api.js";
 import { cachePolicy, retryTransient } from "../policy.js";
@@ -43,8 +43,8 @@ export function useRequestBooking<TResponse, TInput>(client: ApiClient, provider
 const P = (providerId: string, ...rest: readonly unknown[]) => ["providers", providerId, ...rest] as const;
 const live = { staleTime: 15_000, gcTime: 5 * 60_000 } as const;
 
-export function useListingSearch(client: ApiClient, q: string) {
-  return useQuery({ queryKey: ["providers", "listing-search", q] as const, queryFn: () => providerService(client).searchListings(q), staleTime: 30_000, enabled: q.trim().length >= 2 || q === "" });
+export function useListingSearch(client: ApiClient, q: string, locale = "es-BO") {
+  return useQuery({ queryKey: ["providers", "listing-search", q, locale] as const, queryFn: () => providerService(client).searchListings(q, locale), staleTime: 30_000, enabled: q.trim().length >= 2 || q === "" });
 }
 
 /** Public catalog metadata, shared by gift cards and cached across the list and detail page. Never sends the guest credential. */
@@ -75,6 +75,10 @@ export function usePublicListing(client: ApiClient, listingId: string | undefine
   return { ...listing, data: { ...summary, destinationTypes } };
 }
 
+/** M23 · product categories (and the ones shared by both offer types), named in `locale`. */
+export function useProductCategories(client: ApiClient, locale: string) {
+  return useQuery({ queryKey: ["providers", "product-categories", locale] as const, queryFn: () => providerService(client).productCategories(locale), ...cachePolicy.provider });
+}
 export function useOfferCategories(client: ApiClient, locale: string) {
   return useQuery({ queryKey: ["providers", "offer-categories", locale] as const, queryFn: () => providerService(client).categories(locale), ...cachePolicy.provider });
 }
@@ -204,11 +208,6 @@ export function useUploadDocument(client: ApiClient, providerId: string) {
   });
 }
 
-/** REQ-F23-05 · public discovery of verified providers from the host panel. */
-export function useProviderDiscovery(client: ApiClient, query: ProviderDiscoveryQuery, locale = "es-BO") {
-  return useQuery({ queryKey: ["providers", "discover", locale, query] as const, queryFn: () => providerService(client).discover(query, locale), staleTime: 30_000, placeholderData: (previous) => previous });
-}
-
 export * from "./directory.js";
 export * from "./partner.js";
 
@@ -218,3 +217,5 @@ export function useDirectorySearch<TPage>(client: ApiClient, query: DirectoryQue
   return useQuery({ queryKey: ["providers", "directory", path] as const, queryFn: ({ signal }) => client.request<TPage>(path, { auth: false, signal }), staleTime: 60_000, retry: retryTransient, enabled });
 }
 export * from "./partner-requests.js";
+export * from "./product-sheet.js";
+export * from "./product-sheet-hooks.js";

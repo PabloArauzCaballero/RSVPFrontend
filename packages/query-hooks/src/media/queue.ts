@@ -18,6 +18,10 @@ export interface QueueItem {
   readonly size: number;
   readonly type: string;
   readonly purpose: MediaPurpose;
+  /** The bytes themselves, for the screen to draw a preview while the file is in the list. */
+  readonly file: Blob;
+  /** A local address of the file, when the picker has one (iOS and Android, where a Blob cannot be drawn). */
+  readonly previewUri?: string;
   readonly status: QueueStatus;
   /** 0 to 1 while uploading. */
   readonly progress: number;
@@ -26,7 +30,7 @@ export interface QueueItem {
   readonly asset?: MediaAsset;
 }
 
-export interface QueueFile { readonly file: Blob; readonly name: string; readonly type: string; readonly size: number }
+export interface QueueFile { readonly file: Blob; readonly name: string; readonly type: string; readonly size: number; readonly previewUri?: string }
 
 export interface QueueOptions {
   readonly purpose: MediaPurpose;
@@ -49,7 +53,7 @@ const CODES: Readonly<Record<string, readonly [UploadFailure, boolean]>> = {
 
 /** Maps what the server or the network said to a failure kind. A 5xx or a dropped connection can be retried as is; a 4xx cannot until the person changes something. */
 export function classifyFailure(error: unknown): { readonly failure: UploadFailure; readonly retryable: boolean } {
-  if (error instanceof UploadError) return error.status === 0 ? { failure: "network", retryable: true } : { failure: error.status === 403 ? "forbidden" : "server", retryable: error.status >= 500 || error.status === 403 };
+  if (error instanceof UploadError) return error.status === 0 ? { failure: "network", retryable: true } : { failure: error.status === 403 ? "forbidden" : "server", retryable: error.status >= 500 || error.status === 429 || error.status === 403 };
   const problem = error as Problem;
   const known = problem.problem?.code ? CODES[problem.problem.code] : undefined;
   if (known) return { failure: known[0], retryable: known[1] };
@@ -64,16 +68,24 @@ export interface UploadQueue {
   readonly add: (files: readonly QueueFile[], options: QueueOptions) => readonly string[];
   readonly retry: (id: string) => void;
   readonly remove: (id: string) => void;
+  /**
+   * Settles the files the server was still processing when their upload ended, from the list the host re-reads while the worker runs:
+   * PROCESSED closes the row as done, REJECTED turns it into a `rejected` error (the file itself is the problem, so it is not retryable
+   * as is) and DELETED removes the row. Rows that are not `processing`, or whose asset is not in the list yet, are left alone.
+   */
+  readonly reconcile: (assets: readonly MediaAsset[]) => void;
   /** Removes the finished ones (done and errors the person dismissed with "clear"). */
   readonly clearFinished: () => void;
 }
 
 /** Cheap checks done before a byte is uploaded, with the same limits the server enforces. */
-export function precheck(file: Pick<QueueFile, "type" | "size">, purpose: MediaPurpose, quota: MediaQuota | undefined, pendingBytes: number, pendingCount: number, limits: { readonly image: number; readonly audio: number }): UploadFailure | null {
+export function precheck(file: Pick<QueueFile, "type" | "size">, purpose: MediaPurpose, quota: MediaQuota | undefined, pendingBytes: number, pendingCount: number, limits: UploadLimits): UploadFailure | null {
   const audio = file.type === "audio/mpeg";
   if ((audio) !== (purpose === "music")) return "type";
   if (!ACCEPTED.has(file.type)) return "type";
-  if (file.size <= 0 || file.size > (audio ? limits.audio : limits.image)) return "tooLarge";
+  if (file.size <= 0) return "invalid";
+  const limit = audio ? limits.audio : file.type === "image/svg+xml" ? Math.min(limits.svg ?? DEFAULT_LIMITS.svg, limits.image) : limits.image;
+  if (file.size > limit) return "tooLarge";
   if (quota) {
     if (quota.assets + pendingCount + 1 > quota.maxAssets) return "quotaAssets";
     if (quota.bytes + pendingBytes + file.size > quota.maxBytes) return "quotaBytes";
@@ -84,9 +96,10 @@ export function precheck(file: Pick<QueueFile, "type" | "size">, purpose: MediaP
 export const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif", "image/svg+xml", "image/heic", "image/heif"] as const;
 export const ACCEPTED_AUDIO_TYPES = ["audio/mpeg"] as const;
 const ACCEPTED: ReadonlySet<string> = new Set([...ACCEPTED_IMAGE_TYPES, ...ACCEPTED_AUDIO_TYPES]);
-export const DEFAULT_LIMITS = { image: 10 * 1024 * 1024, audio: 15 * 1024 * 1024 } as const;
+export const DEFAULT_LIMITS = { image: 10 * 1024 * 1024, audio: 15 * 1024 * 1024, svg: 5 * 1024 * 1024 } as const;
+export interface UploadLimits { readonly image: number; readonly audio: number; /** The server caps vector drawings below photos. */ readonly svg?: number }
 
-export function createUploadQueue(upload: UploadOne, config: { readonly concurrency?: number; readonly quota?: () => MediaQuota | undefined; readonly limits?: { readonly image: number; readonly audio: number } } = {}): UploadQueue {
+export function createUploadQueue(upload: UploadOne, config: { readonly concurrency?: number; readonly quota?: () => MediaQuota | undefined; readonly limits?: UploadLimits } = {}): UploadQueue {
   const concurrency = config.concurrency ?? 2;
   const limits = config.limits ?? DEFAULT_LIMITS;
   let items: QueueItem[] = [];
@@ -133,15 +146,17 @@ export function createUploadQueue(upload: UploadOne, config: { readonly concurre
     getSnapshot: () => snapshot,
     add: (files, options) => {
       const quota = config.quota?.();
-      let pendingBytes = 0;
-      let pendingCount = 0;
+      // What is still waiting or going up from earlier batches takes room too: the quota that was read does not count it yet.
+      const pending = items.filter((item) => item.status === "queued" || item.status === "uploading");
+      let pendingBytes = pending.reduce((sum, item) => sum + item.size, 0);
+      let pendingCount = pending.length;
       const created = files.map((file): QueueItem => {
         sequence += 1;
         const id = `upload-${sequence}`;
         sources.set(id, { file, options });
         const blocked = precheck(file, options.purpose, quota, pendingBytes, pendingCount, limits);
         if (!blocked) { pendingBytes += file.size; pendingCount += 1; }
-        return { id, name: file.name, size: file.size, type: file.type, purpose: options.purpose, status: blocked ? "error" : "queued", progress: 0, ...(blocked ? { failure: blocked, retryable: false } : {}) };
+        return { id, name: file.name, size: file.size, type: file.type, purpose: options.purpose, file: file.file, ...(file.previewUri ? { previewUri: file.previewUri } : {}), status: blocked ? "error" : "queued", progress: 0, ...(blocked ? { failure: blocked, retryable: false } : {}) };
       });
       items = [...items, ...created];
       publish();
@@ -153,6 +168,21 @@ export function createUploadQueue(upload: UploadOne, config: { readonly concurre
       if (!item || item.status !== "error") return;
       patch(id, { status: "queued", progress: 0, failure: undefined, retryable: undefined });
       pump();
+    },
+    reconcile: (assets) => {
+      const byId = new Map(assets.map((asset) => [asset.id, asset]));
+      let changed = false;
+      const next: QueueItem[] = [];
+      for (const item of items) {
+        const known = item.status === "processing" && item.asset ? byId.get(item.asset.id) : undefined;
+        if (!known || known.status === "PROCESSING" || known.status === "PENDING_UPLOAD") { next.push(item); continue; }
+        changed = true;
+        if (known.status === "DELETED") { sources.delete(item.id); continue; }
+        next.push(known.status === "PROCESSED" ? { ...item, status: "done", progress: 1, asset: known } : { ...item, status: "error", failure: "rejected", retryable: false, asset: known });
+      }
+      if (!changed) return;
+      items = next;
+      publish();
     },
     remove: (id) => { sources.delete(id); items = items.filter((item) => item.id !== id); publish(); },
     clearFinished: () => {

@@ -26,6 +26,21 @@ export function celebrationDescription(view: PublicCelebrationView, t: Translate
   return text.slice(0, MAX_DESCRIPTION);
 }
 
+const isGalleryPhoto = (image: GalleryImage): boolean => image.purpose === undefined || image.purpose === "gallery" || image.purpose === "cover";
+
+/**
+ * The photo a shared link or a search result shows: the cover or, when the cover has no raster variant (an SVG, which neither
+ * WhatsApp nor search engines draw), the first gallery photo that has one. None is better than a broken card.
+ */
+export function shareImage(gallery: readonly GalleryImage[]): { readonly url: string; readonly image: GalleryImage } | null {
+  const photos = gallery.filter(isGalleryPhoto);
+  for (const image of [...photos.filter((photo) => photo.isCover), ...photos]) {
+    const url = image.variants.full ?? image.variants.medium;
+    if (url) return { url, image };
+  }
+  return null;
+}
+
 /**
  * Title, description, canonical, hreflang alternates and the Open Graph card WhatsApp shows when
  * the link is pasted (REQ-F08-02/03).
@@ -38,8 +53,8 @@ export function celebrationMetadata(view: PublicCelebrationView, gallery: readon
   const own = `${url}?lang=${view.locale}`;
   const title = section ? t("celebration.meta.sectionTitle", { section: t(`celebration.sections.${section.id}`), title: content.title }) : content.title;
   const description = celebrationDescription(view, t);
-  const cover = gallery.find((image) => image.isCover) ?? gallery[0];
-  const image = cover?.variants.full ?? cover?.variants.medium;
+  const shared = shareImage(gallery);
+  const image = shared?.url;
   return {
     title,
     description,
@@ -54,7 +69,7 @@ export function celebrationMetadata(view: PublicCelebrationView, gallery: readon
       description,
       siteName: "DOne",
       locale: view.locale.replace("-", OG_LOCALE_SEPARATOR),
-      ...(image ? { images: [{ url: image, width: cover?.width ?? undefined, height: cover?.height ?? undefined, alt: content.title }] } : {})
+      ...(image ? { images: [{ url: image, width: shared?.image.width ?? undefined, height: shared?.image.height ?? undefined, alt: content.title }] } : {})
     },
     twitter: { card: image ? "summary_large_image" : "summary", title, description, ...(image ? { images: [image] } : {}) },
     robots: celebrationRobots(view)

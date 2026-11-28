@@ -1,4 +1,4 @@
-import type { PropsWithChildren, ReactNode } from "react";
+import type { PropsWithChildren, ReactNode, RefObject } from "react";
 import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { radius, spacing } from "@rsvp/design-tokens";
 import { ActionDock, ButtonAlignContext, Enter, Logo, fonts, useThemedStyles, type Palette } from "@rsvp/ui";
@@ -30,9 +30,9 @@ const createFrameStyles = (palette: Palette) => StyleSheet.create({
   body: { gap: spacing[6] }
 });
 
-export interface GuestFrameProps { readonly heading?: string; readonly lead?: string; /** Date and place, one line. */ readonly meta?: string }
+export interface GuestFrameProps { readonly heading?: string; readonly lead?: string; /** Date and place, one line. */ readonly meta?: string; /** The page's scroller, for a screen that has to bring the guest back to a message at the top. */ readonly scrollRef?: RefObject<ScrollView | null> }
 
-export function GuestFrame({ heading, lead, meta, children }: PropsWithChildren<GuestFrameProps>): ReactNode {
+export function GuestFrame({ heading, lead, meta, scrollRef, children }: PropsWithChildren<GuestFrameProps>): ReactNode {
   const s = useThemedStyles(createFrameStyles);
   const { width } = useWindowDimensions();
   const compact = width < COMPACT;
@@ -40,7 +40,7 @@ export function GuestFrame({ heading, lead, meta, children }: PropsWithChildren<
   const size = compact ? 40 : 56;
   return (
     <ActionDock inset={spacing[4]}>
-    <ScrollView role="main" tabIndex={0} style={s.page} contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+    <ScrollView ref={scrollRef} role="main" tabIndex={0} style={s.page} contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
       <View style={s.inner} testID="guest-column">
         <View style={s.top}><Logo tone="auto" height={26} /></View>
         <View style={[s.sheet, { padding: pad, gap: spacing[8] }]}>
