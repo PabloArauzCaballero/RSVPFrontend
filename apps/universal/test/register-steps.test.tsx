@@ -92,8 +92,8 @@ describe("MV-D2 · step 1: e-mail, then the 6-digit code", () => {
     const snapshotFor = async (email: string): Promise<string> => {
       const { view } = setup();
       await askForCode(email);
-      // The entrance animation is in flight at different moments in two renders: compare structure, text and attributes, not its inline style.
-      const html = view.container.innerHTML.replaceAll(email, "<correo>").replace(/ style="[^"]*"/g, "").replace(/ data-enter="\w+"/g, "");
+      // The wait counts down by the second and the entrance animation is in flight at different moments in two renders: compare structure, text and attributes, not its inline style.
+      const html = view.container.innerHTML.replaceAll(email, "<correo>").replace(/ style="[^"]*"/g, "").replace(/ data-enter="\w+"/g, "").replace(/Pedir otro código en \d+ s/g, "Pedir otro código en N s");
       cleanup(); clearRegistrationDraft();
       return html;
     };
