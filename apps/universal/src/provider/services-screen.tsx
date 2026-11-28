@@ -147,7 +147,7 @@ function NewOffer({ providerId, onClose, onCreated }: { readonly providerId: str
     <Section title={t("portal.services.new.title")}>
       {kindChoice}
       <Text style={styles.body}>{t("portal.product.newOffer.productHint")}</Text>
-      <StickyActions ground="surface">
+      <StickyActions label={t("common.actions")} ground="surface">
         <ActionButton icon="arrow" label={t("portal.product.newOffer.productStart")} onPress={() => router.push(PRODUCT_NEW_ROUTE as Href)} testID="product-start" />
         <ActionButton icon="close" variant="secondary" label={t("portal.services.new.cancel")} onPress={onClose} testID="offer-new-close" />
       </StickyActions>
@@ -189,7 +189,7 @@ function NewOffer({ providerId, onClose, onCreated }: { readonly providerId: str
       {errors.length ? <Notice kind="error">{errors.map((message) => <Text key={message} style={styles.body}>{message}</Text>)}</Notice> : null}
       <ErrorNotice error={create.error} onRetry={submit} />
     </Section>
-    <StickyActions>
+    <StickyActions label={t("common.actions")}>
       <ActionButton icon="plus" label={create.isPending ? t("portal.services.new.creating") : t("portal.services.new.submit")} busy={create.isPending} disabled={create.isPending || !category} onPress={submit} testID="listing-submit" />
       <ActionButton icon="close" variant="secondary" label={t("portal.services.new.cancel")} disabled={create.isPending} onPress={onClose} testID="offer-new-close" />
     </StickyActions>

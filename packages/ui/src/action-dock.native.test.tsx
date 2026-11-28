@@ -55,7 +55,7 @@ function Form({ onSave }: { readonly onSave?: () => void }) {
   return (
     <div data-testid="scroll">
       <input aria-label="Nombre" value={name} onChange={(event) => setName(event.target.value)} />
-      <StickyActions testID="bar"><Button onPress={onSave}>{`Guardar ${name}`}</Button></StickyActions>
+      <StickyActions label="Acciones" testID="bar"><Button onPress={onSave}>{`Guardar ${name}`}</Button></StickyActions>
     </div>
   );
 }
@@ -67,6 +67,8 @@ describe('MV-A2 native ActionDock draws the bar under the scroll area', () => {
     const bar = screen.getByTestId('bar');
     expect(scroll.contains(bar)).toBe(false);
     expect(bar.getAttribute('role')).toBe('group');
+    expect(bar.getAttribute('aria-label')).toBe('Acciones');
+    expect(screen.getByRole('group', { name: 'Acciones' })).toBe(bar);
     expect(scroll.compareDocumentPosition(bar) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(scroll.parentElement).toBe(bar.parentElement);
     expect(getComputedStyle(bar).position).not.toBe('sticky');
@@ -93,8 +95,8 @@ describe('MV-A2 native ActionDock draws the bar under the scroll area', () => {
   });
 
   it('removes the bar when its form unmounts and lets the screen own action (priority 0) come back', () => {
-    const screenAction = <StickyActions testID="screen-bar" priority={0}><Button>Siguiente</Button></StickyActions>;
-    const view = (open: boolean) => <UiProvider scheme="light"><ActionDock><div>{screenAction}{open ? <StickyActions testID="form-bar"><Button>Crear</Button></StickyActions> : null}</div></ActionDock></UiProvider>;
+    const screenAction = <StickyActions label="Acciones" testID="screen-bar" priority={0}><Button>Siguiente</Button></StickyActions>;
+    const view = (open: boolean) => <UiProvider scheme="light"><ActionDock><div>{screenAction}{open ? <StickyActions label="Acciones" testID="form-bar"><Button>Crear</Button></StickyActions> : null}</div></ActionDock></UiProvider>;
     const { rerender } = render(view(false));
     expect(screen.getByRole('button', { name: 'Siguiente' })).toBeTruthy();
     rerender(view(true));
@@ -106,7 +108,7 @@ describe('MV-A2 native ActionDock draws the bar under the scroll area', () => {
   });
 
   it('a StickyActions inside a Modal stays in the modal instead of landing behind it in the screen dock', () => {
-    render(<UiProvider scheme="light"><ActionDock><div data-testid="scroll" /><Modal visible onClose={() => undefined} title="Hoja"><StickyActions testID="modal-bar"><Button>Dentro</Button></StickyActions></Modal></ActionDock></UiProvider>);
+    render(<UiProvider scheme="light"><ActionDock><div data-testid="scroll" /><Modal visible onClose={() => undefined} title="Hoja"><StickyActions label="Acciones" testID="modal-bar"><Button>Dentro</Button></StickyActions></Modal></ActionDock></UiProvider>);
     const bar = screen.getByTestId('modal-bar');
     expect(bar.closest('[aria-modal=true], [role=dialog]')).not.toBeNull();
     expect(screen.getByTestId('scroll').parentElement?.contains(bar)).toBe(false);
@@ -164,7 +166,7 @@ describe('MV-A2 native ActionDock draws the bar under the scroll area', () => {
 
 describe('StickyActions ground (bar inside a card)', () => {
   const colorOf = (ground?: 'canvas' | 'surface'): string => {
-    render(<UiProvider scheme="dark"><StickyActions testID="bar" {...(ground ? { ground } : {})}><Button>Ok</Button></StickyActions></UiProvider>);
+    render(<UiProvider scheme="dark"><StickyActions label="Acciones" testID="bar" {...(ground ? { ground } : {})}><Button>Ok</Button></StickyActions></UiProvider>);
     const color = getComputedStyle(screen.getByTestId('bar')).backgroundColor;
     cleanup();
     return color;

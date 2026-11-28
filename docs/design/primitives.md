@@ -212,12 +212,13 @@ Barra de acción fija al pie para formularios largos en móvil. Un botón primar
 
 ```tsx
 import { ActionButton, StickyActions } from "../host/ui";
-<StickyActions summary={<Text style={styles.muted}>{t("guests.form.unsaved")}</Text>}>
+<StickyActions label={t("common.actions")} summary={<Text style={styles.muted}>{t("guests.form.unsaved")}</Text>}>
   <ActionButton label={t("common.save")} onPress={save} busy={saving} />
   <ActionButton variant="secondary" label={t("common.cancel")} onPress={back} />
 </StickyActions>
 ```
 
+- `label` es obligatorio: el nombre accesible del grupo (`aria-label`, «Acciones»/«Actions» con `common.actions`), tanto en la barra en el flujo como en la acoplada.
 - Web: `position: sticky; bottom: 0` dentro del área que hace scroll, `padding-bottom: max(12px, env(safe-area-inset-bottom))` (respeta la barra de inicio), borde superior y superficie opaca. Ocupa su propio espacio en el flujo: no tapa el último campo ni el teclado del navegador.
 - Nativo (decisión MV-D1: la acción siempre fija abajo, el contenido se desplaza): el contenedor de scroll de la pantalla va envuelto en `ActionDock` (`@rsvp/ui`). Un `StickyActions` que encuentra un dock encima **no se dibuja donde está**: publica su barra y el dock la pinta bajo el área de scroll, a todo el ancho (relleno 16 px, contenido hasta 560 px), sobre el borde seguro que ya reserva `SafeFrame`. El scroll termina donde empieza la barra, así que nada queda tapado. El teclado sube el dock lo que cubre su borde inferior (medido en coordenadas de ventana), de modo que la barra viaja encima del teclado (también si ya estaba abierto al montar el dock, y al girar). **No** hace scroll hasta el campo enfocado: con el teclado abierto el área de scroll se acorta y un campo bajo puede quedar fuera de la parte visible hasta que la persona desplace; sin verificar en dispositivo (seguimiento: scroll al campo enfocado, o `automaticallyAdjustKeyboardInsets` si la prueba en iPhone lo justifica).
 - Los tres contenedores que ya llevan `ActionDock`: `Screen` (`host/shell.tsx`, móvil; cubre host, proveedor y admin), `AuthLayout` (`auth/auth-ui.tsx`) y `GuestFrame` (`guest/frame.tsx`). Una pantalla nueva con su propio `ScrollView` y un `StickyActions` debe envolver ese `ScrollView` en `ActionDock`; sin dock la barra vuelve al flujo (comportamiento anterior).

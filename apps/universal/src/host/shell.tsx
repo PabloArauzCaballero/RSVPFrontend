@@ -407,6 +407,7 @@ export function PersistentShell({ store, children }: PropsWithChildren<{ readonl
  * `status` is the one line that says where the work stands (see the prop).
  */
 export function Screen({ title, intro, nav, current, onNavigate, actions, menu, status, animate = true, children }: PropsWithChildren<{ readonly title: string; readonly intro?: string; readonly nav?: readonly NavItem[]; readonly current?: string; readonly onNavigate?: (href: string) => void; readonly actions?: ReactNode; readonly menu?: ReactNode; /** One short line about the work in progress ("unsaved changes", "saved"). Sits above the sticky action bar below 768 px and at the top of the content from 768 px. */ readonly status?: ReactNode; readonly animate?: boolean }>): ReactNode {
+  const t = useT();
   const s = useThemedStyles(createShellStyles);
   const { width } = useWindowDimensions();
   const wide = width >= WIDE;
@@ -426,7 +427,7 @@ export function Screen({ title, intro, nav, current, onNavigate, actions, menu, 
   const stack = <View testID="screen-stack" style={[s.stack, wide && s.stackWide]}>{status && actionsInHeader ? status : null}{children}</View>;
   const content = animate ? <ScreenTransition routeKey={current ?? title} groupKey={destination?.key} focusHeading={false}>{stack}</ScreenTransition> : stack;
   const headerActions = menu || (actions && actionsInHeader) ? <View style={s.headActions}>{menu}{actionsInHeader ? actions : null}</View> : null;
-  const stickyActions = actions && !actionsInHeader ? <StickyActions testID="screen-sticky-actions" priority={0} {...(status ? { summary: status } : {})}>{actions}</StickyActions> : null;
+  const stickyActions = actions && !actionsInHeader ? <StickyActions label={t("common.actions")} testID="screen-sticky-actions" priority={0} {...(status ? { summary: status } : {})}>{actions}</StickyActions> : null;
   const tabs = sectionTabs && sectionTabs.length > 1 ? sectionTabs : undefined;
   const heading = <Text ref={headingRef} accessibilityRole="header" aria-level={1} style={wide ? s.title : s.mTitle}>{title}</Text>;
   const headRow = (

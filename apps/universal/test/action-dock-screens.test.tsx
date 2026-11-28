@@ -18,7 +18,7 @@ vi.mock("@rsvp/ui", async (importOriginal) => {
 });
 
 const t = (key: string): string => key;
-const form = <StickyActions testID="form-bar"><ActionButton label="Guardar" onPress={() => undefined} /></StickyActions>;
+const form = <StickyActions label="Acciones" testID="form-bar"><ActionButton label="Guardar" onPress={() => undefined} /></StickyActions>;
 
 function expectUnderScroll(): void {
   const bar = screen.getByTestId("form-bar");
@@ -27,6 +27,7 @@ function expectUnderScroll(): void {
   expect(scroll.contains(bar)).toBe(false);
   expect(scroll.compareDocumentPosition(bar) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(getComputedStyle(bar).position).not.toBe("sticky");
+  expect(screen.getByRole("group", { name: "Acciones" })).toBe(bar);
   expect(screen.getByRole("button", { name: "Guardar" })).toBeTruthy();
 }
 
