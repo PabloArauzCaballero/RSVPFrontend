@@ -10,4 +10,4 @@ export { CelebrationRenderer, type CelebrationRendererProps } from "./renderer.j
 export { CelebrationThemeProvider, useCelebrationTheme, type ThemeContextValue } from "./theme-context.js";
 export * from "./media/embed.js";
 export * from "./media/variants.js";
-export { AUTO_SCRIM, AudioPlayer, EmbedFacade, MediaBackground, MediaImage, type AudioPlayerProps, type EmbedFacadeProps, type MediaBackgroundProps, type MediaImageProps } from "./media/components.js";
+export { AudioPlayer, EmbedFacade, MediaBackdrop, MediaImage, type AudioPlayerProps, type EmbedFacadeProps, type MediaBackdropProps, type MediaImageProps } from "./media/components.js";

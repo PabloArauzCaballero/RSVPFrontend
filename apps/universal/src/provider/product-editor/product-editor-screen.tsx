@@ -1,18 +1,19 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Linking, Pressable, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { radius, spacing } from "@rsvp/design-tokens";
 import { useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "@rsvp/api-client";
 import { Chip, StepTransition, pressVisual, useColors, useReducedMotion } from "@rsvp/ui";
 import {
-  fetchGiftIdeas, newIdempotencyKey, useCreateProduct, useDuplicateListing, useGiftIdeas, useListingSheet, usePatchListing, useProductCategories, useProviderGeo, usePublishListing, useWhatsappTemplate,
-  type ProductSheet, type Provider
+  fetchGiftIdeas, msUntilLeadContextRenewal, newIdempotencyKey, useCreateProduct, useDuplicateListing, useGiftIdeas, useLeadContext, useListingSheet, usePatchListing, useProductCategories, useProviderGeo, usePublishListing, useWhatsappTemplate,
+  type LeadContext, type ProductSheet, type Provider
 } from "@rsvp/query-hooks";
 import type { AppLocale } from "@rsvp/i18n/server";
 import { formatMinor } from "@rsvp/i18n";
 import { parseMinor } from "../../host/gifts/money";
 import { useApiClient, useLocale, useT } from "../../platform/providers";
+import { portalRedirectUrl } from "../../platform/partner-link";
 import { ActionButton, EmptyState, Notice, PageIntro, Section, SuccessNote, useStyles } from "../../host/ui";
 import { PortalErrorNotice, PortalErrorState } from "../errors";
 import { PORTAL_ROUTES, PortalScreen, usePortalHeader } from "../frame";
@@ -24,7 +25,7 @@ import {
 import { BasicStep, ContactStep, DeliveryStep, IdeasStep, PriceStep } from "./steps";
 import { MissingList } from "./missing-list";
 import { PhotoUploader } from "./photo-uploader";
-import { PreviewCard } from "./preview-card";
+import { PreviewCard, type PreviewDestination, type PreviewLinks } from "./preview-card";
 import { SheetErrorNotice } from "./sheet-errors";
 import { WhatsappTemplateField } from "./whatsapp-template-field";
 
@@ -104,7 +105,9 @@ function ProductEditor({ provider, listingId, initialStep, duplicated }: EditorP
   const [draft, setDraft] = useState<SheetDraft>(EMPTY_DRAFT);
   const [problems, setProblems] = useState<readonly LocalProblem[]>([]);
   const loadedVersion = useRef<number | null>(null);
-  const lastOrder = useRef<readonly string[] | null>(null);
+  // False once the editor is gone: a read that resolves afterwards must not save or navigate.
+  const alive = useRef(true);
+  useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   const createKey = useRef(newIdempotencyKey());
   const duplicateKey = useRef(newIdempotencyKey());
   const queryClient = useQueryClient();
@@ -140,7 +143,7 @@ function ProductEditor({ provider, listingId, initialStep, duplicated }: EditorP
 
   const set = (change: Partial<SheetDraft>): void => { setIdeasFailed(false); dirty.current.add(step); setDraft((current) => ({ ...current, ...change })); if (problems.length) setProblems([]); };
   const open = (target: EditorStep): void => {
-    setProblems([]); patch.reset(); publish.reset(); setVersionLost(false); setIdeasFailed(false); lastOrder.current = null;
+    setProblems([]); patch.reset(); publish.reset(); setVersionLost(false); setIdeasFailed(false);
     // The «Copia creada» note belongs to the arrival, not to the product: it goes with the first step change.
     setShowCopyNote(false);
     setStep(target);
@@ -148,7 +151,7 @@ function ProductEditor({ provider, listingId, initialStep, duplicated }: EditorP
   };
   const missing = stepsMissing(sheet?.missing);
   const busy = checkingIdeas || create.isPending || patch.isPending || publish.isPending || duplicate.isPending;
-  const reload = (): void => { patch.reset(); lastOrder.current = null; setIdeasFailed(false); void sheetQuery.refetch(); };
+  const reload = (): void => { patch.reset(); setIdeasFailed(false); void sheetQuery.refetch(); };
   const hasDestination = (sheet?.destinations ?? []).some((destination) => destination === "WHATSAPP" || destination === "PRODUCT_PAGE");
 
   const save = (current: StepKey): void => {
@@ -171,12 +174,14 @@ function ProductEditor({ provider, listingId, initialStep, duplicated }: EditorP
     // A category change must send the ideas the new category allows: read its list first and never guess (a failed read blocks the save).
     if (current === "basic" && draft.category !== sheet.category) {
       setCheckingIdeas(true); setIdeasFailed(false);
-      fetchGiftIdeas(queryClient, client, draft.category, locale).then((items) => { setCheckingIdeas(false); send(items.map((idea) => idea.code)); }, () => { setCheckingIdeas(false); setIdeasFailed(true); });
+      fetchGiftIdeas(queryClient, client, draft.category, locale).then((items) => { if (!alive.current) return; setCheckingIdeas(false); send(items.map((idea) => idea.code)); }, () => { setCheckingIdeas(false); setIdeasFailed(true); });
       return;
     }
     send();
   };
-  const reorder = (order: readonly string[]): void => { lastOrder.current = order; if (!sheet?.version) { setVersionLost(true); return; } patch.mutate({ version: sheet.version, input: { photoOrder: [...order] } }, { onSuccess: () => { lastOrder.current = null; } }); };
+  const reorder = (order: readonly string[]): void => { if (!sheet?.version) { setVersionLost(true); return; } patch.mutate({ version: sheet.version, input: { photoOrder: [...order] } }); };
+  /** The order of the reorder that failed, and only while it is the failure: a finished one is never repeated. */
+  const failedOrder = patch.isError ? patch.variables.input.photoOrder : undefined;
   const publishNow = (): void => { if (sheet && !busy) publish.mutate(sheet.id, { onSuccess: () => { setPublished(true); void sheetQuery.refetch(); } }); };
   const duplicateNow = (): void => {
     if (!sheet || busy) return;
@@ -188,7 +193,7 @@ function ProductEditor({ provider, listingId, initialStep, duplicated }: EditorP
   const canPublish = Boolean(sheet && sheet.completeness === "COMPLETE" && !sheet.published);
   usePortalHeader(
     step === "summary" && sheet && !sheet.published ? { icon: "check", label: publish.isPending ? t("portal.product.actions.publishing") : t("portal.product.actions.publish"), busy: publish.isPending, disabled: !canPublish || busy, onPress: publishNow, testID: "product-publish" } : undefined,
-    sheet && !noSheet ? [{ key: "duplicate", label: duplicate.isPending ? t("portal.product.actions.duplicating") : t("portal.product.actions.duplicate"), disabled: busy || sheet.completeness === "HIDDEN_BY_ADMIN", onPress: duplicateNow }, { key: "offers", label: t("portal.product.actions.backToOffers"), onPress: () => router.push(PORTAL_ROUTES.services as Href) }] : undefined
+    sheet && !noSheet ? [{ key: "duplicate", label: duplicate.isPending ? t("portal.product.actions.duplicating") : t("portal.product.actions.duplicate"), disabled: busy || sheet.completeness === "HIDDEN_BY_ADMIN", onPress: duplicateNow }, { key: "offers", label: t("portal.product.actions.backToOffers"), disabled: checkingIdeas, onPress: () => router.push(PORTAL_ROUTES.services as Href) }] : undefined
   );
 
   if (!creating && sheetQuery.isPending) return <RowsSkeleton count={4} minHeight={96} />;
@@ -251,7 +256,7 @@ function ProductEditor({ provider, listingId, initialStep, duplicated }: EditorP
           <>
             {versionLost ? <Notice kind="error"><View style={{ gap: spacing[2] }} testID="sheet-no-version"><Text style={styles.body}>{t("portal.product.errors.noVersion")}</Text><ActionButton icon="refresh" variant="secondary" label={t("portal.product.actions.reload")} onPress={() => { setVersionLost(false); reload(); }} testID="sheet-reload" /></View></Notice> : null}
             {ideasFailed ? <Notice kind="error"><View style={{ gap: spacing[2] }} testID="ideas-load-error"><Text style={styles.body}>{t("portal.product.errors.ideasLoad")}</Text><ActionButton icon="refresh" variant="secondary" label={t("portal.errors.retry")} onPress={() => save("basic")} testID="ideas-load-retry" /></View></Notice> : null}
-            <SheetErrorNotice error={create.error ?? patch.error ?? duplicate.error} onReload={reload} onRetry={() => { if (duplicate.error && !create.error && !patch.error) duplicateNow(); else if (step !== "photos") save(step); else if (lastOrder.current) reorder(lastOrder.current); }} />
+            <SheetErrorNotice error={create.error ?? patch.error ?? duplicate.error} onReload={reload} onRetry={() => { if (duplicate.error && !create.error && !patch.error) duplicateNow(); else if (step !== "photos") save(step); else if (failedOrder) reorder(failedOrder); }} />
             <StickyActions ground="surface">
               {step === "photos" ? (
                 <ActionButton icon="arrow" label={t("portal.product.actions.next")} disabled={busy} onPress={() => open(nextStep(step))} testID="step-next" />
@@ -267,6 +272,34 @@ function ProductEditor({ provider, listingId, initialStep, duplicated }: EditorP
   );
 }
 
+const MIN_USABLE_MS = 10_000;
+const usable = (grant: LeadContext | undefined): grant is LeadContext => Boolean(grant) && Date.parse(grant?.expiresAt ?? "") - Date.now() > MIN_USABLE_MS;
+
+/**
+ * R6b (M-2) · the buttons of the preview open the real destination with the preview's ctx: the portal asks for it (POST lead-context, PREVIEW for this listing)
+ * and keeps it fresh until the screen closes. A press always opens synchronously (an `await` before `Linking.openURL` loses the user gesture and the popup blocker
+ * stops the tab): the buttons are enabled only with a ctx that is valid and outside the renewal margin («ready»). Inside the margin they wait («preparing», disabled)
+ * while the ctx is renewed; if the renewal fails but the ctx is still valid they stay enabled with it. Without a valid ctx nothing opens (a click without it would be
+ * a normal visitor's, and bill). Only when the card has a button.
+ */
+function usePreviewLinks(sheet: ProductSheet, providerId: string): PreviewLinks | undefined {
+  const client = useApiClient();
+  const hasButtons = (sheet.destinations ?? []).some((destination) => destination === "PRODUCT_PAGE" || destination === "WHATSAPP");
+  const grant = useLeadContext(client, providerId, { relation: "PREVIEW", listingId: sheet.id }, hasButtons);
+  const valid = usable(grant.data);
+  const inMargin = valid && msUntilLeadContextRenewal(grant.data) === 0;
+  const renewing = inMargin && !grant.isError && !grant.isFetching;
+  const refetch = grant.refetch;
+  useEffect(() => { if (renewing) void refetch(); }, [renewing, refetch]);
+  if (!hasButtons) return undefined;
+  const status: PreviewLinks["status"] = valid && (!inMargin || grant.isError) ? "ready" : !valid && grant.isError ? "unavailable" : "preparing";
+  const onOpen = (destination: PreviewDestination): void => {
+    if (!usable(grant.data)) return;
+    void Linking.openURL(portalRedirectUrl(sheet.id, { relation: "PREVIEW", ctx: grant.data.ctx, destination }));
+  };
+  return { status, onOpen, onRetry: () => { void grant.refetch(); } };
+}
+
 /** Resumen: the card as the guest sees it, the state, and what is still missing, each item a link to its step. */
 function Summary({ sheet, provider, published, onOpen }: { readonly sheet: ProductSheet; readonly provider: Provider; readonly published: boolean; readonly onOpen: (step: EditorStep) => void }): ReactNode {
   const t = useT();
@@ -274,10 +307,11 @@ function Summary({ sheet, provider, published, onOpen }: { readonly sheet: Produ
   const client = useApiClient();
   const geo = useProviderGeo(client);
   const missing = sheet.missing ?? [];
+  const links = usePreviewLinks(sheet, provider.id);
   return (
     <View style={{ gap: spacing[4] }}>
       <Text style={styles.body}>{t("portal.product.summary.intro")}</Text>
-      <PreviewCard sheet={sheet} providerName={provider.name} cities={geo.data?.items} />
+      <PreviewCard sheet={sheet} providerName={provider.name} cities={geo.data?.items} {...(links ? { links } : {})} />
       {sheet.completeness === "HIDDEN_BY_ADMIN" ? <Notice kind="error">{sheet.adminHiddenReason ? t("portal.product.summary.hidden", { reason: sheet.adminHiddenReason }) : t("portal.product.summary.hiddenNoReason")}</Notice> : null}
       {published ? <SuccessNote message={t("portal.product.summary.published")} detail={t("portal.product.summary.publishedDetail")} />
         : sheet.published && sheet.completeness === "COMPLETE" ? <Text style={styles.muted} testID="summary-published">{t("portal.product.summary.isPublished")}</Text>

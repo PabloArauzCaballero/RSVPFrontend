@@ -85,7 +85,7 @@ export function AudioPlayerView({ src, durationMs, labels }: AudioPlayerViewProp
         ref={audio} src={src} preload="none" onPlay={() => setState("playing")} onPause={() => setState((current) => (current === "error" ? current : "paused"))}
         onEnded={() => { setState("idle"); setPosition(0); }} onError={() => setState("error")} onTimeUpdate={(event) => setPosition(event.currentTarget.currentTime)}
       />
-      <button type="button" className="celebration-audio-button" onClick={toggle} aria-pressed={state === "playing"} aria-label={state === "playing" ? labels.pause : labels.play}>
+      <button type="button" className="celebration-audio-button" onClick={toggle} aria-label={state === "playing" ? labels.pause : labels.play}>
         <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
           {state === "playing" ? <path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="currentColor" /> : <path d="M8 5v14l11-7z" fill="currentColor" />}
         </svg>

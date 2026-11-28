@@ -3,7 +3,7 @@ import { ApiError } from "@rsvp/api-client";
 import { arrangeGifts, buttonQuantity, clampUnits, effectivePrice, guestGiftState, insufficientUnitsLeft, reserveFailureKind, reserveFailureMessage, type GiftItem } from "../src/index.js";
 
 const item = (over: Partial<GiftItem> = {}): GiftItem => ({
-  id: "g1", listId: "l", celebrationId: "c", title: "Vajilla", price: { amountMinor: 45000, currency: "BOB" }, source: "CATALOGED", status: "AVAILABLE", version: 1, createdAt: "2026-11-01T00:00:00Z", ...over
+  id: "g1", listId: "l", celebrationId: "c", title: "Vajilla", price: { amountMinor: 45000, currency: "BOB" }, source: "CATALOGED", status: "AVAILABLE", availability: "AVAILABLE", version: 1, createdAt: "2026-11-01T00:00:00Z", ...over
 });
 
 describe("R5 · guestGiftState: what the guest's card says and offers", () => {

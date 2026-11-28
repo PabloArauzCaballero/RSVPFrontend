@@ -9,8 +9,8 @@ import type { GiftItem } from '@rsvp/query-hooks';
  * `gifts.guest.mine.*`). A native <dialog>: focus is trapped, Escape keeps the reservation and focus returns to the opener.
  * The two buttons name both outcomes, because «Cancelar» alone would be ambiguous. `failure` is the already-translated reason.
  */
-export function CancelReservationDialog({ item, t, pending, failure, onKeep, onConfirm }: {
-  readonly item: GiftItem | null; readonly t: Translate; readonly pending: boolean; readonly failure: string | null;
+export function CancelReservationDialog({ item, listClosed, t, pending, failure, onKeep, onConfirm }: {
+  readonly item: GiftItem | null; /** REG-01 · cancelling on a closed list cannot be undone: the body says so. */ readonly listClosed: boolean; readonly t: Translate; readonly pending: boolean; readonly failure: string | null;
   readonly onKeep: () => void; readonly onConfirm: () => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -26,7 +26,7 @@ export function CancelReservationDialog({ item, t, pending, failure, onKeep, onC
       {item ? (
         <form method="dialog" onSubmit={(event) => { event.preventDefault(); onConfirm(); }}>
           <h2 id={`${id}-title`}>{t('gifts.guest.mine.confirmTitle')}</h2>
-          <p id={`${id}-body`}>{t('gifts.guest.mine.confirmBody', { title: item.title })}</p>
+          <p id={`${id}-body`}>{t(listClosed ? 'gifts.guest.mine.confirmBodyClosed' : 'gifts.guest.mine.confirmBody', { title: item.title })}</p>
           {failure ? <p className="rsvp-error" role="alert">{failure}</p> : null}
           <div className="rsvp-actions">
             <button type="submit" className="rsvp-button" disabled={pending} aria-disabled={pending}>{pending ? t('gifts.guest.mine.cancelling') : t('gifts.guest.mine.confirm')}</button>

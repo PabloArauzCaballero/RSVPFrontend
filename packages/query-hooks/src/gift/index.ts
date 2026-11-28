@@ -51,8 +51,10 @@ export function catalogedFirst<T extends { readonly source: string }>(items: rea
   return [...items.filter((item) => item.source === "CATALOGED"), ...items.filter((item) => item.source !== "CATALOGED")];
 }
 
-/** Guest-visible gifts: the host also receives PROPOSED/REJECTED, which a guest must never see. */
-export const guestVisible = <T extends { readonly status: string }>(items: readonly T[]): T[] => items.filter((item) => item.status === "AVAILABLE" || item.status === "PENDING_REVIEW" || item.status === "COMMITTED");
+/** Guest-visible gifts: the host also receives PROPOSED/REJECTED and the UNAVAILABLE ones (`availability`), which a guest must never see. */
+export const guestVisible = <T extends { readonly status: string; readonly availability?: string }>(items: readonly T[]): T[] => items.filter((item) => item.availability !== "UNAVAILABLE" && (item.status === "AVAILABLE" || item.status === "PENDING_REVIEW" || item.status === "COMMITTED"));
+/** True when the gift can no longer be given (gift-list 1.14.0 `availability`). */
+export const isGiftUnavailable = (item: { readonly availability?: string }): boolean => item.availability === "UNAVAILABLE";
 
 /** `credential` = the guest's bearer; omit it for the host session. The credential is never part of the query key. */
 /** Where a gift comes from, as a guest filters it: a DOne partner (CATALOGED) or any other store. */

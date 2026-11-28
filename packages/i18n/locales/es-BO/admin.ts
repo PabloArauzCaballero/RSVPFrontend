@@ -54,6 +54,14 @@ export const adminEsBO = {
     title: "Solicitudes por periodo", intro: "Cuántas solicitudes generó cada partner y categoría.", groupBy: "Agrupar por", groups: { partner: "Partner", category: "Categoría" }, from: "Desde", to: "Hasta", dateHelp: "Los días se cuentan en UTC.", invalidRange: "Revisa las fechas: «Desde» no puede ser posterior a «Hasta».",
     empty: "No hay leads en este periodo.", total: "Leads en el periodo: {{count}}", columns: { name: "Nombre", leads: "Leads", quotes: "Cotiz.", bookings: "Reserv." }
   },
+  leadReport: {
+    title: "Reporte de leads para cobro", intro: "Leads del mes por proveedor, producto y botón. Válidos, no válidos por motivo y total cobrable según el modelo de cobro. Sin datos personales.", month: "Mes", provider: "Proveedor", allProviders: "Todos los proveedores", download: "Descargar CSV", downloading: "Preparando el CSV…",
+    downloaded: "Descargamos {{name}}.", shared: "Compartimos {{name}}.", downloadFailed: "No pudimos preparar el CSV. Reintenta.", fileName: "leads-{{month}}.csv",
+    row: "{{product}} · {{button}}", rowFigures: "{{valid}} válidos · {{invalid}} no válidos",
+    valid: "Válidos", invalid: "No válidos", billable: "Cobrables", billingModel: { CPC: "CPC (por clic)", CPA: "CPA", FLAT: "Tarifa fija", COMMISSION: "Comisión" },
+    notPerClick: "No se cobra por clic ({{model}})", cap: "Tope: {{cap}}", noCap: "Sin tope",
+    emptyTitle: "Sin leads en este mes", empty: "No hubo clics registrados para este mes y este filtro.", unknownProduct: "Producto sin título", tz: "Cada proveedor cuenta el mes en su propia zona horaria.", rowsTitle: "Detalle por producto y botón"
+  },
   operations: {
     title: "Estado operativo", intro: "Si algo no responde, lo ves aquí primero.", services: "Servicios", allUpTitle: "Todo funciona", allUpBody: "Los servicios responden con normalidad.", someDownTitle: "Algo no responde", someDownBody: "Revisa los servicios marcados; el resto sigue disponible.", healthy: "Disponible", down: "No responde",
     replay: "Reconstruir la proyección pública", replayConfirm: "Se borrará y reconstruirá desde el historial de eventos. Los sitios siguen disponibles durante el proceso.",
@@ -67,6 +75,11 @@ export const adminEsBO = {
   partners: {
     title: "Partners", intro: "Los proveedores de la plataforma. Aquí se crean, con su KYP completo, y se administran.", create: "Crear partner",
     total_one: "{{count}} partner", total_other: "{{count}} partners", unknownUser: "Cuenta no encontrada", noSlug: "Sin micrositio", ciDue: "CI vence el {{date}}", choose: "Elige una opción",
+    list: {
+      sort: "Ordenar:", updatedSort: "Última mod.", ascending: "{{column}}, ascendente", descending: "{{column}}, descendente",
+      offers_one: "{{count}} oferta", offers_other: "{{count}} ofertas", origins: { ADMIN: "Backoffice", SELF_SERVICE: "Autoservicio" },
+      created: "Alta: {{date}}", modified: "Mod: {{date}}", see: "Ver:", pageSize: "Partners por página", page: "Pág. {{page}} / {{pages}}"
+    },
     columns: { partner: "Partner", owner: "Dueño", status: "Estado", kyp: "KYP", categoryCity: "Categoría y ciudad", created: "Alta", updated: "Última modificación", origin: "Origen", listings: "Ofertas publicadas" },
     statuses: { DRAFT: "Borrador", PENDING_VERIFICATION: "En verificación", VERIFIED: "Verificado", SUSPENDED: "Suspendido", REJECTED: "Rechazado" },
     kypStatuses: { COMPLETE: "KYP completo", PENDING: "KYP pendiente", EXPIRING: "KYP por vencer", EXPIRED: "KYP vencido" },

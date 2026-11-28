@@ -1,9 +1,9 @@
-import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ContentEditorScreen } from "../src/host/content-editor";
 import { contentPatch, scheduleContent, slugify, toWallClock } from "../src/host/content-draft";
 import { CelebrationsScreen, forgetAutoOpen } from "../src/host/celebrations";
-import { GalleryEditorScreen, imageProblem } from "../src/host/gallery-editor";
+import { GalleryEditorScreen } from "../src/host/gallery-editor";
 import { ModesScreen } from "../src/host/modes-screen";
 import { defaultCurrency, OnboardingScreen, suggestedTitle, zoneLabel } from "../src/host/onboarding";
 import { PublishScreen, taskFor } from "../src/host/publish-checklist";
@@ -317,15 +317,18 @@ describe("C7–C11 · content editor", () => {
 });
 
 describe("C12 · gallery", () => {
+  beforeEach(() => localStorage.clear());
+  afterEach(() => vi.useRealTimers());
+
   it("an invalid file is refused with a clear message, before any upload", async () => {
     const { client, calls } = fakeClient({ ...baseHandlers(), "GET /media/celebrations/c-1/assets": () => ({ items: [] }) });
-    const pick = vi.fn(async () => ({ file: new Blob(["%PDF"]), name: "contrato.pdf", type: "application/pdf", size: 4 }));
+    const pick = vi.fn(async () => [{ file: new Blob(["%PDF"]), name: "contrato.pdf", type: "application/pdf", size: 4 }, { file: new Blob(["x"]), name: "enorme.png", type: "image/png", size: 11 * 1024 * 1024 }]);
     renderApp(<GalleryEditorScreen celebrationId="c-1" onNavigate={navigate} pick={pick} />, client);
     fireEvent.click(await screen.findByTestId("add-photo"));
-    expect(await screen.findByText("Ese archivo no es una imagen JPG, PNG o WebP.")).toBeTruthy();
+    // Each file gets its own reason.
+    expect(await screen.findByText("contrato.pdf: este tipo de archivo no se puede subir aquí.")).toBeTruthy();
+    expect(screen.getByText("enorme.png es demasiado grande. Prueba con una versión más liviana.")).toBeTruthy();
     expect(calls.some((call) => call.path.includes("presign"))).toBe(false);
-    expect(imageProblem({ type: "image/png", size: 11 * 1024 * 1024 })).toBe("tooLarge");
-    expect(imageProblem({ type: "image/webp", size: 10 })).toBeNull();
   });
 
   it("reorders and chooses the cover through the API", async () => {
@@ -337,6 +340,51 @@ describe("C12 · gallery", () => {
     fireEvent.click(menu[1] as HTMLElement);
     fireEvent.click(await screen.findByRole("menuitem", { name: "Usar como portada" }));
     await waitFor(() => expect(calls.find((call) => call.method === "PUT")?.body).toEqual({ assetIds: ["a1", "a2"], coverAssetId: "a2" }));
+  });
+
+  const processingPhoto = (id: string, createdAt: string) => ({ id, celebrationId: "c-1", filename: `${id}.jpg`, contentType: "image/jpeg", sizeBytes: 100, status: "PROCESSING" as const, createdAt, width: null, height: null, sortOrder: 0, isCover: false, variants: {} });
+  const showGallery = (asset: ReturnType<typeof processingPhoto>) => {
+    const { client } = fakeClient({ ...baseHandlers(), "GET /media/celebrations/c-1/assets": () => ({ items: [asset] }) });
+    renderApp(<GalleryEditorScreen celebrationId="c-1" onNavigate={navigate} pick={vi.fn()} />, client);
+  };
+
+  it("does not offer to delete a photo first seen in PROCESSING after a slow upload or with a device clock ahead", async () => {
+    showGallery(processingPhoto("sana", new Date(Date.now() - 10 * 60_000).toISOString()));
+    expect(await screen.findByText(/sana\.jpg/)).toBeTruthy();
+    expect(screen.queryByTestId("processing-stale-sana")).toBeNull();
+    expect(screen.queryByTestId("delete-processing-sana")).toBeNull();
+  });
+
+  it("offers to delete on first sight a photo still in PROCESSING a day after its upload was signed", async () => {
+    showGallery(processingPhoto("olvidada", new Date(Date.now() - 25 * 60 * 60_000).toISOString()));
+    expect(await screen.findByTestId("delete-processing-olvidada")).toBeTruthy();
+  });
+
+  it("offers check-again and delete actions when a PROCESSING photo is stale and deletes it on confirm", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    // The device clock is far behind the server: only the time spent watching may mark the photo as stuck.
+    const createdAt = new Date(Date.now() + 60 * 60_000).toISOString();
+    let list = [
+      { id: "a1", celebrationId: "c-1", filename: "ok.jpg", contentType: "image/jpeg", sizeBytes: 100, status: "PROCESSED" as const, width: 10, height: 10, sortOrder: 0, isCover: true, variants: { thumb: "https://api.test/rsvp-media/a1-thumb.webp?X-Amz-Signature=s1" } },
+      { id: "stuck", celebrationId: "c-1", filename: "58042.jpg", contentType: "image/jpeg", sizeBytes: 6_318_943, status: "PROCESSING" as const, createdAt, width: null, height: null, sortOrder: 1, isCover: false, variants: {} }
+    ];
+    const { client, calls } = fakeClient({
+      ...baseHandlers(),
+      "GET /media/celebrations/c-1/assets": () => ({ items: list }),
+      "DELETE /media/assets/stuck": () => { list = list.filter((item) => item.id !== "stuck"); return {}; }
+    });
+    renderApp(<GalleryEditorScreen celebrationId="c-1" onNavigate={navigate} pick={vi.fn()} />, client);
+    expect(await screen.findByText(/58042\.jpg/)).toBeTruthy();
+    expect(screen.queryByTestId("processing-stale-stuck")).toBeNull();
+    // Every answer is identical from here on: the screen must still notice the time passing.
+    await act(async () => { await vi.advanceTimersByTimeAsync(3 * 60_000 + 10_000); });
+    expect(await screen.findByTestId("processing-stale-stuck")).toBeTruthy();
+    expect(screen.getByText(/58042\.jpg está tardando más de lo normal/)).toBeTruthy();
+    fireEvent.click(screen.getByTestId("retry-processing-stuck"));
+    await waitFor(() => expect(calls.filter((call) => call.path === "/media/celebrations/c-1/assets").length).toBeGreaterThanOrEqual(2));
+    fireEvent.click(screen.getByTestId("delete-processing-stuck"));
+    fireEvent.click(await screen.findByTestId("confirm-delete-photo"));
+    await waitFor(() => expect(calls.some((call) => call.method === "DELETE" && call.path === "/media/assets/stuck")).toBe(true));
   });
 });
 
@@ -390,6 +438,17 @@ describe("C13–C16 · translations, templates, preview, publishing", () => {
     fireEvent.click(screen.getAllByText("Publicar celebración").at(-1) as HTMLElement);
     await waitFor(() => expect(calls.find((call) => call.method === "POST")?.headers.get("if-match")).toBe('"3"'));
     expect(screen.getByTestId("whatsapp-card").textContent).toContain("Ana y Luis");
+  });
+});
+
+describe("C16 · shared link card", () => {
+  it("with an SVG cover it previews the first gallery photo that has raster variants", async () => {
+    const asset = (id: string, over: Record<string, unknown>) => ({ id, celebrationId: "c-1", filename: id, contentType: "image/png", sizeBytes: 1, status: "PROCESSED", width: 1, height: 1, sortOrder: 0, isCover: false, ...over });
+    const items = [asset("d", { isCover: true, variants: { svg: "https://x.test/d.svg" } }), asset("fondo", { purpose: "background", variants: { medium: "https://x.test/fondo.webp" } }), asset("foto", { purpose: "gallery", variants: { medium: "https://x.test/foto.webp" } })];
+    const { client } = fakeClient({ ...baseHandlers(), "GET /celebrations/c-1/publish-check": () => ({ ready: true, missingFields: [], status: "DRAFT", version: 3 }), "GET /media/celebrations/c-1/assets": () => ({ items }) });
+    renderApp(<PublishScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    await waitFor(() => expect(screen.getByTestId("whatsapp-card").innerHTML).toContain("https://x.test/foto.webp"));
+    expect(screen.getByTestId("whatsapp-card").innerHTML).not.toContain("fondo.webp");
   });
 });
 

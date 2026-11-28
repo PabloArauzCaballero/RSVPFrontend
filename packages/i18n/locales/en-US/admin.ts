@@ -57,6 +57,14 @@ export const adminEnUS: DeepStrings<typeof adminEsBO> = {
     title: "Requests by period", intro: "How many requests each partner and category generated.", groupBy: "Group by", groups: { partner: "Partner", category: "Category" }, from: "From", to: "To", dateHelp: "Days are counted in UTC.", invalidRange: "Check the dates: make sure \"From\" is not after \"To\".",
     empty: "There are no leads in this period.", total: "Leads in the period: {{count}}", columns: { name: "Name", leads: "Leads", quotes: "Quotes", bookings: "Booked" }
   },
+  leadReport: {
+    title: "Billable lead report", intro: "The month's leads by provider, product and button. Valid, not valid by reason and the billable total by billing model. No personal data.", month: "Month", provider: "Provider", allProviders: "All providers", download: "Download CSV", downloading: "Preparing the CSV…",
+    downloaded: "We downloaded {{name}}.", shared: "We shared {{name}}.", downloadFailed: "We could not prepare the CSV. Try again.", fileName: "leads-{{month}}.csv",
+    row: "{{product}} · {{button}}", rowFigures: "{{valid}} valid · {{invalid}} not valid",
+    valid: "Valid", invalid: "Not valid", billable: "Billable", billingModel: { CPC: "CPC (per click)", CPA: "CPA", FLAT: "Flat fee", COMMISSION: "Commission" },
+    notPerClick: "Not billed per click ({{model}})", cap: "Cap: {{cap}}", noCap: "No cap",
+    emptyTitle: "No leads this month", empty: "No clicks were recorded for this month and filter.", unknownProduct: "Untitled product", tz: "Each provider counts the month in its own time zone.", rowsTitle: "Detail by product and button"
+  },
   operations: {
     title: "Operational status", intro: "If something stops answering, you see it here first.", services: "Services", allUpTitle: "Everything works", allUpBody: "All services are responding normally.", someDownTitle: "Something is not responding", someDownBody: "Check the services listed below; the rest is still available.", healthy: "Available", down: "Not responding",
     replay: "Rebuild the public projection", replayConfirm: "It will be dropped and rebuilt from the event history. Sites stay available meanwhile.",
@@ -68,6 +76,11 @@ export const adminEnUS: DeepStrings<typeof adminEsBO> = {
   },
   stepper: { progress: "Form progress", step: "Step {{step}} of {{total}}" },
   partners: {
+    list: {
+      sort: "Sort:", updatedSort: "Last updated", ascending: "{{column}}, ascending", descending: "{{column}}, descending",
+      offers_one: "{{count}} offer", offers_other: "{{count}} offers", origins: { ADMIN: "Backoffice", SELF_SERVICE: "Self-service" },
+      created: "Added: {{date}}", modified: "Updated: {{date}}", see: "Show:", pageSize: "Partners per page", page: "Page {{page}} / {{pages}}"
+    },
     title: "Partners", intro: "The platform's providers. They are created here, with a complete KYP, and managed.", create: "Create partner",
     total_one: "{{count}} partner", total_other: "{{count}} partners", unknownUser: "Account not found", noSlug: "No microsite", ciDue: "ID card expires {{date}}", choose: "Choose an option",
     columns: { partner: "Partner", owner: "Owner", status: "Status", kyp: "KYP", categoryCity: "Category and city", created: "Created", updated: "Last change", origin: "Origin", listings: "Published offers" },
