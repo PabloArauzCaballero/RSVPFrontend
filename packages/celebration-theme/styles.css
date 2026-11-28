@@ -267,6 +267,16 @@ body:has(.cdesign-dock) { padding-bottom: 5.5rem; }
   .celebration-design .cdesign-el[data-m]:not([data-d]) { display: none; }
   .celebration-design .cdesign-el[data-d] { display: block; }
 }
+/* Typography of an element: the phone canvas's values (`--tm-*`) at every width, the desktop canvas's (`--td-*`) from 900 px. A property the desktop canvas leaves out keeps the phone value (PLA-02); one neither sets is inherited. */
+.celebration-design .cdesign-el { font-size: var(--tm-size); font-weight: var(--tm-weight); text-align: var(--tm-align); line-height: var(--tm-lh); letter-spacing: var(--tm-ls); text-transform: var(--tm-tt); }
+.celebration-design .cdesign-el[data-sized] { --cd-size: var(--tm-size); }
+@media (min-width: 56.25rem) {
+  .celebration-design .cdesign-el { font-size: var(--td-size, var(--tm-size)); font-weight: var(--td-weight, var(--tm-weight)); text-align: var(--td-align, var(--tm-align)); line-height: var(--td-lh, var(--tm-lh)); letter-spacing: var(--td-ls, var(--tm-ls)); text-transform: var(--td-tt, var(--tm-tt)); }
+  .celebration-design .cdesign-el[data-sized-d] { --cd-size: var(--td-size, var(--tm-size)); }
+  .celebration-design .cdesign-el[data-sized-d] :is(h1, h2, h3, .cdesign-monogram) { font-size: 1em; }
+  .celebration-design .cdesign-el[data-sized-d] :is(.celebration-date, .celebration-hosts) { font-size: max(1.1rem, calc(var(--cd-size, 16px) * .3)); }
+  .celebration-design .cdesign-el[data-sized-d] .celebration-venue { font-size: max(1rem, calc(var(--cd-size, 16px) * .22)); }
+}
 /* An element with its own size: the cover title scales with it and the lines under it stay readable. */
 .celebration-design .cdesign-el[data-sized] :is(h1, h2, h3, .cdesign-monogram) { font-size: 1em; }
 .celebration-design .cdesign-el[data-sized] :is(.celebration-date, .celebration-hosts) { font-size: max(1.1rem, calc(var(--cd-size, 16px) * .3)); }
