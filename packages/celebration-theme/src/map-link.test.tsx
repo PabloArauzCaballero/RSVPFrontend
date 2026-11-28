@@ -100,7 +100,8 @@ describe("what a guest gets", () => {
   });
 
   it("the main venue leads when the host saved its place and the list does not name it; a listed one with its name takes the point", () => {
-    expect(hrefs(page({ venueName: "Hacienda El Carmen", venues: [{ key: "v1", kind: "ceremony", name: "Catedral" }], venueMapUrl: POINT }))).toEqual([DIRECTIONS]);
+    // The listed venue has no point of its own: it never borrows the main one, so its link is a search for its name.
+    expect(hrefs(page({ venueName: "Hacienda El Carmen", venues: [{ key: "v1", kind: "ceremony", name: "Catedral" }], venueMapUrl: POINT }))).toEqual([DIRECTIONS, SEARCH + "Catedral"]);
     const repeated = page({ venueName: "Catedral", venues: [{ key: "v1", kind: "ceremony", name: "Catedral" }], venueMapUrl: POINT });
     expect(hrefs(repeated)).toEqual([DIRECTIONS]);
   });
