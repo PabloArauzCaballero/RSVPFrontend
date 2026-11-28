@@ -6,7 +6,7 @@
       "env": {
         "EXPO_PUBLIC_API_URL": "https://rsvp-api.161.97.85.216.sslip.io",
         "EXPO_PUBLIC_SITE_URL": "https://rsvp-web.161.97.85.216.sslip.io",
-        "EXPO_PUBLIC_RSVP_ORIGIN": "https://dev.done.arauzsoftware.com"
+        "EXPO_PUBLIC_RSVP_ORIGIN": "https://dev.doneapp.events"
       }
     },
     "development": { "extends": "base", "developmentClient": true, "distribution": "internal", "channel": "development" },

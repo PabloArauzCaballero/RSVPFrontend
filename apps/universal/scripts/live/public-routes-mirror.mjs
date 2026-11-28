@@ -1,5 +1,5 @@
 // Espejo web/móvil · every public or shared route, the public site (seo-web) against the app served on the web, Chrome real.
-//   APP=https://dev.done.arauzsoftware.com SITE=https://rsvp-web.161.97.85.216.sslip.io SLUG=qa-espejo-movil PARTNER=multicenter-59388c \
+//   APP=https://dev.doneapp.events SITE=https://rsvp-web.161.97.85.216.sslip.io SLUG=qa-espejo-movil PARTNER=multicenter-59388c \
 //   [ONLY=<regex of route ids>] [TAG=antes|despues] CHROMIUM_PATH=... node apps/universal/scripts/live/public-routes-mirror.mjs
 // Per route and locale it reads what a reader sees on each side (headings, the state drawing, the actions) and records
 // whether both say the same. Writes side-by-side screenshots and public-routes-results.json to docs/progress/evidence/espejo-web-movil/.

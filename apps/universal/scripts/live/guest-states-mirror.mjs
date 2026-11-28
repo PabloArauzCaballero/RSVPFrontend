@@ -1,5 +1,5 @@
 // Espejo web/móvil · the guest's journey on the public site and in the app: same title, same drawing, same cover, no overflow, axe.
-//   APP=https://dev.done.arauzsoftware.com SITE=http://localhost:3199 SLUG=qa-espejo-movil API=https://rsvp-api.161.97.85.216.sslip.io \
+//   APP=https://dev.doneapp.events SITE=http://localhost:3199 SLUG=qa-espejo-movil API=https://rsvp-api.161.97.85.216.sslip.io \
 //   [TOKEN_FILE=/path/to/token] [ONLY=<regex of case ids>] CHROMIUM_PATH=... node apps/universal/scripts/live/guest-states-mirror.mjs
 // Matrix: 360/768/1280 × light/dark × es-BO/en-US on both sides. "Sin conexión" aborts every gateway request in the browser
 // (both sides read the celebration from the browser on the personal-link page). Dead-end tokens are fabricated.

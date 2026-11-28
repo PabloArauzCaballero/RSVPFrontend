@@ -8,7 +8,7 @@ import { chromium, expect } from "@playwright/test";
 import sharp from "sharp";
 
 const APP = process.env.APP ?? "http://localhost:8340";
-const BASELINE = process.env.BASELINE_ORIGIN ?? "https://dev.done.arauzsoftware.com";
+const BASELINE = process.env.BASELINE_ORIGIN ?? "https://dev.doneapp.events";
 const OUT = resolve(process.env.EVIDENCE_DIR ?? "docs/progress/evidence/session-refresh/publication-audit/visual");
 assert.ok(process.env.CHROMIUM_PATH, "Set CHROMIUM_PATH to the installed Chrome executable");
 mkdirSync(OUT, { recursive: true });
