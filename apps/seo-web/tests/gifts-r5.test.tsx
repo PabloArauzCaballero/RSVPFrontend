@@ -16,7 +16,7 @@ const VARIANT = "33333333-4444-4555-8666-777777777777";
 const ID = "11111111-2222-4333-8444-555555555555";
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { "content-type": status >= 400 ? "application/problem+json" : "application/json" } });
 const gift = (over: Partial<GiftItem> = {}): GiftItem => ({
-  id: ID, listId: "l", celebrationId: CELEBRATION, title: "Vajilla", price: { amountMinor: 45000, currency: "BOB" }, source: "CATALOGED", status: "AVAILABLE", version: 1,
+  id: ID, listId: "l", celebrationId: CELEBRATION, title: "Vajilla", price: { amountMinor: 45000, currency: "BOB" }, source: "CATALOGED", status: "AVAILABLE", availability: "AVAILABLE", version: 1,
   createdAt: "2026-11-01T00:00:00Z", productListingId: LISTING, ...over
 });
 const VIEWER = (role: "SOLE" | "COORDINATOR" | "CONTRIBUTOR", units = 1) => ({ reservationId: "r-1", role, status: "PENDING_REVIEW" as const, units });

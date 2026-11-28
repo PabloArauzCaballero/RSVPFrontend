@@ -1,7 +1,7 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
-import { Chip, PressFeedback, useColors } from "@rsvp/ui";
+import { PressFeedback, useColors } from "@rsvp/ui";
 import { useOfferCategories } from "@rsvp/query-hooks";
 import {
   KYP_STATUSES, PARTNER_ORIGINS, PARTNER_STATUSES, PARTNERS_PAGE_SIZE, useAdminPartner, useAdminPartners, useAdminUsersByIds, useOpenIntakes, usePartnerAction, usePartnerGeo,
@@ -13,12 +13,11 @@ import { useSingleMutation } from "../../platform/single-flight";
 import { ActionButton, DateInput, Field, Notice, OverflowMenu, PageIntro, ToggleChip, useStyles } from "../../host/ui";
 import { AdminScreen, adminOnly, useHeaderSlot } from "../admin-screen";
 import { AdminErrorNotice, ReasonDialog, Stack, useStamp } from "../shared";
-import { DataTable, type DataColumn } from "../data-table";
-import { Paginator } from "../paginator";
 import { EditorDialog } from "../editor-dialog";
 import { activeFilterCount, filtersFromParams, KYP_EXPIRING_DAYS, paramsFromFilters, PERSON_TYPE_VALUES, PLAN_VALUES, type FilterParam, type UrlParams } from "./model";
 import { Picker } from "./partner-steps";
-import { KYP_TONE, PartnerDetailDialog, STATUS_TONE } from "./partner-detail";
+import { PartnerDetailDialog } from "./partner-detail";
+import { PartnersList, PartnersPagination } from "./partners-list";
 import { PartnerWizard } from "./partner-wizard";
 import { ChangeOwnerDialog } from "./change-owner";
 import { partnerOwnerChangeEnabled } from "../../platform/partner-flags";
@@ -26,7 +25,7 @@ import { PartnerRequestsView, usePendingRequestCount } from "./requests-view";
 
 /**
  * Partners tab (A24, DP-9..DP-13): the only place where partners are created (by an ADMIN, VERIFIED, with a complete KYP),
- * a server-paginated table with filters kept in the URL, and the per-row actions. The self-service sign-up (/portal/alta) is untouched here (phase 4).
+ * a server-paginated list with filters kept in the URL, and the per-row actions. The self-service sign-up (/portal/alta) is separate.
  */
 
 export interface PartnersScreenProps {
@@ -113,10 +112,9 @@ function Filters({ filters, onChange, onClear, categories, cities }: {
   const value = (raw: string): string | undefined => raw || undefined;
   return (
     <View role="group" aria-label={t("admin.partners.filters.label")} style={{ gap: spacing[3] }}>
-      <View style={[styles.row, { alignItems: "flex-end" }]}>
-        <View style={{ flexGrow: 3, flexBasis: 280 }}><Field label={t("admin.partners.filters.q")} help={t("admin.partners.filters.qHelp")} value={text} onChange={setText} onSubmit={search} testID="partners-q" {...(tooLong ? { error: t("admin.partners.codes.TOO_LONG") } : {})} /></View>
-        <ActionButton icon="search" variant="secondary" label={t("admin.partners.filters.search")} onPress={search} testID="partners-search" />
-      </View>
+      <Field label={t("admin.partners.filters.q")} help={t("admin.partners.filters.qHelp")} value={text} onChange={setText} onSubmit={search} testID="partners-q"
+        trailing={<ActionButton icon="search" variant="secondary" label={t("admin.partners.filters.search")} onPress={search} testID="partners-search" />}
+        {...(tooLong ? { error: t("admin.partners.codes.TOO_LONG") } : {})} />
       <View style={styles.row}>
         <View style={cell}><Picker label={t("admin.partners.columns.status")} value={filters.status ?? ""} onChange={(status) => onChange({ status: value(status) as PartnerFilters["status"] })} options={PARTNER_STATUSES.map((status) => ({ value: status, label: t(`admin.partners.statuses.${status}`) }))} testID="filter-status" /></View>
         <View style={cell}><Picker label={t("admin.partners.columns.kyp")} value={filters.kypStatus ?? ""} onChange={(kyp) => onChange({ kypStatus: value(kyp) as PartnerFilters["kypStatus"] })} options={KYP_STATUSES.map((status) => ({ value: status, label: t(`admin.partners.kypStatuses.${status}`) }))} testID="filter-kyp" /></View>
@@ -145,15 +143,14 @@ function Filters({ filters, onChange, onClear, categories, cities }: {
 function PartnersScreenContent({ onNavigate, params, onParams }: PartnersScreenProps): ReactNode {
   const t = useT();
   const styles = useStyles();
-  const palette = useColors();
   const locale = useLocale();
-  const stamp = useStamp();
   const client = useApiClient();
   const filters = useMemo(() => filtersFromParams(params), [params]);
   const openPartner = params.partner;
+  const view = params.view === "requests" ? "requests" : "partners";
   const list = useAdminPartners(client, filters);
   const rows = list.data?.items;
-  const people = useAdminUsersByIds(client, (rows ?? []).flatMap((row) => [row.ownerUserId, row.createdBy ?? ""]));
+  const people = useAdminUsersByIds(client, view === "partners" ? (rows ?? []).map((row) => row.ownerUserId) : []);
   const categoriesQuery = useOfferCategories(client, locale);
   const geo = usePartnerGeo(client);
   const action = usePartnerAction(client);
@@ -166,37 +163,26 @@ function PartnersScreenContent({ onNavigate, params, onParams }: PartnersScreenP
 
   const categoryName = (code: string): string => categoriesQuery.data?.items.find((item) => item.code === code)?.name ?? code;
   const cityName = (code: string): string => geo.data?.items.find((city) => city.slug === code)?.name ?? code;
-  const email = (id: string | null): string => (id ? people.data?.get(id)?.email ?? t("admin.partners.unknownUser") : "—");
-  const view = params.view === "requests" ? "requests" : "partners";
+  const email = (id: string): string => {
+    if (!id || (people.isPending && people.isFetching)) return "—";
+    return people.data?.get(id)?.email || t("admin.partners.unknownUser");
+  };
   const pending = usePendingRequestCount();
-  const write = (next: PartnerFilters, partner = openPartner): void => onParams(paramsFromFilters(next, partner, params.view));
+  const write = (next: PartnerFilters): void => onParams(paramsFromFilters(next, openPartner, params.view));
+  const clear = (): void => write({ ...(filters.pageSize ? { pageSize: filters.pageSize } : {}) });
   /** A new filter starts again on the first page; the open partner stays open. */
   const change = (patch: Partial<PartnerFilters>): void => { setNotice(null); write(Object.fromEntries(Object.entries({ ...filters, ...patch, page: undefined }).filter(([, item]) => item !== undefined)) as PartnerFilters); };
-  const open = (id: string | undefined): void => write(filters, id);
+  const open = (id: string | undefined): void => onParams(paramsFromFilters(filters, id, params.view));
   const done = (id: string, kind: "created" | "saved" | "kyp"): void => { setWizard(null); setNotice(t(`admin.partners.done.${kind}`)); open(id); };
 
-  const columns: readonly DataColumn<PartnerRow>[] = [
-    { key: "name", header: t("admin.partners.columns.partner"), primary: true, flex: 2, sort: { value: "name", direction: "ascending" }, render: (row) => (
-      <View style={{ gap: 2 }}>
-        <PressFeedback accessibilityRole="button" accessibilityLabel={t("admin.partners.actions.viewNamed", { name: row.name })} onPress={() => open(row.id)} testID={`partner-open-${row.id}`}><Text style={[styles.itemTitle, { overflowWrap: "anywhere" } as object]}>{row.name}</Text></PressFeedback>
-        {row.slug ? <PressFeedback accessibilityRole="link" accessibilityLabel={t("admin.partners.actions.micrositeNamed", { name: row.name })} onPress={() => onNavigate(`/p/${row.slug}`)}><Text style={[styles.muted, { color: palette.primary, textDecorationLine: "underline" }]}>{`/p/${row.slug}`}</Text></PressFeedback> : <Text style={styles.muted}>{t("admin.partners.noSlug")}</Text>}
-      </View>
-    ) },
-    { key: "owner", header: t("admin.partners.columns.owner"), flex: 2, render: (row) => email(row.ownerUserId) },
-    { key: "status", header: t("admin.partners.columns.status"), flex: 1.4, render: (row) => <Chip tone={STATUS_TONE[row.status]}>{t(`admin.partners.statuses.${row.status}`)}</Chip> },
-    { key: "kyp", header: t("admin.partners.columns.kyp"), flex: 1.4, sort: { value: "kypStatus", direction: "ascending" }, render: (row) => (
-      <View style={{ gap: 2 }}>
-        <Chip tone={KYP_TONE[row.kypStatus]}>{t(`admin.partners.kypStatuses.${row.kypStatus}`)}</Chip>
-        {row.kypReviewDueAt ? <Text style={styles.muted}>{t("admin.partners.ciDue", { date: row.kypReviewDueAt })}</Text> : null}
-      </View>
-    ) },
-    { key: "where", header: t("admin.partners.columns.categoryCity"), flex: 1.6, render: (row) => [row.categoryCode ? categoryName(row.categoryCode) : "", row.cityCode ? cityName(row.cityCode) : ""].filter(Boolean).join(" · ") || "—" },
-    { key: "created", header: t("admin.partners.columns.created"), flex: 1.4, sort: { value: "-createdAt", direction: "descending" }, render: (row) => stamp(row.createdAt) },
-    { key: "updated", header: t("admin.partners.columns.updated"), flex: 1.4, sort: { value: "-updatedAt", direction: "descending" }, render: (row) => stamp(row.updatedAt) },
-    { key: "origin", header: t("admin.partners.columns.origin"), flex: 1.6, render: (row) => `${t(`admin.partners.origins.${row.origin}`)}${row.createdBy ? ` · ${email(row.createdBy)}` : ""}` },
-    { key: "listings", header: t("admin.partners.columns.listings"), render: (row) => String(row.publishedListings) },
-    { key: "plan", header: t("admin.partners.fields.plan"), render: (row) => t(`admin.partners.plans.${row.plan}`, { defaultValue: row.plan }) }
-  ];
+  useEffect(() => {
+    if (view !== "partners" || list.isPlaceholderData || !list.data?.total) return;
+    // A saved URL can outlive the last page when partners are removed or stop matching its filters.
+    const last = Math.ceil(list.data.total / list.data.pageSize) - 1;
+    if (list.data.page > last) {
+      onParams(paramsFromFilters({ ...filters, page: last }, openPartner, params.view));
+    }
+  }, [filters, list.data, list.isPlaceholderData, onParams, openPartner, params.view, view]);
 
   const rowActions = (row: PartnerRow): ReactNode => (
     <OverflowMenu label={t("admin.partners.actions.menu", { name: row.name })} testID={`partner-menu-${row.id}`} items={[
@@ -227,16 +213,19 @@ function PartnersScreenContent({ onNavigate, params, onParams }: PartnersScreenP
         <Drafts onContinue={(intakeId) => setWizard({ kind: "create", intakeId })} />
         {action.isSuccess ? <Notice kind="success">{t(`admin.partners.done.${action.variables?.action === "reactivate" ? "reactivated" : "suspended"}`)}</Notice> : null}
         <AdminErrorNotice error={action.error} />
-        <Filters key={filters.q ?? ""} filters={filters} onChange={change} onClear={() => write({})}
+        <Filters key={filters.q ?? ""} filters={filters} onChange={change} onClear={clear}
           categories={(categoriesQuery.data?.items ?? []).map((item) => ({ value: item.code, label: item.name }))}
           cities={[...(geo.data?.items ?? [])].sort((a, b) => a.name.localeCompare(b.name)).map((city) => ({ value: city.slug, label: `${city.name} · ${city.department}` }))} />
         {list.data ? <Text role="status" style={styles.muted} testID="partners-total">{t("admin.partners.total", { count: list.data.total })}</Text> : null}
-        <DataTable label={t("admin.partners.title")} columns={columns} rows={rows} rowKey={(row) => row.id} actions={rowActions} sort={filters.sort ?? "-createdAt"} onSort={(sort) => change({ sort: sort as PartnerFilters["sort"] })}
+        <PartnersList rows={rows} rowActions={rowActions} sort={filters.sort ?? "-createdAt"} onSort={(sort) => change({ sort })}
           loading={list.isPending} refreshing={list.isFetching && list.isPlaceholderData} error={list.error} onRetry={() => { void list.refetch(); }}
+          onOpen={open} onNavigate={onNavigate} ownerEmail={email} categoryName={categoryName} cityName={cityName}
           emptyTitle={t(count ? "admin.partners.empty.filteredTitle" : "admin.partners.empty.title")} emptyBody={t(count ? "admin.partners.empty.filtered" : "admin.partners.empty.body")}
-          {...(count ? { emptyAction: <ActionButton icon="close" variant="secondary" label={t("admin.partners.filters.clear", { count })} onPress={() => write({})} testID="empty-clear" /> } : {})}
-          illustration="provider" testID="partners-table" />
-        {list.data ? <Paginator page={list.data.page} pageSize={PARTNERS_PAGE_SIZE} total={list.data.total} disabled={list.isFetching} onChange={(page) => write({ ...filters, page: page || undefined })} testID="partners-pages" /> : null}
+          emptyAction={count ? <ActionButton icon="close" variant="secondary" label={t("admin.partners.filters.clear", { count })} onPress={clear} testID="empty-clear" /> : undefined}
+        />
+        {list.data ? (
+          <PartnersPagination data={list.data} selectedSize={filters.pageSize ?? PARTNERS_PAGE_SIZE} busy={list.isFetching} onSizeChange={(pageSize) => change({ pageSize })} onPageChange={(page) => write({ ...filters, page })} />
+        ) : null}
         </>}
       </Stack>
       {changingOwner ? <ChangeOwnerDialog partnerId={changingOwner} onClose={() => setChangingOwner(null)} onDone={() => { setChangingOwner(null); setNotice(t("admin.partners.done.ownerChanged")); }} /> : null}

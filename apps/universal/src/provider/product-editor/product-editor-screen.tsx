@@ -105,7 +105,9 @@ function ProductEditor({ provider, listingId, initialStep, duplicated }: EditorP
   const [draft, setDraft] = useState<SheetDraft>(EMPTY_DRAFT);
   const [problems, setProblems] = useState<readonly LocalProblem[]>([]);
   const loadedVersion = useRef<number | null>(null);
-  const lastOrder = useRef<readonly string[] | null>(null);
+  // False once the editor is gone: a read that resolves afterwards must not save or navigate.
+  const alive = useRef(true);
+  useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   const createKey = useRef(newIdempotencyKey());
   const duplicateKey = useRef(newIdempotencyKey());
   const queryClient = useQueryClient();
@@ -141,7 +143,7 @@ function ProductEditor({ provider, listingId, initialStep, duplicated }: EditorP
 
   const set = (change: Partial<SheetDraft>): void => { setIdeasFailed(false); dirty.current.add(step); setDraft((current) => ({ ...current, ...change })); if (problems.length) setProblems([]); };
   const open = (target: EditorStep): void => {
-    setProblems([]); patch.reset(); publish.reset(); setVersionLost(false); setIdeasFailed(false); lastOrder.current = null;
+    setProblems([]); patch.reset(); publish.reset(); setVersionLost(false); setIdeasFailed(false);
     // The «Copia creada» note belongs to the arrival, not to the product: it goes with the first step change.
     setShowCopyNote(false);
     setStep(target);
@@ -149,7 +151,7 @@ function ProductEditor({ provider, listingId, initialStep, duplicated }: EditorP
   };
   const missing = stepsMissing(sheet?.missing);
   const busy = checkingIdeas || create.isPending || patch.isPending || publish.isPending || duplicate.isPending;
-  const reload = (): void => { patch.reset(); lastOrder.current = null; setIdeasFailed(false); void sheetQuery.refetch(); };
+  const reload = (): void => { patch.reset(); setIdeasFailed(false); void sheetQuery.refetch(); };
   const hasDestination = (sheet?.destinations ?? []).some((destination) => destination === "WHATSAPP" || destination === "PRODUCT_PAGE");
 
   const save = (current: StepKey): void => {
@@ -172,12 +174,14 @@ function ProductEditor({ provider, listingId, initialStep, duplicated }: EditorP
     // A category change must send the ideas the new category allows: read its list first and never guess (a failed read blocks the save).
     if (current === "basic" && draft.category !== sheet.category) {
       setCheckingIdeas(true); setIdeasFailed(false);
-      fetchGiftIdeas(queryClient, client, draft.category, locale).then((items) => { setCheckingIdeas(false); send(items.map((idea) => idea.code)); }, () => { setCheckingIdeas(false); setIdeasFailed(true); });
+      fetchGiftIdeas(queryClient, client, draft.category, locale).then((items) => { if (!alive.current) return; setCheckingIdeas(false); send(items.map((idea) => idea.code)); }, () => { setCheckingIdeas(false); setIdeasFailed(true); });
       return;
     }
     send();
   };
-  const reorder = (order: readonly string[]): void => { lastOrder.current = order; if (!sheet?.version) { setVersionLost(true); return; } patch.mutate({ version: sheet.version, input: { photoOrder: [...order] } }, { onSuccess: () => { lastOrder.current = null; } }); };
+  const reorder = (order: readonly string[]): void => { if (!sheet?.version) { setVersionLost(true); return; } patch.mutate({ version: sheet.version, input: { photoOrder: [...order] } }); };
+  /** The order of the reorder that failed, and only while it is the failure: a finished one is never repeated. */
+  const failedOrder = patch.isError ? patch.variables.input.photoOrder : undefined;
   const publishNow = (): void => { if (sheet && !busy) publish.mutate(sheet.id, { onSuccess: () => { setPublished(true); void sheetQuery.refetch(); } }); };
   const duplicateNow = (): void => {
     if (!sheet || busy) return;
@@ -189,7 +193,7 @@ function ProductEditor({ provider, listingId, initialStep, duplicated }: EditorP
   const canPublish = Boolean(sheet && sheet.completeness === "COMPLETE" && !sheet.published);
   usePortalHeader(
     step === "summary" && sheet && !sheet.published ? { icon: "check", label: publish.isPending ? t("portal.product.actions.publishing") : t("portal.product.actions.publish"), busy: publish.isPending, disabled: !canPublish || busy, onPress: publishNow, testID: "product-publish" } : undefined,
-    sheet && !noSheet ? [{ key: "duplicate", label: duplicate.isPending ? t("portal.product.actions.duplicating") : t("portal.product.actions.duplicate"), disabled: busy || sheet.completeness === "HIDDEN_BY_ADMIN", onPress: duplicateNow }, { key: "offers", label: t("portal.product.actions.backToOffers"), onPress: () => router.push(PORTAL_ROUTES.services as Href) }] : undefined
+    sheet && !noSheet ? [{ key: "duplicate", label: duplicate.isPending ? t("portal.product.actions.duplicating") : t("portal.product.actions.duplicate"), disabled: busy || sheet.completeness === "HIDDEN_BY_ADMIN", onPress: duplicateNow }, { key: "offers", label: t("portal.product.actions.backToOffers"), disabled: checkingIdeas, onPress: () => router.push(PORTAL_ROUTES.services as Href) }] : undefined
   );
 
   if (!creating && sheetQuery.isPending) return <RowsSkeleton count={4} minHeight={96} />;
@@ -252,7 +256,7 @@ function ProductEditor({ provider, listingId, initialStep, duplicated }: EditorP
           <>
             {versionLost ? <Notice kind="error"><View style={{ gap: spacing[2] }} testID="sheet-no-version"><Text style={styles.body}>{t("portal.product.errors.noVersion")}</Text><ActionButton icon="refresh" variant="secondary" label={t("portal.product.actions.reload")} onPress={() => { setVersionLost(false); reload(); }} testID="sheet-reload" /></View></Notice> : null}
             {ideasFailed ? <Notice kind="error"><View style={{ gap: spacing[2] }} testID="ideas-load-error"><Text style={styles.body}>{t("portal.product.errors.ideasLoad")}</Text><ActionButton icon="refresh" variant="secondary" label={t("portal.errors.retry")} onPress={() => save("basic")} testID="ideas-load-retry" /></View></Notice> : null}
-            <SheetErrorNotice error={create.error ?? patch.error ?? duplicate.error} onReload={reload} onRetry={() => { if (duplicate.error && !create.error && !patch.error) duplicateNow(); else if (step !== "photos") save(step); else if (lastOrder.current) reorder(lastOrder.current); }} />
+            <SheetErrorNotice error={create.error ?? patch.error ?? duplicate.error} onReload={reload} onRetry={() => { if (duplicate.error && !create.error && !patch.error) duplicateNow(); else if (step !== "photos") save(step); else if (failedOrder) reorder(failedOrder); }} />
             <StickyActions ground="surface">
               {step === "photos" ? (
                 <ActionButton icon="arrow" label={t("portal.product.actions.next")} disabled={busy} onPress={() => open(nextStep(step))} testID="step-next" />

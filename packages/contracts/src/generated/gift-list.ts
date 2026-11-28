@@ -47,7 +47,7 @@ export interface paths {
         get?: never;
         /**
          * Set the delivery notes of the list (host or organizer)
-         * @description Since 1.17.0 (R4). MANAGE only (PF-3). PUT semantics, idempotent (PF-4). Free text of at most 200 characters, published by the host: tell them not to write the exact address. 404 GIFT_LIST_NOT_FOUND without a list.
+         * @description Since 1.17.0 (R4). MANAGE only (PF-3). PUT semantics, idempotent (PF-4). Free text of at most 200 characters, published by the host: tell them not to write the exact address. Since 1.18.0: 422 CONTACT_IN_TEXT (with field and fragment) when the text carries a phone number or a web address, because it is public in getPublicGiftsSummary; nothing is stored. 404 GIFT_LIST_NOT_FOUND without a list.
          */
         put: operations["putGiftListDeliveryNotes"];
         post?: never;
@@ -112,7 +112,11 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Take an unavailable gift off the list (host or organizer)
+         * @description Since 1.20.0 (R7). MANAGE only (PF-3). Only a gift that is UNAVAILABLE (its product left the gift lists, or the host swapped it for a replacement): 409 GIFT_NOT_REMOVABLE otherwise, and 409 GIFT_HAS_RESERVATIONS while it holds an active reservation (cancel it first). The gift stops appearing in listGiftItems and frees its gift idea and its product for a new pick. Repeating the call answers 204 again (PF-4). A gift of another celebration answers 404 (PF-3). No request body and no query parameters.
+         */
+        delete: operations["removeGiftItem"];
         options?: never;
         head?: never;
         /**
@@ -962,7 +966,7 @@ export interface components {
             title: string;
         };
         DevCompatProblem: {
-            /** @description Stable machine code, for example GIFT_NOT_AVAILABLE, HOST_REQUIRED, GIFT_LIST_EXISTS, INVALID_GIFT_TRANSITION, CATALOG_PRODUCT_UNAVAILABLE, INVALID_EXTERNAL_URL, INVALID_MONEY, PARTNER_CATALOG_FIRST, RESERVATION_NOT_PENDING; since 1.14.0 also GIFT_LISTING_NOT_PRODUCT (422 of addGiftItem: the CATALOGED listing is a SERVICE, only products can be gifts) */
+            /** @description Stable machine code, for example GIFT_NOT_AVAILABLE, HOST_REQUIRED, GIFT_LIST_EXISTS, INVALID_GIFT_TRANSITION, CATALOG_PRODUCT_UNAVAILABLE, INVALID_EXTERNAL_URL, INVALID_MONEY, PARTNER_CATALOG_FIRST, RESERVATION_NOT_PENDING; since 1.14.0 also GIFT_LISTING_NOT_PRODUCT (422 of addGiftItem: the CATALOGED listing is a SERVICE, only products can be gifts); since 1.15.0 also LIST_CLOSED (409 of reserveGift: the gift list is closed by hand) */
             code?: string;
             correlationId?: string;
             detail?: string;
@@ -1021,7 +1025,7 @@ export interface components {
             variantCode?: string | null;
         };
         GiftBatchRequest: {
-            /** @description Omit to keep the current notes; null or an empty text clears them. */
+            /** @description Omit to keep the current notes; null or an empty text clears them. Since 1.18.0: 422 CONTACT_IN_TEXT when it carries a phone number or a web address. */
             deliveryNotes?: string | null;
             items: components["schemas"]["GiftBatchEntry"][];
         };
@@ -1266,7 +1270,7 @@ export interface components {
             closed: boolean;
         };
         GiftListDeliveryNotesRequest: {
-            /** @description Delivery instructions, no exact address. null or an empty text clears them. */
+            /** @description Delivery instructions, no exact address, no phone number or web address (422 CONTACT_IN_TEXT since 1.18.0). null or an empty text clears them. */
             deliveryNotes: string | null;
         };
         /** @description Since 1.13.0 (R8a): DevCompatGiftList plus its manual closure state. */
@@ -1895,7 +1899,7 @@ export interface components {
                 "application/problem+json": components["schemas"]["DevCompatProblem"];
             };
         };
-        /** @description The gift is no longer available */
+        /** @description The gift is no longer available (GIFT_NOT_AVAILABLE; since 1.15.0 also LIST_CLOSED from reserveGift when the host or the organizer closed the gift list by hand) */
         DevCompatGiftNotAvailable: {
             headers: {
                 [name: string]: unknown;
@@ -2271,6 +2275,36 @@ export interface operations {
                     "application/problem+json": components["schemas"]["DevCompatProblem"];
                 };
             };
+            422: components["responses"]["DevCompatValidation"];
+            503: components["responses"]["DevCompatDependencyUnavailable"];
+        };
+    };
+    removeGiftItem: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Echoed in the response header and in problem.correlationId; generated when absent. */
+                "X-Correlation-Id"?: components["parameters"]["DevCompatCorrelationId"];
+            };
+            path: {
+                celebrationId: components["parameters"]["DevCompatCelebrationId"];
+                giftItemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The gift is no longer on the list (also when it already was not) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["DevCompatUnauthorized"];
+            403: components["responses"]["DevCompatForbidden"];
+            404: components["responses"]["DevCompatNotFound"];
+            409: components["responses"]["DevCompatGiftConflict"];
             422: components["responses"]["DevCompatValidation"];
             503: components["responses"]["DevCompatDependencyUnavailable"];
         };
@@ -7163,7 +7197,7 @@ export interface operations {
                     };
                 };
             };
-            /** @description GiftNotAvailable */
+            /** @description GiftNotAvailable, or LIST_CLOSED while the host holds the gift list closed (since 1.15.0; new reservations are refused, existing ones are untouched) */
             409: {
                 headers: {
                     /** @description Responses are never stored. */
@@ -7175,7 +7209,7 @@ export interface operations {
                 content: {
                     "application/problem+json": components["schemas"]["ReservationProblem"] & {
                         /** @enum {unknown} */
-                        code?: "GiftNotAvailable";
+                        code?: "GiftNotAvailable" | "LIST_CLOSED";
                         /** @constant */
                         status?: 409;
                         /** @constant */
@@ -7402,7 +7436,7 @@ export interface operations {
                     };
                 };
             };
-            /** @description GiftNotAvailable */
+            /** @description GiftNotAvailable, or LIST_CLOSED while the host holds the gift list closed (since 1.15.0; new reservations are refused, existing ones are untouched) */
             409: {
                 headers: {
                     /** @description Responses are never stored. */
@@ -7414,7 +7448,7 @@ export interface operations {
                 content: {
                     "application/problem+json": components["schemas"]["ReservationProblem"] & {
                         /** @enum {unknown} */
-                        code?: "GiftNotAvailable";
+                        code?: "GiftNotAvailable" | "LIST_CLOSED";
                         /** @constant */
                         status?: 409;
                         /** @constant */

@@ -69,19 +69,52 @@ describe("REQ-F23-04 · status of each gift", () => {
 });
 
 describe("R1 · M-6 · a gift that can no longer be given (UNAVAILABLE)", () => {
-  const WITH_UNAVAILABLE = { items: [gift("Torta"), gift("Musica", { status: "UNAVAILABLE" }), gift("Mesa", { status: "COMMITTED" })], partnerPriorityEnabled: true };
-  it("the host sees it marked with words, not only a color, and counted apart; no action is offered on it", async () => {
+  // gift-list 1.14.0: availability is its own field; status never says UNAVAILABLE and keeps the gift's own value.
+  const WITH_UNAVAILABLE = { items: [gift("Torta", { availability: "AVAILABLE" }), gift("Musica", { status: "AVAILABLE", availability: "UNAVAILABLE" }), gift("Mesa", { status: "COMMITTED", availability: "AVAILABLE" })], partnerPriorityEnabled: true };
+  it("the host sees it marked with words, in its own section «No disponibles (n)», outside the total; approve, reject and release are not offered; only the replacements and removal (R7)", async () => {
     const { client } = fakeClient(handlers({ "GET /gifts/celebrations/c-1/items": () => WITH_UNAVAILABLE }));
     renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);
     await screen.findByTestId("gift-Musica");
     expect(screen.getByTestId("gift-status-Musica").textContent).toBe("No disponible");
     expect(screen.getByTestId("gift-unavailable-Musica").textContent).toMatch(/Tus invitados ya no lo ven/);
     expect(screen.queryByTestId("gift-unavailable-Torta")).toBeNull();
-    expect(screen.getByTestId("gift-unavailable").getAttribute("aria-label")).toBe("No disponibles: 1");
+    expect(screen.getByRole("region", { name: /No disponibles/ })).toBe(screen.getByTestId("gift-unavailable-section"));
+    expect(screen.getByTestId("gift-unavailable").textContent).toBe("No disponibles (1)");
+    expect(within(screen.getByTestId("gift-unavailable-section")).getByTestId("gift-Musica")).toBeTruthy();
+    expect(within(screen.getByTestId("gift-unavailable-section")).queryByTestId("gift-Torta")).toBeNull();
+    // the total excludes it: Torta and Mesa count, Musica does not
+    expect(screen.getByTestId("gift-count").getAttribute("aria-label")).toBe("Regalos: 2");
     expect(screen.getByTestId("gift-available").getAttribute("aria-label")).toBe("Disponibles: 1");
-    expect(within(screen.getByTestId("gift-Musica")).queryAllByRole("button")).toEqual([]);
+    // R7: an unavailable gift offers two controls, the one that opens its replacements and (Gift 1.20.0) the one that takes it off the list; approve, reject and release are never offered.
+    expect(within(screen.getByTestId("gift-Musica")).queryAllByRole("button").map((button) => button.getAttribute("data-testid"))).toEqual(["replacements-toggle-Musica", "remove-gift-Musica"]);
   });
-  it("without unavailable gifts the figure does not appear", async () => {
+  it("the mark follows availability; a server that still wrote UNAVAILABLE in status is read too (R7 isGiftUnavailable), and the gift goes to the unavailable section", async () => {
+    const { client } = fakeClient(handlers({ "GET /gifts/celebrations/c-1/items": () => ({ items: [gift("Vieja", { status: "UNAVAILABLE" })], partnerPriorityEnabled: true }) }));
+    renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    await screen.findByTestId("gift-Vieja");
+    expect(within(screen.getByTestId("gift-unavailable-section")).getByTestId("gift-Vieja")).toBeTruthy();
+    expect(screen.getByTestId("gift-status-Vieja").textContent).toBe("No disponible");
+  });
+
+  it("when every gift is unavailable the list shows the zero total and the section, not the empty state", async () => {
+    const { client } = fakeClient(handlers({ "GET /gifts/celebrations/c-1/items": () => ({ items: [gift("Musica", { availability: "UNAVAILABLE" })], partnerPriorityEnabled: true }) }));
+    renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    await screen.findByTestId("gift-unavailable-section");
+    expect(screen.getByTestId("gift-count").getAttribute("aria-label")).toBe("Regalos: 0");
+    expect(screen.queryByText("Tu lista empieza con un regalo")).toBeNull();
+    expect(screen.queryByTestId("gift-list")).toBeNull();
+  });
+  it("a reserved gift that becomes unavailable keeps its «Liberar» action: the host can still free it", async () => {
+    const { client } = fakeClient(handlers({
+      "GET /gifts/celebrations/c-1/items": () => ({ items: [gift("Mesa", { status: "COMMITTED", availability: "UNAVAILABLE" })], partnerPriorityEnabled: true }),
+      "GET /gifts/celebrations/c-1/reservations": () => ({ items: [{ id: "r1", itemId: "Mesa", celebrationId: "c-1", status: "COMMITTED", requestedAt: "2026-11-02T00:00:00Z" }] })
+    }));
+    renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    await screen.findByTestId("gift-Mesa");
+    expect(within(screen.getByTestId("gift-unavailable-section")).getByTestId("gift-Mesa")).toBeTruthy();
+    expect(await screen.findByTestId("release-Mesa")).toBeTruthy();
+  });
+  it("without unavailable gifts the section does not appear", async () => {
     const { client } = fakeClient(handlers({ "GET /gifts/celebrations/c-1/items": () => GIFTS }));
     renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);
     await screen.findByTestId("gift-Torta");
@@ -93,17 +126,22 @@ describe("R1 · M-6 · a gift that can no longer be given (UNAVAILABLE)", () => 
     await screen.findByTestId("gift-Musica");
     expect(screen.getByTestId("gift-status-Musica").textContent).toBe("Unavailable");
     expect(screen.getByTestId("gift-unavailable-Musica").textContent).toMatch(/Your guests no longer see it/);
+    expect(screen.getByTestId("gift-unavailable").textContent).toBe("Unavailable (1)");
   });
-  it("the guest never sees it, even if a response carried it", async () => {
+  // Contract (gift-list 1.14.0): a guest list never carries an UNAVAILABLE gift. If a server sent one, R7 shows a quiet card marked «No disponible»
+  // with no reserve or purchase control, so the guest can never act on it. Hide-or-quiet-card is an open R1/R7 product decision (see the PR chain).
+  it("a guest can take no action on it, even if a response carried it", async () => {
     const { client } = fakeClient(handlers({
       "GET /celebrations/public/ana-luis": () => ({ celebrationId: "c-1", slug: "ana-luis", content: { title: "Ana y Luis" } }),
       "GET /gifts/celebrations/c-1/items": () => WITH_UNAVAILABLE
     }));
     renderApp(<GuestGiftsScreen slug="ana-luis" token={"T".repeat(43)} onNavigate={navigate} />, client);
     await screen.findByTestId("reserve-Torta");
-    expect(screen.queryByText("Musica")).toBeNull();
-    expect(screen.queryByText("No disponible")).toBeNull();
+    expect(screen.queryByTestId("reserve-Musica")).toBeNull();
+    expect(within(screen.getByTestId("gift-Musica")).queryAllByRole("button")).toEqual([]);
+    expect(screen.queryByText(/No disponibles/)).toBeNull();
   });
+
 });
 
 describe("REQ-F23-01 · pending reservations inbox", () => {
@@ -324,6 +362,34 @@ describe("REQ-F28-03/05 · services with delivery conditions", () => {
     expect(screen.getByText(/ciudad de cobertura/)).toBeTruthy();
     expect(calls.filter((call) => call.method === "POST" && call.path.endsWith("/listings"))).toHaveLength(0);
   });
+  it("R1 · a listing the platform hid for a type/category mismatch says so, in both languages; a normal one says nothing", async () => {
+    await withProvider();
+    const items = [{ id: "h1", providerId: PID, type: "SERVICE", category: "DECORATION", city: "la-paz", title: "Torta mal categorizada", published: false, hiddenReason: "CATEGORY_TYPE_MISMATCH" }, { id: "h2", providerId: PID, type: "PRODUCT", category: "DECORATION", city: "la-paz", title: "Normal", published: false, hiddenReason: null }];
+    const { client } = fakeClient(providerHandlers({ [`GET /providers/${PID}/listings`]: () => ({ items }) }));
+    renderApp(<ProductsScreen />, client, HOST);
+    expect((await screen.findByTestId("listing-hidden-h1")).textContent).toMatch(/Oculto: el tipo no coincide con la categoría/);
+    expect(screen.queryByTestId("listing-hidden-h2")).toBeNull();
+    // hidden: the chip says «Oculto» and there is no «Publicar» in its row; the normal draft keeps it
+    expect(screen.getByTestId("listing-state-h1").textContent).toBe("Oculto");
+    expect(within(screen.getByTestId("listing-h1")).queryByRole("button", { name: /Más opciones/ })).toBeNull();
+    expect(within(screen.getByTestId("listing-h2")).getByRole("button", { name: /Más opciones/ })).toBeTruthy();
+    cleanup();
+    const second = fakeClient(providerHandlers({ [`GET /providers/${PID}/listings`]: () => ({ items }) }));
+    renderApp(<ProductsScreen />, second.client, HOST, "en-US");
+    expect((await screen.findByTestId("listing-hidden-h1")).textContent).toMatch(/Hidden: the type does not match the category/);
+    expect(screen.getByTestId("listing-state-h1").textContent).toBe("Hidden");
+  });
+  it("R1 + R2 · a product with a sheet that the platform hid shows only «Oculto» and why: no completeness chip, menu or «Editar»", async () => {
+    await withProvider();
+    const items = [{ id: "h3", providerId: PID, type: "PRODUCT", category: "PASTRY", city: "la-paz", title: "Oculta con ficha", published: false, version: 2, completeness: "INCOMPLETE", missing: ["PHOTO"], hiddenReason: "CATEGORY_TYPE_MISMATCH" }];
+    const { client } = fakeClient(providerHandlers({ [`GET /providers/${PID}/listings`]: () => ({ items }) }));
+    renderApp(<ProductsScreen />, client, HOST);
+    const row = await screen.findByTestId("listing-h3");
+    expect(screen.getByTestId("listing-state-h3").textContent).toBe("Oculto");
+    expect(screen.getByTestId("listing-hidden-h3")).toBeTruthy();
+    expect(within(row).queryByRole("button", { name: /Más opciones/ })).toBeNull();
+    for (const id of ["listing-completeness-h3", "listing-edit-h3", "listing-missing-h3", "listing-not-gift-h3", "publish-blocked-h3"]) expect(screen.queryByTestId(id)).toBeNull();
+  });
   it("lists the categories of each offer type; a product goes to the step-by-step sheet (R2: no image link, 422 IMAGE_URL_NOT_ALLOWED)", async () => {
     await withProvider();
     const { client, calls } = fakeClient(providerHandlers({ [`GET /providers/${PID}/listings`]: () => ({ items: [] }) }));
@@ -532,6 +598,30 @@ describe("D-3 · the host releases a reserved gift", () => {
     const posts = calls.filter((call) => call.method === "POST");
     expect(posts.map((call) => call.path)).toEqual(["/gifts/celebrations/c-1/reservations/r9/cancel"]);
     expect(posts[0]?.headers.get("idempotency-key")).toBeTruthy();
+  });
+  const mesa = (availability: string) => ({ items: [gift("Mesa", { status: "COMMITTED", availability })], partnerPriorityEnabled: true });
+  const cancelled = () => ({ ...COMMITTED.items[0], status: "CANCELLED", cancellationReason: "HOST_CANCELLED" });
+  it.each([
+    ["es-BO", "Se cancela la reserva de «Mesa». El regalo sigue como no disponible: tus invitados no lo ven.", "Liberaste «Mesa». Sigue como no disponible: tus invitados no lo ven.", /vuelve a estar disponible|disponible otra vez/],
+    ["en-US", "The reservation of \"Mesa\" is cancelled. The gift stays unavailable: your guests do not see it.", "You released \"Mesa\". It is still unavailable: your guests do not see it.", /available to your guests again|It is available again/]
+  ] as const)("releasing an unavailable gift never says guests can get it again (%s)", async (locale, confirmBody, done, promise) => {
+    const { client } = fakeClient(base({ "GET /gifts/celebrations/c-1/items": () => mesa("UNAVAILABLE"), "POST /gifts/celebrations/c-1/reservations/r9/cancel": cancelled }));
+    renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client, HOST, locale);
+    fireEvent.click(await screen.findByTestId("release-Mesa"));
+    expect(screen.getByText(confirmBody)).toBeTruthy();
+    expect(screen.queryByText(promise)).toBeNull();
+    fireEvent.click(screen.getByTestId("release-confirm"));
+    expect(await screen.findByText(done)).toBeTruthy();
+    expect(screen.queryByText(promise)).toBeNull();
+  });
+  it("an available gift keeps the «available again» wording; if the refreshed list says it is unavailable, the notice follows the list", async () => {
+    let availability = "AVAILABLE";
+    const { client } = fakeClient(base({ "GET /gifts/celebrations/c-1/items": () => mesa(availability), "POST /gifts/celebrations/c-1/reservations/r9/cancel": () => { availability = "UNAVAILABLE"; return cancelled(); } }));
+    renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    fireEvent.click(await screen.findByTestId("release-Mesa"));
+    expect(screen.getByText("Se cancela la reserva de «Mesa» y el regalo vuelve a estar disponible para tus invitados. Quien lo reservó verá su reserva como cancelada.")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("release-confirm"));
+    expect(await screen.findByText("Liberaste «Mesa». Sigue como no disponible: tus invitados no lo ven.")).toBeTruthy();
   });
   it("«No, mantener la reserva» sends nothing; a reservation already ended (409) closes and explains", async () => {
     const { client, calls } = fakeClient(base({ "POST /gifts/celebrations/c-1/reservations/r9/cancel": () => new HttpFailure(409, { code: "RESERVATION_NOT_ACTIVE" }) }));

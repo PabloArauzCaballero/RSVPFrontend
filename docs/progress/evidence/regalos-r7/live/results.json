@@ -1,0 +1,222 @@
+[
+ {
+  "name": "BE host list: dead gift is availability UNAVAILABLE, status AVAILABLE, reason OUT_OF_STOCK",
+  "ok": true,
+  "detail": "{\"a\":\"UNAVAILABLE\",\"s\":\"AVAILABLE\",\"r\":\"OUT_OF_STOCK\"}"
+ },
+ {
+  "name": "BE guest list: the UNAVAILABLE gifts are NOT sent to a guest (contract decision 2026-11-26)",
+  "ok": true,
+  "detail": "guest sees 1 item(s)"
+ },
+ {
+  "name": "BE 403 replacements for a guest credential",
+  "ok": true,
+  "detail": "403"
+ },
+ {
+  "name": "BE 404 replacements for an unknown gift",
+  "ok": true,
+  "detail": "404"
+ },
+ {
+  "name": "BE 401 replacements without token",
+  "ok": true,
+  "detail": "401"
+ },
+ {
+  "name": "[360-light-es-BO] dead gift chip says No disponible",
+  "ok": true,
+  "detail": "NO DISPONIBLE"
+ },
+ {
+  "name": "[360-light-es-BO] reason shown",
+  "ok": true,
+  "detail": "Se agotó."
+ },
+ {
+  "name": "[360-light-es-BO] 3 replacements of the same idea",
+  "ok": true,
+  "detail": "3"
+ },
+ {
+  "name": "[360-light-es-BO] replacements read with eventType",
+  "ok": true,
+  "detail": "GET /gifts/celebrations/5f1c2d3e-4a5b-4c6d-8e7f-a1b2c3d4e5f6/items/4adeb928-b3cf-40be-af2c-cb640171255a/replacements?eventType=WEDDING"
+ },
+ {
+  "name": "axe host list + panel 360-light-es-BO",
+  "ok": true,
+  "detail": "0 minor/moderate, 0 critical/serious"
+ },
+ {
+  "name": "[360-light-es-BO] toggle exposes aria-expanded=true",
+  "ok": true,
+  "detail": "true"
+ },
+ {
+  "name": "[768-dark-es-BO] dead gift chip says No disponible",
+  "ok": true,
+  "detail": "NO DISPONIBLE"
+ },
+ {
+  "name": "[768-dark-es-BO] reason shown",
+  "ok": true,
+  "detail": "Se agotó."
+ },
+ {
+  "name": "[768-dark-es-BO] 3 replacements of the same idea",
+  "ok": true,
+  "detail": "3"
+ },
+ {
+  "name": "[768-dark-es-BO] replacements read with eventType",
+  "ok": true,
+  "detail": "GET /gifts/celebrations/5f1c2d3e-4a5b-4c6d-8e7f-a1b2c3d4e5f6/items/4adeb928-b3cf-40be-af2c-cb640171255a/replacements?eventType=WEDDING"
+ },
+ {
+  "name": "axe host list + panel 768-dark-es-BO",
+  "ok": true,
+  "detail": "0 minor/moderate, 0 critical/serious"
+ },
+ {
+  "name": "[768-dark-es-BO] toggle exposes aria-expanded=true",
+  "ok": true,
+  "detail": "true"
+ },
+ {
+  "name": "[1280-light-en-US] dead gift chip says Unavailable",
+  "ok": true,
+  "detail": "UNAVAILABLE"
+ },
+ {
+  "name": "[1280-light-en-US] reason shown",
+  "ok": true,
+  "detail": "It is out of stock."
+ },
+ {
+  "name": "[1280-light-en-US] 3 replacements of the same idea",
+  "ok": true,
+  "detail": "3"
+ },
+ {
+  "name": "[1280-light-en-US] replacements read with eventType",
+  "ok": true,
+  "detail": "GET /gifts/celebrations/5f1c2d3e-4a5b-4c6d-8e7f-a1b2c3d4e5f6/items/4adeb928-b3cf-40be-af2c-cb640171255a/replacements?eventType=WEDDING"
+ },
+ {
+  "name": "axe host list + panel 1280-light-en-US",
+  "ok": true,
+  "detail": "1 minor/moderate, 0 critical/serious"
+ },
+ {
+  "name": "[1280-light-en-US] toggle exposes aria-expanded=true",
+  "ok": true,
+  "detail": "true"
+ },
+ {
+  "name": "[503] error shown, nothing changed",
+  "ok": true,
+  "detail": "El catálogo no responde por ahora. No se cambió nada."
+ },
+ {
+  "name": "[503] «Reintentar» loads the replacements",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "[network] error shown, nothing changed",
+  "ok": true,
+  "detail": "Sin conexión por ahora. No se cambió nada; reintenta cuando vuelva internet."
+ },
+ {
+  "name": "[network] «Reintentar» loads the replacements",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "empty replacements shows the empty state with the catalog action",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "swap success notice",
+  "ok": true,
+  "detail": "Cambiaste «Juego de platos» por «Vajilla de gres». Ya está en tu lista."
+ },
+ {
+  "name": "BE: the replacement exists with the same idea, quantity 2 and group switch",
+  "ok": true,
+  "detail": "{\"idea\":\"TABLEWARE\",\"q\":2,\"g\":true,\"av\":\"AVAILABLE\"}"
+ },
+ {
+  "name": "BE: the unavailable gift stays on the list, marked",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "BE guest now sees the replacement and still not the dead gift",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "BE: the swapped product is no longer offered as a replacement",
+  "ok": true,
+  "detail": "2 left"
+ },
+ {
+  "name": "BE 422 when the idea already has a live gift (DUPLICATE_GIFT_IDEA)",
+  "ok": true,
+  "detail": "422 DUPLICATE_GIFT_IDEA"
+ },
+ {
+  "name": "[guest 360-light-es-BO] real payload: normal card with its reserve button",
+  "ok": true,
+  "detail": "reserve buttons: 1"
+ },
+ {
+  "name": "[guest 360-light-es-BO] SIMULATED UNAVAILABLE: muted card says the sentence",
+  "ok": true,
+  "detail": "El proveedor ya no lo ofrece"
+ },
+ {
+  "name": "[guest 360-light-es-BO] no reserve / store / WhatsApp / units control",
+  "ok": true,
+  "detail": "[]"
+ },
+ {
+  "name": "[guest 360-light-es-BO] no /r/ partner link",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "axe guest unavailable card 360-light-es-BO",
+  "ok": true,
+  "detail": "0 minor/moderate, 0 critical/serious"
+ },
+ {
+  "name": "[guest 1280-dark-en-US] real payload: normal card with its reserve button",
+  "ok": true,
+  "detail": "reserve buttons: 1"
+ },
+ {
+  "name": "[guest 1280-dark-en-US] SIMULATED UNAVAILABLE: muted card says the sentence",
+  "ok": true,
+  "detail": "The provider no longer offers this"
+ },
+ {
+  "name": "[guest 1280-dark-en-US] no reserve / store / WhatsApp / units control",
+  "ok": true,
+  "detail": "[]"
+ },
+ {
+  "name": "[guest 1280-dark-en-US] no /r/ partner link",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "axe guest unavailable card 1280-dark-en-US",
+  "ok": true,
+  "detail": "0 minor/moderate, 0 critical/serious"
+ }
+]

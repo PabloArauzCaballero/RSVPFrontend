@@ -771,6 +771,17 @@ describe("R4 · step 3 · balance and delivery notes", () => {
     expect((await screen.findByTestId("wizard-notes-failed")).textContent).toMatch(/Revisa las indicaciones de entrega/);
     expect(screen.queryByTestId("wizard-done")).toBeNull();
   });
+  it("422 CONTACT_IN_TEXT of the PUT says the notes are public and must not carry a phone or a web address, and the gifts stay added", async () => {
+    const srv = server();
+    await toSummaryWith(srv, { [BATCH]: () => created([IDEA_CAKE, IDEA_DINNER]), [NOTES]: () => new HttpFailure(422, { code: "CONTACT_IN_TEXT", field: "deliveryNotes", fragment: "71234567" }) });
+    fireEvent.change(screen.getByTestId("wizard-notes"), { target: { value: "Llamar al 71234567" } });
+    click("wizard-submit");
+    const failed = (await screen.findByTestId("wizard-notes-failed")).textContent ?? "";
+    expect(failed).toMatch(/son públicas: quita teléfonos y direcciones web/);
+    expect(failed).not.toMatch(/Revisa las indicaciones de entrega/);
+    expect((screen.getByTestId("wizard-notes-edit") as HTMLTextAreaElement).value).toBe("Llamar al 71234567");
+    expect(screen.queryByTestId("wizard-done")).toBeNull();
+  });
   it("422 of the PUT leaves a way out: the text is kept in an editable field, «Guardar indicaciones» sends ONLY the PUT with the new text", async () => {
     const srv = server();
     let puts = 0;

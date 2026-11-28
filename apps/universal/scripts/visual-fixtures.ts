@@ -67,9 +67,9 @@ const templates = [
   { id: "t-draft", name: "Festivo (borrador)", status: "DRAFT", version: 1, publishedAt: null, eventTypeTags: ["quinceanera"], layout: "festive", theme: { palette: { canvas: "#FFF4F8", surface: "#FFFFFF", text: "#3A1730", accent: "#C2185B", muted: "#7A5A6E" }, typography: { heading: "Georgia, serif", body: "Arial, sans-serif" }, sectionStyle: "cards" }, sectionOrder: ["story", "rsvp"] }
 ];
 const gifts = [
-  { id: "g-1", listId: "gl-1", celebrationId: MOCK_CELEBRATION_ID, title: "Juego de copas", description: null, price: { amountMinor: 18000, currency: "BOB" }, source: "CATALOGED", status: "AVAILABLE", version: 1, productListingId: L2, providerId: P, externalUrl: null, createdAt: NOW },
-  { id: "g-2", listId: "gl-1", celebrationId: MOCK_CELEBRATION_ID, title: "Licuadora", description: "Cualquier marca", price: { amountMinor: 35000, currency: "BOB" }, source: "EXTERNAL", status: "COMMITTED", version: 2, productListingId: null, providerId: null, externalUrl: "https://example.com/licuadora", createdAt: NOW },
-  { id: "g-3", listId: "gl-1", celebrationId: MOCK_CELEBRATION_ID, title: "Torta de bodas", description: null, price: { amountMinor: 60000, currency: "BOB" }, source: "CATALOGED", status: "PENDING_REVIEW", version: 1, productListingId: L2, providerId: P, externalUrl: null, createdAt: NOW }
+  { id: "g-1", listId: "gl-1", celebrationId: MOCK_CELEBRATION_ID, title: "Juego de copas", description: null, price: { amountMinor: 18000, currency: "BOB" }, source: "CATALOGED", status: "AVAILABLE", availability: "AVAILABLE", version: 1, productListingId: L2, providerId: P, externalUrl: null, createdAt: NOW },
+  { id: "g-2", listId: "gl-1", celebrationId: MOCK_CELEBRATION_ID, title: "Licuadora", description: "Cualquier marca", price: { amountMinor: 35000, currency: "BOB" }, source: "EXTERNAL", status: "COMMITTED", availability: "AVAILABLE", version: 2, productListingId: null, providerId: null, externalUrl: "https://example.com/licuadora", createdAt: NOW },
+  { id: "g-3", listId: "gl-1", celebrationId: MOCK_CELEBRATION_ID, title: "Torta de bodas", description: null, price: { amountMinor: 60000, currency: "BOB" }, source: "CATALOGED", status: "PENDING_REVIEW", availability: "AVAILABLE", version: 1, productListingId: L2, providerId: P, externalUrl: null, createdAt: NOW }
 ];
 const reservations = [
   { id: "r-1", itemId: "g-3", celebrationId: MOCK_CELEBRATION_ID, guestId: "x", guestDisplayName: "Marta Quispe", message: "¡Con cariño!", status: "PENDING_REVIEW", requestedAt: NOW, resolvedAt: null, resolvedBy: null }
