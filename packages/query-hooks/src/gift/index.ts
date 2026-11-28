@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient, type Query } from "@tanstack/react-query";
+import { effectiveAmountMinor } from "./guest-card.js";
 import { ApiError, type ApiClient } from "@rsvp/api-client";
 import { cachePolicy } from "../policy.js";
 import { queryKeys } from "../keys.js";
@@ -64,7 +65,7 @@ export interface GiftFilters { readonly maxMinor?: number; readonly source: Gift
  * gifts before the others whatever the order they arrived in. One function so both surfaces filter identically.
  */
 export function arrangeGifts<T extends { readonly source: string; readonly status: string; readonly price: { readonly amountMinor: number }; readonly currentPrice?: { readonly amountMinor: number } | null }>(items: readonly T[], filters: GiftFilters): { readonly partner: T[]; readonly other: T[] } {
-  const kept = guestVisible(items).filter((item) => (filters.maxMinor === undefined || (item.currentPrice?.amountMinor ?? item.price.amountMinor) <= filters.maxMinor) && (!filters.onlyAvailable || item.status === "AVAILABLE") && (filters.source === "all" || (filters.source === "partner") === (item.source === "CATALOGED")));
+  const kept = guestVisible(items).filter((item) => (filters.maxMinor === undefined || effectiveAmountMinor(item) <= filters.maxMinor) && (!filters.onlyAvailable || item.status === "AVAILABLE") && (filters.source === "all" || (filters.source === "partner") === (item.source === "CATALOGED")));
   const ordered = catalogedFirst(kept);
   return { partner: ordered.filter((item) => item.source === "CATALOGED"), other: ordered.filter((item) => item.source !== "CATALOGED") };
 }

@@ -1,4 +1,5 @@
 import { CORRELATION_HEADER, REDIRECT_STATUS, resolveRedirect } from "../../../lib/redirect";
+import { resolveLocale } from "@rsvp/i18n/server";
 import { redirectErrorPage } from "../../../lib/redirect-page";
 import { clientAddressOf, trustedProxyHops } from "../../../lib/client-address";
 
@@ -33,7 +34,7 @@ export async function GET(request: Request, { params }: { readonly params: Promi
   if (outcome.kind === "redirect") {
     return new Response(null, { status: REDIRECT_STATUS, headers: { ...noStore, location: outcome.location } });
   }
-  return new Response(redirectErrorPage(outcome.reason, backLink(request.headers.get("referer"), url.origin)), {
+  return new Response(redirectErrorPage(outcome.reason, backLink(request.headers.get("referer"), url.origin), resolveLocale(url.searchParams.get("locale"))), {
     status: outcome.status,
     headers: { ...noStore, "content-type": "text/html; charset=utf-8" }
   });

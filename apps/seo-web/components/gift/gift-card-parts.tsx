@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { GuestGiftState, PurchaseAnswer } from '@rsvp/query-hooks';
 import type { createTranslator } from '@rsvp/i18n/server';
 
@@ -16,7 +16,7 @@ export function UnitsStepper({ id, value, max, title, t, onChange }: { readonly 
       <p id={`${id}-label`} className="gift-stepper__label">{t('gifts.guest.units.choose')}</p>
       <div className="gift-stepper__row">
         <button type="button" className="gift-stepper__button" aria-label={`${t('gifts.guest.units.less')} · ${title}`} disabled={value <= 1} onClick={() => onChange(value - 1)} data-testid={`${id}-less`}><span aria-hidden="true" className="gift-stepper__sign" /></button>
-        <output className="gift-stepper__value" aria-live="polite" aria-label={t('gifts.guest.units.value', { count: value })} data-testid={`${id}-value`}>{value}</output>
+        <output className="gift-stepper__value" aria-live="polite" data-testid={`${id}-value`}>{t('gifts.guest.units.value', { count: value })}</output>
         <button type="button" className="gift-stepper__button" aria-label={`${t('gifts.guest.units.more')} · ${title}`} disabled={value >= max} onClick={() => onChange(value + 1)} data-testid={`${id}-more`}><span aria-hidden="true" className="gift-stepper__sign gift-stepper__sign--plus" /></button>
       </div>
       <p className="rsvp-hint">{t('gifts.guest.units.help', { count: max })}</p>
@@ -41,12 +41,20 @@ export function UnitsAndGroup({ id, state, t }: { readonly id: string; readonly 
 
 /** The card that appears when the guest comes back from the provider. It is a labelled group, so a screen reader announces the question with its options. */
 export function PurchasePromptCard({ id, title, units, reminder, closed, t, onAnswer, claimAnnouncement }: { readonly id: string; readonly title: string; readonly units: number; readonly reminder: boolean; /** The list is closed and the guest holds nothing: the purchase cannot be recorded, so the only action is to acknowledge. */ readonly closed: boolean; readonly t: T; readonly onAnswer: (answer: PurchaseAnswer) => void; readonly claimAnnouncement: () => boolean }): ReactNode {
-  // The question appears when the guest comes back: it takes focus ONCE per attempt (not each time the row remounts, e.g. when a filter changes: WCAG 3.2.2) so a screen reader says it.
+  // Two ways to appear. Coming back from the provider (`reminder` false) the guest is waiting for the question: it takes focus ONCE per attempt (not each
+  // time the row remounts, e.g. when a filter changes: WCAG 3.2.2). The reminder shown when the list OPENS must not move focus or scroll a page that just
+  // loaded to a far row: it is announced through a polite live region instead.
   const ref = useRef<HTMLElement>(null);
-  useEffect(() => { if (claimAnnouncement()) ref.current?.focus({ preventScroll: false }); }, [claimAnnouncement]);
+  const [spoken, setSpoken] = useState(false);
+  const question = units > 1 ? t('gifts.guest.prompt.titleUnits', { units, title }) : t('gifts.guest.prompt.title', { title });
+  useEffect(() => {
+    if (!claimAnnouncement()) return;
+    if (reminder) setSpoken(true); else ref.current?.focus({ preventScroll: false });
+  }, [claimAnnouncement, reminder]);
   return (
     <section ref={ref} tabIndex={-1} className="gift-note gift-note--info gift-prompt" aria-labelledby={`gift-prompt-${id}-title`} data-testid={`gift-prompt-${id}`}>
-      <h3 id={`gift-prompt-${id}-title`}>{units > 1 ? t('gifts.guest.prompt.titleUnits', { units, title }) : t('gifts.guest.prompt.title', { title })}</h3>
+      <h3 id={`gift-prompt-${id}-title`}>{question}</h3>
+      {reminder ? <p className="visually-hidden" role="status" data-testid={`gift-prompt-live-${id}`}>{spoken ? question : ''}</p> : null}
       <p className="rsvp-hint">{t(closed ? 'gifts.guest.prompt.bodyClosed' : 'gifts.guest.prompt.body')}</p>
       {reminder && !closed ? <p className="rsvp-hint">{t('gifts.guest.prompt.reminder')}</p> : null}
       <div className="gift-actions">

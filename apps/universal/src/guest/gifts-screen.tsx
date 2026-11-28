@@ -98,7 +98,7 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
   const mine = activeReservationsByItem(mineQuery.data?.items);
   const cancel = useCancelGiftReservation(client, celebrationId ?? "", credential);
   const [cancelTarget, setCancelTarget] = useState<{ readonly item: GiftItem; readonly reservation: GiftReservation } | null>(null);
-  const [cancelled, setCancelled] = useState<string | null>(null);
+  const [cancelled, setCancelled] = useState<{ readonly title: string; readonly left: boolean } | null>(null);
   const cancelKeys = useRef(new Map<string, string>());
 
   // REG-01 · the host closed the list by hand: say so and offer no reservation. What the guest already holds stays, and they can still cancel it.
@@ -139,7 +139,7 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
     let key = cancelKeys.current.get(reservation.id);
     if (!key) { key = newIdempotencyKey(); cancelKeys.current.set(reservation.id, key); }
     cancel.mutate({ reservationId: reservation.id, idempotencyKey: key }, {
-      onSuccess: () => { setCancelTarget(null); setOutcome(null); setCancelled(item.title); },
+      onSuccess: () => { setCancelTarget(null); setOutcome(null); setCancelled({ title: item.title, left: reservation.role === "CONTRIBUTOR" }); },
       onError: (error) => { if (isReservationNotActive(error)) setCancelTarget(null); }
     });
   };
@@ -228,6 +228,7 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
   const failedKind = reserve.isError ? reserveFailureKind(reserve.error) : null;
   const retryAfter = reserve.error instanceof ApiError ? reserve.error.retryAfterSeconds : undefined;
   const reserveMessage = failedKind && failedKind !== "taken" ? reserveFailureMessage(failedKind, retryAfter, insufficientUnitsLeft(reserve.error)) : null;
+  const leaving = cancelTarget?.reservation.role === "CONTRIBUTOR";
   const reservedInList = outcome?.kind === "reserved" && items.some((item) => item.id === outcome.item.id);
 
   const reservedNote = (reserved: Extract<Outcome, { kind: "reserved" }>): ReactNode => reserved.status === "CANCELLED" ? (
@@ -371,7 +372,7 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
         {link(t("gifts.back"), `/c/${encodeURIComponent(slug)}`, "gifts-invitation")}
       </View>
       {outcome?.kind === "reserved" && !reservedInList ? reservedNote(outcome) : null}
-      {cancelled ? <View testID="reservation-cancelled"><SuccessNote message={t("gifts.guest.mine.done", { title: cancelled })} /></View> : null}
+      {cancelled ? <View testID="reservation-cancelled"><SuccessNote message={t(cancelled.left ? "gifts.guest.group.leaveDone" : "gifts.guest.mine.done", { title: cancelled.title })} /></View> : null}
       {cancel.isError && isReservationNotActive(cancel.error) ? <Notice kind="info"><Text style={styles.body}>{t("gifts.guest.mine.notActive")}</Text></Notice> : null}
       {list.data && !onlyItemId && visibleCount > 0 ? (
         <View accessibilityRole="search" aria-label={t("gifts.filters.label")} style={{ gap: spacing[3] }} testID="gift-filters">
@@ -387,8 +388,8 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
       {list.data && visibleCount > 0 && items.length === 0 ? <EmptyState illustration="emptySearch" title={t("gifts.empty.filtered")} body={t("gifts.empty.filteredBody")} /> : null}
       {partner.length ? <View><Text accessibilityRole="header" aria-level={2} style={styles.subtitle}>{t("gifts.guest.groupPartner")}</Text><Stagger>{partner.map(renderGift)}</Stagger></View> : null}
       {other.length ? <View><Text accessibilityRole="header" aria-level={2} style={styles.subtitle}>{t("gifts.guest.groupOther")}</Text><Stagger>{other.map(renderGift)}</Stagger></View> : null}
-      <ConfirmDialog visible={cancelTarget !== null} danger busy={cancel.isPending} title={t("gifts.guest.mine.confirmTitle")} body={cancelTarget ? t(listClosed ? "gifts.guest.mine.confirmBodyClosed" : "gifts.guest.mine.confirmBody", { title: cancelTarget.item.title }) : ""}
-        confirmLabel={cancel.isPending ? t("gifts.guest.mine.cancelling") : t("gifts.guest.mine.confirm")} cancelLabel={t("gifts.guest.mine.keep")} confirmTestID="cancel-reservation-confirm" cancelTestID="cancel-reservation-keep"
+      <ConfirmDialog visible={cancelTarget !== null} danger busy={cancel.isPending} title={t(leaving ? "gifts.guest.group.leaveTitle" : "gifts.guest.mine.confirmTitle")} body={cancelTarget ? t(leaving ? (listClosed ? "gifts.guest.group.leaveBodyClosed" : "gifts.guest.group.leaveBody") : (listClosed ? "gifts.guest.mine.confirmBodyClosed" : "gifts.guest.mine.confirmBody"), { title: cancelTarget.item.title }) : ""}
+        confirmLabel={cancel.isPending ? t(leaving ? "gifts.guest.group.leaveBusy" : "gifts.guest.mine.cancelling") : t(leaving ? "gifts.guest.group.leaveConfirm" : "gifts.guest.mine.confirm")} cancelLabel={t(leaving ? "gifts.guest.group.leaveKeep" : "gifts.guest.mine.keep")} confirmTestID="cancel-reservation-confirm" cancelTestID="cancel-reservation-keep"
         onCancel={() => { setCancelTarget(null); cancel.reset(); }} onConfirm={confirmCancel}>
         {cancelFailure ? <Notice kind="error"><Text testID="cancel-reservation-error" style={styles.body}>{cancelFailure}</Text></Notice> : null}
       </ConfirmDialog>

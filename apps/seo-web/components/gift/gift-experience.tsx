@@ -97,7 +97,7 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
   const mine = activeReservationsByItem(mineQuery.data?.items);
   const cancel = useCancelGiftReservation(client, celebrationId, credential ?? null);
   const [cancelTarget, setCancelTarget] = useState<{ readonly item: GiftItem; readonly reservation: GiftReservation } | null>(null);
-  const [cancelled, setCancelled] = useState<string | null>(null);
+  const [cancelled, setCancelled] = useState<{ readonly title: string; readonly left: boolean } | null>(null);
   const cancelKeys = useRef(new Map<string, string>());
 
   const [maxPrice, setMaxPrice] = useState('');
@@ -178,7 +178,7 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
     let key = cancelKeys.current.get(reservation.id);
     if (!key) { key = newIdempotencyKey(); cancelKeys.current.set(reservation.id, key); }
     cancel.mutate({ reservationId: reservation.id, idempotencyKey: key }, {
-      onSuccess: () => { setCancelTarget(null); setOutcome(null); setCancelled(item.title); },
+      onSuccess: () => { setCancelTarget(null); setOutcome(null); setCancelled({ title: item.title, left: reservation.role === 'CONTRIBUTOR' }); },
       onError: (failure) => { if (isReservationNotActive(failure)) setCancelTarget(null); }
     });
   };
@@ -359,7 +359,7 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
           </FocusNote>
         ) : null}
         {outcome?.kind === 'reserved' && !reservedInList ? reservedNote(outcome) : null}
-        {cancelled ? <FocusNote testId="reservation-cancelled"><p>{t('gifts.guest.mine.done', { title: cancelled })}</p></FocusNote> : null}
+        {cancelled ? <FocusNote testId="reservation-cancelled"><p>{t(cancelled.left ? 'gifts.guest.group.leaveDone' : 'gifts.guest.mine.done', { title: cancelled.title })}</p></FocusNote> : null}
         {cancel.isError && isReservationNotActive(cancel.error) ? <FocusNote tone="info" testId="reservation-not-active"><p>{t('gifts.guest.mine.notActive')}</p></FocusNote> : null}
 
         {!onlyItemId && visibleCount > 0 ? (
@@ -391,7 +391,7 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
         {partner.length ? <section aria-labelledby="gifts-partner"><h2 id="gifts-partner" className="gift-group">{t('gifts.guest.groupPartner')}</h2><ul className="gift-rows" data-group="partner">{partner.map(renderRow)}</ul></section> : null}
         {other.length ? <section aria-labelledby="gifts-other"><h2 id="gifts-other" className="gift-group">{t('gifts.guest.groupOther')}</h2><ul className="gift-rows" data-group="other">{other.map(renderRow)}</ul></section> : null}
       </GuestSheet>
-      <CancelReservationDialog listClosed={listClosed} item={cancelTarget?.item ?? null} t={t} pending={cancel.isPending} failure={cancelFailure} onKeep={() => { setCancelTarget(null); cancel.reset(); }} onConfirm={confirmCancel} />
+      <CancelReservationDialog listClosed={listClosed} contributor={cancelTarget?.reservation.role === 'CONTRIBUTOR'} item={cancelTarget?.item ?? null} t={t} pending={cancel.isPending} failure={cancelFailure} onKeep={() => { setCancelTarget(null); cancel.reset(); }} onConfirm={confirmCancel} />
     </main>
   );
 }

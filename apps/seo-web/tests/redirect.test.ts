@@ -65,6 +65,17 @@ describe("REQ-F27-02/03 · /r/{listingId} redirector", () => {
     expect(correlationIdOf(null, CID)).toBe(CID);
   });
 
+  it("m6 · the error page speaks the visitor's language (the `locale` of the link) and falls back to es-BO", async () => {
+    gateway(() => new Response("{}", { status: 503 }));
+    const english = await (await GET(new Request(`http://site.test/r/${LISTING}?destination=WHATSAPP&locale=en-US`), ctx)).text();
+    expect(english).toContain('<html lang="en-US">');
+    expect(english).toContain("We could not open the link");
+    expect(english).toContain("Go back");
+    const other = await (await GET(new Request(`http://site.test/r/${LISTING}?destination=WHATSAPP&locale=xx`), ctx)).text();
+    expect(other).toContain('<html lang="es-BO">');
+    expect(other).toContain("No pudimos abrir el enlace");
+  });
+
   it("backend not answering: clear error page with a link back, not a redirect", async () => {
     gateway(() => new Response('{"message":"name resolution failed"}', { status: 503 }));
     const response = await GET(new Request(`http://site.test/r/${LISTING}?destination=PHONE`, { headers: { referer: "http://site.test/p/hotel-andino" } }), ctx);
@@ -233,6 +244,15 @@ describe("R5 · /r resolves the WhatsApp message on the server", () => {
     await GET(new Request(`http://site.test/r/${LISTING}?destination=WHATSAPP&surface=GIFT_LIST&celebrationId=${celebration}&celebrationSlug=ana-y-luis&giftItemId=${ITEM}&variant=${VARIANT}&quantity=2&locale=es-BO`), ctx);
     const [url] = fetchFn.mock.calls[0] as unknown as [URL];
     expect(Object.fromEntries(url.searchParams)).toEqual({ destination: "WHATSAPP", surface: "GIFT_LIST", celebrationId: celebration, celebrationSlug: "ana-y-luis", giftItemId: ITEM, variant: VARIANT, quantity: "2", locale: "es-BO" });
+  });
+
+  it("m7 · a version code that is not a UUID travels (the contract's variantCode); a malformed one is dropped", async () => {
+    const fetchFn = gateway(upstream302(WA));
+    await GET(new Request(`http://site.test/r/${LISTING}?destination=WHATSAPP&variant=blue_L-2`), ctx);
+    expect((fetchFn.mock.calls[0] as unknown as [URL])[0].searchParams.get("variant")).toBe("blue_L-2");
+    fetchFn.mockClear();
+    await GET(new Request(`http://site.test/r/${LISTING}?destination=WHATSAPP&variant=-bad`), ctx);
+    expect((fetchFn.mock.calls[0] as unknown as [URL])[0].searchParams.has("variant")).toBe(false);
   });
 
   it("the answer is exactly the wa.me link of the backend: no utm_* and no correlationId added, the text untouched", async () => {

@@ -56,7 +56,7 @@ describe("R5 · units", () => {
       const r = await row();
       expect(r.getByTestId(`gift-units-${ID}`).textContent).toBe("Faltan 8 de 12");
       fireEvent.click(r.getByTestId(`units-${ID}-more`)); fireEvent.click(r.getByTestId(`units-${ID}-more`));
-      expect(r.getByTestId(`units-${ID}-value`).textContent).toBe("3");
+      expect(r.getByTestId(`units-${ID}-value`).textContent).toBe("3 unidades");
       fireEvent.click(await r.findByRole("button", { name: "Pedir por WhatsApp" }));
       expect(lastLaunch(launch)).toEqual({ destination: "WHATSAPP", surface: "GIFT_LIST", celebrationId: "c-1", celebrationSlug: "ana-luis", giftItemId: ID, variant: VARIANT, quantity: "3", locale: "es-BO" });
       fireEvent.click(r.getByRole("button", { name: "Ver en la tienda" }));
@@ -191,7 +191,7 @@ describe("R5 · «¿Compraste?»", () => {
       expect(calls.slice(before).some((call) => call.method === "POST")).toBe(false);
       fireEvent.click(screen.getByTestId(`prompt-yes-${ID}`));
       expect(screen.queryByTestId(`gift-prompt-${ID}`)).toBeNull();
-      expect(screen.getByTestId(`units-${ID}-value`).textContent).toBe("2");
+      expect(screen.getByTestId(`units-${ID}-value`).textContent).toBe("2 unidades");
       fireEvent.click(screen.getByTestId("reserve-confirm"));
       await screen.findByTestId("gift-reserved");
       expect(calls.find((call) => call.method === "POST")?.body).toEqual({ units: 2 });
@@ -357,5 +357,23 @@ describe("R5 B1/M1/M2 · closed list: the purchase prompt never dead-ends and th
     expect(await r.findByRole("button", { name: "Pedir por WhatsApp" })).toBeTruthy();
     expect(r.getByTestId(`cancel-reservation-${ID}`)).toBeTruthy();
     expect(r.queryByTestId(`units-${ID}`)).toBeNull();
+  });
+});
+
+
+describe("R5 m11/m4 · contributor words and the stepper value", () => {
+  it("a contributor leaving a group gift reads «salirte», and the confirmation says they left", async () => {
+    items = [gift({ groupGiftEnabled: true, status: "PENDING_REVIEW", participants: 2, contributors: 1, coordinatorName: "Marta", viewer: viewer("CONTRIBUTOR", 0) })];
+    mine = [{ id: "r-1", itemId: ID, status: "PENDING_REVIEW", units: 0, role: "CONTRIBUTOR" }];
+    show({ "POST /gifts/celebrations/c-1/reservations/r-1/cancel": () => ({ id: "r-1", itemId: ID, celebrationId: "c-1", status: "CANCELLED", requestedAt: "2026-11-01T00:00:00Z" }) });
+    fireEvent.click(await screen.findByTestId(`cancel-reservation-${ID}`));
+    expect((await screen.findByText("¿Salirte del regalo?"))).toBeTruthy();
+    expect(screen.getByText("Dejas de aportar a «Vajilla». Si cambias de idea, podrás sumarte otra vez mientras siga libre.")).toBeTruthy();
+    expect(screen.getByTestId("cancel-reservation-confirm").textContent).toContain("Sí, salirme");
+  });
+
+  it("the stepper value is visible text with its unit", async () => {
+    items = [gift({ quantity: 12, unitsLeft: 8 })]; show();
+    expect((await (await row()).findByTestId(`units-${ID}-value`)).textContent).toBe("1 unidad");
   });
 });

@@ -29,7 +29,7 @@ export function UnitsStepper({ value, max, onChange, title, testID }: { readonly
       <Text style={styles.label}>{t("gifts.guest.units.choose")}</Text>
       <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[3] }}>
         {step(t("gifts.guest.units.less"), value - 1, value <= 1, `${testID}-less`, false)}
-        <Text aria-live="polite" accessibilityLiveRegion="polite" accessibilityLabel={t("gifts.guest.units.value", { count: value })} style={[styles.itemTitle, { minWidth: 32, textAlign: "center" }]} testID={`${testID}-value`}>{value}</Text>
+        <Text aria-live="polite" accessibilityLiveRegion="polite" style={[styles.itemTitle, { minWidth: 32, textAlign: "center" }]} testID={`${testID}-value`}>{t("gifts.guest.units.value", { count: value })}</Text>
         {step(t("gifts.guest.units.more"), value + 1, value >= max, `${testID}-more`, true)}
       </View>
       <Text style={styles.muted}>{t("gifts.guest.units.help", { count: max })}</Text>

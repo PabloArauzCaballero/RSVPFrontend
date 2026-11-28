@@ -47,6 +47,12 @@ export function effectivePrice(item: Pick<GiftItem, "price" | "currentPrice">): 
   return current && Number.isFinite(current.amountMinor) && current.amountMinor > 0 ? current : item.price;
 }
 
+/** The amount `effectivePrice` shows, for code that only has amounts (the price filter must compare what the guest reads, not a current price the screen ignores). */
+export function effectiveAmountMinor(item: { readonly price: { readonly amountMinor: number }; readonly currentPrice?: { readonly amountMinor: number } | null }): number {
+  const current = item.currentPrice?.amountMinor;
+  return current !== undefined && Number.isFinite(current) && current > 0 ? current : item.price.amountMinor;
+}
+
 /**
  * `held`: the guest's own reservation of this gift from `my-reservations`, for a server that does not send `viewer` on the list.
  * `listClosed`: the host closed the list (REG-01). It is part of the state, not a patch in each screen: a closed list offers no new reservation,

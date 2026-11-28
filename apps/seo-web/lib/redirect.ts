@@ -23,14 +23,15 @@ const CONTEXT_KEYS = ["surface", "celebrationId", "guestId", "locale", "country"
 /**
  * R5 (Provider Catalog 3.8.0): what the redirector reads to resolve the WhatsApp message on the server. Each one has a shape; a value that does not
  * have it is dropped here instead of sent, because the backend answers 422 to a `quantity` that is not a positive integer and a click must always
- * redirect. `giftItemId` and `variant` are ids; `celebrationSlug` only counts next to `celebrationId`. None of them can carry text into the message:
+ * redirect. `giftItemId` is a UUID and `variant` the contract's version code; the backend only honors `celebrationSlug` together with `celebrationId` (it is not enforced here). None of them can carry text into the message:
  * the guest's name, phone or `text` never reach it (PF-1), and the backend ignores any other key.
  */
 const GIFT_CONTEXT: Readonly<Record<string, RegExp>> = {
   // The contract's own slug: lowercase words joined by single hyphens, at most 100 characters (anything else is a 422 INVALID_LEAD_CONTEXT).
   celebrationSlug: /^(?=.{1,100}$)[a-z0-9]+(?:-[a-z0-9]+)*$/,
   giftItemId: UUID,
-  variant: UUID,
+  // The contract's `variantCode` (provider-catalog /r and GiftBatchEntry): not necessarily a UUID.
+  variant: /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/,
   quantity: /^[1-9][0-9]{0,5}$/
 };
 /**

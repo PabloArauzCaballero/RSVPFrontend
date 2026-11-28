@@ -125,6 +125,17 @@ describe("R5 · price, units and the quantity the buttons carry", () => {
   });
 });
 
+describe("R5 m2 · the price filter compares what the guest reads", () => {
+  it("a current price of 0 (ignored by the screen) does not make a gift pass or fail the filter: the stored price decides", () => {
+    const zero = item({ price: { amountMinor: 45000, currency: "BOB" }, currentPrice: { amountMinor: 0, currency: "BOB" } });
+    expect(effectivePrice(zero).amountMinor).toBe(45000);
+    expect(arrangeGifts([zero], { maxMinor: 10000, source: "all", onlyAvailable: false }).partner).toHaveLength(0);
+    expect(arrangeGifts([zero], { maxMinor: 50000, source: "all", onlyAvailable: false }).partner).toHaveLength(1);
+    const cheaper = item({ currentPrice: { amountMinor: 9000, currency: "BOB" } });
+    expect(arrangeGifts([cheaper], { maxMinor: 10000, source: "all", onlyAvailable: false }).partner).toHaveLength(1);
+  });
+});
+
 describe("R5 · reading the new 409s of reserveGift", () => {
   const conflict = (code: string, extra: Record<string, unknown> = {}) => new ApiError(409, "t", { title: "x", status: 409, code, ...extra });
   it("INSUFFICIENT_UNITS carries unitsLeft and gets its own message with the number", () => {

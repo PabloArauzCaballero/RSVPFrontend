@@ -29,6 +29,7 @@ export const giftsEnUS: DeepStrings<typeof giftsEsBO> = {
       join: "Join in", joinFor: "Join in for {{title}}", start: "Coordinate this gift", startFor: "Coordinate {{title}}",
       youCoordinate: "You coordinate this gift", youCoordinateHelp: "You are the one who buys it. Use the buttons below and the others chip in.", namesShown: "Joined: {{names}}",
       youContribute: "You joined this gift", youContributeHelp: "Someone else buys it; you chip in your share with them.", leave: "Leave this gift", leaveFor: "Leave this gift: {{title}}",
+      leaveTitle: "Leave this gift?", leaveBody: "You stop chipping in on “{{title}}”. If you change your mind, you can join again while it is still free.", leaveBodyClosed: "The list is closed: if you leave “{{title}}”, you will not be able to join again while it stays closed.", leaveConfirm: "Yes, leave", leaveKeep: "No, stay", leaveBusy: "Leaving…", leaveDone: "You left the gift “{{title}}”. You no longer chip in on it.",
       lead: "This gift is bought together. Whoever signs up first coordinates and buys it; the app does not charge or move money.", leadContributor: "You join another person's purchase. The app does not charge: agree on the share between you."
     },
     prompt: {
