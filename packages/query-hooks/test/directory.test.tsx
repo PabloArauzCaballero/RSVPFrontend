@@ -3,14 +3,28 @@ import { renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { createApiClient } from "@rsvp/api-client";
-import { agendaEmptiness, categoryLabel, createImpressionBatcher, uniqueZones, pageCount, pageParam, providerSearchPath, useDirectorySearch } from "../src/index.js";
+import { agendaEmptiness, categoryLabel, offerKind, createImpressionBatcher, uniqueZones, pageCount, pageParam, providerSearchPath, useDirectorySearch } from "../src/index.js";
 
 describe("directory (shared by the public site and the app)", () => {
-  it("categoryLabel: own translation, then the published name, then the code; never the raw key", () => {
+  it("categoryLabel: the published name, then the own translation, then the code as words; never a key nor a bare code", () => {
     const t = (key: string): string => (key === "directory.category.VENUE" ? "Salones de eventos" : key);
-    expect(categoryLabel("VENUE", t, { VENUE: "Venues" })).toBe("Salones de eventos");
+    expect(categoryLabel("VENUE", t, { VENUE: "Salones y quintas" })).toBe("Salones y quintas");
+    // The catalogue answers the code as the name of a category without translations.
+    expect(categoryLabel("VENUE", t, { VENUE: "VENUE" })).toBe("Salones de eventos");
     expect(categoryLabel("PASTRY", t, { PASTRY: "Pastelería" })).toBe("Pastelería");
-    expect(categoryLabel("NEW_CODE", t)).toBe("NEW_CODE");
+    expect(categoryLabel("NEW_CODE", t, { NEW_CODE: "NEW_CODE" })).toBe("New code");
+    expect(categoryLabel("PARTY-RENTALS", t)).toBe("Party rentals");
+  });
+
+  it("offerKind: named by the type only when every listing's category says the same one", () => {
+    const categories = [{ code: "TABLEWARE", listingType: "PRODUCT" }, { code: "TOYS", listingType: "PRODUCT" }, { code: "MUSIC", listingType: "SERVICE" }, { code: "DECORATION", listingType: null }];
+    const kind = (...codes: string[]) => offerKind(codes.map((category) => ({ category })), categories);
+    expect(kind("TABLEWARE", "TOYS")).toBe("PRODUCT");
+    expect(kind("MUSIC")).toBe("SERVICE");
+    expect(kind("TABLEWARE", "MUSIC")).toBe("OFFER");
+    expect(kind("DECORATION")).toBe("OFFER");
+    expect(kind("TABLEWARE", "UNKNOWN")).toBe("OFFER");
+    expect(offerKind([{ category: "MUSIC" }], [])).toBe("OFFER");
   });
 
   it("coverage zones typed differently by the provider are one zone (first spelling kept)", () => {
