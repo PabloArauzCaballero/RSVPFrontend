@@ -1,0 +1,2810 @@
+[
+ {
+  "width": 360,
+  "name": "marfil",
+  "font": [
+   48,
+   48
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   14.02,
+   14.02
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 360,
+  "name": "pinata",
+  "font": [
+   47.988,
+   47.988
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.06,
+   15.06
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 360,
+  "name": "gala",
+  "font": [
+   40.32,
+   40.32
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   16.76,
+   16.76
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 360,
+  "name": "jardin-botanico",
+  "font": [
+   48,
+   48
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   13.82,
+   13.82
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 360,
+  "name": "rosa-antiguo",
+  "font": [
+   48,
+   48
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.6,
+   15.6
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 360,
+  "name": "editorial",
+  "font": [
+   61.704,
+   61.704
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.28,
+   15.28
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 360,
+  "name": "editorial-granate",
+  "font": [
+   47.988,
+   47.988
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.3,
+   15.3
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 360,
+  "name": "editorial-oliva",
+  "font": [
+   34.272,
+   34.272
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.81,
+   15.81
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 360,
+  "name": "bodas-de-oro",
+  "font": [
+   48,
+   48
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   14.83,
+   14.83
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 360,
+  "name": "bodas-de-plata",
+  "font": [
+   41.148,
+   41.148
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.17,
+   15.17
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 360,
+  "name": "pedida-de-mano",
+  "font": [
+   41.148,
+   41.148
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.05,
+   15.05
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 360,
+  "name": "festivo",
+  "font": [
+   41.148,
+   41.148
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   16.06,
+   16.06
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 360,
+  "name": "fiesta-lila",
+  "font": [
+   41.148,
+   41.148
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.93,
+   15.93
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 360,
+  "name": "cumpleanos-adulto",
+  "font": [
+   47.988,
+   47.988
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.8,
+   15.8
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 360,
+  "name": "fiesta-tematica",
+  "font": [
+   41.148,
+   41.148
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.96,
+   15.96
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 360,
+  "name": "fin-de-ano",
+  "font": [
+   47.988,
+   47.988
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   16.24,
+   16.24
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 360,
+  "name": "despedida",
+  "font": [
+   37.728,
+   37.728
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.12,
+   15.12
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 360,
+  "name": "reencuentro",
+  "font": [
+   41.148,
+   41.148
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.27,
+   15.27
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 360,
+  "name": "cielo-bautizo",
+  "font": [
+   37.728,
+   37.728
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   14.07,
+   14.07
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 360,
+  "name": "menta-infantil",
+  "font": [
+   47.988,
+   47.988
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.48,
+   15.48
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 360,
+  "name": "baby-shower",
+  "font": [
+   44.568,
+   44.568
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.33,
+   15.33
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 360,
+  "name": "primera-comunion",
+  "font": [
+   51.444,
+   51.444
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.48,
+   15.48
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 360,
+  "name": "graduacion",
+  "font": [
+   47.988,
+   47.988
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   16.36,
+   16.36
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 360,
+  "name": "minimalista",
+  "font": [
+   61.704,
+   61.704
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   17.34,
+   17.34
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 360,
+  "name": "arena-terracota",
+  "font": [
+   41.148,
+   41.148
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.29,
+   15.29
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 360,
+  "name": "corporativo",
+  "font": [
+   37.728,
+   37.728
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.34,
+   15.34
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 360,
+  "name": "corporativo-grafito",
+  "font": [
+   58.284,
+   58.284
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   16.14,
+   16.14
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 360,
+  "name": "inauguracion",
+  "font": [
+   34.272,
+   34.272
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   16.02,
+   16.02
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 360,
+  "name": "fiesta-patronal",
+  "font": [
+   41.148,
+   41.148
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   16.93,
+   16.93
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 360,
+  "name": "otros-evento",
+  "font": [
+   44.568,
+   44.568
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   16.18,
+   16.18
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 360,
+  "name": "otros-rumbo",
+  "font": [
+   41.148,
+   41.148
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   16.58,
+   16.58
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 360,
+  "name": "otros-mesa",
+  "font": [
+   37.728,
+   37.728
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   16.14,
+   16.14
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 360,
+  "name": "despedida-disco",
+  "font": [
+   41.148,
+   41.148
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   17.42,
+   17.42
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 360,
+  "name": "despedida-esmoquin",
+  "font": [
+   47.988,
+   47.988
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   17.42,
+   17.42
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 360,
+  "name": "pedida-solitario",
+  "font": [
+   34.272,
+   34.272
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.21,
+   15.21
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 360,
+  "name": "pedida-rosa",
+  "font": [
+   47.988,
+   47.988
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   16.84,
+   16.84
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 900,
+  "name": "marfil",
+  "font": [
+   90,
+   90
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   2,
+   2
+  ],
+  "aa": [
+   14.02,
+   14.02
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 900,
+  "name": "pinata",
+  "font": [
+   56,
+   96
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   1,
+   2
+  ],
+  "aa": [
+   15.06,
+   15.06
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 900,
+  "name": "gala",
+  "font": [
+   75.6,
+   75.6
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   16.76,
+   16.76
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 900,
+  "name": "jardin-botanico",
+  "font": [
+   90,
+   90
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   13.82,
+   13.82
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 900,
+  "name": "rosa-antiguo",
+  "font": [
+   90,
+   90
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.6,
+   15.6
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 900,
+  "name": "editorial",
+  "font": [
+   72,
+   120
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   1,
+   2
+  ],
+  "aa": [
+   15.28,
+   15.28
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 900,
+  "name": "editorial-granate",
+  "font": [
+   56,
+   88
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.3,
+   15.3
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 900,
+  "name": "editorial-oliva",
+  "font": [
+   40,
+   64
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   1,
+   2
+  ],
+  "aa": [
+   15.81,
+   15.81
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 900,
+  "name": "bodas-de-oro",
+  "font": [
+   90,
+   90
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   14.83,
+   14.83
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 900,
+  "name": "bodas-de-plata",
+  "font": [
+   48,
+   72
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   2,
+   2
+  ],
+  "aa": [
+   15.17,
+   15.17
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 900,
+  "name": "pedida-de-mano",
+  "font": [
+   48,
+   64
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   1,
+   2
+  ],
+  "aa": [
+   15.05,
+   15.05
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 900,
+  "name": "festivo",
+  "font": [
+   48,
+   88
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   16.06,
+   16.06
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 900,
+  "name": "fiesta-lila",
+  "font": [
+   48,
+   96
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   1,
+   2
+  ],
+  "aa": [
+   15.93,
+   15.93
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 900,
+  "name": "cumpleanos-adulto",
+  "font": [
+   56,
+   88
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.8,
+   15.8
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 900,
+  "name": "fiesta-tematica",
+  "font": [
+   48,
+   104
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   2
+  ],
+  "aa": [
+   15.96,
+   15.96
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 900,
+  "name": "fin-de-ano",
+  "font": [
+   56,
+   96
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   2,
+   3
+  ],
+  "aa": [
+   16.24,
+   16.24
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 900,
+  "name": "despedida",
+  "font": [
+   44,
+   88
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   1,
+   2
+  ],
+  "aa": [
+   15.12,
+   15.12
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 900,
+  "name": "reencuentro",
+  "font": [
+   48,
+   72
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.27,
+   15.27
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 900,
+  "name": "cielo-bautizo",
+  "font": [
+   44,
+   80
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   14.07,
+   14.07
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 900,
+  "name": "menta-infantil",
+  "font": [
+   56,
+   72
+  ],
+  "align": [
+   "center",
+   "start"
+  ],
+  "lines": [
+   1,
+   2
+  ],
+  "aa": [
+   15.48,
+   15.48
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 900,
+  "name": "baby-shower",
+  "font": [
+   52,
+   80
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   1,
+   2
+  ],
+  "aa": [
+   15.33,
+   15.33
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 900,
+  "name": "primera-comunion",
+  "font": [
+   60,
+   64
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   2,
+   2
+  ],
+  "aa": [
+   15.48,
+   15.48
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 900,
+  "name": "graduacion",
+  "font": [
+   56,
+   96
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   16.36,
+   16.36
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 900,
+  "name": "minimalista",
+  "font": [
+   72,
+   72
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   17.34,
+   17.34
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 900,
+  "name": "arena-terracota",
+  "font": [
+   48,
+   48
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.29,
+   15.29
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 900,
+  "name": "corporativo",
+  "font": [
+   44,
+   72
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.34,
+   15.34
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 900,
+  "name": "corporativo-grafito",
+  "font": [
+   68,
+   68
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   16.14,
+   16.14
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 900,
+  "name": "inauguracion",
+  "font": [
+   40,
+   80
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   16.02,
+   16.02
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 900,
+  "name": "fiesta-patronal",
+  "font": [
+   48,
+   88
+  ],
+  "align": [
+   "center",
+   "start"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   16.93,
+   16.93
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 900,
+  "name": "otros-evento",
+  "font": [
+   52,
+   96
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   2
+  ],
+  "aa": [
+   16.18,
+   16.18
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 900,
+  "name": "otros-rumbo",
+  "font": [
+   48,
+   72
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   16.58,
+   16.58
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 900,
+  "name": "otros-mesa",
+  "font": [
+   44,
+   72
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   16.14,
+   16.14
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 900,
+  "name": "despedida-disco",
+  "font": [
+   48,
+   80
+  ],
+  "align": [
+   "start",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   17.42,
+   17.42
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 900,
+  "name": "despedida-esmoquin",
+  "font": [
+   56,
+   104
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   17.42,
+   17.42
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 900,
+  "name": "pedida-solitario",
+  "font": [
+   40,
+   72
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.21,
+   15.21
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 900,
+  "name": "pedida-rosa",
+  "font": [
+   56,
+   104
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   2
+  ],
+  "aa": [
+   16.84,
+   16.84
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 1280,
+  "name": "marfil",
+  "font": [
+   95,
+   95
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   2,
+   2
+  ],
+  "aa": [
+   14.02,
+   14.02
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 1280,
+  "name": "pinata",
+  "font": [
+   56,
+   96
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   1,
+   2
+  ],
+  "aa": [
+   15.06,
+   15.06
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 1280,
+  "name": "gala",
+  "font": [
+   79.8,
+   79.8
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   16.76,
+   16.76
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 1280,
+  "name": "jardin-botanico",
+  "font": [
+   95,
+   95
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   13.82,
+   13.82
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 1280,
+  "name": "rosa-antiguo",
+  "font": [
+   95,
+   95
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.6,
+   15.6
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 1280,
+  "name": "editorial",
+  "font": [
+   72,
+   120
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   1,
+   2
+  ],
+  "aa": [
+   15.28,
+   15.28
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 1280,
+  "name": "editorial-granate",
+  "font": [
+   56,
+   88
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.3,
+   15.3
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 1280,
+  "name": "editorial-oliva",
+  "font": [
+   40,
+   64
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.81,
+   15.81
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 1280,
+  "name": "bodas-de-oro",
+  "font": [
+   95,
+   95
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   14.83,
+   14.83
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 1280,
+  "name": "bodas-de-plata",
+  "font": [
+   48,
+   72
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   1,
+   2
+  ],
+  "aa": [
+   15.17,
+   15.17
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 1280,
+  "name": "pedida-de-mano",
+  "font": [
+   48,
+   64
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   1,
+   2
+  ],
+  "aa": [
+   15.05,
+   15.05
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 1280,
+  "name": "festivo",
+  "font": [
+   48,
+   88
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   16.06,
+   16.06
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 1280,
+  "name": "fiesta-lila",
+  "font": [
+   48,
+   96
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.93,
+   15.93
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 1280,
+  "name": "cumpleanos-adulto",
+  "font": [
+   56,
+   88
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.8,
+   15.8
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 1280,
+  "name": "fiesta-tematica",
+  "font": [
+   48,
+   104
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.96,
+   15.96
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 1280,
+  "name": "fin-de-ano",
+  "font": [
+   56,
+   96
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   2
+  ],
+  "aa": [
+   16.24,
+   16.24
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 1280,
+  "name": "despedida",
+  "font": [
+   44,
+   88
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.12,
+   15.12
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 1280,
+  "name": "reencuentro",
+  "font": [
+   48,
+   72
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.27,
+   15.27
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 1280,
+  "name": "cielo-bautizo",
+  "font": [
+   44,
+   80
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   14.07,
+   14.07
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 1280,
+  "name": "menta-infantil",
+  "font": [
+   56,
+   72
+  ],
+  "align": [
+   "center",
+   "start"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.48,
+   15.48
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 1280,
+  "name": "baby-shower",
+  "font": [
+   52,
+   80
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.33,
+   15.33
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 1280,
+  "name": "primera-comunion",
+  "font": [
+   60,
+   64
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   2,
+   2
+  ],
+  "aa": [
+   15.48,
+   15.48
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 1280,
+  "name": "graduacion",
+  "font": [
+   56,
+   96
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   16.36,
+   16.36
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 1280,
+  "name": "minimalista",
+  "font": [
+   72,
+   72
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   17.34,
+   17.34
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 1280,
+  "name": "arena-terracota",
+  "font": [
+   48,
+   48
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.29,
+   15.29
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 1280,
+  "name": "corporativo",
+  "font": [
+   44,
+   72
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.34,
+   15.34
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 1280,
+  "name": "corporativo-grafito",
+  "font": [
+   68,
+   68
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   16.14,
+   16.14
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": false
+ },
+ {
+  "width": 1280,
+  "name": "inauguracion",
+  "font": [
+   40,
+   80
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   16.02,
+   16.02
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 1280,
+  "name": "fiesta-patronal",
+  "font": [
+   48,
+   88
+  ],
+  "align": [
+   "center",
+   "start"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   16.93,
+   16.93
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 1280,
+  "name": "otros-evento",
+  "font": [
+   52,
+   96
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   2
+  ],
+  "aa": [
+   16.18,
+   16.18
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 1280,
+  "name": "otros-rumbo",
+  "font": [
+   48,
+   72
+  ],
+  "align": [
+   "start",
+   "start"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   16.58,
+   16.58
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 1280,
+  "name": "otros-mesa",
+  "font": [
+   44,
+   72
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   16.14,
+   16.14
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 1280,
+  "name": "despedida-disco",
+  "font": [
+   48,
+   80
+  ],
+  "align": [
+   "start",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   17.42,
+   17.42
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 1280,
+  "name": "despedida-esmoquin",
+  "font": [
+   56,
+   104
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   17.42,
+   17.42
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 1280,
+  "name": "pedida-solitario",
+  "font": [
+   40,
+   72
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   15.21,
+   15.21
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ },
+ {
+  "width": 1280,
+  "name": "pedida-rosa",
+  "font": [
+   56,
+   104
+  ],
+  "align": [
+   "center",
+   "center"
+  ],
+  "lines": [
+   1,
+   1
+  ],
+  "aa": [
+   16.84,
+   16.84
+  ],
+  "overlapDock": [
+   false,
+   false
+  ],
+  "overflowX": false,
+  "changed": true
+ }
+]
