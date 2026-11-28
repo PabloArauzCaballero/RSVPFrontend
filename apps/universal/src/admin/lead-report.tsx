@@ -25,17 +25,17 @@ export function AdminLeadReportSection(): ReactNode {
   const [month, setMonth] = useState(months[0] ?? "");
   const [providerId, setProviderId] = useState(ALL);
   const [message, setMessage] = useState<{ readonly kind: "success" | "error"; readonly text: string } | null>(null);
-  const report = useAdminLeadReport(client, month);
+  const report = useAdminLeadReport(client, month, undefined, locale);
   const csv = useDownloadLeadReportCsv(client);
   const providers = report.data?.providers ?? [];
   const selected = providerId === ALL || providers.some((provider) => provider.providerId === providerId) ? providerId : ALL;
   const download = (): void => {
     setMessage(null);
-    csv.mutate({ month, ...(selected === ALL ? {} : { providerId: selected }) }, {
+    csv.mutate({ month, locale, ...(selected === ALL ? {} : { providerId: selected }) }, {
       onSuccess: async (text) => {
         const name = t("admin.leadReport.fileName", { month });
         const outcome = await saveTextFile(name, text);
-        setMessage(outcome === "failed" ? { kind: "error", text: t("admin.leadReport.downloadFailed") } : { kind: "success", text: t(outcome === "shared" ? "admin.leadReport.shared" : "admin.leadReport.downloaded", { name }) });
+        setMessage(outcome === "dismissed" ? null : outcome === "failed" ? { kind: "error", text: t("admin.leadReport.downloadFailed") } : { kind: "success", text: t(outcome === "shared" ? "admin.leadReport.shared" : "admin.leadReport.downloaded", { name }) });
       },
       onError: () => setMessage({ kind: "error", text: t("admin.leadReport.downloadFailed") })
     });

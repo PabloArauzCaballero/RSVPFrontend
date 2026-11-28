@@ -230,7 +230,7 @@ describe("provider · leads pagination", () => {
     fireEvent.click(screen.getByTestId("leads-more"));
     await waitFor(() => expect(screen.getByTestId("leads-shown").textContent).toBe("Mostrando 60 de 60"));
     expect(screen.queryByTestId("leads-more")).toBeNull();
-    expect(paths.filter((path) => path.includes("/leads"))).toEqual([`GET /providers/${PID}/leads?limit=50&offset=0`, `GET /providers/${PID}/leads?limit=50&offset=50`]);
+    expect(paths.filter((path) => path.includes("/leads"))).toEqual([`GET /providers/${PID}/leads?limit=50&offset=0&locale=es-BO`, `GET /providers/${PID}/leads?limit=50&offset=50&locale=es-BO`]);
   });
   it("an empty list says so and a 429 tells how long to wait and can be retried", async () => {
     await withProvider();
