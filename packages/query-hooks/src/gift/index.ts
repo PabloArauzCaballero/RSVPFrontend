@@ -83,9 +83,11 @@ export function maxPriceMinor(text: string): number | undefined {
 }
 
 /**
- * R6a · The lead context (`leadContext`) is signed by Gift List with a 300 s TTL (GIFT_LEAD_CONTEXT_TTL_SECONDS, default 300, 60..3600).
+ * R6a · The lead context (`leadContext`) is signed by Gift List with a TTL of GIFT_LEAD_CONTEXT_TTL_SECONDS (default 300, allowed 60..3600).
  * With `refreshLeadContext`, a member's list is re-read every 240 s, so the `ctx` of the links is always younger than the TTL (a stale one proves
- * nothing and the member's click is billed to the provider). Only a read that carries a context polls (guests never get one). The poll pauses in the background, so the query also refetches every time the tab or the app returns to the foreground (`refetchOnWindowFocus: "always"` overrides the app default, which seo-web turns off, and ignores staleTime). On Expo the foreground signal is React Query's focusManager, fed by AppState in the app providers.
+ * nothing and the member's click is billed to the provider). SUPPORTED TTL: at least 300 s. The contract does not expose the expiry (decision 5 of the PR:
+ * ask the backend for `leadContextExpiresAt` and derive this interval from it), so a deployment with a shorter TTL silently loses the benefit: the ctx
+ * expires between reads and the click is billed. Only a read that carries a context polls (guests never get one). The poll pauses in the background, so the query also refetches every time the tab or the app returns to the foreground (`refetchOnWindowFocus: "always"` overrides the app default, which seo-web turns off, and ignores staleTime). On Expo the foreground signal is React Query's focusManager, fed by AppState in the app providers.
  */
 export const LEAD_CONTEXT_REFRESH_MS = 240_000;
 
