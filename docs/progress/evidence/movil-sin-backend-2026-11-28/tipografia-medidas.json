@@ -1,0 +1,164 @@
+[
+ {
+  "phase": "before",
+  "name": "pinata",
+  "width": 360,
+  "h1FontSize": "47.988px",
+  "h1TextAlign": "center",
+  "elFontSize": "47.988px",
+  "overflowX": false
+ },
+ {
+  "phase": "before",
+  "name": "pinata",
+  "width": 768,
+  "h1FontSize": "56px",
+  "h1TextAlign": "center",
+  "elFontSize": "56px",
+  "overflowX": false
+ },
+ {
+  "phase": "before",
+  "name": "pinata",
+  "width": 1280,
+  "h1FontSize": "56px",
+  "h1TextAlign": "start",
+  "elFontSize": "56px",
+  "overflowX": false
+ },
+ {
+  "phase": "before",
+  "name": "marfil",
+  "width": 360,
+  "h1FontSize": "48px",
+  "h1TextAlign": "center",
+  "elFontSize": "16px",
+  "overflowX": false
+ },
+ {
+  "phase": "before",
+  "name": "marfil",
+  "width": 768,
+  "h1FontSize": "76.8px",
+  "h1TextAlign": "center",
+  "elFontSize": "16px",
+  "overflowX": false
+ },
+ {
+  "phase": "before",
+  "name": "marfil",
+  "width": 1280,
+  "h1FontSize": "95px",
+  "h1TextAlign": "start",
+  "elFontSize": "16px",
+  "overflowX": false
+ },
+ {
+  "phase": "before",
+  "name": "gala",
+  "width": 360,
+  "h1FontSize": "40.32px",
+  "h1TextAlign": "center",
+  "elFontSize": "16px",
+  "overflowX": false
+ },
+ {
+  "phase": "before",
+  "name": "gala",
+  "width": 768,
+  "h1FontSize": "64.512px",
+  "h1TextAlign": "center",
+  "elFontSize": "16px",
+  "overflowX": false
+ },
+ {
+  "phase": "before",
+  "name": "gala",
+  "width": 1280,
+  "h1FontSize": "79.8px",
+  "h1TextAlign": "center",
+  "elFontSize": "16px",
+  "overflowX": false
+ },
+ {
+  "phase": "after",
+  "name": "pinata",
+  "width": 360,
+  "h1FontSize": "47.988px",
+  "h1TextAlign": "center",
+  "elFontSize": "47.988px",
+  "overflowX": false
+ },
+ {
+  "phase": "after",
+  "name": "pinata",
+  "width": 768,
+  "h1FontSize": "56px",
+  "h1TextAlign": "center",
+  "elFontSize": "56px",
+  "overflowX": false
+ },
+ {
+  "phase": "after",
+  "name": "pinata",
+  "width": 1280,
+  "h1FontSize": "96px",
+  "h1TextAlign": "start",
+  "elFontSize": "96px",
+  "overflowX": false
+ },
+ {
+  "phase": "after",
+  "name": "marfil",
+  "width": 360,
+  "h1FontSize": "48px",
+  "h1TextAlign": "center",
+  "elFontSize": "16px",
+  "overflowX": false
+ },
+ {
+  "phase": "after",
+  "name": "marfil",
+  "width": 768,
+  "h1FontSize": "76.8px",
+  "h1TextAlign": "center",
+  "elFontSize": "16px",
+  "overflowX": false
+ },
+ {
+  "phase": "after",
+  "name": "marfil",
+  "width": 1280,
+  "h1FontSize": "95px",
+  "h1TextAlign": "start",
+  "elFontSize": "16px",
+  "overflowX": false
+ },
+ {
+  "phase": "after",
+  "name": "gala",
+  "width": 360,
+  "h1FontSize": "40.32px",
+  "h1TextAlign": "center",
+  "elFontSize": "16px",
+  "overflowX": false
+ },
+ {
+  "phase": "after",
+  "name": "gala",
+  "width": 768,
+  "h1FontSize": "64.512px",
+  "h1TextAlign": "center",
+  "elFontSize": "16px",
+  "overflowX": false
+ },
+ {
+  "phase": "after",
+  "name": "gala",
+  "width": 1280,
+  "h1FontSize": "79.8px",
+  "h1TextAlign": "center",
+  "elFontSize": "16px",
+  "overflowX": false
+ }
+]

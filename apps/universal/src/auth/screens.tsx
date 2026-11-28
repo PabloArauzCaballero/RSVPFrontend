@@ -5,7 +5,7 @@ import { spacing } from "@rsvp/design-tokens";
 import { CheckMark, Checkbox, FilterSelect, StickyActions, useColors } from "@rsvp/ui";
 import { useApiClient, useLocale, useT } from "../platform/providers";
 import { useAuth } from "./auth-context";
-import { AuthField, AuthLayout, AuthPair, AuthSection, Banner, SubmitButton, TextLink, useAuthFocusRing, useAuthStyles } from "./auth-ui";
+import { AuthField, AuthLayout, AuthPair, AuthSection, Banner, FormActions, SubmitButton, TextLink, useAuthFocusRing, useAuthStyles } from "./auth-ui";
 import { ACCOUNT_LINK_ROUTES, AUTH_ROUTES, loginHref } from "./routes";
 import { IDLE, useAuthSubmit, type AuthSubmit } from "./use-auth-submit";
 
@@ -54,8 +54,9 @@ export function LoginScreen({ onNavigate, returnTo = null }: AuthScreenProps): R
       <View style={authStyles.form}>
         <AuthField label={t("auth.email")} value={email} onChange={setEmail} error={errors["email"]} autoComplete="email" keyboardType="email-address" textContentType="emailAddress" returnKeyType="go" onSubmitEditing={() => { void submit(); }} editable={!busy} testID="login-email" />
         <AuthField label={t("auth.password")} value={password} onChange={setPassword} error={errors["password"]} secret autoComplete="current-password" textContentType="password" returnKeyType="go" onSubmitEditing={() => { void submit(); }} editable={!busy} testID="login-password" />
-        <SubmitButton label={t("auth.signIn")} busyLabel={t("auth.signingIn")} busy={busy} blocked={submitState.waitSeconds > 0} onPress={() => { void submit(); }} testID="login-submit" />
-        <FailureBanner submit={submitState} />
+        <FormActions summary={<FailureBanner submit={submitState} />}>
+          <SubmitButton label={t("auth.signIn")} busyLabel={t("auth.signingIn")} busy={busy} blocked={submitState.waitSeconds > 0} onPress={() => { void submit(); }} testID="login-submit" />
+        </FormActions>
       </View>
       <View>
         <TextLink label={t("auth.forgotPassword")} onPress={() => onNavigate(AUTH_ROUTES.recover)} />
@@ -222,9 +223,9 @@ export function RecoveryScreen({ onNavigate }: AuthScreenProps): ReactNode {
     <AuthLayout title={t("auth.recoverTitle")} intro={t("auth.recoverIntro")} illustration="verifying">
       <View style={authStyles.form}>
         <AuthField label={t("auth.email")} value={email} onChange={setEmail} error={errors["email"]} autoComplete="email" keyboardType="email-address" textContentType="emailAddress" returnKeyType="go" onSubmitEditing={() => { void submit(); }} editable={!busy} testID="recover-email" />
-        <SubmitButton label={t("auth.recoverSend")} busyLabel={t("common.loading")} busy={busy} blocked={submitState.waitSeconds > 0} onPress={() => { void submit(); }} testID="recover-submit" />
-        {submitState.status.kind === "sent" ? <Banner kind="success">{t("auth.recoverSent")}</Banner> : null}
-        <FailureBanner submit={submitState} />
+        <FormActions summary={<>{submitState.status.kind === "sent" ? <Banner kind="success">{t("auth.recoverSent")}</Banner> : null}<FailureBanner submit={submitState} /></>}>
+          <SubmitButton label={t("auth.recoverSend")} busyLabel={t("common.loading")} busy={busy} blocked={submitState.waitSeconds > 0} onPress={() => { void submit(); }} testID="recover-submit" />
+        </FormActions>
       </View>
       <TextLink label={t("auth.backToSignIn")} onPress={() => onNavigate(AUTH_ROUTES.login)} />
     </AuthLayout>
@@ -287,8 +288,9 @@ export function ResetPasswordScreen({ onNavigate, token }: LinkScreenProps): Rea
     <AuthLayout title={t("auth.reset.title")} intro={t("auth.reset.intro")} illustration="verifying">
       <View style={authStyles.form}>
         <AuthField label={t("auth.reset.newPassword")} value={password} onChange={setPassword} error={errors["newPassword"]} hint={t("auth.passwordHint")} secret autoComplete="new-password" textContentType="newPassword" returnKeyType="go" onSubmitEditing={() => { void submit(); }} editable={!busy} testID="reset-password" />
-        <SubmitButton label={t("auth.reset.submit")} busyLabel={t("auth.reset.busy")} busy={busy} blocked={submitState.waitSeconds > 0} onPress={() => { void submit(); }} testID="reset-submit" />
-        <FailureBanner submit={submitState} />
+        <FormActions summary={<FailureBanner submit={submitState} />}>
+          <SubmitButton label={t("auth.reset.submit")} busyLabel={t("auth.reset.busy")} busy={busy} blocked={submitState.waitSeconds > 0} onPress={() => { void submit(); }} testID="reset-submit" />
+        </FormActions>
       </View>
       <TextLink label={t("auth.backToSignIn")} onPress={() => onNavigate(AUTH_ROUTES.login)} />
     </AuthLayout>
