@@ -36,7 +36,15 @@ export interface PublicCelebrationView {
   /** D-1 (celebration 1.4.0): true only when the host allowed search engines; absent or false means `noindex`. */
   readonly indexable?: boolean;
   readonly version: number;
+  /** F7 (Celebration 1.8.0): what moderation hid. It is already out of `content` and `enabledSections`; `{ kind: "SECTION", id: "music" }` means the own music (MP3) only. Empty almost always. */
+  readonly hiddenElements?: readonly { readonly kind: "SECTION" | "BLOCK" | "IMAGE"; readonly id: string }[];
 }
+
+/** Moderation hid the own music (MP3): the invitation and its photos stay, the player does not. */
+export const isMusicHidden = (view: Pick<PublicCelebrationView, "hiddenElements">): boolean => (view.hiddenElements ?? []).some((element) => element.kind === "SECTION" && element.id === "music");
+
+/** The public gallery has an own MP3 a guest can play (and report). Hidden or deleted files are not listed by the media service. */
+export const hasOwnMusic = (view: Pick<PublicCelebrationView, "hiddenElements">, gallery: readonly Pick<GalleryImage, "purpose" | "variants">[]): boolean => !isMusicHidden(view) && gallery.some((item) => item.purpose === "music" && Boolean(item.variants.audio));
 
 /** One processed photo from GET /media/public/celebrations/{id}/assets. */
 export interface GalleryImage {

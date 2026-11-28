@@ -22,10 +22,10 @@ const FILES: readonly GalleryImage[] = [
 
 type Blocks = readonly { readonly block: DesignBlock; readonly element: Partial<DesignElement> }[];
 /** Marfil with extra blocks placed on its story page, and optionally a media background on its cover. */
-function documentWith(blocks: Blocks, extra: { readonly coverBackground?: boolean; readonly css?: string } = {}): DesignDocumentV2 {
+function documentWith(blocks: Blocks, extra: { readonly coverBackground?: boolean; readonly css?: string; readonly veil?: "graded" | "even" } = {}): DesignDocumentV2 {
   const base = JSON.parse(JSON.stringify(designTemplate("marfil").theme)) as DesignDocumentV2;
   const pages = base.pages.map((page) => {
-    if (page.kind === "cover" && extra.coverBackground) return { ...page, background: { kind: "media" as const, mediaId: BG, fit: "cover" as const } };
+    if (page.kind === "cover" && extra.coverBackground) return { ...page, background: { kind: "media" as const, mediaId: BG, fit: "cover" as const, ...(extra.veil ? { veil: extra.veil } : {}) } };
     if (page.section !== "story") return page;
     const elements = blocks.map(({ block, element }, position) => ({ id: `x-${block.id}`, block: block.id, x: 0, y: 1 + position, w: 4, h: 1, visible: true, ...element }));
     return { ...page, canvases: { ...page.canvases, mobile: { ...page.canvases.mobile, elements: [...page.canvases.mobile.elements, ...elements] }, ...(page.canvases.desktop ? { desktop: page.canvases.desktop } : {}) } };
@@ -62,8 +62,8 @@ describe("F6 · pictures", () => {
     expect(container.querySelector(".celebration-gallery-navigation")).toBeNull();
   });
 
-  it("a page background is a veiled picture behind the content, with a veil per scheme that keeps the text at AA", () => {
-    const design = documentWith([], { coverBackground: true });
+  it("an even veil (contract 1.8.0, `veil: even`) is one veil over the whole picture, with a value per scheme that keeps the text at AA", () => {
+    const design = documentWith([], { coverBackground: true, veil: "even" });
     const { container } = draw(design);
     const backdrop = container.querySelector('[data-page-kind="cover"] .celebration-media-backdrop') as HTMLElement;
     expect(backdrop).toBeTruthy();
@@ -91,11 +91,11 @@ describe("F6 · pictures", () => {
   });
 
   it("a veil the document sets can raise the automatic one, never lower it", () => {
-    const design = documentWith([], { coverBackground: true });
+    const design = documentWith([], { coverBackground: true, veil: "even" });
     const needed = requiredScrim(designPalette(design, "light"));
     const lowered = JSON.parse(JSON.stringify(design)) as DesignDocumentV2;
-    const page = lowered.pages[0] as { background?: { kind: "media"; mediaId: string; fit: "cover"; scrim?: number } };
-    page.background = { kind: "media", mediaId: BG, fit: "cover", scrim: 0 };
+    const page = lowered.pages[0] as { background?: { kind: "media"; mediaId: string; fit: "cover"; scrim?: number; veil?: "even" | "graded" } };
+    page.background = { kind: "media", mediaId: BG, fit: "cover", scrim: 0, veil: "even" };
     const { container } = draw(readDesign(lowered) as DesignDocumentV2);
     const backdrop = container.querySelector(".celebration-media-backdrop") as HTMLElement;
     expect(Number.parseInt(backdrop.style.getPropertyValue("--cd-veil-l"), 10)).toBe(Math.round(needed * 100));
@@ -190,6 +190,49 @@ describe("F6 · embeds (P17)", () => {
     expect(button.textContent).toBe("celebration.media.playShort");
     expect(container.querySelector(".celebration-embed[data-kind=\"audio\"] audio")).toBeTruthy();
     expect(container.querySelector("progress")).toBeTruthy();
+  });
+});
+
+describe("F7 · the own music that moderation hid (decision of Pablo 2026-11-26: only the MP3 goes, the invitation stays)", () => {
+  const MUSIC_HIDDEN = { ...VIEW, hiddenElements: [{ kind: "SECTION" as const, id: "music" }] };
+  const withMusic = (): DesignDocumentV2 => documentWith([{ block: block("mus", "music", { source: "media", ref: SONG }), element: {} }]);
+  const drawView = (view: typeof VIEW, files: readonly GalleryImage[]) => render(
+    <CelebrationRenderer theme={themeFromTemplate({ ...designTemplate("marfil"), theme: withMusic() }, view.enabledSections)} view={view} gallery={files} t={t} now={NOW} basePath="/c/ana-y-luis" rsvpHelpHref="/c/ana-y-luis/rsvp" />
+  );
+
+  it("hiddenElements with the music: no player and no empty box in the grid, while the cover, the photos and both buttons stay", () => {
+    const { container } = drawView(MUSIC_HIDDEN, FILES);
+    expect(container.querySelector("audio")).toBeNull();
+    expect(container.querySelector('.cdesign-el[data-block="music"]')).toBeNull();
+    expect(container.querySelector(".cdesign-cover h1")?.textContent).toBe(VIEW.content.title);
+    expect(container.querySelectorAll('a[data-action="gifts"][href="/c/ana-y-luis/regalos"]').length).toBeGreaterThanOrEqual(1);
+    expect(container.querySelectorAll('[data-action="rsvp"], [data-action="rsvp-help"]').length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("the file the media service no longer lists (hidden, deleted) leaves no box either, even if the page still names it", () => {
+    const { container } = drawView(VIEW, FILES.filter((file) => file.id !== SONG));
+    expect(container.querySelector("audio")).toBeNull();
+    expect(container.querySelector('.cdesign-el[data-block="music"]')).toBeNull();
+  });
+
+  it("negative: without the hiding, the same music plays as before", () => {
+    const { container } = drawView(VIEW, FILES);
+    expect(container.querySelector("audio")?.getAttribute("src")).toBe("https://media.test/song.mp3");
+    expect(container.querySelector('.cdesign-el[data-block="music"]')).toBeTruthy();
+  });
+
+  it("negative: hiding another element, or a block or image that is called music, does not touch the player", () => {
+    for (const hidden of [[{ kind: "SECTION" as const, id: "gallery" }], [{ kind: "BLOCK" as const, id: "music" }], [{ kind: "IMAGE" as const, id: "music" }]]) {
+      const { container } = drawView({ ...VIEW, hiddenElements: hidden }, FILES);
+      expect(container.querySelector("audio")).toBeTruthy();
+      cleanup();
+    }
+  });
+
+  it("a music link to YouTube or Spotify is not a file of the media service: it is not judged here (open question to Pablo)", () => {
+    const external = documentWith([{ block: block("mus", "music", { source: "spotify", ref: "https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC" }), element: {} }]);
+    const { getByRole } = render(<CelebrationRenderer theme={themeFromTemplate({ ...designTemplate("marfil"), theme: external }, VIEW.enabledSections)} view={MUSIC_HIDDEN} gallery={FILES} t={t} now={NOW} basePath="/c/ana-y-luis" />);
+    expect(getByRole("button", { name: /celebration\.media\.playMusic/ })).toBeTruthy();
   });
 });
 

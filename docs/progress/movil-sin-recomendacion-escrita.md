@@ -1,6 +1,6 @@
 # Móvil sin backend: qué tiene recomendación escrita y qué no
 
-Fecha: 2026-11-28. Base: `chore/deploy-contabo-coolify` @ `68af6eb6` (incluye FE #158/#159 por el merge #174).
+Fecha: 2026-11-28. Base: `chore/deploy-contabo-coolify` @ `68af6eb6` (incluye FE #158/#159 por el merge #174); se fusionó después `5c56053d`.
 
 Regla del dueño (`docs/bugs/auditorias/2026-11-27/DECISIONES-2026-11-28.md`, rama `bugs/catalogo` de RSVPBackend): «Móvil (tipografía, cuenta en 4 pasos, figura por paso, botón fijo en tablet y formularios cortos, paso 3): aplicar la recomendación escrita en los documentos de diseño; donde no haya recomendación escrita, no inventar y anotarlo.»
 
@@ -27,7 +27,7 @@ Documentos revisados: `DECISIONES-2026-11-28.md`, `auditorias/2026-11-26/app-mov
 5. **Color exacto por paso.** Pregunta 5 del diseño: «¿qué color exacto debe llevar cada paso del registro, y debe ser el mismo en claro y oscuro?». La regla provisional («azul/verde») se aplicó solo como «el amarillo pasa a azul»; las demás figuras conservan su pastel de grupo.
 6. **Figuras nuevas (sobre con código, gafete, pin de ciudad, llave).** El diseño las describe, pero solo sirven al registro en 4 pasos, que hace otra sesión. No se dibujaron: no tienen pantalla que las use aquí y el archivo `illustrations.ts` (y su copia en `apps/seo-web`) es zona de choque. Pendiente para esa sesión, con la descripción de §3.
 7. **Reiniciar el scroll al cambiar de paso (onboarding).** `auditoria-movil.md` MV-B1: «Conviene igualmente reiniciarlo al cambiar de paso». Es una sugerencia sobre una hipótesis descartada como causa; no se aplicó.
-8. **Alineación del título en la portada.** `typography.align` de escritorio se emite como variable, pero el `h1` de la portada tiene su propia regla `text-align` en `styles.css` (la auditoría ya avisa del choque en `styles.css:216-219`), así que la alineación del documento no llega al título ni en móvil ni en escritorio. La auditoría pregunta sin responder (§PL-EXTRA-3). Medido: `marfil` sigue centrado a 1280.
+8. **Alineación del título en la portada.** No requirió cambio: tras fusionar la oficial `5c56053d`, la alineación de escritorio ya se aplica (medido: `marfil` y `pinata` pasan de centro en 360/768 a `start` en 1280, antes y después de esta rama). Se emite igualmente como `--td-align` para heredar del móvil lo que el escritorio no define.
 9. **Otras propiedades del lienzo de escritorio** (padding, margin, radius, opacity, rotation, animation, background): `auditoria-movil.md` PL-EXTRA-3 dice que también se toman del móvil, pero PLA-02 solo prescribe la tipografía. No se tocaron.
 
 ## Pendiente de la sesión del registro

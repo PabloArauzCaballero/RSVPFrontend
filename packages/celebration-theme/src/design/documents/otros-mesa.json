@@ -1,0 +1,620 @@
+{
+  "key": "otros-mesa",
+  "name": "Otros eventos · Mesa larga",
+  "description": "La mesa larga: el mantel de papel con los nombres, una mesa servida para todos y un verde botella solo en un detalle.",
+  "layout": "classic",
+  "eventTypeTags": [
+    "other"
+  ],
+  "sectionOrder": [
+    "story",
+    "venues",
+    "schedule",
+    "dressCode",
+    "gifts",
+    "gallery",
+    "faq",
+    "rsvp"
+  ],
+  "theme": {
+    "schemaVersion": 2,
+    "tokens": {
+      "palettes": {
+        "light": {
+          "canvas": "#F8F4EA",
+          "surface": "#FFFEFA",
+          "text": "#22201A",
+          "muted": "#5B5648",
+          "accent": "#1F6B4A",
+          "accentFill": "#1F6B4A",
+          "onAccent": "#FFFFFF",
+          "line": "#808C80"
+        },
+        "dark": {
+          "canvas": "#121510",
+          "surface": "#1B2018",
+          "text": "#EFEFE4",
+          "muted": "#B7BCA9",
+          "accent": "#7FCBA2",
+          "accentFill": "#63B88B",
+          "onAccent": "#06180F",
+          "line": "#6D7864"
+        }
+      },
+      "typography": {
+        "heading": {
+          "family": "libre-baskerville",
+          "weights": [
+            400,
+            700
+          ]
+        },
+        "body": {
+          "family": "dm-sans",
+          "weights": [
+            400,
+            500,
+            600
+          ]
+        },
+        "scale": {
+          "base": 16,
+          "ratio": 1.333
+        }
+      },
+      "spacing": {
+        "unit": 8,
+        "section": 64,
+        "contentMaxWidth": 1080
+      },
+      "radii": {
+        "sm": 4,
+        "md": 12,
+        "lg": 24
+      },
+      "ornament": "flourish",
+      "illustrationSet": "none"
+    },
+    "pages": [
+      {
+        "id": "page-cover",
+        "kind": "cover",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-cover",
+                "block": "cover",
+                "x": 0,
+                "y": 0,
+                "w": 4,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 200,
+                  "durationMs": 800
+                },
+                "typography": {
+                  "align": "center",
+                  "role": "heading",
+                  "size": 44,
+                  "lineHeight": 1.1
+                },
+                "padding": {
+                  "top": 24,
+                  "right": 16,
+                  "bottom": 24,
+                  "left": 16
+                },
+                "background": {
+                  "kind": "colour",
+                  "role": "surface"
+                },
+                "border": {
+                  "width": 1,
+                  "style": "solid",
+                  "colour": "line"
+                },
+                "radius": 12
+              },
+              {
+                "id": "el-mesa",
+                "block": "art-mesa",
+                "x": 0,
+                "y": 8,
+                "w": 4,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "rise",
+                  "delayMs": 700,
+                  "durationMs": 900
+                },
+                "padding": {
+                  "top": 0,
+                  "right": 24,
+                  "bottom": 0,
+                  "left": 24
+                }
+              },
+              {
+                "id": "el-copas",
+                "block": "art-copas",
+                "x": 1,
+                "y": 16,
+                "w": 2,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "scale",
+                  "delayMs": 1400,
+                  "durationMs": 600
+                },
+                "padding": {
+                  "top": 0,
+                  "right": 24,
+                  "bottom": 0,
+                  "left": 24
+                }
+              }
+            ]
+          },
+          "desktop": {
+            "mode": "flow",
+            "columns": 12,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-cover",
+                "block": "cover",
+                "x": 2,
+                "y": 0,
+                "w": 8,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 200,
+                  "durationMs": 800
+                },
+                "typography": {
+                  "align": "center",
+                  "role": "heading",
+                  "size": 72,
+                  "lineHeight": 1.08
+                },
+                "padding": {
+                  "top": 40,
+                  "right": 40,
+                  "bottom": 40,
+                  "left": 40
+                },
+                "background": {
+                  "kind": "colour",
+                  "role": "surface"
+                },
+                "border": {
+                  "width": 1,
+                  "style": "solid",
+                  "colour": "line"
+                },
+                "radius": 12
+              },
+              {
+                "id": "el-copas",
+                "block": "art-copas",
+                "x": 10,
+                "y": 0,
+                "w": 2,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "scale",
+                  "delayMs": 1400,
+                  "durationMs": 600
+                }
+              },
+              {
+                "id": "el-mesa",
+                "block": "art-mesa",
+                "x": 0,
+                "y": 8,
+                "w": 12,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "rise",
+                  "delayMs": 700,
+                  "durationMs": 900
+                },
+                "padding": {
+                  "top": 0,
+                  "right": 160,
+                  "bottom": 0,
+                  "left": 160
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-story",
+        "kind": "section",
+        "section": "story",
+        "style": "cards",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-story",
+                "block": "story",
+                "x": 0,
+                "y": 0,
+                "w": 8,
+                "h": 1,
+                "visible": true,
+                "typography": {
+                  "align": "center"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-venues",
+        "kind": "section",
+        "section": "venues",
+        "style": "cards",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-mapa-pin",
+                "block": "art-mapa-pin",
+                "x": 3,
+                "y": 0,
+                "w": 2,
+                "h": 5,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-venues",
+                "block": "venues",
+                "x": 0,
+                "y": 5,
+                "w": 8,
+                "h": 1,
+                "visible": true,
+                "typography": {
+                  "align": "center"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-schedule",
+        "kind": "section",
+        "section": "schedule",
+        "style": "cards",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-schedule",
+                "block": "schedule",
+                "x": 0,
+                "y": 0,
+                "w": 8,
+                "h": 1,
+                "visible": true,
+                "typography": {
+                  "align": "center"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-dress-code",
+        "kind": "section",
+        "section": "dressCode",
+        "style": "cards",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-percha",
+                "block": "art-percha",
+                "x": 3,
+                "y": 0,
+                "w": 2,
+                "h": 5,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-dress-code",
+                "block": "dress-code",
+                "x": 0,
+                "y": 5,
+                "w": 8,
+                "h": 1,
+                "visible": true,
+                "typography": {
+                  "align": "center"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-gifts",
+        "kind": "section",
+        "section": "gifts",
+        "style": "cards",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-gifts-cta",
+                "block": "gifts-cta",
+                "x": 0,
+                "y": 0,
+                "w": 8,
+                "h": 6,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-gallery",
+        "kind": "section",
+        "section": "gallery",
+        "style": "cards",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-gallery",
+                "block": "gallery",
+                "x": 0,
+                "y": 0,
+                "w": 8,
+                "h": 1,
+                "visible": true,
+                "typography": {
+                  "align": "center"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-faq",
+        "kind": "section",
+        "section": "faq",
+        "style": "cards",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-faq",
+                "block": "faq",
+                "x": 0,
+                "y": 0,
+                "w": 8,
+                "h": 1,
+                "visible": true,
+                "typography": {
+                  "align": "center"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-rsvp",
+        "kind": "section",
+        "section": "rsvp",
+        "style": "cards",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-sobre",
+                "block": "art-sobre",
+                "x": 3,
+                "y": 0,
+                "w": 2,
+                "h": 5,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-rsvp-cta",
+                "block": "rsvp-cta",
+                "x": 0,
+                "y": 5,
+                "w": 8,
+                "h": 6,
+                "visible": true
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "blocks": [
+      {
+        "id": "cover",
+        "type": "cover",
+        "config": {
+          "variant": "classic",
+          "envelope": false
+        }
+      },
+      {
+        "id": "art-mesa",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "mesa-larga",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "art-copas",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "copas",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "art-flor",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "ramo",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "story",
+        "type": "story",
+        "config": {}
+      },
+      {
+        "id": "art-mapa-pin",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "mapa-pin",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "venues",
+        "type": "venues",
+        "config": {
+          "display": "cards",
+          "mapOnTap": true
+        }
+      },
+      {
+        "id": "schedule",
+        "type": "schedule",
+        "config": {
+          "display": "timeline"
+        }
+      },
+      {
+        "id": "art-percha",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "percha",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "dress-code",
+        "type": "dressCode",
+        "config": {}
+      },
+      {
+        "id": "gifts-cta",
+        "type": "giftsCta",
+        "required": true,
+        "config": {
+          "style": "solid"
+        }
+      },
+      {
+        "id": "gallery",
+        "type": "gallery",
+        "config": {
+          "display": "grid"
+        }
+      },
+      {
+        "id": "faq",
+        "type": "faq",
+        "config": {}
+      },
+      {
+        "id": "art-sobre",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "sobre",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "rsvp-cta",
+        "type": "rsvpCta",
+        "config": {
+          "style": "solid"
+        }
+      }
+    ],
+    "custom": {
+      "html": "",
+      "css": ""
+    }
+  }
+}

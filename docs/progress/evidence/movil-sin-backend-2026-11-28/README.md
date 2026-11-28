@@ -1,16 +1,16 @@
 # Móvil sin backend · evidencia (2026-11-28)
 
-Base: `chore/deploy-contabo-coolify` @ `68af6eb6`. Chromium 1243 preinstalado (Playwright, sin reinstalar), Linux. Nada de esto se probó en iPhone/Android reales.
+Base: `chore/deploy-contabo-coolify` @ `5c56053d`. La tipografía se midió tras fusionarla; las capturas de autenticación se tomaron sobre `68af6eb6` (esa pantalla no cambió en la fusión). Chromium 1243 preinstalado (Playwright, sin reinstalar), Linux. Nada de esto se probó en iPhone/Android reales.
 
 ## Tipografía de escritorio (PLA-02)
-Arnés: `packages/celebration-theme/scripts/typography-harness.tsx` (renderiza el documento real con el renderizador y `styles.css` reales; «antes» = la base sin el cambio).
+Arnés: `packages/celebration-theme/scripts/typography-harness.tsx` (renderiza el documento real con el renderizador y `styles.css` reales; «antes» = `render.tsx` y `styles.css` de la oficial `5c56053d`, «después» = esta rama).
 
 | Plantilla | Ancho | h1 antes | h1 después |
 |---|---|---|---|
 | pinata (móvil 56, escritorio 96) | 360 | 47,99 px | 47,99 px |
 | pinata | 768 | 56 px | 56 px (< 900 px usa el lienzo móvil) |
 | pinata | 1280 | 56 px | **96 px** |
-| marfil (solo `align` en escritorio) | 360 / 768 / 1280 | 48 / 76,8 / 95 px | igual |
+| marfil (solo `align` en escritorio) | 360 / 768 / 1280 | 48 / 76,8 / 95 px; alineación center / center / start | igual (la alineación ya la resolvía la oficial) |
 | gala (sin diferencias en la portada) | 360 / 768 / 1280 | 40,3 / 64,5 / 79,8 px | igual |
 
 Sin desbordamiento horizontal en ninguna combinación. Datos completos: `tipografia-medidas.json`; capturas `tipografia-pinata-{antes,despues}-{360,768,1280}.png`.

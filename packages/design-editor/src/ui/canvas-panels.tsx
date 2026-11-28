@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { addBlock, canRemove, PALETTE, placeElement, reorderLayer, rotateElement, setElementBox } from "../model/canvas.js";
+import { canMask, elementAnimationOf, elementAnimationsFor, elementFrameOf, elementMaskOf, FRAME_COLOURS, FRAME_STYLES, isProtectedBlock, MASKS, setElementAnimation, setElementFrame, setElementMask, type AnimationName, type DesignMask, type FrameStyle } from "../model/fidelity.js";
 import { isGiftsElement } from "../model/guards.js";
-import { patchElement, setElementVisible } from "../model/ops.js";
+import { patchElement, setElementVisible, type DocumentOp } from "../model/ops.js";
+import type { design } from "@rsvp/celebration-theme";
 import { blockName, elementOf, useCommands } from "./commands.js";
 import { useEditor } from "./editor-context.js";
 import { useNarrow } from "./use-narrow.js";
@@ -40,6 +42,68 @@ function NumberField({ id, label, value, min, max, step = 1, disabled = false, o
         onChange={(event) => { setDraft(event.target.value); setInvalid(false); }} onBlur={commit} onKeyDown={keys} />
       {invalid ? <span id={errorId} className="de-field-error" role="alert">{t(key("inspector.invalid"), { min, max })}</span> : null}
     </div>
+  );
+}
+
+/**
+ * Animation, mask and frame of the selected element (contract v2 of fidelity). The protected buttons (gifts, reply) only
+ * offer the entrance that does not move them: never a mask, a frame or `mecerse`. A mask is only offered on blocks that can be clipped.
+ * With a named animation there is no duration to edit: it comes from the motion tokens of the design.
+ */
+function EffectsFields({ element, edit }: { readonly element: design.DesignElement; readonly edit: (op: DocumentOp, field: string) => void }) {
+  const { document, state, t } = useEditor();
+  const canvas = state.canvas;
+  const base = useId();
+  const protectedButton = isProtectedBlock(document, element);
+  const animation = elementAnimationOf(element);
+  const animations = elementAnimationsFor(document, element);
+  // A value the document already has but this element is not offered (a stale or hand-made one) stays visible instead of reading as «Ninguna».
+  const shown = animation !== null && !animations.includes(animation) ? [...animations, animation] : animations;
+  const mask = elementMaskOf(element);
+  const frame = elementFrameOf(element);
+  return (
+    <fieldset className="de-fieldset" data-testid="inspector-effects">
+      <legend>{t(key("fx.title"))}</legend>
+      <label className="de-field">
+        <span>{t(key("fx.animation"))}</span>
+        <select value={animation ?? ""} aria-describedby={`${base}-anim`} onChange={(event) => edit(setElementAnimation(canvas, element.id, event.target.value === "" ? null : (event.target.value as AnimationName)), "animation")}>
+          <option value="">{t(key("fx.animations.none"))}</option>
+          {shown.map((name) => <option key={name} value={name}>{t(key(`fx.animations.${name}`))}</option>)}
+        </select>
+      </label>
+      <p id={`${base}-anim`} className="de-hint">{t(key("fx.animationHint"))}</p>
+      {protectedButton ? <p className="de-hint" data-testid="effects-protected">{t(key("fx.protectedNote"))}</p> : null}
+      {canMask(document, element) ? (
+        <>
+          <label className="de-field">
+            <span>{t(key("fx.mask"))}</span>
+            <select value={mask ?? ""} onChange={(event) => edit(setElementMask(canvas, element.id, event.target.value === "" ? null : (event.target.value as DesignMask)), "mask")}>
+              <option value="">{t(key("fx.masks.none"))}</option>
+              {MASKS.map((name) => <option key={name} value={name}>{t(key(`fx.masks.${name}`))}</option>)}
+            </select>
+          </label>
+        </>
+      ) : !protectedButton ? <p className="de-hint">{t(key("fx.maskHint"))}</p> : null}
+      {protectedButton ? null : (
+        <>
+          <label className="de-field">
+            <span>{t(key("fx.frame"))}</span>
+            <select value={frame?.style ?? ""} onChange={(event) => edit(setElementFrame(canvas, element.id, event.target.value === "" ? null : { style: event.target.value as FrameStyle, colour: frame?.colour ?? "accent" }), "frame")}>
+              <option value="">{t(key("fx.frames.none"))}</option>
+              {FRAME_STYLES.map((name) => <option key={name} value={name}>{t(key(`fx.frames.${name}`))}</option>)}
+            </select>
+          </label>
+          {frame ? (
+            <label className="de-field">
+              <span>{t(key("fx.frameColour"))}</span>
+              <select value={frame.colour} onChange={(event) => edit(setElementFrame(canvas, element.id, { style: frame.style, colour: event.target.value as design.PaletteRole }), "frame")}>
+                {FRAME_COLOURS.map((role) => <option key={role} value={role}>{t(key(`fx.colours.${role}`))}</option>)}
+              </select>
+            </label>
+          ) : null}
+        </>
+      )}
+    </fieldset>
   );
 }
 
@@ -91,6 +155,7 @@ export function ElementInspector() {
           {SIDES.map((side) => <NumberField key={side} id={id(`${which}-${side}`)} label={t(key(`inspector.${side}`))} value={element[which]?.[side] ?? 0} min={0} max={256} step={4} onCommit={(value) => edit(setElementBox(canvas, element.id, which, side, value), `${which}-${side}`)} />)}
         </fieldset>
       ))}
+      <EffectsFields element={element} edit={edit} />
       <label className="de-field de-field--check">
         <input type="checkbox" checked={element.visible} disabled={required} onChange={(event) => { apply(setElementVisible(canvas, element.id, event.target.checked), said); }} />
         <span>{t(key("inspector.visible"))}</span>

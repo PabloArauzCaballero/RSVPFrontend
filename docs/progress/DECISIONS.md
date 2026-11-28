@@ -158,6 +158,13 @@
 - Hecho sin decisión de Pablo (verificable en el catálogo): las tres parejas tipográficas salen del catálogo curado de F1, así que no se amplía el catálogo.
 
 
+## Moderación F7 en el frontend: contratos provisionales y vista previa de un solo uso · 2026-11-27
+
+- **Contratos 1.8.0 (Celebration) y 1.9.0 (Template/Media) provisionales.** Se vendorizan de la cabeza de BE #167 (`9e97de01`, Template/Media 1.9.1; antes `bf93c097`), aún sin fusionar (PROVISIONAL), con el generador del repo. Alternativa descartada: esperar a la fusión (bloquea la denuncia de la música y la vista previa, ya decididas por Pablo el 2026-11-26). Riesgo: la numeración puede cambiar según el orden de fusión (#159, #164, #167); se vuelve a vendorizar desde la oficial al fusionar. Reversión: volver a vendorizar el lock anterior (`generate --ref` del commit previo) y quitar la ruta `/admin/denuncias`.
+- **El enlace de vista previa nunca es una consulta.** Un `useQuery` lo guardaría en caché y lo volvería a pedir, y un segundo uso es un 404: es una mutación con `gcTime: 0` cuyo resultado vive en el estado del componente, un enlace nuevo por cada petición, y la pantalla explica el 404 de un enlace usado en vez de reintentar a ciegas.
+- **El comentario de un denunciante es texto.** Se pinta con `<Text>`; una prueba con `<img onerror>` lo comprueba en Chrome real.
+- **El foco sigue a la vista (ronda 1 de FE #155).** Un control que está pidiendo algo y tiene el foco no se pone `disabled` (el navegador lo suelta): el envío de la denuncia usa `aria-disabled` y el botón de vista previa solo cambia de rótulo; el doble envío lo impide un cerrojo síncrono (`useSingleMutation` o un `ref`). Alternativa descartada: cambiar el estado `loading` de `Button` en `@rsvp/ui`, que afecta a todas las pantallas. Reversión: revertir el commit.
+
 ## R6a FE (PR #147): foco de la app y `ctx` del miembro · 2026-11-27
 
 - **`focusManager` global alimentado por `AppState` en Expo** (`apps/universal/src/platform/app-focus.ts`). Motivo: en iOS y Android React Query no tiene foco de ventana, así que `refetchOnWindowFocus` no haría nada. Con el listener, las consultas vencidas se releen al volver la app a primer plano (la configuración recomendada por TanStack para React Native) y el `ctx` de una lista de miembro, que vence a los 300 s y cuyo intervalo se pausa en segundo plano, se renueva. Alternativas: refetch manual solo en `useGiftList` (descartada: no cubre otras pantallas ni el intervalo pausado) y descartar el `ctx` por edad (descartada: añade estado y un TTL duplicado en el FE). Alcance: toda consulta de la app respeta ahora su `staleTime` al volver; web conserva `visibilitychange`.

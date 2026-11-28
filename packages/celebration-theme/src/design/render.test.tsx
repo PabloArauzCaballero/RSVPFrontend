@@ -131,7 +131,7 @@ describe("the three prototyped templates as design documents v2", () => {
     expect(markup).toContain('data-mode="flow"');
     expect(markup).toContain("data-desktop");
     expect(markup).toMatch(/--mx:\d+;--my:\d+;--mw:\d+;--mh:\d+/);
-    expect(markup).toMatch(/--dx:6;--dy:4;--dw:6;/);
+    expect(markup).toMatch(/--dx:5;--dy:4;--dw:8;/);
   });
 
   it("an element hidden in the document is not drawn, but the dock still carries the gifts button (P22)", () => {

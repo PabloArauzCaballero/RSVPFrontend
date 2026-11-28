@@ -92,7 +92,9 @@ const banderin: OrnamentSet = {
   separator: {
     ...SEP,
     paths: [
-      line("M6 5Q60 24 116 5M124 5Q180 24 234 5"),
+      // One continuous cord (the approved prototype's): the two sags meet over the middle post through a short cubic whose tangents are the ones the sags arrive and leave with
+      // (slope -19/56 and +19/56), so there is no flat stretch and no corner where they join. The flags stay on the sags (`sagLeft`, `sagRight`).
+      line("M6 5Q60 24 116 5C119 3.98 121 3.98 124 5Q180 24 234 5"),
       ...[0.12, 0.32, 0.5, 0.68, 0.88].map((t) => fill(flagPath(flag(...sagLeft(t), 6)))),
       acc(`${flagPath(flag(...sagRight(0.5), 6))}`),
       ...[0.12, 0.32, 0.68, 0.88].map((t) => fill(flagPath(flag(...sagRight(t), 6))))

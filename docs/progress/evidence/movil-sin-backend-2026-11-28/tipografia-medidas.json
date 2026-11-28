@@ -4,7 +4,7 @@
   "name": "pinata",
   "width": 360,
   "h1FontSize": "47.988px",
-  "h1TextAlign": "start",
+  "h1TextAlign": "center",
   "elFontSize": "47.988px",
   "overflowX": false
  },
@@ -13,7 +13,7 @@
   "name": "pinata",
   "width": 768,
   "h1FontSize": "56px",
-  "h1TextAlign": "start",
+  "h1TextAlign": "center",
   "elFontSize": "56px",
   "overflowX": false
  },
@@ -49,7 +49,7 @@
   "name": "marfil",
   "width": 1280,
   "h1FontSize": "95px",
-  "h1TextAlign": "center",
+  "h1TextAlign": "start",
   "elFontSize": "16px",
   "overflowX": false
  },
@@ -85,7 +85,7 @@
   "name": "pinata",
   "width": 360,
   "h1FontSize": "47.988px",
-  "h1TextAlign": "start",
+  "h1TextAlign": "center",
   "elFontSize": "47.988px",
   "overflowX": false
  },
@@ -94,7 +94,7 @@
   "name": "pinata",
   "width": 768,
   "h1FontSize": "56px",
-  "h1TextAlign": "start",
+  "h1TextAlign": "center",
   "elFontSize": "56px",
   "overflowX": false
  },
@@ -130,7 +130,7 @@
   "name": "marfil",
   "width": 1280,
   "h1FontSize": "95px",
-  "h1TextAlign": "center",
+  "h1TextAlign": "start",
   "elFontSize": "16px",
   "overflowX": false
  },

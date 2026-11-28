@@ -63,7 +63,7 @@ const hoverLift = (variant: ButtonVariant, scheme: 'light' | 'dark'): ViewStyle 
 );
 
 /** Full width on a phone (a thumb target), content width from 640 px up, unless `block`. */
-export function Button({ children, onPress, variant = 'primary', state = 'default', accessibilityLabel, className, testID, block = false, icon }: PropsWithChildren<{ icon?: string; onPress?: () => void; variant?: ButtonVariant; state?: State; accessibilityLabel?: string; className?: string; testID?: string; block?: boolean }>) {
+export function Button({ children, onPress, variant = 'primary', state = 'default', accessibilityLabel, className, testID, block = false, icon, buttonRef }: PropsWithChildren<{ /** The pressable itself, for a screen that has to put the focus back on it. */ buttonRef?: React.Ref<View> | undefined; icon?: string; onPress?: () => void; variant?: ButtonVariant; state?: State; accessibilityLabel?: string; className?: string; testID?: string; block?: boolean }>) {
   const { palette, styles, strings, scheme } = useTheme();
   const { width } = useWindowDimensions();
   const align = useContext(ButtonAlignContext);
@@ -78,6 +78,7 @@ export function Button({ children, onPress, variant = 'primary', state = 'defaul
   const place = width >= WIDE_BUTTONS && !block ? { alignSelf: align === 'center' ? 'center' : 'flex-start' } as const : undefined;
   return (
     <Pressable
+      ref={buttonRef}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? (typeof children === 'string' ? children : strings.action)}
       accessibilityState={{ disabled, busy: state === 'loading' }}
