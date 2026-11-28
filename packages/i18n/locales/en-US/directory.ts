@@ -10,7 +10,12 @@ export const directoryEnUS: DeepStrings<typeof directoryEsBO> = {
   citiesHeading: "Or search by city",
   category: {
     VENUE: "Event venues", CATERING: "Catering", PHOTOGRAPHY: "Photography", MUSIC: "Music", DECORATION: "Decoration", MAKEUP: "Makeup",
-    TRANSPORT: "Transport", INVITATIONS: "Invitations", WEDDING_PLANNER: "Wedding planners", ACCOMMODATION: "Accommodation", HONEYMOON: "Honeymoon"
+    TRANSPORT: "Transport", INVITATIONS: "Invitations", WEDDING_PLANNER: "Wedding planners", ACCOMMODATION: "Accommodation", HONEYMOON: "Honeymoon",
+    PASTRY: "Cakes and pastries", KITCHENWARE: "Kitchenware", CLOTHING: "Clothing and accessories", TABLEWARE: "Tableware and glassware", SMALL_APPLIANCES: "Home appliances",
+    HOME_DECOR: "Home decor", BED_BATH: "Bed and bath linens", FURNITURE: "Furniture", FLOWERS: "Flowers and arrangements", GIFT_BASKETS: "Surprise breakfasts and gift baskets",
+    WINES_GOURMET: "Wines and gourmet", JEWELRY: "Jewelry and watches", BEAUTY: "Beauty and personal care", BABY: "Baby and maternity", TOYS: "Toys and learning",
+    RELIGIOUS: "Religious items", ELECTRONICS: "Technology", BOOKS_STATIONERY: "Books and stationery", SPORTS_OUTDOOR: "Sports and outdoors", PERSONALIZED: "Personalized and corporate",
+    GIFT_CARDS: "Gift cards"
   },
   categoryTitle: "{{category}} in Bolivia",
   categoryDescription: "Compare verified {{category}} for your wedding, quinceañera or event, and request a quote, no commitment.",
