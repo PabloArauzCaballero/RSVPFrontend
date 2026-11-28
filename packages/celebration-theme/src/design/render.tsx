@@ -213,7 +213,24 @@ function fontSize(size: number): string {
   return size >= BIG_TEXT ? `clamp(${Math.round(size / 2)}px, ${(size / FLUID_DIVISOR).toFixed(2)}vw, ${size}px)` : `${size}px`;
 }
 
-function elementStyle(element: DesignElement, mobile: DesignElement | undefined, desktop: DesignElement | undefined): CSSProperties {
+/**
+ * The typography an element carries on one canvas, as custom properties (`--tm-*` for the phone canvas, `--td-*` for the desktop one).
+ * They are variables, not inline declarations, because an inline value always beats a media query: the stylesheet picks the desktop value
+ * from 900 px and falls back to the phone value for anything the desktop canvas leaves out (PLA-02: what is missing on desktop is inherited).
+ */
+function typographyVariables(prefix: "tm" | "td", typography: DesignElement["typography"]): Record<string, string | number> {
+  if (!typography) return {};
+  const out: Record<string, string | number> = {};
+  if (typography.size !== undefined) out[`--${prefix}-size`] = fontSize(typography.size);
+  if (typography.weight !== undefined) out[`--${prefix}-weight`] = typography.weight;
+  if (typography.align !== undefined) out[`--${prefix}-align`] = typography.align;
+  if (typography.lineHeight !== undefined) out[`--${prefix}-lh`] = typography.lineHeight;
+  if (typography.letterSpacing !== undefined) out[`--${prefix}-ls`] = `${typography.letterSpacing}em`;
+  if (typography.transform !== undefined) out[`--${prefix}-tt`] = typography.transform;
+  return out;
+}
+
+function elementStyle(element: DesignElement, mobile: DesignElement | undefined, desktop: DesignElement | undefined, desktopTypography: DesignElement["typography"]): CSSProperties {
   const style: Record<string, string | number | undefined> = {};
   const set = (prefix: string, item: DesignElement | undefined): void => {
     if (!item) return;
@@ -223,11 +240,11 @@ function elementStyle(element: DesignElement, mobile: DesignElement | undefined,
   set("d", desktop);
   const box = (value: DesignElement["padding"]): string | undefined => (value ? `${value.top}px ${value.right}px ${value.bottom}px ${value.left}px` : undefined);
   const { typography, border } = element;
-  const sized = typography?.size !== undefined;
   return {
     ...style,
+    ...typographyVariables("tm", typography),
+    ...typographyVariables("td", desktopTypography),
     ...(typography?.colour ? { "--cd-ink": role(typography.colour) } : {}),
-    ...(sized ? { "--cd-size": fontSize(typography.size as number) } : {}),
     zIndex: element.z,
     margin: box(element.margin),
     padding: box(element.padding),
@@ -236,11 +253,7 @@ function elementStyle(element: DesignElement, mobile: DesignElement | undefined,
     opacity: element.opacity,
     transform: element.rotation ? `rotate(${element.rotation}deg)` : undefined,
     ...backgroundStyle(element.background),
-    ...(typography ? {
-      fontFamily: typography.role ? FONT_VAR[typography.role] : undefined, fontSize: sized ? fontSize(typography.size as number) : undefined, fontWeight: typography.weight,
-      textAlign: typography.align === "start" ? "start" : typography.align === "end" ? "end" : typography.align, lineHeight: typography.lineHeight,
-      letterSpacing: typography.letterSpacing === undefined ? undefined : `${typography.letterSpacing}em`, textTransform: typography.transform, color: role(typography.colour)
-    } : {}),
+    ...(typography ? { fontFamily: typography.role ? FONT_VAR[typography.role] : undefined, color: role(typography.colour) } : {}),
     ...(element.animation ? { "--cdesign-delay": `${element.animation.delayMs ?? 0}ms`, "--cdesign-duration": `${element.animation.durationMs ?? 700}ms` } : {})
   } as CSSProperties;
 }
@@ -259,6 +272,8 @@ function Canvas({ page, context }: { readonly page: DesignPage; readonly context
         const element = (phone.get(id) ?? wide.get(id)) as DesignElement;
         const block = blocks.get(element.block);
         if (!block) return null;
+        // Only a desktop canvas of its own can carry desktop typography; without one the phone values apply at every width.
+        const desktopTypography = desktop ? wide.get(id)?.typography : undefined;
         const protectedBlock = block.type === "giftsCta" || block.type === "rsvpCta";
         // The block's content goes in the author container; the gifts and reply buttons do not: they are the grid item itself, a sibling layer the stylesheet cannot reach.
         const content = <BlockBody block={block} element={element} context={context} />;
@@ -266,8 +281,8 @@ function Canvas({ page, context }: { readonly page: DesignPage; readonly context
         const href = block.type === "button" || block.type === "giftsCta" || block.type === "rsvpCta" ? undefined : hrefOf(element.link, context);
         return (
           <div key={id} className={block.type === "giftsCta" || block.type === "rsvpCta" ? "cdesign-el rsvp-protected" : "cdesign-el"} data-block={block.type} data-m={phone.has(id) ? "" : undefined} data-d={wide.has(id) || (!desktop && phone.has(id)) ? "" : undefined}
-            data-entrance={element.animation && element.animation.entrance !== "none" ? element.animation.entrance : undefined} data-sized={element.typography?.size !== undefined ? "" : undefined} data-round={element.radius ? "" : undefined} data-bg-media={element.background?.kind === "media" ? "" : undefined}
-            style={elementStyle(element, phone.get(id), wide.get(id) ?? (desktop ? undefined : phone.get(id)))}>
+            data-entrance={element.animation && element.animation.entrance !== "none" ? element.animation.entrance : undefined} data-sized={element.typography?.size !== undefined ? "" : undefined} data-sized-d={(desktopTypography?.size ?? element.typography?.size) !== undefined ? "" : undefined} data-round={element.radius ? "" : undefined} data-bg-media={element.background?.kind === "media" ? "" : undefined}
+            style={elementStyle(element, phone.get(id), wide.get(id) ?? (desktop ? undefined : phone.get(id)), desktopTypography)}>
             <BackgroundMedia background={element.background} context={context} />
             {href ? <a href={href} className="cdesign-el-link" {...linkAttributes(element.link)}>{body}</a> : body}
           </div>

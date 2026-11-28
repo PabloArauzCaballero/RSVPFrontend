@@ -344,3 +344,32 @@ describe("the documents themselves", () => {
     for (const banned of ["\"inter\"", "poppins", "ibm-plex"]) expect(text).not.toContain(banned);
   });
 });
+
+describe("typography per canvas (PLA-02)", () => {
+  const cover = (name: (typeof NAMES)[number]): string => {
+    const markup = html(name);
+    const start = markup.indexOf('data-page-kind="cover"');
+    const end = markup.indexOf('data-page-kind="section"', start);
+    return markup.slice(start, end < 0 ? undefined : end);
+  };
+  const stylesheet = readFileSync(join(__dirname, "..", "..", "styles.css"), "utf8");
+
+  it("the cover carries the phone size and the desktop size as variables, not as an inline font-size that no media query could beat", () => {
+    const markup = cover("pinata");
+    expect(markup).toMatch(/--tm-size:clamp\(28px[^;"]*56px\)/);
+    expect(markup).toMatch(/--td-size:clamp\(48px[^;"]*96px\)/);
+    expect(markup).not.toMatch(/style="[^"]*[^-]font-size:/);
+  });
+
+  it("what the desktop canvas leaves out stays phone-only: no desktop variable is invented", () => {
+    const styles = [...cover("marfil").matchAll(/style="([^"]*)"/g)].map((match) => match[1] as string);
+    const aligned = styles.filter((style) => style.includes("--td-align:start"));
+    expect(aligned.length).toBeGreaterThan(0);
+    for (const style of aligned) expect(style).not.toContain("--td-size");
+  });
+
+  it("the stylesheet applies the desktop value from 900 px and falls back to the phone one for what the desktop canvas leaves out", () => {
+    expect(stylesheet).toMatch(/\.cdesign-el \{ font-size: var\(--tm-size\)/);
+    expect(stylesheet).toMatch(/@media \(min-width: 56\.25rem\) \{\s*\.celebration-design \.cdesign-el \{ font-size: var\(--td-size, var\(--tm-size\)\)[^}]*text-align: var\(--td-align, var\(--tm-align\)\)/);
+  });
+});
