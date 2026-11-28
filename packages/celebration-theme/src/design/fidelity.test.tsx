@@ -248,7 +248,7 @@ describe("render · the graded veil", () => {
    * carries the light veil, so the picture reaches it at 1 - (1 - elsewhere)(1 - text). The worst pictures are pure black and pure white (every other pixel lies between).
    */
   const SEEDED = readdirSync(DOCUMENTS).filter((file) => file.endsWith(".json")).sort();
-  it("the seed set is the whole catalogue (30 documents)", () => { expect(SEEDED).toHaveLength(30); });
+  it("the seed set is the whole catalogue (36 documents: the 30 of the first catalogue and the six extra templates of Otros, Despedida and Pedida)", () => { expect(SEEDED).toHaveLength(36); });
 
   it.each(SEEDED)("%s · the text reaches AA (4.5:1) over the worst picture, in light and dark, under the graded veil", (file) => {
     const entry = JSON.parse(readFileSync(join(DOCUMENTS, file), "utf8")) as { theme: unknown };

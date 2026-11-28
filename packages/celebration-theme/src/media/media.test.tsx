@@ -186,10 +186,11 @@ describe("MediaImage and MediaBackground", () => {
     expect(renderToStaticMarkup(<MediaImage media={SONG} alt="" />)).toBe("");
   });
 
-  it("the veil is never a fixed default: MediaBackdrop takes the opacity per scheme the palette needs, clamped to the contract's 0.8", () => {
+  it("the veil is never a fixed default: MediaBackdrop takes the opacity per scheme the palette needs, clamped to the strongest veil the renderer paints (MAX_TEXT_VEIL, above the 0.8 a document may ask for because the graded veil of contract 1.8.0 is .85)", () => {
     const html = renderToStaticMarkup(<MediaBackdrop media={PHOTO} light={0.35} dark={5} />);
     expect(html).toContain("--cd-veil-l:35%");
-    expect(html).toContain("--cd-veil-d:80%");
+    expect(html).toContain("--cd-veil-d:95%");
+    expect(renderToStaticMarkup(<MediaBackdrop media={PHOTO} light={0.85} dark={0.85} />)).toContain("--cd-veil-l:85%");
     expect(html).toContain('aria-hidden="true"');
     expect(renderToStaticMarkup(<MediaBackdrop media={SONG} light={0.4} dark={0.4} />)).toBe("");
     expect(clampScrim(-1)).toBe(0);
