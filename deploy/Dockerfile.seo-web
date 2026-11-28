@@ -24,6 +24,8 @@ ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 NODE_OPTIONS=--max-old-space-s
 WORKDIR /app
 COPY --from=build --chown=node:node /workspace/apps/seo-web/.next/standalone ./
 COPY --from=build --chown=node:node /workspace/apps/seo-web/.next/static ./apps/seo-web/.next/static
+# El modo standalone no incluye public/: sin esta copia, los estaticos propios (miniaturas del marketplace) dan 404.
+COPY --from=build --chown=node:node /workspace/apps/seo-web/public ./apps/seo-web/public
 # M14 · The ISR/data cache writes under .next/cache: it must belong to the runtime user.
 RUN mkdir -p /app/apps/seo-web/.next/cache && chown -R node:node /app/apps/seo-web/.next
 EXPOSE 3000
