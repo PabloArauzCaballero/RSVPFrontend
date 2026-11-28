@@ -205,13 +205,18 @@ export function GiftAssistant({ celebration, eventTypeName, onSeeList, onStore }
   const headline = recs.data && recs.data.scope !== "EVENT_TYPE" ? t("gifts.host.wizard.ideas.allIdeas") : eventTypeName ? (cityName ? t("gifts.host.wizard.ideas.recommended", { event: eventTypeName, city: cityName }) : t("gifts.host.wizard.ideas.recommendedNoCity", { event: eventTypeName })) : t("gifts.host.wizard.ideas.title");
   const index = Math.max(0, STEPS.indexOf(step === "done" ? "summary" : step));
 
+  /** Why the notes were refused: 422 INVALID_DELIVERY_NOTES (length, control characters) and 422 CONTACT_IN_TEXT (a phone number or web address, gift-list 1.17.0) have their own wording; anything else keeps the retry line. */
+  const notesFailureMessage = (code: string | undefined): string =>
+    code === "INVALID_DELIVERY_NOTES" ? t("gifts.host.wizard.errors.invalidNotes", { max: DELIVERY_NOTES_MAX })
+      : code === "CONTACT_IN_TEXT" ? t("gifts.host.wizard.errors.contactInNotes")
+        : t("gifts.host.wizard.errors.notesUnsaved");
   if (unsaved) {
     const problem = unsaved.definitive ? deliveryNotesProblem(draft) : null;
     return (
       <View style={{ gap: spacing[4] }} testID="wizard-notes-failed">
         <Notice key={notesAttempts} kind="error">
           <StepHeading focusOnMount testID="wizard-notes-failed-title">{t("gifts.host.wizard.errors.notesUnsavedTitle", { count: unsaved.count })}</StepHeading>
-          <Text style={styles.body} testID="wizard-notes-failed-body">{unsaved.code === "INVALID_DELIVERY_NOTES" ? t("gifts.host.wizard.errors.invalidNotes", { max: DELIVERY_NOTES_MAX }) : t("gifts.host.wizard.errors.notesUnsaved")}</Text>
+          <Text style={styles.body} testID="wizard-notes-failed-body">{notesFailureMessage(unsaved.code)}</Text>
         </Notice>
         {unsaved.definitive ? (
           <Field label={t("gifts.host.wizard.errors.notesEdit")} value={draft} onChange={(value) => { if (!sending) setDraft(value); }} multiline testID="wizard-notes-edit" editable={!sending}

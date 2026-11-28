@@ -101,3 +101,8 @@ NO corrido: el recorrido en Chrome real contra el backend real, Playwright (`tes
 4. Ficha completa del producto (galería, descripción, garantía): la tarjeta de recomendación no las trae; hace falta un detalle público del producto en provider-catalog.
 5. Las capturas de `host-regalos-catalogo-768/1440` y `host-regalos-proveedores-768/1440` cambian de contenido y su línea base queda obsoleta hasta regenerarlas en macOS.
 6. «Ver más productos» de una idea con más de 12: la API pagina con `ideas=<código>&offset=`; esta etapa muestra los 12 primeros y lo dice.
+
+## Hallazgo del recorrido real (2026-11-28) y su corrección
+
+- Con el backend real (gift-list 1.17.0), unas indicaciones de entrega con un teléfono o una dirección web dan `PUT .../gift-list/delivery-notes` 422 `CONTACT_IN_TEXT`. El asistente solo conocía `INVALID_DELIVERY_NOTES` y mostraba «Reintenta para guardar», una promesa falsa: el mismo texto vuelve a fallar. Ahora `CONTACT_IN_TEXT` tiene su propio texto (es-BO y en-US) que dice que no se admiten teléfonos ni enlaces y conserva el texto en el campo editable; los regalos ya agregados no se pierden. Prueba: `gift-assistant.test.tsx` «422 CONTACT_IN_TEXT of the PUT…» (falla sin la corrección, verificado).
+- Pendiente fuera de este PR: el `Screen` del shell (`apps/universal/src/host/shell.tsx`) cambia de árbol al cruzar el punto de corte de ancho (rotar el teléfono o redimensionar la ventana) y reinicia el asistente al paso 1 con la selección perdida. No lo introduce este PR; afecta a cualquier pantalla con estado local.

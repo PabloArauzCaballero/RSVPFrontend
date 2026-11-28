@@ -58,6 +58,7 @@ export const giftsWizardEsBO = {
     failedTitle_one: "No se agregó ningún regalo: {{count}} necesita un cambio", failedTitle_other: "No se agregó ningún regalo: {{count}} necesitan un cambio",
     failedHelp: "Corrige lo marcado y vuelve a tocar «Agregar». Lo demás se conserva.", fix: "Corregir",
     invalidNotes: "Revisa las indicaciones de entrega: admiten hasta {{max}} caracteres y no deben llevar la dirección exacta.",
+    contactInNotes: "Las indicaciones no pueden llevar teléfonos ni enlaces: tus invitados verán este texto. Quita el número o el enlace y guarda de nuevo. Tus regalos ya están en la lista.",
     retryHint: "Puedes volver a tocar «Agregar»: no se agregará dos veces.", offline: "Sin conexión por ahora. Tu selección sigue aquí; reintenta cuando vuelva internet.",
     notesUnsavedTitle_one: "Agregamos {{count}} regalo, pero no pudimos guardar tus indicaciones", notesUnsavedTitle_other: "Agregamos {{count}} regalos, pero no pudimos guardar tus indicaciones",
     notesSaving: "Guardando…", notesEdit: "Editar indicaciones de entrega", notesSave: "Guardar indicaciones",
