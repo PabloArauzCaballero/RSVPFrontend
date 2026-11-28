@@ -15,11 +15,11 @@ const V2: readonly (readonly [string, TemplateDocument])[] = readdirSync(DOCUMEN
 });
 const V1 = TEMPLATES.map((template) => [`v1 ${template.layout}`, template] as const);
 /**
- * The two design documents whose gifts page is only the button (PL-139-R2-03): they fold into the block and keep no gifts section. The list is
+ * The five design documents whose gifts page is only the button (PL-139-R2-03): they fold into the block and keep no gifts section. The list is
  * fixed on purpose: recomputing it from the document would repeat the production predicate and let a drift in both pass unseen. A document that
  * joins or leaves this list is a deliberate edit of this line.
  */
-const FOLDED_V2 = ["minimalista", "corporativo-grafito"] as const;
+const FOLDED_V2 = ["minimalista", "corporativo-grafito", "otros-mesa", "otros-rumbo", "pedida-solitario"] as const;
 /** The v1 layouts whose sections carry a drawing keep their gifts section (a drawing and the text, no button). */
 const KEEPS_V1 = ["classic", "festive", "corporate"] as const;
 const keepsGiftsSection = (template: TemplateDocument): boolean =>
