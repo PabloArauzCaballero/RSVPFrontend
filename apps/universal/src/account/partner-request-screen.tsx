@@ -5,7 +5,7 @@ import { ApiError } from "@rsvp/api-client";
 import { Checkbox, Chip, FilterSelect, useColors, type ChipTone } from "@rsvp/ui";
 import { CONTACT_CHANNELS, partnerRequestErrors, partnerRequestPayload, PARTNER_REQUEST_MESSAGE_MAX, BUSINESS_NAME_MAX, type PartnerRequestFormValues, type PartnerRequestReference } from "@rsvp/forms";
 import {
-  PARTNER_REQUEST_LIMIT, PARTNER_REQUEST_WINDOW_DAYS, WITHDRAWN_BY_REQUESTER, useMyPartnerRequests, useOfferCategories, useProviderGeo, useSubmitPartnerRequest, useWithdrawPartnerRequest,
+  categoryLabel, PARTNER_REQUEST_LIMIT, PARTNER_REQUEST_WINDOW_DAYS, WITHDRAWN_BY_REQUESTER, useMyPartnerRequests, useOfferCategories, useProviderGeo, useSubmitPartnerRequest, useWithdrawPartnerRequest,
   type PartnerRequest
 } from "@rsvp/query-hooks";
 import { useApiClient, useClaims, useLocale, useT } from "../platform/providers";
@@ -237,7 +237,7 @@ function PartnerRequestBody({ onNavigate }: { readonly onNavigate: (href: string
   const [sentId, setSentId] = useState<string | null>(null);
   const day = useDay();
 
-  const categoryName = (code: string): string => categories.data?.items.find((item) => item.code === code)?.name ?? code;
+  const categoryName = (code: string): string => categoryLabel(code, t, Object.fromEntries((categories.data?.items ?? []).map((item) => [item.code, item.name])));
   const cityName = (code: string): string => geo.data?.items.find((city) => city.slug === code)?.name ?? code;
 
   if (mine.isPending) return <View accessibilityLiveRegion="polite"><Text style={styles.muted}>{t("account.partnerRequest.loading")}</Text><Loading /></View>;

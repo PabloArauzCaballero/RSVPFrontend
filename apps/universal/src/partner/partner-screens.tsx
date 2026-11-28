@@ -5,7 +5,7 @@ import { spacing, radius } from "@rsvp/design-tokens";
 import { isFutureDate, quoteSchema, toMinor } from "@rsvp/forms";
 import { formatMinor } from "@rsvp/i18n";
 import {
-  agendaEmptiness, categoryLabel, dayState, PROVIDER_CATEGORIES, PROVIDER_CITIES, quoteFailureMessage, shiftMonth, todayIn, useBookDate, useMonthCalendar, useOfferCategories, usePartnerContext, useQuote, zoneName,
+  agendaEmptiness, categoryLabel, dayState, FACT_LEAD_KEY, offerKind, PROVIDER_CATEGORIES, PROVIDER_CITIES, quoteFailureMessage, shiftMonth, todayIn, useBookDate, useMonthCalendar, useOfferCategories, usePartnerContext, useQuote, zoneName,
   type DirectoryCard, type Partner, type PartnerContext, type QuoteReceipt
 } from "@rsvp/query-hooks";
 import { Checkbox, CheckMark, DatePicker, EmptyState, Select, Skeleton, fonts } from "@rsvp/ui";
@@ -85,11 +85,11 @@ function WithPartner({ slug, needsProfile = false, onNavigate, children }: { rea
   return children(data);
 }
 
-function useCategoryNames(): Readonly<Record<string, string>> {
+/** The categories the catalogue publishes (names and listing types); empty while loading or unreachable. */
+function useCategories() {
   const client = useApiClient();
   const locale = useLocale();
-  const categories = useOfferCategories(client, locale);
-  return Object.fromEntries((categories.data?.items ?? []).map((item) => [item.code, item.name]));
+  return useOfferCategories(client, locale).data?.items ?? [];
 }
 
 function Money({ card }: { readonly card: Pick<DirectoryCard, "priceFrom"> }): ReactNode {
@@ -123,8 +123,8 @@ function PartnerBody({ partner, onNavigate }: { readonly partner: Partner } & Di
   const t = useT();
   const locale = useLocale();
   const s = useSearchStyles();
-  const names = useCategoryNames();
-  const category = categoryLabel(partner.category, t, names);
+  const categories = useCategories();
+  const category = categoryLabel(partner.category, t, Object.fromEntries(categories.map((item) => [item.code, item.name])));
   const categorySlug = PROVIDER_CATEGORIES.find((entry) => entry.code === partner.category)?.slug;
   const facts = { name: partner.name, category: category.toLocaleLowerCase(locale), city: partner.city };
   const here = base(partner.slug);
@@ -154,7 +154,7 @@ function PartnerBody({ partner, onNavigate }: { readonly partner: Partner } & Di
 
       <View style={{ gap: spacing[2] }}>
         <Text accessibilityRole="header" aria-level={2} style={s.h2}>{t("partner.about")}</Text>
-        <Text style={s.lead}>{partner.listings.length ? t("partner.factLead", { ...facts, count: partner.listings.length }) : t("partner.factLeadNone", facts)}</Text>
+        <Text style={s.lead}>{partner.listings.length ? t(FACT_LEAD_KEY[offerKind(partner.listings, categories)], { ...facts, count: partner.listings.length }) : t("partner.factLeadNone", facts)}</Text>
         <Text style={s.lead}>{partner.summary ?? t("partner.noSummary")}</Text>
       </View>
 

@@ -8,6 +8,8 @@ export interface RequestOptions<TBody = unknown> {
   signal?: AbortSignal;
   /** Authentication is disabled only for public or identity bootstrap routes. */
   auth?: boolean;
+  /** `text` returns the body untouched (a CSV export) and asks for `text/csv`; the default parses JSON. */
+  responseType?: "json" | "text";
 }
 
 export interface TokenPair {

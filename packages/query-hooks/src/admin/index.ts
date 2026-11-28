@@ -154,3 +154,4 @@ export function useIdentitySummary(client: ApiClient) {
 }
 export * from "./partners.js";
 export * from "./partner-requests.js";
+export * from "./product-moderation.js";

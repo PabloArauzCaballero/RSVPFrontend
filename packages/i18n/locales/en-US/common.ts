@@ -1,5 +1,5 @@
 export const enUS = {
-  common: { loading: "Loading…", retry: "Try again", cancel: "Cancel", save: "Save", signOut: "Sign out", more: "More", close: "Close", empty: "There are no results." },
+  common: { loading: "Loading…", retry: "Try again", cancel: "Cancel", save: "Save", signOut: "Sign out", more: "More", actions: "Actions", close: "Close", empty: "There are no results." },
   auth: {
     signOut: { title: "Are you sure you want to sign out?", body: "You can cancel to stay signed in." },
     restoreUnavailable: { title: "We couldn't restore your session", body: "Check your connection and try again. You don't need to sign out.", retry: "Try again" },

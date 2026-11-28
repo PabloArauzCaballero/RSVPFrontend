@@ -1,6 +1,6 @@
 import { useEffect, useState, type PropsWithChildren, type ReactNode } from "react";
-import { Platform, View } from "react-native";
-import { radius, spacing } from "@rsvp/design-tokens";
+import { View } from "react-native";
+import { radius } from "@rsvp/design-tokens";
 import { useT } from "../platform/providers";
 import { readLocal, writeLocal } from "../platform/local-store";
 import { Button, SkeletonList, useColors } from "@rsvp/ui";
@@ -29,16 +29,6 @@ export function useFirstTime(key: string, wanted: boolean): boolean {
     return () => { alive = false; };
   }, [key, wanted]);
   return first;
-}
-
-/**
- * The primary action of a long form: on the web it sticks to the bottom of the scroll area so the thumb always reaches it and the
- * error stays next to the button (native keeps it in the flow, the keyboard already pushes the screen). `ground` is the colour behind it.
- */
-export function StickyActions({ ground = "canvas", children }: PropsWithChildren<{ readonly ground?: "canvas" | "surface" }>): ReactNode {
-  const palette = useColors();
-  const sticky = Platform.OS === "web" ? ({ position: "sticky", bottom: 0, zIndex: 2, borderTopWidth: 1, borderTopColor: palette.border } as object) : null;
-  return <View style={[{ flexDirection: "row", flexWrap: "wrap", gap: spacing[2], paddingVertical: spacing[3], backgroundColor: palette[ground] }, sticky]}>{children}</View>;
 }
 
 /** "More options": a quiet text button, so the primary action stays the only filled one on the screen. */

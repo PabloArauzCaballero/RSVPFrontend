@@ -75,6 +75,18 @@ describe("F25 · partner microsite /p/{slug}", () => {
     expect([...document.querySelectorAll("a")].filter((a) => /^(https?:|tel:|mailto:|wa\.me)/.test(a.getAttribute("href") ?? ""))).toEqual([]);
   });
 
+  it("a product category is named and its listings are counted as products, never a raw key", () => {
+    const partner = partnerFromListings("hotel-andino", [card({ category: "TABLEWARE" }), card({ category: "TABLEWARE", listingId: "7d1c1a34-5d4c-4a39-9a2e-0f4f2d3d7b12" })]);
+    if (!partner) throw new Error("expected partner");
+    const published = [{ code: "TABLEWARE", name: "Vajilla y cristalería", listingType: "PRODUCT" as const }];
+    const text = dom(renderToStaticMarkup(<PartnerMicrosite partner={partner} t={t} locale="es-BO" categories={published} />)).body.textContent ?? "";
+    expect(text).toContain("proveedor de vajilla y cristalería en La Paz, verificado por DOne. Publica 2 productos.");
+    // Catalogue categories unreachable: still named (static translation) and counted without guessing the type.
+    const offline = renderToStaticMarkup(<PartnerMicrosite partner={partner} t={t} locale="es-BO" />);
+    expect(offline).toContain("Publica 2 ofertas.");
+    expect(offline + text).not.toContain("directory.category");
+  });
+
   it("empty state: a partner without description, coverage, services or contacts still renders honest text", () => {
     const partner = partnerFromListings("hotel-andino", [card({ summary: undefined, coverage: undefined, destinations: undefined, address: undefined, hours: undefined, priceFrom: undefined })]);
     if (!partner) throw new Error("expected partner");

@@ -35,14 +35,36 @@ export const PROVIDER_CITIES = [
 export type ProviderCity = (typeof PROVIDER_CITIES)[number];
 
 /**
- * The label of a listing's category. Categories are reference data the admin can extend (e.g. PASTRY), so the static
- * translation may not know a code yet: then the name the catalogue publishes for it, and only then the code itself.
+ * The label of a listing's category. Categories are reference data the admin can extend, so the name the catalogue
+ * publishes (GET /providers/categories) wins; then the static translation (catalogue unreachable or category retired);
+ * and last the code written as words. Never a translation key nor a bare code.
  * `translate` returns the key when it has no text for it (i18next's behaviour).
  */
 export function categoryLabel(code: string, translate: (key: string) => string, published: Readonly<Record<string, string>> = {}): string {
+  // The catalogue answers the code as the name of a category with no translation: that is not a name.
+  const name = published[code];
+  if (name && name !== code) return name;
+  // "" is how the verification queue says "no listing yet".
+  if (!code) return "";
   const key = `directory.category.${code}`;
   const own = translate(key);
-  return own && own !== key ? own : published[code] ?? code;
+  if (own && own !== key) return own;
+  const words = code.replace(/[_-]+/g, " ").trim().toLowerCase();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+export type OfferKind = "SERVICE" | "PRODUCT" | "OFFER";
+export const FACT_LEAD_KEY: Readonly<Record<OfferKind, string>> = { SERVICE: "partner.factLeadService", PRODUCT: "partner.factLeadProduct", OFFER: "partner.factLeadOffer" };
+
+/**
+ * What a provider's listings are, to name them when counting. The public card carries no listing type, but its category
+ * does (`listingType` of GET /providers/categories, and the catalogue rejects a listing of the other type). All of one
+ * type is named by it; a mix, a category open to both (null) or one that could not be read is the neutral "OFFER".
+ */
+export function offerKind(listings: readonly { readonly category: string }[], categories: readonly { readonly code: string; readonly listingType?: string | null }[]): OfferKind {
+  const kinds = new Set(listings.map((listing) => categories.find((category) => category.code === listing.category)?.listingType ?? "OFFER"));
+  const [only] = kinds;
+  return kinds.size === 1 && (only === "SERVICE" || only === "PRODUCT") ? only : "OFFER";
 }
 
 export const categoryBySlug = (slug: string): ProviderCategory | undefined => PROVIDER_CATEGORIES.find((category) => category.slug === slug);

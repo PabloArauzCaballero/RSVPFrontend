@@ -36,8 +36,7 @@ export const HOST: SessionClaims = { userId: "u-host", roles: ["HOST"], organiza
 export const ADMIN: SessionClaims = { userId: "u-admin", roles: ["ADMIN"], organizationIds: [] };
 export const GUEST: SessionClaims = { userId: "u-guest", roles: ["GUEST"], organizationIds: [] };
 
-export function renderApp(ui: ReactNode, client: ApiClient, claims: SessionClaims = HOST, locale: "es-BO" | "en-US" = "es-BO"): RenderResult {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+export function renderApp(ui: ReactNode, client: ApiClient, claims: SessionClaims = HOST, locale: "es-BO" | "en-US" = "es-BO", queryClient: QueryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })): RenderResult {
   return render(<AppProviders client={client} claims={claims} locale={locale} queryClient={queryClient}>{ui}</AppProviders>);
 }
 
