@@ -15,7 +15,7 @@ const CELEBRATION_ID = '9b1e6a52-7c1f-4d57-a7a1-3a8d3a0f6c10';
 if (!SLUG) throw new Error('MERCADO_PROVIDER_SLUG is required');
 mkdirSync(OUT, { recursive: true });
 const results = [];
-const check = (name, ok, detail = '') => { results.push({ name, ok: Boolean(ok), detail }); console.log(JSON.stringify({ name, ok: Boolean(ok), detail })); };
+const check = (name, ok, detail = '') => { results.push({ name, ok: Boolean(ok), detail }); process.stdout.write(`${JSON.stringify({ name, ok: Boolean(ok), detail })}\n`); };
 
 const browser = await chromium.launch({ executablePath: process.env.CHROME_PATH ?? '/usr/bin/google-chrome', args: ['--no-sandbox'] });
 try {
@@ -97,5 +97,5 @@ try {
   }
 } finally { await browser.close(); }
 const failed = results.filter((result) => !result.ok);
-console.log(JSON.stringify({ total: results.length, failed: failed.length }));
+process.stdout.write(`${JSON.stringify({ total: results.length, failed: failed.length })}\n`);
 process.exit(failed.length ? 1 : 0);
