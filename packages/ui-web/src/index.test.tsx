@@ -186,6 +186,10 @@ describe('PartnerLink: always through /r/{listingId}', () => {
     for (const quantity of [0, -1, 2.5]) expect(partnerRedirectHref(ID, { surface: 'GIFT_LIST', celebrationId: 'c1', quantity })).not.toContain('quantity');
     expect(partnerRedirectHref(ID, { surface: 'GIFT_LIST', celebrationId: 'c1', variant: null })).not.toContain('variant');
   });
+  it('R6b: partnerRedirectHref carries the eventType code of the celebration, and drops one the redirector would refuse', () => {
+    expect(new URL(partnerRedirectHref(ID, { surface: 'GIFT_LIST', celebrationId: 'c1', eventType: 'BABY_SHOWER' }), 'http://site.test').searchParams.get('eventType')).toBe('BABY_SHOWER');
+    for (const eventType of ['baby shower', '', 'A', '1WEDDING']) expect(partnerRedirectHref(ID, { surface: 'GIFT_LIST', celebrationId: 'c1', eventType })).not.toContain('eventType');
+  });
   it('R5: onFollow runs on a click and on a middle click, before leaving, and not on an alt-click or another button', () => {
     const follow = vi.fn();
     render(<PartnerLink listingId={ID} surface="GIFT_LIST" celebrationId="c1" onFollow={follow}>Ir</PartnerLink>);

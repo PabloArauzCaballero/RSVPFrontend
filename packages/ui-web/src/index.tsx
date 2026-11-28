@@ -52,11 +52,14 @@ export type ButtonProps = PropsWithChildren<{
   onPress?: () => void;
 } & VariantProps<typeof buttonVariants> & ButtonHTMLAttributes<HTMLButtonElement>>;
 
+/** An event type code (WEDDING, BABY_SHOWER): the same shape the redirector accepts; anything else is not sent. */
+const EVENT_TYPE_SHAPE = /^[A-Z][A-Z0-9_]{1,59}$/;
 const LISTING_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export type PartnerDestination = 'OFFICIAL_SITE' | 'LANDING' | 'WHATSAPP' | 'PHONE' | 'EMAIL' | 'INSTAGRAM' | 'PRODUCT_PAGE';
 /**
- * Surface of a click. `PREVIEW` (the provider portal or moderation previewing a page) only means something with the signed `ctx` of the
- * portal or of moderation: without a token the click is evaluated as a normal one (decision M-2), so a PREVIEW link without `ctx` is a plain click.
+ * Surface of a click. `PREVIEW` (the provider portal or moderation previewing a page): per provider-catalog 3.8.0 the click is recorded as an
+ * invalid (non-billable) lead with reason `PREVIEW`, with or without `ctx`. Restricting PREVIEW to the portal's own signed `ctx` is not in this
+ * contract (it arrives with BE R6b, #166), so today anyone can append `surface=PREVIEW` to a link and the click is not billed.
  */
 export type PartnerSurface = 'PUBLIC_SITE' | 'SEARCH' | 'CELEBRATION_SITE' | 'GIFT_LIST' | 'EMAIL' | 'APP' | 'QUOTE_FORM' | 'PREVIEW';
 /**
@@ -74,6 +77,8 @@ export interface PartnerGiftContext {
   quantity?: number;
   /** City slug of the celebration, when known: {ciudad}. */
   city?: string;
+  /** Event type code of the celebration (`eventType.code` of its public view): the provider reports break leads down by it. */
+  eventType?: string;
 }
 export type PartnerLinkContext =
   | ({ celebrationId: string; ctx?: string | null } & PartnerGiftContext)
@@ -97,6 +102,7 @@ export function partnerRedirectHref(listingId: string, options: PartnerRedirectO
     if (options.variant) query.set('variant', options.variant);
     if (Number.isInteger(options.quantity) && (options.quantity ?? 0) > 0) query.set('quantity', String(options.quantity));
     if (options.city) query.set('city', options.city);
+    if (options.eventType && EVENT_TYPE_SHAPE.test(options.eventType)) query.set('eventType', options.eventType);
   }
   if (options.locale) query.set('locale', options.locale);
   // R6a: the member's signed lead context (opaque, ~5 min).

@@ -59,7 +59,8 @@ export const adminEsBO = {
     downloaded: "Descargamos {{name}}.", shared: "Compartimos {{name}}.", downloadFailed: "No pudimos preparar el CSV. Reintenta.", fileName: "leads-{{month}}.csv",
     row: "{{product}} · {{button}}", rowFigures: "{{valid}} válidos · {{invalid}} no válidos",
     valid: "Válidos", invalid: "No válidos", billable: "Cobrables", billingModel: { CPC: "CPC (por clic)", CPA: "CPA", FLAT: "Tarifa fija", COMMISSION: "Comisión" },
-    notPerClick: "No se cobra por clic ({{model}})", cap: "Tope: {{cap}}", noCap: "Sin tope",
+    notPerClick: "No se cobra por clic ({{model}})", cap: "Tope: {{cap}} (informativo)", noCap: "Sin tope",
+    invalidReason: { dup: "Duplicado (mismo visitante en 24 h)", bot: "Bot descartado", PREVIEW: "Vista previa", NOT_ELIGIBLE: "Producto no elegible", PROVIDER_SELF: "Clic del propio proveedor", HOST_OR_PLANNER: "Anfitrión u organizador", OTHER: "Otros motivos" },
     emptyTitle: "Sin leads en este mes", empty: "No hubo clics registrados para este mes y este filtro.", unknownProduct: "Producto sin título", tz: "Cada proveedor cuenta el mes en su propia zona horaria.", rowsTitle: "Detalle por producto y botón"
   },
   operations: {

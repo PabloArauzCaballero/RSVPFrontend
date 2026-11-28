@@ -81,6 +81,28 @@ describe("lead report hooks", () => {
   });
 });
 
+describe("M4 · the app's language travels with the reports", () => {
+  it("locale is sent by the provider report, the admin report, its CSV and the lead list, and is part of the cache key", async () => {
+    const h = harness((seen) => (seen.path.includes("report.csv") ? new Response("a\r\n", { headers: { "content-type": "text/csv" } }) : json(seen.path.includes("/leads?") ? { items: [], total: 0 } : { month: "2026-11", providers: [], rows: [] })));
+    const provider = renderHook(() => hooks.useProviderLeadReport(h.client, PID, { month: "2026-11", locale: "en-US" }), { wrapper: h.wrapper });
+    await waitFor(() => expect(provider.result.current.isSuccess).toBe(true));
+    const admin = renderHook(() => hooks.useAdminLeadReport(h.client, "2026-11", undefined, "en-US"), { wrapper: h.wrapper });
+    await waitFor(() => expect(admin.result.current.isSuccess).toBe(true));
+    const csv = renderHook(() => hooks.useDownloadLeadReportCsv(h.client), { wrapper: h.wrapper });
+    await act(async () => { await csv.result.current.mutateAsync({ month: "2026-11", locale: "en-US" }); });
+    const leads = renderHook(() => hooks.useInfiniteLeads(h.client, PID, { month: "2026-11", locale: "en-US" }), { wrapper: h.wrapper });
+    await waitFor(() => expect(leads.result.current.isSuccess).toBe(true));
+    expect(h.calls.map((call) => call.path)).toEqual([
+      `/providers/${PID}/leads/report?month=2026-11&locale=en-US`,
+      "/providers/admin/leads/report?month=2026-11&locale=en-US",
+      "/providers/admin/leads/report.csv?month=2026-11&locale=en-US",
+      `/providers/${PID}/leads?limit=50&offset=0&month=2026-11&locale=en-US`
+    ]);
+    expect(hooks.leadReportKeys.provider(PID, { month: "2026-11", locale: "en-US" })).not.toEqual(hooks.leadReportKeys.provider(PID, { month: "2026-11", locale: "es-BO" }));
+    expect(hooks.leadReportKeys.admin("2026-11", undefined, "en-US")).not.toEqual(hooks.leadReportKeys.admin("2026-11", undefined, "es-BO"));
+  });
+});
+
 describe("useLeadContext (M-1, M-2)", () => {
   it("POST /providers/{id}/lead-context asks PROVIDER_OWNER without a listing and returns the ctx", async () => {
     const h = harness(() => json({ ctx: "opaque-token", relation: "PROVIDER_OWNER", expiresAt: "2026-11-27T12:15:00Z" }));

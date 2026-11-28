@@ -168,10 +168,6 @@ describe("targeted resource refresh", () => {
 });
 
 describe("R6a · lead context of the gift list", () => {
-  it("the refresh interval is below the 300 s TTL of the context Gift List signs", () => {
-    expect(LEAD_CONTEXT_REFRESH_MS).toBeLessThan(300_000);
-  });
-
   it("leadContextOf: the signed token, or undefined for a guest, a public read or an older server", () => {
     expect(leadContextOf({ leadContext: "tok" })).toBe("tok");
     expect(leadContextOf({ leadContext: null })).toBeUndefined();

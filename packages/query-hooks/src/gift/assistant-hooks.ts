@@ -25,14 +25,6 @@ export function useAddGiftBatch(client: ApiClient, celebrationId: string, keys?:
     onError: (error) => { if (!mayHaveBeenApplied(error)) void refetchAll(queryClient, invalidation.giftReservationChanged(celebrationId)); }
   });
 }
-/** PATCH /items/{id}: quantity and coordinated-gift switch, with the version the host read (409 GIFT_VERSION_CONFLICT when stale). */
-export function useUpdateGiftItem(client: ApiClient, celebrationId: string) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ giftItemId, body }: { readonly giftItemId: string; readonly body: GiftItemUpdateRequest }) => assistantApi(client).updateItem(celebrationId, giftItemId, body),
-    onSettled: () => refetchAll(queryClient, invalidation.giftReservationChanged(celebrationId))
-  });
-}
 export function useSetDeliveryNotes(client: ApiClient, celebrationId: string) {
   const queryClient = useQueryClient();
   return useMutation({

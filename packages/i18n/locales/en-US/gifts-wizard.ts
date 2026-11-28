@@ -6,7 +6,7 @@ export const giftsWizardEnUS: DeepStrings<typeof giftsWizardEsBO> = {
   stepName: { ideas: "Ideas", products: "Products", summary: "Summary" },
   ideas: {
     title: "Pick gift ideas", intro: "Tick the ideas you want on your list. Then you choose a product from a verified provider for each one.",
-    recommended: "Recommended for your celebration ({{event}}) in {{city}}", recommendedNoCity: "Recommended for your celebration ({{event}})",
+    recommended: "Recommended for your celebration ({{event}}) in {{city}}", recommendedNoCity: "Recommended for your celebration ({{event}})", allIdeas: "Gift ideas",
     cityLabel: "Delivery city", cityAny: "All cities", cityHelp: "We show first the products that deliver to that city.",
     count_one: "{{count}} product · {{range}}", count_other: "{{count}} products · {{range}}", range: "{{min}} – {{max}}", rangeSingle: "{{price}}",
     alreadyListed: "Already on your list", choose: "Pick the idea {{name}}", chooseListed: "{{name}}: already on your list",
@@ -18,7 +18,7 @@ export const giftsWizardEnUS: DeepStrings<typeof giftsWizardEsBO> = {
   },
   products: {
     title: "Choose one product per idea", intro: "One product per idea. To change it, tap another one.",
-    ideaGroup: "Products for {{idea}}", chosen: "Chosen", choose: "Choose {{title}}, {{price}}", shown: "Showing {{shown}} of {{total}} products, most recommended first.",
+    ideaGroup: "Products for {{idea}}", optionsFor: "Options for {{title}}", chosen: "Chosen", choose: "Choose {{title}}, {{price}}", shown: "Showing {{shown}} of {{total}} products, most recommended first.",
     provider: "Verified provider: {{name}}", sponsored: "Sponsored", photo: "Photo of {{title}}", noPhoto: "No photo",
     deliveryHere: "Delivers to your city", deliveryOther: "Delivers to another city", leadSameDay: "Same-day delivery", lead_one: "Delivery in {{count}} day", lead_other: "Delivery in {{count}} days",
     shippingFree: "Free shipping", shipping: "Shipping {{price}}",
@@ -30,7 +30,7 @@ export const giftsWizardEnUS: DeepStrings<typeof giftsWizardEsBO> = {
     currencyNote: "Provider prices are in bolivianos (Bs)."
   },
   summary: {
-    title: "Review your list", intro: "These gifts are added together: if one fails, none is added.",
+    title: "Review your list", intro: "These gifts are added together: if one fails, none is added.", disclaimer: "DOne connects you with the provider; it does not sell or guarantee the product. Agree price, delivery and timing with them.",
     line: "{{idea}}: {{title}}", lineVersion: "{{idea}}: {{title}} ({{version}})", lineQuantity: "{{count}} × {{price}}", group: "Can be given by several people", total: "Total of the new gifts: {{price}}",
     change: "Change", currencyNote: "Provider prices are in bolivianos (Bs).",
     balance: {
@@ -42,7 +42,7 @@ export const giftsWizardEnUS: DeepStrings<typeof giftsWizardEsBO> = {
       needAffordableNone: "You have no gifts up to {{max}} and {{guests}}: add affordable ideas.",
       seeCheap: "See ideas up to {{max}}", ok: "Your list has gifts for different budgets.", noGuests: "Once you invite people, we compare your list with them.", loadingGuests: "Working it out with your guests…", guestsError: "We could not read your guests; the balance is shown without comparing."
     },
-    delivery: { label: "Delivery notes (optional)", help: "For example: “Deliver to the front desk, in the afternoon”. Your guests and the provider they message will see it.", warning: "Do not write the exact address.", control: "Remove the control characters: only text is allowed.", counter: "{{count}} of {{max}} characters", tooLong_one: "Remove {{count}} character: the limit is {{max}}.", tooLong_other: "Remove {{count}} characters: the limit is {{max}}." },
+    delivery: { label: "Delivery notes (optional)", help: "For example: “Deliver to the front desk, in the afternoon”. Your guests will see them when this feature is available.", warning: "Do not write the exact address.", control: "Remove the control characters: only text is allowed.", counter: "{{count}} of {{max}} characters", tooLong_one: "Remove {{count}} character: the limit is {{max}}.", tooLong_other: "Remove {{count}} characters: the limit is {{max}}." },
     submit_one: "Add {{count}} gift", submit_other: "Add {{count}} gifts", submitting: "Adding…",
     doneTitle_one: "Done: we added {{count}} gift", doneTitle_other: "Done: we added {{count}} gifts", doneBody: "They are on your list and your guests will see them.", seeList: "See my list", addMore: "Add more"
   },

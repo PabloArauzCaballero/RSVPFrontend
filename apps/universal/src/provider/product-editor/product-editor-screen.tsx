@@ -273,31 +273,44 @@ function ProductEditor({ provider, listingId, initialStep, duplicated }: EditorP
 }
 
 const MIN_USABLE_MS = 10_000;
-const usable = (grant: LeadContext | undefined): grant is LeadContext => Boolean(grant) && Date.parse(grant?.expiresAt ?? "") - Date.now() > MIN_USABLE_MS;
+/** A ctx the server issued less than this ago is trusted whatever the device clock says: the clock of the device only judges older ones (a clock ahead made every fresh ctx look expired). */
+const JUST_ISSUED_MS = 60_000;
+const justIssued = (updatedAt: number): boolean => Date.now() - updatedAt < JUST_ISSUED_MS;
+const usable = (grant: LeadContext | undefined, updatedAt: number): grant is LeadContext => Boolean(grant) && (Date.parse(grant?.expiresAt ?? "") - Date.now() > MIN_USABLE_MS || justIssued(updatedAt));
 
 /**
  * R6b (M-2) · the buttons of the preview open the real destination with the preview's ctx: the portal asks for it (POST lead-context, PREVIEW for this listing)
  * and keeps it fresh until the screen closes. A press always opens synchronously (an `await` before `Linking.openURL` loses the user gesture and the popup blocker
  * stops the tab): the buttons are enabled only with a ctx that is valid and outside the renewal margin («ready»). Inside the margin they wait («preparing», disabled)
- * while the ctx is renewed; if the renewal fails but the ctx is still valid they stay enabled with it. Without a valid ctx nothing opens (a click without it would be
- * a normal visitor's, and bill). Only when the card has a button.
+ * while the ctx is renewed once; if that renewal fails but the ctx is still valid they stay enabled with it. If the renewal answers a ctx that is still inside the margin
+ * the device clock is off (the server just issued it): it is trusted and no second POST is made here; the hook's own interval renews it at most once every 30 s.
+ * Without a valid ctx nothing opens (a click without it would be a normal visitor's, and bill), and a press on a ctx that went stale says so. Only when the card has a button.
  */
 function usePreviewLinks(sheet: ProductSheet, providerId: string): PreviewLinks | undefined {
   const client = useApiClient();
   const hasButtons = (sheet.destinations ?? []).some((destination) => destination === "PRODUCT_PAGE" || destination === "WHATSAPP");
   const grant = useLeadContext(client, providerId, { relation: "PREVIEW", listingId: sheet.id }, hasButtons);
-  const valid = usable(grant.data);
+  const [renewTried, setRenewTried] = useState(false);
+  const [stalePress, setStalePress] = useState(false);
+  const valid = usable(grant.data, grant.dataUpdatedAt);
   const inMargin = valid && msUntilLeadContextRenewal(grant.data) === 0;
-  const renewing = inMargin && !grant.isError && !grant.isFetching;
   const refetch = grant.refetch;
-  useEffect(() => { if (renewing) void refetch(); }, [renewing, refetch]);
+  // One renewal per time the ctx enters the margin; a ctx outside it re-arms. Never a loop of POSTs, whatever the device clock says.
+  useEffect(() => {
+    if (!inMargin && valid && msUntilLeadContextRenewal(grant.data) > 0) setRenewTried(false);
+    if (inMargin && !renewTried && !grant.isFetching && !grant.isError) { setRenewTried(true); void refetch(); }
+  }, [inMargin, valid, renewTried, grant.data, grant.isFetching, grant.isError, refetch]);
+  useEffect(() => { setStalePress(false); }, [grant.dataUpdatedAt]);
   if (!hasButtons) return undefined;
-  const status: PreviewLinks["status"] = valid && (!inMargin || grant.isError) ? "ready" : !valid && grant.isError ? "unavailable" : "preparing";
+  const waiting = inMargin && (!renewTried || grant.isFetching) && !grant.isError;
+  const status: PreviewLinks["status"] = stalePress ? "unavailable"
+    : valid ? (waiting ? "preparing" : "ready")
+      : grant.isFetching || (!grant.isError && !grant.data) ? "preparing" : "unavailable";
   const onOpen = (destination: PreviewDestination): void => {
-    if (!usable(grant.data)) return;
-    void Linking.openURL(portalRedirectUrl(sheet.id, { relation: "PREVIEW", ctx: grant.data.ctx, destination }));
+    if (!usable(grant.data, grant.dataUpdatedAt)) { setStalePress(true); void refetch(); return; }
+    Linking.openURL(portalRedirectUrl(sheet.id, { relation: "PREVIEW", ctx: grant.data.ctx, destination })).catch(() => setStalePress(true));
   };
-  return { status, onOpen, onRetry: () => { void grant.refetch(); } };
+  return { status, onOpen, onRetry: () => { setStalePress(false); void refetch(); } };
 }
 
 /** Resumen: the card as the guest sees it, the state, and what is still missing, each item a link to its step. */

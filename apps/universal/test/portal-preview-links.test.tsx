@@ -161,6 +161,51 @@ describe("preview of the product sheet", () => {
     expect(new URL(String(open.mock.calls[0]?.[0])).searchParams.get("ctx")).toBe("ctx-renovado");
   });
 
+  it("M2 · a server that answers a ctx always inside the renewal margin gets one renewal, not a stream of POSTs, and the buttons are ready", async () => {
+    const open = vi.spyOn(Linking, "openURL").mockResolvedValue(true);
+    let n = 0;
+    const { client } = fakeClient(handlers({ [`POST /providers/${PID}/lead-context`]: () => grant(`ctx-corto-${++n}`, 2) }));
+    renderApp(<ProductEditorScreen />, client, HOST);
+    const store = await screen.findByTestId("preview-open-PRODUCT_PAGE");
+    await waitFor(() => expect(store.getAttribute("aria-disabled")).not.toBe("true"));
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    expect(n).toBe(2); // the first answer and its single renewal
+    expect(screen.queryByTestId("preview-unavailable")).toBeNull();
+    fireEvent.click(store);
+    expect(open).toHaveBeenCalledTimes(1);
+  });
+
+  it("M2 · a device clock 20 minutes ahead does not leave the buttons «preparing» for ever: a ctx just issued is trusted", async () => {
+    const open = vi.spyOn(Linking, "openURL").mockResolvedValue(true);
+    const real = Date.now();
+    const clock = vi.spyOn(Date, "now").mockReturnValue(real + 20 * 60_000);
+    let n = 0;
+    const { client } = fakeClient(handlers({ [`POST /providers/${PID}/lead-context`]: () => ({ ctx: `ctx-reloj-${++n}`, relation: "PREVIEW", expiresAt: new Date(real + 15 * 60_000).toISOString() }) }));
+    renderApp(<ProductEditorScreen />, client, HOST);
+    const store = await screen.findByTestId("preview-open-PRODUCT_PAGE");
+    await waitFor(() => expect(store.getAttribute("aria-disabled")).not.toBe("true"));
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    expect(n).toBeLessThanOrEqual(2);
+    expect(screen.queryByTestId("preview-unavailable")).toBeNull();
+    fireEvent.click(store);
+    expect(open).toHaveBeenCalledTimes(1);
+    clock.mockRestore();
+  });
+
+  it("M2 · pressing a ctx that went stale while the screen sat open opens nothing, says so and asks for a new one", async () => {
+    const open = vi.spyOn(Linking, "openURL").mockResolvedValue(true);
+    let n = 0;
+    const { client } = fakeClient(handlers({ [`POST /providers/${PID}/lead-context`]: () => (n++ === 0 ? grant("ctx-viejo", 15) : new HttpFailure(503, { code: "LEAD_CONTEXT_UNAVAILABLE" })) }));
+    renderApp(<ProductEditorScreen />, client, HOST);
+    const store = await screen.findByTestId("preview-open-PRODUCT_PAGE");
+    await waitFor(() => expect(store.getAttribute("aria-disabled")).not.toBe("true"));
+    vi.spyOn(Date, "now").mockReturnValue(Date.now() + 20 * 60_000); // the time passes without the screen re-rendering
+    fireEvent.click(store);
+    expect(open).not.toHaveBeenCalled();
+    expect(await screen.findByTestId("preview-unavailable")).toBeTruthy();
+    await waitFor(() => expect(n).toBe(2));
+  });
+
   it("a product without a store page or WhatsApp has no buttons and asks for no ctx", async () => {
     const { client, calls } = fakeClient(handlers({}, { ...SHEET, destinations: [] }));
     renderApp(<ProductEditorScreen />, client, HOST);

@@ -1,21 +1,22 @@
 import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { INVALID_REASONS } from "@rsvp/query-hooks";
 import { adminEsBO } from "../../../packages/i18n/locales/es-BO/admin";
 import { portalEsBO } from "../../../packages/i18n/locales/es-BO/portal";
 import { adminEnUS } from "../../../packages/i18n/locales/en-US/admin";
 import { portalEnUS } from "../../../packages/i18n/locales/en-US/portal";
 import { REPORT_KEYS, currentMonth, recentMonths, type ReportKey } from "../src/provider/lead-report-view";
-import { LeadsScreen } from "../src/provider/leads-screen";
+import { KNOWN_EVENT_TYPES, LeadsScreen } from "../src/provider/leads-screen";
 import { MetricsScreen as PortalMetricsScreen } from "../src/provider/metrics-screen";
 import { MetricsScreen as AdminMetricsScreen } from "../src/admin/insight";
 import { writeLocal } from "../src/platform/local-store";
 import { resetSecureStore } from "./stubs/expo-secure-store";
 import { ADMIN, fakeClient, GEO, HOST, HttpFailure, renderApp, type Handler } from "./support";
 
-const saveTextFile = vi.hoisted(() => vi.fn(async (): Promise<"downloaded" | "shared" | "failed"> => "downloaded"));
+const saveTextFile = vi.hoisted(() => vi.fn(async (): Promise<"downloaded" | "shared" | "dismissed" | "failed"> => "downloaded"));
 vi.mock("../src/platform/files", () => ({ saveTextFile, canPickTextFile: false, pickTextFile: async () => null }));
 
-/** R6b · provider portal lead list and monthly report, and the administrator's report with its CSV (provider-catalog 3.9.0). */
+/** R6b · provider portal lead list and monthly report, and the administrator's report with its CSV (provider-catalog 3.10.0). */
 const PID = "4f0f2d3d-0000-4000-8000-0000000000bb";
 const LID = "5a0f2d3d-0000-4000-8000-0000000000cc";
 const profile = { id: PID, slug: "dulce-sol", name: "Dulce Sol", status: "VERIFIED", plan: "FREE", currency: "BOB", timeZone: "America/La_Paz", version: 1, ownerId: "u-host" };
@@ -41,7 +42,19 @@ const adminKeys: Record<ReportKey, string> = adminEsBO.leadReport;
 const portalKeysEn: Record<ReportKey, string> = portalEnUS.leadReport;
 const adminKeysEn: Record<ReportKey, string> = adminEnUS.leadReport;
 
+const adminReasons: Record<(typeof INVALID_REASONS)[number], string> = adminEsBO.leadReport.invalidReason;
+const adminReasonsEn: Record<(typeof INVALID_REASONS)[number], string> = adminEnUS.leadReport.invalidReason;
+
 describe("report keys", () => {
+  it("m1 · the admin panel has its own words for every reason a lead is not valid, in both languages, and none is in the provider's voice", () => {
+    for (const reason of INVALID_REASONS) {
+      expect(adminReasons[reason].length, reason).toBeGreaterThan(0);
+      expect(adminReasonsEn[reason].length, reason).toBeGreaterThan(0);
+    }
+    expect(adminReasons.PROVIDER_SELF).not.toMatch(/tu propio/i);
+    expect(adminReasonsEn.PROVIDER_SELF).not.toMatch(/your own/i);
+  });
+
   it("every key the report view uses exists in both namespaces and both languages, with the same placeholders", () => {
     for (const key of REPORT_KEYS) {
       const forms = [portalKeys[key], adminKeys[key], portalKeysEn[key], adminKeysEn[key]];
@@ -53,7 +66,23 @@ describe("report keys", () => {
   });
 });
 
+describe("m6 · event types", () => {
+  it("every code the list knows has words in both languages", () => {
+    for (const code of KNOWN_EVENT_TYPES) {
+      expect((portalEsBO.leads.eventTypes as Record<string, string>)[code], code).toBeTruthy();
+      expect((portalEnUS.leads.eventTypes as Record<string, string>)[code], code).toBeTruthy();
+    }
+    expect(Object.keys(portalEsBO.leads.eventTypes).sort()).toEqual([...KNOWN_EVENT_TYPES].sort());
+  });
+});
+
 describe("month helpers", () => {
+  it("m5 · a time zone the platform does not know falls back to La Paz instead of throwing at render", () => {
+    const now = new Date("2026-12-01T01:00:00Z");
+    expect(currentMonth("Mars/Olympus", now)).toBe("2026-11");
+    expect(recentMonths("Mars/Olympus", 2, now)).toEqual(["2026-11", "2026-10"]);
+  });
+
   it("currentMonth uses the provider's zone: 01:00 UTC of the 1st is still the previous month in La Paz", () => {
     const now = new Date("2026-12-01T01:00:00Z");
     expect(currentMonth("America/La_Paz", now)).toBe("2026-11");
@@ -106,10 +135,10 @@ describe("portal · leads list with filters (D-10 #34, PF-1)", () => {
     fireEvent.change(screen.getByTestId("filter-destination"), { target: { value: "PHONE" } });
     expect(await screen.findByText("Ningún toque coincide con estos filtros.")).toBeTruthy();
     const last = calls.filter((call) => call.path === `/providers/${PID}/leads`).at(-1);
-    expect(last?.url).toBe(`/providers/${PID}/leads?limit=50&offset=0&month=${currentMonth("America/La_Paz")}&listingId=${LID}&destination=PHONE`);
+    expect(last?.url).toBe(`/providers/${PID}/leads?limit=50&offset=0&month=${currentMonth("America/La_Paz")}&listingId=${LID}&destination=PHONE&locale=es-BO`);
     fireEvent.change(screen.getByTestId("filter-destination"), { target: { value: "__all__" } });
     await screen.findByTestId("lead-a");
-    expect(calls.some((call) => call.url === `/providers/${PID}/leads?limit=50&offset=0&month=${currentMonth("America/La_Paz")}&listingId=${LID}`)).toBe(true);
+    expect(calls.some((call) => call.url === `/providers/${PID}/leads?limit=50&offset=0&month=${currentMonth("America/La_Paz")}&listingId=${LID}&locale=es-BO`)).toBe(true);
     expect(screen.queryByText("Ningún toque coincide con estos filtros.")).toBeNull();
   });
   it("shows the amiable error with retry when the list cannot load, and the filters stay on screen", async () => {
@@ -151,7 +180,7 @@ describe("portal · monthly report on Resultados", () => {
     expect(within(screen.getByTestId("report-row")).getByText("Torta de chocolate · WhatsApp")).toBeTruthy();
     expect(document.body.innerHTML).not.toContain(FORBIDDEN_CELEBRATION_ID);
     expect(document.body.innerHTML).not.toContain(FORBIDDEN_GUEST_ID);
-    expect(calls.find((call) => call.path === `/providers/${PID}/leads/report`)?.url).toBe(`/providers/${PID}/leads/report?month=${currentMonth("America/La_Paz")}`);
+    expect(calls.find((call) => call.path === `/providers/${PID}/leads/report`)?.url).toBe(`/providers/${PID}/leads/report?month=${currentMonth("America/La_Paz")}&locale=es-BO`);
   });
   it("a provider not billed per click sees why there is no billable figure", async () => {
     const flat = { ...providerRow, billingModel: "FLAT", billableLeads: null, monthlyCap: 0 };
@@ -185,6 +214,44 @@ describe("portal · monthly report on Resultados", () => {
     expect(await screen.findByText("Months are counted in your business time zone (Bolivia Time).")).toBeTruthy();
     expect(within(await screen.findByTestId("report-totals")).getByText("Valid: 7")).toBeTruthy();
   });
+  it("M4 · the language of the app, not the browser's, picks the language of the product titles: locale goes in the report and in the list", async () => {
+    const { client, calls } = fakeClient(portal({ ...reportHandler(), [`GET /providers/${PID}/leads`]: () => ({ items: [lead("a")], total: 1 }) }));
+    renderApp(<PortalMetricsScreen />, client, HOST, "en-US");
+    await screen.findByTestId("report-totals");
+    expect(calls.find((call) => call.path === `/providers/${PID}/leads/report`)?.url).toBe(`/providers/${PID}/leads/report?month=${currentMonth("America/La_Paz")}&locale=en-US`);
+    cleanup();
+    const list = fakeClient(portal({ [`GET /providers/${PID}/leads`]: () => ({ items: [lead("a")], total: 1 }) }));
+    renderApp(<LeadsScreen />, list.client, HOST, "en-US");
+    await screen.findByTestId("lead-a");
+    expect(list.calls.find((call) => call.path === `/providers/${PID}/leads`)?.url).toBe(`/providers/${PID}/leads?limit=50&offset=0&locale=en-US`);
+  });
+  it("m4 · totals of another provider are never drawn as this provider's", async () => {
+    const stranger = { ...providerRow, providerId: "6b0f2d3d-0000-4000-8000-0000000000ee", providerName: "Otro", validLeads: 99 };
+    const { client } = fakeClient(portal(reportHandler({ providers: [stranger] })));
+    renderApp(<PortalMetricsScreen />, client, HOST);
+    await screen.findByTestId("report-row");
+    expect(screen.queryByTestId("report-totals")).toBeNull();
+    expect(document.body.textContent).not.toContain("Válidos: 99");
+  });
+  it("m8 · a product with no title in this language is still a choice; if the products cannot load, only «all» is offered", async () => {
+    const { client } = fakeClient(portal({ [`GET /providers/${PID}/listings`]: () => ({ items: [{ id: LID, title: "", type: "PRODUCT" }] }), [`GET /providers/${PID}/leads`]: () => ({ items: [lead("a")], total: 1 }) }));
+    renderApp(<LeadsScreen />, client, HOST);
+    await screen.findByTestId("lead-a");
+    await waitFor(() => expect((screen.getByTestId("filter-product") as HTMLSelectElement).options.length).toBe(2));
+    expect((screen.getByTestId("filter-product") as HTMLSelectElement).options[1]?.textContent).toBe("Producto sin título");
+    cleanup();
+    const failing = fakeClient(portal({ [`GET /providers/${PID}/listings`]: () => new HttpFailure(503), [`GET /providers/${PID}/leads`]: () => ({ items: [lead("a")], total: 1 }) }));
+    renderApp(<LeadsScreen />, failing.client, HOST);
+    await screen.findByTestId("lead-a");
+    expect((screen.getByTestId("filter-product") as HTMLSelectElement).options).toHaveLength(1);
+  });
+  it("m6 · an invalid lead with no reason says «Otros motivos», never «bot»", async () => {
+    const { client } = fakeClient(portal({ [`GET /providers/${PID}/leads`]: () => ({ items: [lead("x", { valid: false, billable: false })], total: 1 }) }));
+    renderApp(<LeadsScreen />, client, HOST);
+    const row = await screen.findByTestId("lead-x");
+    expect(within(row).getByText("Otros motivos")).toBeTruthy();
+    expect(row.textContent).not.toMatch(/bot/i);
+  });
 });
 
 describe("admin · billable lead report and CSV (D-10 #33)", () => {
@@ -210,7 +277,29 @@ describe("admin · billable lead report and CSV (D-10 #33)", () => {
     fireEvent.change(screen.getByTestId("admin-lead-provider"), { target: { value: OTHER } });
     expect(screen.getAllByTestId("report-row")).toHaveLength(1);
     expect(screen.queryByTestId(`admin-lead-totals-${PID}`)).toBeNull();
-    expect(calls.find((call) => call.path === "/providers/admin/leads/report")?.url).toMatch(/^\/providers\/admin\/leads\/report\?month=20\d\d-\d\d$/);
+    expect(calls.find((call) => call.path === "/providers/admin/leads/report")?.url).toMatch(/^\/providers\/admin\/leads\/report\?month=20\d\d-\d\d&locale=es-BO$/);
+  });
+  it("m1 · the admin panel names the reasons in its own voice, and the CSV asks in the language of the app", async () => {
+    const { client, calls } = fakeClient(adminHandlers({ "GET /providers/admin/leads/report.csv": () => "a\r\n" }));
+    renderApp(<AdminMetricsScreen onNavigate={vi.fn()} />, client, ADMIN, "en-US");
+    await screen.findByTestId(`admin-lead-totals-${PID}`);
+    expect(document.body.textContent).toContain("Host or organizer");
+    expect(document.body.textContent).not.toContain("Anfitrión u organizador");
+    expect(document.body.textContent).not.toMatch(/your own business/i);
+    expect(calls.find((call) => call.path === "/providers/admin/leads/report")?.url).toMatch(/&locale=en-US$/);
+    fireEvent.click(screen.getByTestId("admin-lead-csv"));
+    await waitFor(() => expect(saveTextFile).toHaveBeenCalledTimes(1));
+    expect(calls.find((call) => call.path.endsWith("report.csv"))?.url).toMatch(/&locale=en-US$/);
+  });
+  it("a share sheet closed without choosing leaves no «we shared» message", async () => {
+    saveTextFile.mockResolvedValueOnce("dismissed");
+    const { client } = fakeClient(adminHandlers({ "GET /providers/admin/leads/report.csv": () => "a\r\n" }));
+    renderApp(<AdminMetricsScreen onNavigate={vi.fn()} />, client, ADMIN);
+    await screen.findByTestId(`admin-lead-totals-${PID}`);
+    fireEvent.click(screen.getByTestId("admin-lead-csv"));
+    await waitFor(() => expect(saveTextFile).toHaveBeenCalledTimes(1));
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(screen.queryByText(/Compartimos|Descargamos/)).toBeNull();
   });
   it("downloads the CSV of the chosen month and provider through the file saver and confirms it", async () => {
     const csv = "proveedor,producto\r\nDulce Sol,Torta\r\n";
@@ -222,7 +311,7 @@ describe("admin · billable lead report and CSV (D-10 #33)", () => {
     await waitFor(() => expect(saveTextFile).toHaveBeenCalledTimes(1));
     const month = (screen.getByTestId("admin-lead-month") as HTMLSelectElement).value;
     expect(saveTextFile).toHaveBeenCalledWith(`leads-${month}.csv`, csv);
-    expect(calls.find((call) => call.path.endsWith("report.csv"))?.url).toBe(`/providers/admin/leads/report.csv?month=${month}&providerId=${PID}`);
+    expect(calls.find((call) => call.path.endsWith("report.csv"))?.url).toBe(`/providers/admin/leads/report.csv?month=${month}&providerId=${PID}&locale=es-BO`);
     expect(await screen.findByText(`Descargamos leads-${month}.csv.`)).toBeTruthy();
   });
   it("a failed CSV says so and a failed save too", async () => {

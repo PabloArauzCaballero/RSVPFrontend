@@ -1,4 +1,4 @@
-import { chromium } from '/home/user/RSVPFrontend/node_modules/playwright/index.mjs';
+import { chromium } from 'playwright';
 import { readFileSync, mkdirSync } from 'node:fs';
 import assert from 'node:assert/strict';
 // Carpeta de trabajo (state.json de la siembra); la salida va a R6B_OUT. Arranque y precondiciones: docs/progress/R6b-FE-reportes.md.
@@ -81,8 +81,8 @@ const bodyText = (p) => p.evaluate(() => document.body.innerText);
   const api = await (await fetch(`http://localhost:8000/providers/admin/leads/report.csv?month=${new Date().toISOString().slice(0, 7)}`, { headers: { authorization: 'Bearer ' + st.tokenAdmin } })).text();
   console.log('archivo:', download.suggestedFilename());
   console.log(csv);
-  assert.equal(csv.replace(/^﻿/, '').replace(/\r\n/g, '\n'), api.replace(/^﻿/, '').replace(/\r\n/g, '\n'));
-  assert.equal(csv.startsWith('﻿'), true); assert.equal((csv.match(/﻿/g) ?? []).length, 1);
+  assert.equal(csv.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n'), api.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n'));
+  assert.equal(csv.startsWith('\uFEFF'), true); assert.equal((csv.match(/\uFEFF/g) ?? []).length, 1);
   const lines = csv.trim().split(/\r?\n/);
   assert.equal(lines.length, 1 + adminRep.rows.length);
   const sum = (col) => lines.slice(1).reduce((n, l) => n + Number(l.split(',')[col]), 0);

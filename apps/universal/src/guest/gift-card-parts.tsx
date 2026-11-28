@@ -29,10 +29,10 @@ export function UnitsStepper({ value, max, onChange, title, testID }: { readonly
       <Text style={styles.label}>{t("gifts.guest.units.choose")}</Text>
       <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[3] }}>
         {step(t("gifts.guest.units.less"), value - 1, value <= 1, `${testID}-less`, false)}
-        <Text aria-live="polite" accessibilityLiveRegion="polite" accessibilityLabel={t("gifts.guest.units.value", { count: value })} style={[styles.itemTitle, { minWidth: 32, textAlign: "center" }]} testID={`${testID}-value`}>{value}</Text>
+        <Text aria-live="polite" accessibilityLiveRegion="polite" style={[styles.itemTitle, { minWidth: 32, textAlign: "center" }]} testID={`${testID}-value`}>{t("gifts.guest.units.value", { count: value })}</Text>
         {step(t("gifts.guest.units.more"), value + 1, value >= max, `${testID}-more`, true)}
       </View>
-      <Text style={styles.muted}>{t("gifts.guest.units.help", { left: max })}</Text>
+      <Text style={styles.muted}>{t("gifts.guest.units.help", { count: max })}</Text>
     </View>
   );
 }
@@ -59,7 +59,7 @@ export function UnitsAndGroup({ id, state }: { readonly id: string; readonly sta
 }
 
 /** The card that appears when the guest comes back. It is a named region and its question is announced when it appears, so a screen reader hears it on return. */
-export function PurchasePromptCard({ id, title, units, reminder, onAnswer, claimAnnouncement }: { readonly id: string; readonly title: string; readonly units: number; readonly reminder: boolean; readonly onAnswer: (answer: PurchaseAnswer) => void; readonly claimAnnouncement: () => boolean }): ReactNode {
+export function PurchasePromptCard({ id, title, units, reminder, closed, onAnswer, claimAnnouncement }: { readonly id: string; readonly title: string; readonly units: number; readonly reminder: boolean; /** The list is closed and the guest holds nothing: the purchase cannot be recorded, so the only action is to acknowledge. */ readonly closed: boolean; readonly onAnswer: (answer: PurchaseAnswer) => void; readonly claimAnnouncement: () => boolean }): ReactNode {
   const styles = useStyles();
   const t = useT();
   const question = units > 1 ? t("gifts.guest.prompt.titleUnits", { units, title }) : t("gifts.guest.prompt.title", { title });
@@ -69,12 +69,18 @@ export function PurchasePromptCard({ id, title, units, reminder, onAnswer, claim
     <Notice kind="info">
       <View role="region" aria-label={question} testID={`gift-prompt-${id}`} style={{ gap: spacing[2] }}>
         <Text accessibilityRole="header" aria-level={3} style={styles.itemTitle}>{question}</Text>
-        <Text style={styles.muted}>{t("gifts.guest.prompt.body")}</Text>
-        {reminder ? <Text style={styles.muted}>{t("gifts.guest.prompt.reminder")}</Text> : null}
+        <Text style={styles.muted}>{t(closed ? "gifts.guest.prompt.bodyClosed" : "gifts.guest.prompt.body")}</Text>
+        {reminder && !closed ? <Text style={styles.muted}>{t("gifts.guest.prompt.reminder")}</Text> : null}
         <View style={styles.row}>
-          <ActionButton icon="check" label={t("gifts.guest.prompt.yes")} accessibilityLabel={t("gifts.guest.prompt.yesFor", { title })} onPress={() => onAnswer("yes")} testID={`prompt-yes-${id}`} />
-          <ActionButton variant="secondary" label={t("gifts.guest.prompt.later")} accessibilityLabel={t("gifts.guest.prompt.laterFor", { title })} onPress={() => onAnswer("later")} testID={`prompt-later-${id}`} />
-          <ActionButton variant="secondary" label={t("gifts.guest.prompt.no")} accessibilityLabel={t("gifts.guest.prompt.noFor", { title })} onPress={() => onAnswer("no")} testID={`prompt-no-${id}`} />
+          {closed ? (
+            <ActionButton icon="check" label={t("gifts.guest.prompt.ack")} accessibilityLabel={t("gifts.guest.prompt.ackFor", { title })} onPress={() => onAnswer("no")} testID={`prompt-ack-${id}`} />
+          ) : (
+            <>
+              <ActionButton icon="check" label={t("gifts.guest.prompt.yes")} accessibilityLabel={t("gifts.guest.prompt.yesFor", { title })} onPress={() => onAnswer("yes")} testID={`prompt-yes-${id}`} />
+              <ActionButton variant="secondary" label={t("gifts.guest.prompt.later")} accessibilityLabel={t("gifts.guest.prompt.laterFor", { title })} onPress={() => onAnswer("later")} testID={`prompt-later-${id}`} />
+              <ActionButton variant="secondary" label={t("gifts.guest.prompt.no")} accessibilityLabel={t("gifts.guest.prompt.noFor", { title })} onPress={() => onAnswer("no")} testID={`prompt-no-${id}`} />
+            </>
+          )}
         </View>
       </View>
     </Notice>
