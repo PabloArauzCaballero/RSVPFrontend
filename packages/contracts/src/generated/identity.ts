@@ -1434,6 +1434,17 @@ export interface operations {
                 content?: never;
             };
             422: components["responses"]["Validation"];
+            /** @description Kong's per-IP limit of the credential endpoints (10 per minute, 100 per hour), shared with login, register and password recovery. Identity itself never answers 429 here: the per-address limits (60 s gap, 5 per hour, 10 per day) are silent and keep the 202. */
+            429: {
+                headers: {
+                    /** @description Seconds until the client may try again. */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     verifyRegistrationEmailCode: {
@@ -1461,6 +1472,17 @@ export interface operations {
             /** @description One identical problem on `code` for a wrong, expired, exhausted or never requested code and for an address that has an account; on `email` for a malformed address. */
             422: {
                 headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Kong's per-IP limit of the credential endpoints (10 per minute, 100 per hour), shared with login, register and password recovery. Identity itself counts attempts per address inside the 422 (5 per code) and never answers 429 here. */
+            429: {
+                headers: {
+                    /** @description Seconds until the client may try again. */
+                    "Retry-After"?: number;
                     [name: string]: unknown;
                 };
                 content: {

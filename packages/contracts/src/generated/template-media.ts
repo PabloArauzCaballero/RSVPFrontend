@@ -361,6 +361,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/public/celebrations/{celebrationId}/design": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Published design of a published celebration */
+        get: operations["getPublicDesign"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/public/previews/{token}": {
         parameters: {
             query?: never;
@@ -1284,14 +1301,14 @@ export interface components {
             kind: "video" | "audio" | "map";
             /** @enum {string} */
             provider: "youtube" | "vimeo" | "spotify" | "google_maps";
-            /** @description Provider identifier: YouTube/Vimeo id, Spotify kind/id, or the map query */
+            /** @description Provider identifier: YouTube/Vimeo id or Spotify kind/id (the map query of `google_maps` is retired) */
             ref: string;
             /** @description Value of the iframe sandbox attribute */
             sandbox: string;
         };
         EmbedResolveRequest: {
             /**
-             * @description Narrows the providers: video = YouTube, Vimeo; music = YouTube, Spotify; map = Google Maps
+             * @description Narrows the providers: video = YouTube, Vimeo; music = YouTube, Spotify. `map` is retired (1.10.0): it answers 422 EMBED_MAP_RETIRED.
              * @enum {string|null}
              */
             intent?: "video" | "music" | "map" | null;
@@ -1403,6 +1420,12 @@ export interface components {
             type: string;
         } & {
             [key: string]: unknown;
+        };
+        PublicDesign: {
+            document: components["schemas"]["DesignDocumentV2"];
+            /** Format: date-time */
+            publishedAt: string;
+            version: number;
         };
         /** @enum {string} */
         SectionId: "story" | "schedule" | "venues" | "gallery" | "dressCode" | "faq" | "recommendations" | "gifts" | "rsvp";
@@ -1637,6 +1660,15 @@ export interface operations {
             };
             /** @description Unknown or not yours */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description MEDIA_IN_USE: the invitation design (the draft or the published version, by mediaId or by an address inside its HTML/CSS) still uses the file. `designIds` lists the designs; remove the file from the design first. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2687,7 +2719,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description EMBED_NOT_ALLOWED (any host or shape off the list), EMBED_PROVIDER_NOT_ALLOWED_HERE or EMBED_INTENT_UNKNOWN */
+            /** @description EMBED_NOT_ALLOWED (any host or shape off the list), EMBED_MAP_RETIRED (a map link or intent map, 1.10.0), EMBED_PROVIDER_NOT_ALLOWED_HERE or EMBED_INTENT_UNKNOWN */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -2749,6 +2781,48 @@ export interface operations {
             };
             /** @description Not published */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    getPublicDesign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                celebrationId: components["parameters"]["CelebrationId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The last published version of the design. Files it references are in the public gallery listing (`GET /public/celebrations/{celebrationId}/assets`); a file hidden by moderation is not there. */
+            200: {
+                headers: {
+                    /** @description public, max-age=15 */
+                    "Cache-Control"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicDesign"];
+                };
+            };
+            /** @description Unknown celebration, not published, archived, hidden by moderation or without a published design: always the same answer, it reveals nothing */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unexpected error (INTERNAL) */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };
