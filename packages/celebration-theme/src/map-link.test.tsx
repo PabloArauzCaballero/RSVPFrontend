@@ -8,6 +8,7 @@ const POINT = "https://www.openstreetmap.org/?mlat=-17.783300&mlon=-63.182100";
 /** What the picker saved before: the point is still read from it, the address itself is never shown or followed. */
 const OLD_POINT = "https://www.google.com/maps/search/?api=1&query=-17.783300%2C-63.182100";
 const DIRECTIONS = "https://www.openstreetmap.org/directions?to=-17.783300%2C-63.182100";
+const SEARCH = "https://www.openstreetmap.org/search?query=";
 
 describe("the exact place of the venue", () => {
   it("accepts only https links of maps services: a link typed by a host never becomes an arbitrary or script href", () => {
@@ -57,16 +58,38 @@ describe("what a guest gets", () => {
     }
   });
 
-  it("an old invitation with only a link without a point, or only text, gets no link and no map: nothing is made up", () => {
+  it("an old invitation with only a link without a point, or only text, searches the written text on OpenStreetMap: no pin and no point is made up", () => {
     for (const venueMapUrl of [undefined, "https://maps.app.goo.gl/AbC123", "https://www.google.com/maps/@-17.78,-63.18,17z", "https://www.google.com/maps?ll=-17.78,-63.18", "https://evil.example/x", "javascript:alert(1)"]) {
       const html = page({ venueName: "Hacienda El Carmen", venues: [{ key: "ceremony", kind: "ceremony", name: "Catedral", address: "Plaza 24 de Septiembre" }], venueMapUrl });
-      expect(hrefs(html), String(venueMapUrl)).toEqual([]);
+      // The main venue only leads the list when the host saved a link the invitation reads; it has a name and no address.
+      const main = mapUrl(venueMapUrl) ? [SEARCH + "Hacienda%20El%20Carmen"] : [];
+      expect(hrefs(html), String(venueMapUrl)).toEqual([...main, SEARCH + "Plaza%2024%20de%20Septiembre"]);
+      expect(html).not.toMatch(/directions\?to=|mlat=|-17\.78/);
       expect(html).not.toContain("celebration-map-open");
       expect(html).not.toMatch(/google|goo\.gl|evil\.example|javascript:/);
-      expect(html).toContain("celebration.venues.unmarked");
+      expect(html).toContain("celebration.venues.searchOnly");
+      expect(html).toContain("celebration.venues.searchName");
+      expect(html).not.toContain("celebration.venues.directionsName");
+      for (const [anchor] of html.matchAll(/<a [^>]*data-link-kind="navigation"[^>]*>/g)) {
+        expect(anchor).toContain('rel="noopener noreferrer"');
+        expect(anchor.toLowerCase()).toContain('referrerpolicy="no-referrer"');
+      }
       expect(html).toContain("celebration.venues.copy");
       expect(html).toContain("Plaza 24 de Septiembre");
     }
+  });
+
+  it("with no text to search for there is no «how to get there», only the plain notice", () => {
+    const html = page({ venueName: "—", venues: [], venueMapUrl: "https://maps.app.goo.gl/AbC123" });
+    expect(hrefs(html)).toEqual([]);
+    expect(html).toContain("celebration.venues.unmarked");
+    expect(html).not.toContain("celebration.venues.searchOnly");
+  });
+
+  it("the search carries only the public text of the place: nothing of the guest, the invitation or a pasted link", () => {
+    const html = page({ venueName: "Salón", venues: [{ key: "v1", kind: "ceremony", name: "Salón", address: "Calle Sucre #50 & Junín, Sta. Cruz https://maps.app.goo.gl/AbC123?g_st=iw" }], venueMapUrl: undefined });
+    expect(hrefs(html)).toEqual([SEARCH + encodeURIComponent("Calle Sucre #50 & Junín, Sta. Cruz")]);
+    for (const secret of [VIEW.slug, VIEW.celebrationId]) expect(hrefs(html).join()).not.toContain(secret);
   });
 
   it("the map is offered with a point, and nothing of it is in the served page before the tap", () => {

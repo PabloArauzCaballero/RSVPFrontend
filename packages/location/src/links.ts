@@ -7,6 +7,7 @@ import { isValidCoordinates, type Coordinates, type Location } from "./location"
  */
 
 const LINK_MAX = 500;
+const SEARCH_MAX = 200;
 const COORDINATE_DIGITS = 6;
 const OSM_BASE = "https://www.openstreetmap.org/";
 
@@ -82,6 +83,24 @@ export function osmPointUrl(coordinates: Coordinates): string {
  */
 export function osmDirectionsUrl(coordinates: Coordinates): string {
   return `${OSM_BASE}directions?to=${encodeURIComponent(formatCoordinates(coordinates, ","))}`;
+}
+
+/** Links and e-mail addresses pasted into a written address: they locate nothing and may carry someone's identifiers. */
+const PASTED_LINK = /(?:\b[a-z][a-z0-9+.-]*:\/\/|\bwww\.)\S*|\S+@\S+\.\S+|\b(?:maps\.app\.goo\.gl|goo\.gl|g\.co)\/\S*/gi;
+/** Control characters and halves of a surrogate pair: `encodeURIComponent` throws on the latter. */
+const UNSENDABLE = /[\p{Cc}\p{Cs}]/gu;
+const SEARCHABLE = /[\p{L}\p{N}]/u;
+
+/**
+ * OpenStreetMap's search page for a written place: what «how to get there» opens when there is no confirmed point. It is a
+ * search, not the place: no coordinates are made up. Pass only the public text of the place. Null when nothing in the
+ * text can be searched for.
+ */
+export function osmSearchUrl(written: string): string | null {
+  const clean = written.replace(PASTED_LINK, " ").replace(UNSENDABLE, " ").replace(/\s+/g, " ").trim();
+  // By code points, so the cut never leaves half a character behind.
+  const query = Array.from(clean).slice(0, SEARCH_MAX).join("").trim();
+  return SEARCHABLE.test(query) ? `${OSM_BASE}search?query=${encodeURIComponent(query)}` : null;
 }
 
 /** "lat,lng" with six decimals. Throws a `RangeError` for coordinates outside the globe. */

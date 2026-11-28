@@ -162,11 +162,12 @@ describe("F6 · embeds (P17)", () => {
     }
   });
 
-  it("the map block never asks Google for a venue by name: without a point it shows the place in words, and nothing if the venue does not exist", () => {
+  it("the map block never asks Google for a venue by name: without a point it shows the place in words and an OpenStreetMap search of its address, and nothing if the venue does not exist", () => {
     const { container } = draw(documentWith([{ block: block("map", "map", { venueIndex: 0 }), element: {} }]));
     const place = container.querySelector(".celebration-map-block");
     expect(place?.textContent).toContain("Iglesia San Francisco");
-    expect(place?.querySelector("a, iframe, .celebration-map-open")).toBeNull();
+    expect(place?.querySelector("iframe, .celebration-map-open")).toBeNull();
+    expect([...place!.querySelectorAll("a")].map((anchor) => anchor.getAttribute("href"))).toEqual([`https://www.openstreetmap.org/search?query=${encodeURIComponent("Plaza San Francisco, La Paz")}`]);
     expect(container.innerHTML).not.toContain("google.com/maps");
     cleanup();
     expect(draw(documentWith([{ block: block("map", "map", { venueIndex: 7 }), element: {} }])).container.querySelector(".celebration-map-block")).toBeNull();

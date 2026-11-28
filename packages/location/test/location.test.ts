@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { isValidCoordinates, locationFromLegacyLink, mainVenueLocation, osmDirectionsUrl, osmPointUrl, readLocations, venueLocation } from "../src/index";
+import { isValidCoordinates, locationFromLegacyLink, mainVenueLocation, osmDirectionsUrl, osmPointUrl, osmSearchUrl, readLocations, venueLocation } from "../src/index";
 
 describe("rangos de las coordenadas", () => {
   it.each([[0, 0], [-90, -180], [90, 180], [-17.783327, -63.18214]])("acepta (%d, %d)", (lat, lng) => {
@@ -151,5 +151,38 @@ describe("content.locations", () => {
     for (const value of [undefined, "https://maps.app.goo.gl/ABCD", "https://www.google.com/maps/@-17.78,-63.18,17z", "https://www.google.com/maps?ll=-17.78,-63.18"]) {
       expect(mainVenueLocation(stored, value, "Salón")).toBeUndefined();
     }
+  });
+});
+
+describe("búsqueda de una dirección escrita", () => {
+  const SEARCH = "https://www.openstreetmap.org/search?query=";
+  const queryOf = (written: string): string | null => {
+    const href = osmSearchUrl(written);
+    if (href === null) return null;
+    const url = new URL(href);
+    expect([url.origin, url.pathname, [...url.searchParams.keys()], url.hash]).toEqual(["https://www.openstreetmap.org", "/search", ["query"], ""]);
+    return url.searchParams.get("query");
+  };
+
+  it("codifica el texto entero: ni &, ni #, ni +, ni ? abren otro parámetro", () => {
+    expect(osmSearchUrl("Av. Busch #12 & 2º anillo")).toBe(`${SEARCH}Av.%20Busch%20%2312%20%26%202%C2%BA%20anillo`);
+    expect(queryOf("A+B?mlat=1&x=%2F, Ñuflo de Chávez")).toBe("A+B?mlat=1&x=%2F, Ñuflo de Chávez");
+    expect(queryOf("  Calle 1 \n\t Santa\u0000Cruz  ")).toBe("Calle 1 Santa Cruz");
+  });
+
+  it("quita los enlaces y correos pegados, que pueden llevar identificadores", () => {
+    expect(queryOf("Calle 1 https://maps.app.goo.gl/AbC?g_st=iw")).toBe("Calle 1");
+    expect(queryOf("Calle 1 www.example.com/i/token123 maps.app.goo.gl/XyZ ana@example.com")).toBe("Calle 1");
+    expect(osmSearchUrl("https://www.google.com/maps/@-17.78,-63.18,17z")).toBeNull();
+  });
+
+  it("sin nada que buscar no hay enlace", () => {
+    for (const written of ["", "   ", "—", "#, .", "\u0007"]) expect(osmSearchUrl(written), JSON.stringify(written)).toBeNull();
+  });
+
+  it("recorta lo muy largo sin partir un carácter, y no falla con medio par suplente", () => {
+    expect(queryOf("a".repeat(500))).toBe("a".repeat(200));
+    expect(queryOf(`${"a".repeat(199)}😀b`)).toBe(`${"a".repeat(199)}😀`);
+    expect(queryOf("Salón \ud800 Rosa")).toBe("Salón Rosa");
   });
 });

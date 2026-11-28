@@ -104,9 +104,10 @@ test("keyboard: Tab reaches the play button of the video with a visible focus ri
   expect(box!.height).toBeGreaterThanOrEqual(44);
   await page.keyboard.press("Enter");
   await expect(page.locator('.celebration-embed[data-provider="youtube"] iframe')).toHaveCount(1);
-  // The fixture's venue has no marked point: its map block is the place in words with «copy address», never a map made from its name.
+  // The fixture's venue has no marked point: its map block is the place in words with «copy address» and an OpenStreetMap search, never a map made from its name.
   await expect(page.locator(".celebration-map-block").getByRole("button", { name: /Copiar dirección/ })).toBeVisible();
-  await expect(page.locator('.celebration-map-block a, .celebration-map-block iframe, a[href*="google.com/maps"]')).toHaveCount(0);
+  await expect(page.locator(".celebration-map-block").getByRole("link", { name: /Cómo llegar/ })).toHaveAttribute("href", /^https:\/\/www\.openstreetmap\.org\/search\?query=/);
+  await expect(page.locator('.celebration-map-block .celebration-map-open, .celebration-map-block iframe, a[href*="google.com/maps"]')).toHaveCount(0);
 });
 
 test("no network: after the tap, going offline ends in an alert with a retry (no silent blank box)", async ({ page, context }) => {

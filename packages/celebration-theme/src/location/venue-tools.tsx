@@ -38,7 +38,7 @@ export function VenueTools({ labels, copyText, point, directionsHref }: VenueToo
     <div className="celebration-venue-tools">
       {point ? <VenueMap point={point} labels={labels} /> : <p className="celebration-note">{labels.unmarked}</p>}
       <div className="celebration-venue-actions">
-        {directionsHref ? <a href={directionsHref} target="_blank" rel="noopener noreferrer" data-link-kind="navigation" aria-label={labels.directionsName}>{labels.directions}</a> : null}
+        {directionsHref ? <a href={directionsHref} target="_blank" rel="noopener noreferrer" referrerPolicy="no-referrer" data-link-kind="navigation" aria-label={labels.directionsName}>{labels.directions}</a> : null}
         <button type="button" onClick={() => { void copyAddress(); }} aria-label={labels.copyName}>{labels.copy}</button>
       </div>
       {/* Always in the page, so screen readers announce what appears inside it. */}

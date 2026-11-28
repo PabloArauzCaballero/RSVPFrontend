@@ -97,7 +97,11 @@ describe("copy address", () => {
     await waitFor(() => expect(writeText).toHaveBeenCalledWith("Salón, -17.780000, -63.180000"));
     cleanup();
     const bare = render(<VenueDetails venue={{ key: "main", kind: "other", name: "Salón" }} t={t} />);
-    expect(bare.queryByRole("link")).toBeNull();
+    const search = bare.getByRole("link", { name: "celebration.venues.searchName|Salón" });
+    expect(search.getAttribute("href")).toBe("https://www.openstreetmap.org/search?query=Sal%C3%B3n");
+    expect(search.getAttribute("referrerpolicy")).toBe("no-referrer");
+    expect(bare.container.textContent).toContain("celebration.venues.searchOnly");
+    expect(bare.queryByRole("button", { name: "celebration.media.showMap|Salón" })).toBeNull();
     press(bare);
     await waitFor(() => expect(writeText).toHaveBeenLastCalledWith("Salón"));
   });
