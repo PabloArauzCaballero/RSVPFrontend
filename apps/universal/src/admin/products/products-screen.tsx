@@ -22,9 +22,9 @@ import { AdminErrorNotice, QueryBoundary, ReasonDialog, Stack, useStamp } from "
  */
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-/** One line of plain text: the server refuses control characters (422 INVALID_REASON), so a pasted line break becomes a space. */
-// eslint-disable-next-line no-control-regex -- the control range is exactly what the server refuses
-const CONTROL = /[\u0000-\u001f\u007f-\u009f]+/g;
+/** One line of plain text: the server refuses control characters and line/paragraph separators (422 INVALID_REASON: \p{Cc}, \p{Zl}, \p{Zp}), so a pasted line break becomes a space. */
+const CONTROL = /[\p{Cc}\p{Zl}\p{Zp}]+/gu;
+const oneLine = (raw: string): string => raw.replace(CONTROL, " ");
 type Featured = "any" | "on" | "off";
 type Done = { readonly kind: "hidden" | "shown" | "featuredOn" | "featuredOff"; readonly replayed: boolean };
 
@@ -116,13 +116,13 @@ function ProductRow({ item, busy, onHide, onShow, onFeatured }: { readonly item:
   const palette = useColors();
   const state = item.completeness;
   return (
-    <View accessibilityLabel={item.title} testID={`product-${item.listingId}`} style={{ gap: spacing[3], paddingVertical: spacing[6], borderTopWidth: 1, borderTopColor: palette.border }}>
+    <View role="group" accessibilityLabel={item.title} testID={`product-${item.listingId}`} style={{ gap: spacing[3], paddingVertical: spacing[6], borderTopWidth: 1, borderTopColor: palette.border }}>
       <View style={[styles.row, { flexWrap: "nowrap", alignItems: "flex-start", gap: spacing[3] }]}>
         {item.imageUrl ? <Image source={{ uri: item.imageUrl }} accessible={false} style={{ width: 64, height: 64, borderRadius: 8, backgroundColor: palette.surfaceMuted }} /> : null}
         <View style={{ flex: 1, flexShrink: 1, gap: spacing[1] }}>
           <Text accessibilityRole="header" style={[styles.subtitle, { overflowWrap: "anywhere" } as object]}>{item.title}</Text>
           <Text style={styles.muted}>{t("admin.products.row.provider", { name: item.providerName })}</Text>
-          <Text style={styles.muted}>{[item.category, item.priceMinor === null ? t("admin.products.row.noPrice") : formatMinor(item.priceMinor, item.currency, locale), item.publishedAt ? t("admin.products.row.published", { when: stamp(item.publishedAt) }) : t("admin.products.row.unpublished")].join(" · ")}</Text>
+          <Text style={styles.muted}>{[item.category, item.priceMinor === null ? t("admin.products.row.noPrice") : formatMinor(item.priceMinor, item.currency, locale), item.published && item.publishedAt ? t("admin.products.row.published", { when: stamp(item.publishedAt) }) : t("admin.products.row.unpublished")].join(" · ")}</Text>
         </View>
       </View>
       <View style={styles.row}>
@@ -165,9 +165,14 @@ function ProductsScreenContent({ onNavigate }: { readonly onNavigate: (href: str
   const showOnce = useSingleMutation(show);
   const featureOnce = useSingleMutation(feature);
   const items = useMemo(() => inbox.data?.pages.flatMap((page) => page.items) ?? [], [inbox.data]);
-  const counts = moderationCounts(inbox.data?.pages);
+  // The tab counters belong to the whole inbox, not to the filter being loaded: keep the last known ones while the next read is pending (no jump, no changing accessible name).
+  const fresh = moderationCounts(inbox.data?.pages);
+  const [known, setKnown] = useState(fresh);
+  if (fresh && (known?.recent !== fresh.recent || known.hidden !== fresh.hidden)) setKnown(fresh);
+  const counts = fresh ?? known;
   const error = (asking ? null : hide.error) ?? show.error ?? feature.error;
-  const reset = (): void => { hide.reset(); show.reset(); feature.reset(); setDone(null); };
+  // `reset()` of a mutation that is still in flight detaches its observer, so the per-call `onSettled` of useSingleMutation never runs and the lock stays closed: only settled ones are reset.
+  const reset = (): void => { for (const mutation of [hide, show, feature]) if (!mutation.isPending) mutation.reset(); setDone(null); };
   const busyId = hide.isPending ? hide.variables?.listingId : show.isPending ? show.variables?.listingId : feature.isPending ? feature.variables?.listingId : undefined;
   const finish = (kind: Done["kind"]) => ({ onSuccess: (result: unknown) => { setDone({ kind, replayed: typeof result === "object" && result !== null && "replayed" in result && result.replayed === true }); } });
   const changeView = (next: ModerationView): void => { reset(); setView(next); };
@@ -198,9 +203,9 @@ function ProductsScreenContent({ onNavigate }: { readonly onNavigate: (href: str
         </QueryBoundary>
         </View>
         <ReasonDialog visible={asking !== null} title={asking ? t("admin.products.hide.title", { name: asking.title }) : ""} body={t("admin.products.hide.body")} confirmLabel={t("admin.products.actions.hide")}
-          minLength={HIDE_REASON_MIN} maxLength={HIDE_REASON_MAX} multiline={false} holdOpen busy={hide.isPending} error={asking ? hide.error : null}
+          minLength={HIDE_REASON_MIN} maxLength={HIDE_REASON_MAX} multiline={false} holdOpen sanitize={oneLine} busy={hide.isPending} error={asking ? hide.error : null}
           onCancel={() => { hide.reset(); setAsking(null); }}
-          onConfirm={(reason) => { if (asking) hideOnce({ listingId: asking.listingId, reason: reason.replace(CONTROL, " ").trim() }, { ...finish("hidden"), onSuccess: (result) => { finish("hidden").onSuccess(result); setAsking(null); } }); }} />
+          onConfirm={(reason) => { if (asking) hideOnce({ listingId: asking.listingId, reason }, { ...finish("hidden"), onSuccess: (result) => { finish("hidden").onSuccess(result); setAsking(null); } }); }} />
       </Stack>
     </AdminScreen>
   );

@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { ProductsScreen } from "../src/admin/products/products-screen";
 import { ADMIN, fakeClient, GUEST, HOST, HttpFailure, renderApp, type Handler } from "./support";
 
-/** R8b · «Productos»: the moderation inbox of provider-catalog 3.11.0 against a fake gateway (the real one is in the Playwright run). */
+/** R8b · «Productos»: the moderation inbox of provider-catalog 3.12.0 against a fake gateway (the real one is in the Playwright run). */
 const navigate = vi.fn();
 const DENIED = "Acceso denegado: esta área es solo para administradores de la plataforma.";
 const A = "11111111-1111-4111-8111-111111111111";
@@ -278,6 +278,150 @@ describe("R8b · show and featured", () => {
     fireEvent.click(await screen.findByRole("switch", { name: "Destacar Ramo de rosas" }));
     expect(await screen.findByText("Este producto está oculto y no se puede destacar. Muéstralo primero.")).toBeTruthy();
     await waitFor(() => expect(inboxCalls(calls).length).toBeGreaterThanOrEqual(2));
+  });
+});
+
+/** A response the test resolves by hand, to hold a write in flight while the person keeps using the screen. */
+function deferred<T>(): { readonly promise: Promise<T>; readonly resolve: (value: T) => void } {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((done) => { resolve = done; });
+  return { promise, resolve };
+}
+
+describe("R8b · writes in flight and wrong answers", () => {
+  it("M-2: changing tab while a «Destacar» is in flight does not leave the lock closed: the next toggle sends a second PUT", async () => {
+    const gate = deferred<unknown>();
+    let puts = 0;
+    const { calls } = render(base({ [`PUT /providers/admin/listings/${A}/featured`]: () => { puts += 1; return puts === 1 ? gate.promise : row({ featured: false }); } }));
+    fireEvent.click(await screen.findByRole("switch", { name: "Destacar Ramo de rosas" }));
+    await waitFor(() => expect(puts).toBe(1));
+    fireEvent.click(screen.getByRole("tab", { name: /Ocultos/ }));
+    expect(await screen.findByTestId(`product-reason-${B}`)).toBeTruthy();
+    gate.resolve(row({ featured: true }));
+    expect(await screen.findByText("Producto destacado.")).toBeTruthy();
+    fireEvent.click(screen.getByRole("tab", { name: /Recientes/ }));
+    fireEvent.click(await screen.findByRole("switch", { name: "Destacar Ramo de rosas" }));
+    await waitFor(() => expect(calls.filter((call) => call.method === "PUT")).toHaveLength(2));
+  });
+
+  it("M-2: the same for «Mostrar» when a filter changes while it is in flight", async () => {
+    const gate = deferred<unknown>();
+    let shows = 0;
+    const { calls } = render(base({ [`POST /providers/admin/listings/${B}/show`]: () => { shows += 1; return shows === 1 ? gate.promise : moderation({ listingId: B, hidden: false, completeness: "COMPLETE", adminHiddenReason: null }); } }));
+    await screen.findByText("Ramo de rosas");
+    fireEvent.click(screen.getByRole("tab", { name: /Ocultos/ }));
+    fireEvent.click(await screen.findByTestId(`product-show-${B}`));
+    await waitFor(() => expect(shows).toBe(1));
+    fireEvent.change(screen.getByLabelText("Categoría"), { target: { value: "TORTAS" } });
+    gate.resolve(moderation({ listingId: B, hidden: false, completeness: "COMPLETE", adminHiddenReason: null }));
+    await waitFor(() => expect(screen.queryByTestId("products-done")).toBeTruthy());
+    fireEvent.click(await screen.findByTestId(`product-show-${B}`));
+    await waitFor(() => expect(calls.filter((call) => call.path === `/providers/admin/listings/${B}/show`)).toHaveLength(2));
+  });
+
+  it("a double click on «Destacar» sends one PUT", async () => {
+    const gate = deferred<unknown>();
+    const { calls } = render(base({ [`PUT /providers/admin/listings/${A}/featured`]: () => gate.promise }));
+    const toggle = await screen.findByRole("switch", { name: "Destacar Ramo de rosas" });
+    fireEvent.click(toggle);
+    fireEvent.click(toggle);
+    await waitFor(() => expect(calls.filter((call) => call.method === "PUT")).toHaveLength(1));
+    gate.resolve(row({ featured: true }));
+    expect(await screen.findByText("Producto destacado.")).toBeTruthy();
+    expect(calls.filter((call) => call.method === "PUT")).toHaveLength(1);
+  });
+
+  it("m-3: the tab counters stay while the next filter is loading", async () => {
+    const gate = deferred<unknown>();
+    render(base({ "GET /providers/admin/moderation/listings": (call) => (call.url.includes("category=TORTAS") ? gate.promise : inbox("RECENT", [row()])) }));
+    await screen.findByText("Ramo de rosas");
+    expect(screen.getByTestId("products-count-recent").textContent).toBe("2");
+    fireEvent.change(screen.getByLabelText("Categoría"), { target: { value: "TORTAS" } });
+    await waitFor(() => expect(screen.queryByText("Ramo de rosas")).toBeNull());
+    expect(screen.getByTestId("products-count-recent").textContent).toBe("2");
+    expect(screen.getByTestId("products-count-hidden").textContent).toBe("1");
+    gate.resolve(inbox("RECENT", [row()], { counts: { recent: 5, hidden: 1 } }));
+    await waitFor(() => expect(screen.getByTestId("products-count-recent").textContent).toBe("5"));
+  });
+
+  it("m-1: a hidden product, unpublished by the server, says «Sin publicar» and not the old publication date", async () => {
+    render(base());
+    await screen.findByText("Ramo de rosas");
+    expect(screen.getByTestId(`product-${A}`).textContent).toMatch(/Publicado el/);
+    fireEvent.click(screen.getByRole("tab", { name: /Ocultos/ }));
+    const hiddenRow = await screen.findByTestId(`product-${B}`);
+    expect(hiddenRow.textContent).toContain("Sin publicar");
+    expect(hiddenRow.textContent).not.toMatch(/Publicado el/);
+  });
+
+  it("m-2: a pasted U+2028/U+2029 or line break becomes a space, and a reason of only control characters is refused in place", async () => {
+    const { calls } = render(base({ [`POST /providers/admin/listings/${A}/hide`]: () => moderation() }));
+    fireEvent.click(await screen.findByTestId(`product-hide-${A}`));
+    const confirm = (): void => { const buttons = screen.getAllByRole("button", { name: "Ocultar" }); fireEvent.click(buttons[buttons.length - 1]!); };
+    fireEvent.change(screen.getByLabelText("Motivo"), { target: { value: "\u2028\u2029\t\u0085" } });
+    confirm();
+    expect(await screen.findByText(/Escribe el motivo: queda/)).toBeTruthy();
+    expect(calls.some((call) => call.method === "POST")).toBe(false);
+    fireEvent.change(screen.getByLabelText("Motivo"), { target: { value: "ab\u2028\u2029\t" } });
+    confirm();
+    expect(await screen.findByText("El motivo necesita al menos 3 caracteres.")).toBeTruthy();
+    expect(calls.some((call) => call.method === "POST")).toBe(false);
+    fireEvent.change(screen.getByLabelText("Motivo"), { target: { value: "Foto\u2028con\u2029teléfono\u0085visible" } });
+    confirm();
+    await waitFor(() => expect(calls.find((call) => call.method === "POST")?.body).toEqual({ reason: "Foto con teléfono visible" }));
+  });
+
+  it("PF-1: fields of a guest or an owner that a response should never carry are not rendered", async () => {
+    render(base({ "GET /providers/admin/moderation/listings": () => inbox("RECENT", [row({ ownerEmail: "dueno@example.test", guestName: "Invitado Secreto", ownerPhone: "+59170000000" })]) }));
+    await screen.findByText("Ramo de rosas");
+    expect(document.body.textContent).not.toMatch(/dueno@example\.test|Invitado Secreto|59170000000/);
+  });
+
+  it("a 401 on the list says the session ended, not an empty list", async () => {
+    render(base({ "GET /providers/admin/moderation/listings": () => new HttpFailure(401) }));
+    expect(await screen.findByText("Tu sesión terminó. Vuelve a iniciar sesión.")).toBeTruthy();
+  });
+
+  it("a 422 INVALID_CURSOR on the list is explained", async () => {
+    render(base({ "GET /providers/admin/moderation/listings": () => new HttpFailure(422, { code: "INVALID_CURSOR" }) }));
+    expect(await screen.findByText("La página que pediste ya no es válida. Recarga la lista.")).toBeTruthy();
+  });
+
+  it("a 422 INVALID_QUERY on the list is explained", async () => {
+    render(base({ "GET /providers/admin/moderation/listings": () => new HttpFailure(422, { code: "INVALID_QUERY" }) }));
+    expect(await screen.findByText("Algún filtro no es válido. Quita los filtros e inténtalo de nuevo.")).toBeTruthy();
+  });
+
+  it("404 on «Mostrar» and on «Destacar» say the item no longer exists, and the lock opens again", async () => {
+    const { calls } = render(base({
+      [`POST /providers/admin/listings/${B}/show`]: () => new HttpFailure(404),
+      [`PUT /providers/admin/listings/${A}/featured`]: () => new HttpFailure(404)
+    }));
+    fireEvent.click(await screen.findByRole("switch", { name: "Destacar Ramo de rosas" }));
+    expect(await screen.findByText(/el elemento ya no existe/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("switch", { name: "Destacar Ramo de rosas" }));
+    await waitFor(() => expect(calls.filter((call) => call.method === "PUT")).toHaveLength(2));
+    fireEvent.click(screen.getByRole("tab", { name: /Ocultos/ }));
+    fireEvent.click(await screen.findByTestId(`product-show-${B}`));
+    await waitFor(() => expect(calls.filter((call) => call.path === `/providers/admin/listings/${B}/show`)).toHaveLength(1));
+    expect((await screen.findAllByText(/el elemento ya no existe/)).length).toBeGreaterThan(0);
+  });
+
+  it("422 FEATURED_PRODUCT_ONLY on «Destacar» has its own copy", async () => {
+    render(base({ [`PUT /providers/admin/listings/${A}/featured`]: () => new HttpFailure(422, { code: "FEATURED_PRODUCT_ONLY" }) }));
+    fireEvent.click(await screen.findByRole("switch", { name: "Destacar Ramo de rosas" }));
+    expect(await screen.findByText("Solo un producto se puede destacar.")).toBeTruthy();
+  });
+
+  it("a 401 while hiding shows the session notice inside the dialog and keeps the reason", async () => {
+    render(base({ [`POST /providers/admin/listings/${A}/hide`]: () => new HttpFailure(401) }));
+    fireEvent.click(await screen.findByTestId(`product-hide-${A}`));
+    fireEvent.change(screen.getByLabelText("Motivo"), { target: { value: "Reglas" } });
+    const buttons = screen.getAllByRole("button", { name: "Ocultar" });
+    fireEvent.click(buttons[buttons.length - 1]!);
+    const dialog = await screen.findByRole("dialog");
+    expect(await within(dialog).findByText("Tu sesión terminó. Vuelve a iniciar sesión.")).toBeTruthy();
+    expect((screen.getByLabelText("Motivo") as HTMLInputElement).value).toBe("Reglas");
   });
 });
 

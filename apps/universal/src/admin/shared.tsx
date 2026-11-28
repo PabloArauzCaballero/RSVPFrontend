@@ -86,23 +86,25 @@ export function QueryBoundary<TData extends { readonly items: readonly unknown[]
   return <>{children(query.data)}</>;
 }
 
-/** A confirmation that asks for a written reason; an empty reason is refused in place and the dialog stays open. */
 /**
- * A required reason; `maxLength` (the server's limit) caps the field and blocks a longer paste with its own message; `minLength` refuses a
+ * A confirmation that asks for a written reason; an empty reason is refused in place and the dialog stays open.
+ * `maxLength` (the server's limit) caps the field and blocks a longer paste with its own message; `minLength` refuses a
  * shorter one in place; `multiline={false}` asks for one line (the server refuses control characters, new lines included).
  */
-export function ReasonDialog({ visible, title, body, confirmLabel, onConfirm, onCancel, maxLength, minLength, multiline = true, busy = false, holdOpen = false, error: failure }: {
+export function ReasonDialog({ visible, title, body, confirmLabel, onConfirm, onCancel, maxLength, minLength, multiline = true, busy = false, holdOpen = false, sanitize, error: failure }: {
   readonly visible: boolean; readonly title: string; readonly body: string; readonly confirmLabel: string;
   readonly onConfirm: (reason: string) => void; readonly onCancel: () => void; readonly maxLength?: number; readonly minLength?: number; readonly multiline?: boolean; readonly busy?: boolean;
   /** The caller closes the dialog when the write succeeds: the typed reason stays through a failure, and the failure shows inside the dialog (the page behind it is not readable). */
   readonly holdOpen?: boolean; readonly error?: unknown;
+  /** Cleans what was typed or pasted BEFORE it is validated and sent, so the length rules judge exactly what the server will receive (a reason of only control characters is empty, not valid). */
+  readonly sanitize?: (raw: string) => string;
 }): ReactNode {
   const t = useT();
   const [reason, setReason] = useState("");
   const [touched, setTouched] = useState(false);
   useEffect(() => { if (!visible) { setReason(""); setTouched(false); } }, [visible]);
   const close = (): void => { setReason(""); setTouched(false); onCancel(); };
-  const value = reason.trim();
+  const value = (sanitize ? sanitize(reason) : reason).trim();
   const tooLong = maxLength !== undefined && value.length > maxLength;
   const tooShort = minLength !== undefined && value !== "" && value.length < minLength;
   const error = touched && !value ? t("admin.common.reasonRequired") : tooLong ? t("admin.common.reasonTooLong", { max: maxLength ?? 0 }) : touched && tooShort ? t("admin.common.reasonTooShort", { min: minLength ?? 0 }) : undefined;

@@ -1,8 +1,8 @@
 # R8b FE · Moderación del admin (`/admin/productos`)
 
 - Fecha: 2026-11-27. Rama `feat/regalos-r8b-moderacion`, creada desde `origin/feat/regalos-r6a-leads` (FE #147, punta `fbc73c27`).
-- Plan: `PLAN-REGALOS-PROVEEDORES.md` §5.13 (moderación), §5.14 (privacidad, PF-1), §8 fila R8; decisiones 17 y 18. BE: PR #169, `feat/regalos-r8b-moderacion` @ `66a77ce7` (ronda 3b). El recorrido en vivo de abajo se repitió contra `66a77ce7` (ver «Ronda 2026-11-27: alineación con 66a77ce7»); la primera corrida fue contra `e2ea4cfb`.
-- Contratos: alineados con `66a77ce797debe86e98d8c3eab89b7476a6d2f07` (antes `07b3c855b96e7824057c3e72111a4103a17579f4`) con el generador oficial (provider-catalog **3.11.0**; gift-list 1.16.0, celebration 1.6.0 sin cambio). Ningún archivo generado se editó a mano; `check:generated` y `check:source` pasan.
+- Plan: `PLAN-REGALOS-PROVEEDORES.md` §5.13 (moderación), §5.14 (privacidad, PF-1), §8 fila R8; decisiones 17 y 18. BE: PR #169, `feat/regalos-r8b-moderacion` @ `ab4aaa99` (provider-catalog 3.12.0, gift-list 1.20.0, el que declara `backend.lock.json`). El recorrido en vivo VIGENTE es el de «Ronda 5» (contra `ab4aaa99`); las secciones de rondas anteriores (`e2ea4cfb`, `66a77ce7`, `d7c835d0`) son historia y sus cifras ya no valen.
+- Contratos: alineados con `ab4aaa990b96a0291764bfb5beaeb1145085cc42` con el generador oficial (provider-catalog **3.12.0**, gift-list **1.20.0**; las rondas anteriores usaron 3.11.0 / `66a77ce7`). Ningún archivo generado se editó a mano; `check:generated` y `check:source` pasan.
 - Nivel: **TESTED** (unitarias + recorrido en Chrome real contra el servicio real provider-catalog sobre PostgreSQL 16). **NO VERIFIED, NO DONE**: falta el recorrido con el gateway Docker (Kong) y TEST, y el recorrido real de la pantalla del proveedor.
 
 ## Qué se construyó (vertical slice: el admin oculta un producto y deja de recomendarse)
@@ -19,7 +19,7 @@ Fechas: el admin ve los instantes en su propia zona horaria (`useStamp`, igual q
 
 PF-1: la bandeja solo muestra lo que da el contrato (ids y texto de catálogo: título, proveedor, categoría, precio, estados, motivo). Una prueba verifica que la pantalla no muestra datos de invitados.
 
-## Suites (2026-11-27, Node 22.23.5)
+## Suites (2026-11-27, Node 22.23.5; histórico, ver «Ronda 5» para las cifras vigentes)
 
 | Comando | Resultado |
 |---|---|
@@ -106,7 +106,7 @@ BE #169 avanzó de `07b3c855` a `66a77ce7`; solo cambiaron descripciones de prov
 - Gateway Docker (Kong) y TEST: Docker no corre en el sandbox.
 - Pantalla del proveedor en Chrome: el aviso con motivo ya vive en #147 (`product-editor-screen.tsx`) y tiene prueba unitaria; en vivo solo se verificó por API que la ficha del dueño trae `adminHiddenReason`. No se hizo un segundo recorrido con sesión de proveedor.
 - La lista de ofertas del proveedor (`OfferRow`) muestra el chip «Oculto» pero no el motivo: `GET /providers/{id}/listings` no lo trae (`Listing.hiddenReason` es el enum de R1). El motivo se ve en la ficha. Si se quiere en la lista, el contrato tendría que agregarlo.
-- Líneas base visuales (`e2e/__screenshots__`): no se agregó `/admin/productos` a `e2e/screens.ts` ni al mock visual porque el mock no conoce el endpoint nuevo y no hay baseline revisada; queda para quien la agregue.
+- Líneas base visuales (`e2e/__screenshots__`): no se agregó `/admin/productos` a `e2e/screens.ts` ni al mock visual porque el mock de contrato (`@rsvp/testing/contract-mock`) no conoce el endpoint nuevo y la prueba visual fallaría por falta de línea base; queda para quien agregue ambos (mock + línea base revisada).
 - Plataformas nativas (iOS/Android): no ejecutadas.
 
 ## Decisiones pendientes para Pablo
@@ -125,3 +125,47 @@ BE #169 avanzó de `07b3c855` a `66a77ce7`; solo cambiaron descripciones de prov
 - FE regenerado contra `d7c835d0`: `RSVP_BACKEND_REPO=/home/user/wt-c yarn workspace @rsvp/contracts generate --ref d7c835d0c44db82c65d4cb01d4e38759ad69df2c`. `check:generated` y `check:source` verdes (provider-catalog 3.11.0, gift-list 1.19.0); `yarn typecheck` 19/19; vitest de `@rsvp/contracts` (6) y `@rsvp/query-hooks` (250) en verde.
 - Cambia en generated: gift-list 1.19.0 y `giftAvailability` de 3.10.0 (aditivo, ninguna pantalla de R8b lo usa). No se ejecutó Playwright en esta ronda.
 - Orden de fusión: BE #170 antes que BE #169; si #170 cambia de SHA, volver a fusionarla en #169 y regenerar este FE.
+
+## Ronda 5 (2026-11-28): correcciones de la revisión independiente y recorrido en vivo contra BE `ab4aaa99`
+
+Corrige los hallazgos de la revisión independiente (M-1, M-2, m-1, m-2, m-3, m-6, m-7). Esta ronda es la evidencia vigente: las cifras de rondas anteriores (3.11.0, `66a77ce7`, `d7c835d0`) quedan como historia.
+
+| Id | Corrección | Prueba |
+|---|---|---|
+| M-2 | El candado de `useSingleMutation` quedaba cerrado si se cambiaba de pestaña o de filtro con un «Destacar» o «Mostrar» en vuelo: `reset()` de una mutación pendiente desuscribe su observador y el `onSettled` por llamada nunca corre. `reset` ahora solo toca mutaciones ya resueltas. Se comprobó que la prueba falla con el `reset()` anterior | `admin-products.test.tsx`: respuesta diferida + cambio de pestaña/filtro + un segundo PUT/POST (2 pruebas); doble clic envía un solo PUT |
+| m-1 | «Publicado el …» solo si `published` y `publishedAt`; un producto oculto dice «Sin publicar» | prueba en Ocultos |
+| m-2 | El motivo se sanea ANTES de validar (`ReasonDialog` recibe `sanitize`) y la expresión cubre `\p{Cc}\p{Zl}\p{Zp}` como el servicio (incluye U+2028/U+2029/U+0085) | pegado solo de caracteres de control: «Escribe el motivo», sin POST; «ab»+separadores: mínimo de 3; separadores en medio: se envían como espacio |
+| m-3 | Los contadores de las pestañas conservan el último valor conocido mientras carga el siguiente filtro | prueba con respuesta diferida |
+| m-6 | Pruebas de 401 (lista y ocultar), 404 en mostrar y destacar, 422 `FEATURED_PRODUCT_ONLY`, `INVALID_CURSOR` e `INVALID_QUERY`, doble clic, y PF-1 con campos de dueño/invitado en la respuesta que no deben pintarse | `admin-products.test.tsx` (34 pruebas en total) |
+| m-7 | JSDoc duplicado de `ReasonDialog` unificado; la fila del producto lleva `role="group"` | tipos y lint |
+| M-1 | Recorrido en vivo repetido contra `ab4aaa99` (abajo), JSON y capturas regenerados, esta README con versiones y SHA vigentes | `live-admin-productos.json` |
+
+No son de este PR: m-4 (confirmar «Mostrar» con un diálogo, o dejar con deshacer) es decisión de producto de Pablo y no se implementó; m-5 (el GET de la bandeja valida parámetros antes de comprobar ADMIN) es del BE. Contra `ab4aaa99`, un dueño con `view=NOPE` recibe 422 en lugar de 403 (observado); sin fuga de datos.
+
+### Comandos y resultados reales (Node 22.23.5, worktree limpio de la rama)
+
+| Comando | Resultado |
+|---|---|
+| `yarn install --immutable` | OK |
+| `yarn lint` (eslint `--max-warnings 0` + turbo) | 19/19 |
+| `yarn typecheck` | 19/19 |
+| `RSVP_BACKEND_REPO=<worktree BE en ab4aaa99> yarn workspace @rsvp/contracts check:generated` / `check:source` | OK / OK (8 contratos, provider-catalog 3.12.0, gift-list 1.20.0, sin regenerar) |
+| `@rsvp/contracts` / `@rsvp/api-client` / `@rsvp/query-hooks` / `@rsvp/i18n` test | 6 / 19 / 308 / 18, todo en verde |
+| `@rsvp/universal` test (`vitest run`) | 75 archivos; 1016 pruebas. En la primera corrida completa fallaron 2 pruebas ajenas a esta pantalla (`guest-gifts-mirror`, `portal-preview-links`) por tiempo; los dos archivos pasan en aislamiento (34/34, dos veces seguidas) y `portal-preview-links` también pasa sin mis cambios. No se tocó ese código |
+| `yarn workspace @rsvp/universal build` | OK (`expo export` web) |
+| gitleaks sobre `origin/dev..HEAD` | ver el resultado pegado en el PR (corrido tras el commit) |
+
+### Recorrido en Chrome real contra BE `ab4aaa99`: 9/9 PASS
+
+- BE: worktree del BE en `ab4aaa99`, `yarn install --immutable`, `turbo run build --filter=@rsvp/provider-catalog-service...`, `be-harness.mjs` copiado a `apps/provider-catalog-service/test/`: servicio provider-catalog real, PostgreSQL 16.15 local, migraciones de producción (incluida `20261128000200_listing_moderation`), rol no superusuario, JWKS propio. Sin Docker ni Kong (el daemon no corre en el sandbox).
+- FE: Expo web en dev (`EXPO_PUBLIC_API_URL` al `cors-proxy.mjs`, JWT de ADMIN de llave desechable que no se guarda) y Google Chrome real con Playwright. La primera corrida dio 4/9 por el tiempo de la primera compilación del paquete (timeouts de 20 s); con el paquete ya compilado la segunda corrida dio 9/9 (L1 a L9). El JSON guardado es el de la segunda.
+- Controles directos al servicio: `GET /providers/admin/moderation/listings` con el JWT del dueño del proveedor -> 403; sin token -> 401.
+- `live-admin-productos.json`: sin `eyJ` ni rutas de la máquina.
+- axe (críticos y serios): 0 en bandeja, diálogo y Ocultos.
+- Lo que el BE `ab4aaa99` cambió respecto a `66a77ce7` (ocultar despublica, mostrar restaura la publicación previa, `availability-changed`) lo ejercen L3, L4 y L7: tras ocultar el producto sale de las lecturas públicas y tras mostrar vuelve (200), sin volver a estar destacado.
+
+### Sigue sin verificar
+
+- Kong/gateway Docker y TEST (Docker no corre en el sandbox).
+- Pantalla del proveedor en Chrome, líneas base visuales de `/admin/productos` (ver arriba), iOS y Android.
+- Efecto de «ocultar» sobre regalos ya agregados a una lista (`availability-changed` -> `UNAVAILABLE`) en vivo con gift-list: lo cubre el BE; el FE no lo ejercita.
