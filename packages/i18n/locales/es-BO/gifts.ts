@@ -25,7 +25,7 @@ export const giftsEsBO = {
       badge: "Entre varios", contributorsNone: "Todavía nadie se sumó", contributors_one: "1 persona aporta", contributors_other: "{{count}} personas aportan",
       noCoordinator: "Sé quien coordina: reservas el regalo y compras en la tienda; los demás se suman con su parte.",
       coordinatorNamed: "{{name}} lo comprará", coordinatorAnonymous: "Alguien del grupo lo comprará",
-      join: "Sumarme", joinFor: "Sumarme a {{title}}", start: "Coordinar este regalo", startFor: "Coordinar {{title}}",
+      join: "Sumarme", joinFor: "Sumarme a {{title}}", start: "Coordinar este regalo", startFor: "Coordinar este regalo: {{title}}",
       youCoordinate: "Tú coordinas este regalo", youCoordinateHelp: "Eres quien compra. Usa los botones de abajo y los demás aportan su parte.", namesShown: "Se sumaron: {{names}}",
       youContribute: "Te sumaste a este regalo", youContributeHelp: "Otra persona lo compra; tú aportas tu parte con ella.", leave: "Salirme del regalo", leaveFor: "Salirme del regalo {{title}}",
       leaveTitle: "¿Salirte del regalo?", leaveBody: "Dejas de aportar a «{{title}}». Si cambias de idea, podrás sumarte otra vez mientras siga libre.", leaveBodyClosed: "La lista está cerrada: si sales de «{{title}}», no podrás volver a sumarte mientras siga cerrada.", leaveConfirm: "Sí, salirme", leaveKeep: "No, quedarme", leaveBusy: "Saliendo…", leaveDone: "Saliste del regalo «{{title}}». Ya no aportas a él.",
