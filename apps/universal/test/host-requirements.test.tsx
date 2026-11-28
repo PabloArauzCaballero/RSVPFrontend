@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ContentEditorScreen } from "../src/host/content-editor";
 import { canUseHostWorkspace } from "../src/host/gate";
@@ -207,14 +207,15 @@ describe("A18 · «publicada» only when the public page exists", () => {
     expect(await screen.findByText(/^Retirando tu invitación…/)).toBeTruthy();
   });
 
-  it("a page hidden by moderation (celebration 1.6.0 HIDDEN) is not «Publicando…» forever and offers no link", async () => {
-    const { client, calls } = fakeClient({ ...baseHandlers({ ...CELEBRATION, status: "PUBLISHED" }), "GET /celebrations/c-1/publish-check": () => ({ ready: true, missingFields: [], status: "PUBLISHED", version: 3 }), "GET /media/celebrations/c-1/assets": () => ({ items: [] }), "GET /celebrations/c-1/public-page": () => ({ celebrationId: "c-1", status: "PUBLISHED", state: "HIDDEN", version: 3, publicVersion: 3 }) });
-    renderApp(<PublishScreen celebrationId="c-1" onNavigate={navigate} />, client);
-    await waitFor(() => expect(calls.some((call) => call.path === "/celebrations/c-1/public-page")).toBe(true));
-    await waitFor(() => expect(screen.queryByText(/^Publicando…/)).toBeNull());
-    expect(screen.queryByText(/^Publicando…/)).toBeNull();
-    expect(screen.queryByTestId("public-page-pending")).toBeNull();
-    expect(screen.queryByTestId("copy-link")).toBeNull();
+  it("F7: a page hidden by moderation says so in both languages; it never says «Publicando…» nor offers the link", async () => {
+    for (const [locale, text] of [["es-BO", /oculta por una decisión de moderación/], ["en-US", /A moderation decision hides your invitation/]] as const) {
+      const { client } = fakeClient({ ...baseHandlers({ ...CELEBRATION, status: "PUBLISHED" }), "GET /celebrations/c-1/publish-check": () => ({ ready: true, missingFields: [], status: "PUBLISHED", version: 4 }), "GET /media/celebrations/c-1/assets": () => ({ items: [] }), "GET /celebrations/c-1/public-page": () => page("HIDDEN") });
+      renderApp(<PublishScreen celebrationId="c-1" onNavigate={navigate} />, client, undefined, locale);
+      expect((await screen.findByTestId("public-page-hidden")).textContent).toMatch(text);
+      expect(screen.queryByTestId("public-page-pending")).toBeNull();
+      expect(screen.queryByTestId("copy-link")).toBeNull();
+      cleanup();
+    }
   });
 
   it("if the state cannot be read, it never claims the page is visible and offers to retry", async () => {

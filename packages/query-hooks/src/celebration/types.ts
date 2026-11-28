@@ -81,7 +81,7 @@ export interface PublishCheck { readonly ready: boolean; readonly missingFields:
  * GET /celebrations/{id}/public-page (A18): whether the public page agrees with the publication
  * decision. Only LIVE means a guest opening the link sees the invitation.
  */
-/** Celebration 1.6.0 added HIDDEN: an administrator's moderation hides the page (it answers 404 publicly). It is not a transition: nothing to wait for. */
+/** HIDDEN (F7): published, but moderation hides the whole page (guests get 404). */
 export type PublicPageState = "LIVE" | "PUBLISHING" | "UNPUBLISHING" | "OFFLINE" | "HIDDEN";
 export interface PublicPageStatus {
   readonly celebrationId: string;

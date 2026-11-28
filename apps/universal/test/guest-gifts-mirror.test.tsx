@@ -1,5 +1,6 @@
-import { fireEvent, screen, within } from "@testing-library/react";
-import { Linking } from "react-native";
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { onlineManager } from "@tanstack/react-query";
+import { AccessibilityInfo, Linking } from "react-native";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MOCK_VALID_TOKEN } from "@rsvp/testing/contract-mock";
 import { GuestGiftsScreen } from "../src/guest/gifts-screen";
@@ -209,5 +210,119 @@ describe("D-3 · the guest cancels their own reservation in the app", () => {
     expect(await screen.findByText("Esta reserva ya no estaba activa. Actualizamos la lista.")).toBeTruthy();
     const keys = calls.filter((call) => call.method === "POST").map((call) => call.headers.get("idempotency-key"));
     expect(new Set(keys).size).toBe(1);
+  });
+});
+
+describe("REG-01 · lista cerrada por el anfitrión (app)", () => {
+  const MINE = { id: "res-1", itemId: VELAS, celebrationId: "c-1", status: "COMMITTED", requestedAt: "2026-11-20T00:00:00Z" };
+  const closable = (state: { closed: boolean }, extra: Readonly<Record<string, Handler>> = {}) => show({}, {
+    "GET /gifts/celebrations/c-1/items": () => ({ items: ITEMS, partnerPriorityEnabled: true, closed: state.closed }),
+    [`POST /gifts/celebrations/c-1/items/${TORTA}/reservations`]: () => { state.closed = true; return new HttpFailure(409, { code: "LIST_CLOSED" }); },
+    ...extra
+  });
+  beforeEach(() => { saveGiftCredential("ana-luis", TOKEN); });
+
+  it("says the list is closed, offers no reservation and keeps the guest's own reservation cancellable", async () => {
+    closable({ closed: true }, { "GET /gifts/celebrations/c-1/my-reservations": () => ({ items: [MINE] }) });
+    await screen.findByTestId(`cancel-reservation-${VELAS}`);
+    const note = screen.getByTestId("gift-list-closed");
+    expect(note.textContent).toContain("La lista de regalos está cerrada");
+    expect(note.textContent).toContain("Lo que ya reservaste se mantiene.");
+    expect(screen.queryByTestId(`reserve-${TORTA}`)).toBeNull();
+    expect(screen.queryByTestId(`reserve-${MESA}`)).toBeNull();
+    fireEvent.click(screen.getByTestId(`cancel-reservation-${VELAS}`));
+    expect(screen.getByText(/no podrás volver a reservarlo mientras siga cerrada/)).toBeTruthy();
+  });
+
+  it("closed while the form was open: the 409 closes the form and says why, with nothing to retry", async () => {
+    closable({ closed: false });
+    fireEvent.click(await screen.findByTestId(`reserve-${TORTA}`));
+    fireEvent.click(screen.getByTestId("reserve-confirm"));
+    expect(await screen.findByTestId("gift-list-closed")).toBeTruthy();
+    await waitFor(() => expect(screen.queryByTestId("reserve-confirm")).toBeNull());
+    expect(screen.queryByTestId(`reserve-${TORTA}`)).toBeNull();
+    expect(screen.queryByTestId("reserve-error")).toBeNull();
+  });
+
+  const cancelMine = async () => {
+    fireEvent.click(await screen.findByTestId(`cancel-reservation-${VELAS}`));
+    fireEvent.click(screen.getByTestId("cancel-reservation-confirm"));
+  };
+  /** The guest's own reservation, cancellable: the screen re-reads the list after cancelling it. */
+  const WITH_MINE: Readonly<Record<string, Handler>> = {
+    "GET /gifts/celebrations/c-1/my-reservations": () => ({ items: [MINE] }),
+    "POST /gifts/celebrations/c-1/reservations/res-1/cancel": () => ({ ...MINE, status: "CANCELLED" })
+  };
+
+  it("a refused tap far down the list: the page goes back to the notice, focuses it and announces it", async () => {
+    const announce = vi.spyOn(AccessibilityInfo, "announceForAccessibility");
+    try {
+      closable({ closed: false });
+      fireEvent.click(await screen.findByTestId(`reserve-${TORTA}`));
+      const page = screen.getByRole("main");
+      page.scrollTop = 900;
+      fireEvent.click(screen.getByTestId("reserve-confirm"));
+      const note = await screen.findByTestId("gift-list-closed");
+      await waitFor(() => expect(page.scrollTop).toBe(0));
+      expect(document.activeElement).toBe(note);
+      expect(announce.mock.calls).toEqual([["La lista de regalos está cerrada. Quienes te invitan la cerraron: ya no se pueden reservar regalos."]]);
+    } finally { announce.mockRestore(); }
+  });
+
+  it("a list already closed when the screen opens takes no focus and announces nothing", async () => {
+    const announce = vi.spyOn(AccessibilityInfo, "announceForAccessibility");
+    try {
+      closable({ closed: true });
+      const note = await screen.findByTestId("gift-list-closed");
+      expect(document.activeElement).not.toBe(note);
+      expect(announce).not.toHaveBeenCalled();
+    } finally { announce.mockRestore(); }
+  });
+
+  it("closed, then reopened on the same screen: the notice goes, «Reservar» comes back and the old form does not", async () => {
+    const state = { closed: false };
+    closable(state, WITH_MINE);
+    fireEvent.click(await screen.findByTestId(`reserve-${TORTA}`));
+    fireEvent.click(screen.getByTestId("reserve-confirm"));
+    await screen.findByTestId("gift-list-closed");
+    state.closed = false;
+    await cancelMine();
+    expect(await screen.findByTestId(`reserve-${TORTA}`)).toBeTruthy();
+    expect(screen.queryByTestId("gift-list-closed")).toBeNull();
+    expect(screen.queryByTestId("reserve-confirm")).toBeNull();
+  });
+
+  /** A later re-read of the mounted list that touches nothing else: the data is stale and the connection comes back. */
+  const reread = async () => {
+    const later = Date.now() + 60_000;
+    const clock = vi.spyOn(Date, "now").mockReturnValue(later);
+    // React Query reacts to the reconnection after an await: the clock stays ahead until that has run.
+    try { await act(async () => { onlineManager.setOnline(false); onlineManager.setOnline(true); }); } finally { clock.mockRestore(); }
+  };
+
+  it("the alternatives of a «taken» gift go away when the list closes", async () => {
+    const state = { closed: false };
+    closable(state, { [`POST /gifts/celebrations/c-1/items/${TORTA}/reservations`]: () => new HttpFailure(409, { code: "GIFT_NOT_AVAILABLE" }) });
+    fireEvent.click(await screen.findByTestId(`reserve-${TORTA}`));
+    fireEvent.click(screen.getByTestId("reserve-confirm"));
+    await screen.findByTestId("gift-taken");
+    expect(screen.getByTestId(`alt-${MESA}`)).toBeTruthy();
+    state.closed = true;
+    await reread();
+    await screen.findByTestId("gift-list-closed");
+    expect(screen.queryByTestId("gift-taken")).toBeNull();
+    expect(screen.queryByTestId(`alt-${MESA}`)).toBeNull();
+  });
+
+  it("closed and empty: only the closed notice, no «Aún no hay regalos»", async () => {
+    closable({ closed: true }, { "GET /gifts/celebrations/c-1/items": () => ({ items: [], partnerPriorityEnabled: true, closed: true }) });
+    await screen.findByTestId("gift-list-closed");
+    expect(screen.queryByText("Aún no hay regalos")).toBeNull();
+  });
+
+  it("a removed gift opened by its link does not say the list is still open", async () => {
+    show({ onlyItemId: "55555555-6666-4777-8888-999999999999" }, { "GET /gifts/celebrations/c-1/items": () => ({ items: ITEMS, partnerPriorityEnabled: true, closed: true }) });
+    expect(await screen.findByText("Puede que los anfitriones lo hayan quitado. Puedes volver a la lista para ver los demás.")).toBeTruthy();
+    expect(screen.queryByText(/sigue abierta/)).toBeNull();
   });
 });

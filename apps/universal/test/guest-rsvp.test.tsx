@@ -161,3 +161,20 @@ describe("REQ-F21-04 · the five RSVP states, in native components, against the 
     expect(await screen.findByText("Are you coming?")).toBeTruthy();
   });
 });
+
+describe("REG-01 · after replying, the line under the gift list invites to reserve only while it is open", () => {
+  const withGifts = (mock: ContractMock, closed: boolean): typeof fetch => (input, init) => (/\/gifts\/celebrations\/[^/]+\/items/.test(String(input))
+    ? Promise.resolve(new Response(JSON.stringify({ items: [{ id: "g-1", status: "AVAILABLE", source: "EXTERNAL", title: "Torta", price: { amountMinor: 100, currency: "BOB" } }], partnerPriorityEnabled: true, closed }), { status: 200, headers: { "content-type": "application/json" } }))
+    : mock.fetch(input, init));
+  const INVITE = "¿Quieres regalar algo? Reserva uno en un toque.";
+  const CLOSED = "La lista de regalos está cerrada: ya no se pueden reservar.";
+
+  it.each([[true, CLOSED, INVITE], [false, INVITE, CLOSED]] as const)("closed=%s", async (closed, shown, hidden) => {
+    const mock = seeded({ status: "CONFIRMED", version: 1 });
+    show(mock, { token: MOCK_VALID_TOKEN }, withGifts(mock, closed));
+    expect(await screen.findByText(shown)).toBeTruthy();
+    expect(screen.queryByText(hidden)).toBeNull();
+    // The way into the list stays: the guest can still see, and cancel, what they reserved.
+    expect(screen.getByRole("button", { name: "Ver la lista de regalos" })).toBeTruthy();
+  });
+});

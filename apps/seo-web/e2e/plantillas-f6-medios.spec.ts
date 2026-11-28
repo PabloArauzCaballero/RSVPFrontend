@@ -130,10 +130,15 @@ test("the host's song: nothing is downloaded and nothing plays until the guest p
   expect(await page.locator("audio").evaluate((node) => (node as HTMLAudioElement).paused)).toBe(true);
   expect(await page.locator("audio").evaluate((node) => (node as HTMLAudioElement).autoplay)).toBe(false);
   const button = page.locator(".celebration-audio-button");
+  // The state is in the accessible name (Reproducir <-> Pausar, WCAG 2.5.3: the name starts with the visible text), not in aria-pressed.
+  await expect(button).toHaveAccessibleName("Reproducir Ana y Luis");
+  await expect(button).not.toHaveAttribute("aria-pressed");
   await button.click();
-  await expect(button).toHaveAttribute("aria-pressed", "true");
+  await expect(button).toHaveAccessibleName("Pausar Ana y Luis");
+  expect(await page.locator("audio").evaluate((node) => (node as HTMLAudioElement).paused)).toBe(false);
   await button.click();
-  await expect(button).toHaveAttribute("aria-pressed", "false");
+  await expect(button).toHaveAccessibleName("Reproducir Ana y Luis");
+  expect(await page.locator("audio").evaluate((node) => (node as HTMLAudioElement).paused)).toBe(true);
 });
 
 test("the gifts button stays on the page with media in it, and no media block overflows the phone", async ({ page }) => {
