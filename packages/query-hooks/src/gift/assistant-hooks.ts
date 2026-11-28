@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { ApiClient } from "@rsvp/api-client";
 import { invalidation } from "../invalidation.js";
 import { newIdempotencyKey } from "../guest/rsvp-flow.js";
-import { assistantApi, createBatchKeys, type BatchKeys, mayHaveBeenApplied, type GiftBatchRequest, type GiftItemUpdateRequest } from "./assistant.js";
+import { assistantApi, createBatchKeys, type BatchKeys, mayHaveBeenApplied, type GiftBatchRequest } from "./assistant.js";
 
 // A client module on purpose: `useState` does not exist in the server build of React, and seo-web's server components import this barrel.
 const refetchAll = (queryClient: ReturnType<typeof useQueryClient>, keys: readonly (readonly unknown[])[]) => Promise.all(keys.map((queryKey) => queryClient.invalidateQueries({ queryKey })));
