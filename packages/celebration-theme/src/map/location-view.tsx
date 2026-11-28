@@ -1,7 +1,7 @@
 "use client";
 
 import { lazy, Suspense, useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { DEFAULT_MAP_CONFIG, directionsHref, openMapHref, readMapConfig, type CelebrationLocation, type MapConfig } from "../location.js";
+import { DEFAULT_MAP_CONFIG, directionsHref, openMapHref, placeSearchHref, readMapConfig, type CelebrationLocation, type MapConfig } from "../location.js";
 
 /**
  * A place on the invitation: its name and address as text (always enough to know where it is), then, when the host marked a
@@ -19,6 +19,7 @@ export interface LocationLabels {
   /** Accessible name of the map. */ readonly mapLabel: string;
   /** "Al abrir el mapa, tu navegador se conecta a OpenStreetMap." */ readonly privacy: string;
   readonly loading: string; readonly unavailable: string; readonly openInOsm: string; readonly unverified: string;
+  /** Shown beside «Cómo llegar» when it only searches the written address (no point was marked). */ readonly searchNote: string;
 }
 
 export interface LocationViewProps {
@@ -47,6 +48,8 @@ export function LocationView({ name, lines, location, labels, mapConfigUrl }: Lo
   const [unavailable, setUnavailable] = useState(false);
   const [copy, setCopy] = useState<"idle" | "done" | "failed">("idle");
   const noteId = useId();
+  // An invitation made before the pin existed: «Cómo llegar» searches the written address in OpenStreetMap.
+  const searchHref = location ? null : placeSearchHref(name, lines[0]);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
   useEffect(() => {
@@ -74,8 +77,12 @@ export function LocationView({ name, lines, location, labels, mapConfigUrl }: Lo
           <button type="button" className="celebration-location-button" onClick={copyAddress}>{labels.copy}</button>
         </div>
       ) : (
-        <div className="celebration-location-actions"><button type="button" className="celebration-location-button" onClick={copyAddress}>{labels.copy}</button></div>
+        <div className="celebration-location-actions">
+          {searchHref ? <a href={searchHref} target="_blank" rel="noopener noreferrer" data-link-kind="navigation" data-directions="search">{labels.directions}</a> : null}
+          <button type="button" className="celebration-location-button" onClick={copyAddress}>{labels.copy}</button>
+        </div>
       )}
+      {searchHref ? <p className="celebration-note">{labels.searchNote}</p> : null}
       <p aria-live="polite" className="celebration-note">{copy === "done" ? labels.copied : copy === "failed" ? labels.copyFailed : ""}</p>
       {location && open ? (
         <div id={`${noteId}-map`} className="celebration-location-map">

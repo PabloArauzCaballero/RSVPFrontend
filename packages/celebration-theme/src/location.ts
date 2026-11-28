@@ -123,3 +123,27 @@ export function readMapConfig(value: unknown): MapConfig {
   const maxZoom = typeof value["maxZoom"] === "number" && Number.isInteger(value["maxZoom"]) && value["maxZoom"] >= 1 && value["maxZoom"] <= 22 ? value["maxZoom"] : DEFAULT_MAP_CONFIG.maxZoom;
   return { tileUrl: usable ? tileUrl : DEFAULT_MAP_CONFIG.tileUrl, attribution, maxZoom, searchEnabled: value["searchEnabled"] !== false };
 }
+
+/** Links, addresses with `://` or `www.` and e-mail addresses written into a place: they locate nothing and may carry someone's identifiers. */
+const PASTED_LINK = /(?:\b[a-z][a-z0-9+.-]*:\/\/|\bwww\.)\S*|\S+@\S+\.\S+|\b(?:maps\.app\.goo\.gl|goo\.gl|g\.co)\/\S*/gi;
+/** Control characters and lone surrogate halves: `encodeURIComponent` throws on the latter. */
+const UNSENDABLE = /[\p{Cc}\p{Cs}]/gu;
+const SEARCHABLE = /[\p{L}\p{N}]/u;
+const SEARCH_MAX = 200;
+
+/**
+ * «Cómo llegar» for an invitation that has no marked point: OpenStreetMap's search page for the written address (or the place
+ * name). It is a search, not the place: no coordinates are made up, and the host never pastes or sees a map link. Pass only the
+ * public text of the place. `null` when nothing in the text can be searched for. Ported from FE #169 (`packages/location`).
+ */
+export function osmSearchHref(written: string): string | null {
+  const cleaned = written.replace(PASTED_LINK, " ").replace(UNSENDABLE, " ").replace(/\s+/g, " ").trim();
+  // By code points, so the cut never leaves half a character behind.
+  const query = Array.from(cleaned).slice(0, SEARCH_MAX).join("").trim();
+  return SEARCHABLE.test(query) ? `https://www.openstreetmap.org/search?query=${encodeURIComponent(query)}` : null;
+}
+
+/** The search link for a place without a point: its written address when there is one, else its name (one text: the search wants every word to match). */
+export function placeSearchHref(name: string, address?: string): string | null {
+  return (address ? osmSearchHref(address) : null) ?? osmSearchHref(name);
+}

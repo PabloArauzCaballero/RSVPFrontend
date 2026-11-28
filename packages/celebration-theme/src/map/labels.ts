@@ -7,6 +7,6 @@ export function locationLabels(t: Translate, name: string): LocationLabels {
     showMap: t("celebration.venues.showMap"), hideMap: t("celebration.venues.hideMap"), directions: t("celebration.venues.howToGetThere"),
     copy: t("celebration.venues.copyAddress"), copied: t("celebration.venues.copied"), copyFailed: t("celebration.venues.copyFailed"),
     mapLabel: t("celebration.venues.mapLabel", { name }), privacy: t("celebration.venues.mapPrivacy"), loading: t("celebration.venues.mapLoading"),
-    unavailable: t("celebration.venues.mapUnavailable"), openInOsm: t("celebration.venues.openInOsm"), unverified: t("celebration.venues.unverified")
+    unavailable: t("celebration.venues.mapUnavailable"), openInOsm: t("celebration.venues.openInOsm"), unverified: t("celebration.venues.unverified"), searchNote: t("celebration.venues.searchNote")
   };
 }

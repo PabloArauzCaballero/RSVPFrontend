@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { LocationView, type LocationLabels } from "./location-view.js";
 
-const labels: LocationLabels = { showMap: "Ver mapa", hideMap: "Ocultar mapa", directions: "Cómo llegar", copy: "Copiar dirección", copied: "Copiada", copyFailed: "No se copió", mapLabel: "Mapa de Salón", privacy: "Se conecta a OpenStreetMap", loading: "Cargando", unavailable: "Sin mapa", openInOsm: "Abrir en OSM", unverified: "Sin verificar" };
+const labels: LocationLabels = { showMap: "Ver mapa", hideMap: "Ocultar mapa", directions: "Cómo llegar", copy: "Copiar dirección", copied: "Copiada", copyFailed: "No se copió", mapLabel: "Mapa de Salón", privacy: "Se conecta a OpenStreetMap", loading: "Cargando", unavailable: "Sin mapa", openInOsm: "Abrir en OSM", unverified: "Sin verificar", searchNote: "Es una búsqueda" };
 const PIN = { lat: -16.5, lng: -68.15, source: "pin" as const };
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
@@ -36,8 +36,19 @@ describe("LocationView", () => {
     cleanup();
     const textOnly = render(<LocationView name="Salón" lines={["Av. Arce 1"]} labels={labels} />);
     expect(textOnly.queryByRole("button", { name: "Ver mapa" })).toBeNull();
-    expect(textOnly.queryByRole("link", { name: "Cómo llegar" })).toBeNull();
+    // Old invitation with no pin: «Cómo llegar» opens OpenStreetMap's search of the written address, never a pasted link.
+    expect(textOnly.getByRole("link", { name: "Cómo llegar" }).getAttribute("href")).toBe("https://www.openstreetmap.org/search?query=Av.%20Arce%201");
+    expect(textOnly.container.textContent).toContain("Es una búsqueda");
     expect(textOnly.getByRole("button", { name: "Copiar dirección" })).toBeTruthy();
+  });
+
+  it("without a point nor address it searches the name, and with nothing searchable offers no link", () => {
+    const byName = render(<LocationView name="Salón Los Pinos" lines={[]} labels={labels} />);
+    expect(byName.getByRole("link", { name: "Cómo llegar" }).getAttribute("href")).toBe("https://www.openstreetmap.org/search?query=Sal%C3%B3n%20Los%20Pinos");
+    cleanup();
+    const nothing = render(<LocationView name="---" lines={["https://maps.app.goo.gl/abc"]} labels={labels} />);
+    expect(nothing.queryByRole("link", { name: "Cómo llegar" })).toBeNull();
+    expect(nothing.container.textContent).not.toContain("Es una búsqueda");
   });
 
   it("copies the name and address, and says when it could not", async () => {
