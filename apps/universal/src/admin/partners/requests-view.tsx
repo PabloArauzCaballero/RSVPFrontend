@@ -127,9 +127,10 @@ export function PartnerRequestsView({ categoryName, cityName, onOpenIntake }: {
       <Text style={styles.body}>{t("admin.partners.requests.intro")}</Text>
       {notice ? <Notice kind="success">{notice}</Notice> : null}
       <ActionFailure error={failure} onReload={() => { reset(); void list.refetch(); }} />
-      <View role="group" aria-label={t("admin.partners.requests.filters.label")} style={[styles.row, { alignItems: "flex-end" }]}>
-        <View style={{ flexGrow: 3, flexBasis: 280 }}><Field label={t("admin.partners.requests.filters.q")} help={t("admin.partners.requests.filters.qHelp")} value={text} onChange={setText} onSubmit={search} testID="requests-q" {...(tooLong ? { error: t("admin.partners.codes.TOO_LONG") } : {})} /></View>
-        <ActionButton icon="search" variant="secondary" label={t("admin.partners.requests.filters.search")} onPress={search} testID="requests-search" />
+      <View role="group" aria-label={t("admin.partners.requests.filters.label")} style={{ gap: spacing[3] }}>
+        <Field label={t("admin.partners.requests.filters.q")} help={t("admin.partners.requests.filters.qHelp")} value={text} onChange={setText} onSubmit={search} testID="requests-q"
+          trailing={<ActionButton icon="search" variant="secondary" label={t("admin.partners.requests.filters.search")} onPress={search} testID="requests-search" />}
+          {...(tooLong ? { error: t("admin.partners.codes.TOO_LONG") } : {})} />
         <View style={{ gap: spacing[1], alignItems: "flex-start" }}>
           <Text style={styles.label}>{t("admin.partners.requests.filters.status")}</Text>
           <FilterSelect label={t("admin.partners.requests.filters.status")} value={status} onChange={(value) => { setPage(0); setStatus(value as StatusFilter); }} options={statusOptions} testID="requests-status" />

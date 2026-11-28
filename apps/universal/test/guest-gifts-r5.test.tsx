@@ -16,7 +16,7 @@ const TOKEN = MOCK_VALID_TOKEN;
 const LISTING = "6f1c2a3b-4d5e-4f60-8a7b-9c0d1e2f3a4b";
 const ID = "11111111-2222-4333-8444-555555555555";
 const VARIANT = "33333333-4444-4555-8666-777777777777";
-const gift = (over: Record<string, unknown> = {}) => ({ id: ID, listId: "l", celebrationId: "c-1", title: "Vajilla", price: { amountMinor: 45000, currency: "BOB" }, source: "CATALOGED", status: "AVAILABLE", version: 0, createdAt: "2026-11-01T00:00:00Z", productListingId: LISTING, ...over });
+const gift = (over: Record<string, unknown> = {}) => ({ id: ID, listId: "l", celebrationId: "c-1", title: "Vajilla", price: { amountMinor: 45000, currency: "BOB" }, source: "CATALOGED", status: "AVAILABLE", availability: "AVAILABLE", version: 0, createdAt: "2026-11-01T00:00:00Z", productListingId: LISTING, ...over });
 const viewer = (role: "SOLE" | "COORDINATOR" | "CONTRIBUTOR", units = 1) => ({ reservationId: "r-1", role, status: "PENDING_REVIEW", units });
 
 let items: unknown[] = [];

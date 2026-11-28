@@ -76,6 +76,11 @@ export const adminEnUS: DeepStrings<typeof adminEsBO> = {
   },
   stepper: { progress: "Form progress", step: "Step {{step}} of {{total}}" },
   partners: {
+    list: {
+      sort: "Sort:", updatedSort: "Last updated", ascending: "{{column}}, ascending", descending: "{{column}}, descending",
+      offers_one: "{{count}} offer", offers_other: "{{count}} offers", origins: { ADMIN: "Backoffice", SELF_SERVICE: "Self-service" },
+      created: "Added: {{date}}", modified: "Updated: {{date}}", see: "Show:", pageSize: "Partners per page", page: "Page {{page}} / {{pages}}"
+    },
     title: "Partners", intro: "The platform's providers. They are created here, with a complete KYP, and managed.", create: "Create partner",
     total_one: "{{count}} partner", total_other: "{{count}} partners", unknownUser: "Account not found", noSlug: "No microsite", ciDue: "ID card expires {{date}}", choose: "Choose an option",
     columns: { partner: "Partner", owner: "Owner", status: "Status", kyp: "KYP", categoryCity: "Category and city", created: "Created", updated: "Last change", origin: "Origin", listings: "Published offers" },

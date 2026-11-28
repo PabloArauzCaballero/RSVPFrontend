@@ -89,7 +89,7 @@ describe("gift hooks", () => {
     expect(h.calls).toHaveLength(0);
     const items = [{ source: "EXTERNAL", n: 1 }, { source: "CATALOGED", n: 2 }, { source: "EXTERNAL", n: 3 }];
     expect(hooks.catalogedFirst(items).map((item) => item.n)).toEqual([2, 1, 3]);
-    expect(hooks.guestVisible([{ status: "AVAILABLE" }, { status: "PROPOSED" }, { status: "REJECTED" }, { status: "COMMITTED" }, { status: "PENDING_REVIEW" }, { status: "UNAVAILABLE" }]).map((item) => item.status)).toEqual(["AVAILABLE", "COMMITTED", "PENDING_REVIEW"]);
+    expect(hooks.guestVisible([{ status: "AVAILABLE" }, { status: "PROPOSED" }, { status: "REJECTED" }, { status: "COMMITTED" }, { status: "PENDING_REVIEW" }, { status: "AVAILABLE", availability: "UNAVAILABLE" }, { status: "COMMITTED", availability: "UNAVAILABLE" }, { status: "AVAILABLE", availability: "AVAILABLE" }]).map((item) => item.status)).toEqual(["AVAILABLE", "COMMITTED", "PENDING_REVIEW", "AVAILABLE"]);
   });
 
   it("suggestionsOf reads the three shapes an ApiError can carry and ignores anything else", () => {

@@ -5,6 +5,7 @@ import { queryKeys } from "../keys.js";
 import { invalidation } from "../invalidation.js";
 import { celebrationApi, mediaApi, templateApi, type Versioned } from "./api.js";
 import { uploadToPresignedUrl } from "../media/upload.js";
+import { isProcessingStuck, processingAge } from "./processing-age.js";
 import type { EmbedIntent, Celebration, CelebrationPatch, CreateCelebrationInput, EventTypeDefinition, MediaAsset, MediaPurpose, SettingsPatch, TemplateInput } from "./types.js";
 
 export * from "./types.js";
@@ -112,19 +113,92 @@ export function useTemplateTransition(client: ApiClient) {
   });
 }
 
+export const MEDIA_PROCESSING_INTERVAL_MS = 2_000;
+export const MEDIA_PROCESSING_SLOW_INTERVAL_MS = 5_000;
+export const MEDIA_PROCESSING_SLOW_AFTER_MS = 60_000;
+export { MEDIA_PROCESSING_ABANDONED_MS, MEDIA_PROCESSING_STALE_MS } from "./processing-age.js";
+const MEDIA_URL_STABLE_MS = 5 * 60_000;
+
+function mediaUrlKey(url: string): string {
+  try {
+    const parsed = new URL(url);
+    return `${parsed.origin}${parsed.pathname}`;
+  } catch {
+    return url;
+  }
+}
+
+const stableUrlObservedAt = new Map<string, number>();
+
+/** Whether a photo in PROCESSING counts as stuck, as of the latest server answer (see processing-age.ts). */
+export function isMediaProcessingStuck(celebrationId: string, asset: Pick<MediaAsset, "id"> & { readonly createdAt?: unknown }, wallNow = Date.now()): boolean {
+  return isProcessingStuck(processingAge.ageMs(celebrationId, asset.id), asset.createdAt, wallNow);
+}
+
+/** The photos of the gallery and its cover. Backgrounds, logos and the rest share the list but are not gallery photos, and
+ * reordering refuses them (the server asks for exactly the gallery ones). An older server sends no purpose: those are photos. */
+export function isGalleryAsset(asset: Pick<MediaAsset, "purpose">): boolean {
+  return asset.purpose === undefined || asset.purpose === "gallery" || asset.purpose === "cover";
+}
+
 export function useMediaAssets(client: ApiClient, celebrationId: string) {
   return useQuery({
     queryKey: queryKeys.media.list(celebrationId),
-    queryFn: ({ signal }) => mediaApi(client).list(celebrationId, signal),
+    queryFn: async ({ signal }) => {
+      const list = await mediaApi(client).list(celebrationId, signal);
+      processingAge.observe(celebrationId, (list.items ?? []).filter((asset) => asset.status === "PROCESSING").map((asset) => asset.id));
+      return list;
+    },
     ...cachePolicy.celebration, enabled: Boolean(celebrationId),
-    // /complete returns 202 PROCESSING. Refetch only this resource until the worker finishes.
-    // Requests share the query cache, pause in hidden tabs and stop on terminal states or errors.
-    refetchInterval: (query) => !query.state.error && query.state.data?.items.some((asset) => asset.status === "PROCESSING") ? MEDIA_PROCESSING_INTERVAL_MS : false,
+    // Presigned GET URLs rotate their signature on every poll; keep the loaded URL stable while the object path is unchanged
+    // so existing photos never reload or flicker while another upload is still PROCESSING.
+    structuralSharing: (prev, next) => {
+      const list = next as { readonly items?: readonly MediaAsset[] } | undefined;
+      if (!list?.items) return next;
+      const previous = prev as { readonly items?: readonly MediaAsset[] } | undefined;
+      const prevById = new Map((previous?.items ?? []).map((asset) => [asset.id, asset]));
+      const now = Date.now();
+      const prefix = `${celebrationId}:`;
+      const activeKeys = new Set<string>();
+      const items = list.items.map((asset) => {
+        if (asset.status !== "PROCESSED" || !asset.variants) return asset;
+        const prevAsset = prevById.get(asset.id);
+        let changed = false;
+        const stabilized: Record<string, string> = {};
+        for (const [name, url] of Object.entries(asset.variants)) {
+          if (!url) continue;
+          const cacheKey = `${prefix}${asset.id}:${name}`;
+          activeKeys.add(cacheKey);
+          const prevUrl = prevAsset?.variants?.[name as keyof MediaAsset["variants"]];
+          const observedAt = stableUrlObservedAt.get(cacheKey);
+          if (prevUrl && mediaUrlKey(prevUrl) === mediaUrlKey(url) && observedAt !== undefined && now - observedAt < MEDIA_URL_STABLE_MS) {
+            stabilized[name] = prevUrl;
+            if (prevUrl !== url) changed = true;
+          } else {
+            stableUrlObservedAt.set(cacheKey, now);
+            stabilized[name] = url;
+          }
+        }
+        return changed ? { ...asset, variants: stabilized } : asset;
+      });
+      for (const cacheKey of stableUrlObservedAt.keys()) {
+        if (cacheKey.startsWith(prefix) && !activeKeys.has(cacheKey)) stableUrlObservedAt.delete(cacheKey);
+      }
+      return { ...list, items };
+    },
+    // /complete returns 202 PROCESSING. Poll quickly at first, back off after 1 min, and stop once all processing assets are stale
+    // so a stuck backend job can never trap the client in an infinite refresh loop.
+    refetchInterval: (query) => {
+      if (query.state.error) return false;
+      const processing = (query.state.data?.items ?? []).filter((asset) => asset.status === "PROCESSING");
+      const waiting = processing.filter((asset) => !isMediaProcessingStuck(celebrationId, asset));
+      if (waiting.length === 0) return false;
+      const newestAge = Math.min(...waiting.map((asset) => processingAge.ageMs(celebrationId, asset.id)));
+      return newestAge >= MEDIA_PROCESSING_SLOW_AFTER_MS ? MEDIA_PROCESSING_SLOW_INTERVAL_MS : MEDIA_PROCESSING_INTERVAL_MS;
+    },
     refetchIntervalInBackground: false
   });
 }
-
-const MEDIA_PROCESSING_INTERVAL_MS = 2_000;
 
 export interface UploadInput {
   readonly file: Blob;

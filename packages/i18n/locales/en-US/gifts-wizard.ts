@@ -60,6 +60,7 @@ export const giftsWizardEnUS: DeepStrings<typeof giftsWizardEsBO> = {
     failedTitle_one: "No gift was added: {{count}} needs a change", failedTitle_other: "No gift was added: {{count}} need a change",
     failedHelp: "Fix what is marked and tap “Add” again. The rest is kept.", fix: "Fix",
     invalidNotes: "Check the delivery notes: they allow up to {{max}} characters and must not carry the exact address.",
+    contactInNotes: "The delivery notes are public: remove phone numbers and web addresses. Write only where and when to deliver.",
     retryHint: "You can tap “Add” again: nothing is added twice.", offline: "No connection right now. Your selection is still here; retry when the internet is back.",
     notesUnsavedTitle_one: "We added {{count}} gift, but could not save your notes", notesUnsavedTitle_other: "We added {{count}} gifts, but could not save your notes",
     notesSaving: "Saving…", notesEdit: "Edit delivery notes", notesSave: "Save notes",

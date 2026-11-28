@@ -203,7 +203,7 @@ export function GiftAssistant({ celebration, eventTypeName, onSeeList, onStore }
       <View style={{ gap: spacing[4] }} testID="wizard-notes-failed">
         <Notice key={notesAttempts} kind="error">
           <StepHeading focusOnMount testID="wizard-notes-failed-title">{t("gifts.host.wizard.errors.notesUnsavedTitle", { count: unsaved.count })}</StepHeading>
-          <Text style={styles.body} testID="wizard-notes-failed-body">{unsaved.code === "INVALID_DELIVERY_NOTES" ? t("gifts.host.wizard.errors.invalidNotes", { max: DELIVERY_NOTES_MAX }) : t("gifts.host.wizard.errors.notesUnsaved")}</Text>
+          <Text style={styles.body} testID="wizard-notes-failed-body">{unsaved.code === "INVALID_DELIVERY_NOTES" ? t("gifts.host.wizard.errors.invalidNotes", { max: DELIVERY_NOTES_MAX }) : unsaved.code === "CONTACT_IN_TEXT" ? t("gifts.host.wizard.errors.contactInNotes") : t("gifts.host.wizard.errors.notesUnsaved")}</Text>
         </Notice>
         {unsaved.definitive ? (
           <Field label={t("gifts.host.wizard.errors.notesEdit")} value={draft} onChange={(value) => { if (!sending) setDraft(value); }} multiline testID="wizard-notes-edit" editable={!sending}

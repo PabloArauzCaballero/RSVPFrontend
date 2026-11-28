@@ -107,7 +107,7 @@ async function f23() {
     await go(page, `/regalos/catalogo${c}`);
     await page.getByTestId("catalog-query").fill("torta");
     await page.getByTestId("catalog-search").click();
-    // The fallback note only exists when the product search is down (viaFallback); with search available the hit itself is the proof.
+    // With the product search available the hit itself is the proof.
     const hit = page.locator('[data-testid^="hit-"]').first();
     await hit.waitFor();
     await snap("F23", page, "C27-resultados", 1280);
@@ -115,7 +115,7 @@ async function f23() {
     await page.getByText(/^Agregado:/).waitFor();
     const items = (await http("GET", `/gifts/celebrations/${world.celebration.id}/items`, { token: hostToken })).json.items;
     assert.ok(items.filter((i) => i.source === "CATALOGED").length >= 4, "cataloged gift created");
-    record("F23", "REQ-F23-02", "buscar (el gateway no enruta GET /listings: aviso + catalogo publico) y agregar un producto CATALOGED real (201)");
+    record("F23", "REQ-F23-02", "buscar en el catalogo (GET /listings?type=PRODUCT) y agregar un producto CATALOGED real (201)");
     await context.close();
   }
   // External with friction
